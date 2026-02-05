@@ -194,6 +194,32 @@ form a:hover {
   font-size: 14px;
 }
 
+.btn-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  height: fit-content;
+  padding: 10px 14px;
+  border-radius: 6px;
+  background: rgba(16, 185, 129, 0.607);
+  border: 1.5px solid rgba(255, 255, 255, 0.829);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-wrapper p {
+  margin: 0;
+  color: white;
+  font-size: 14px;
+}
+
+.btn-wrapper:hover {
+  background: rgba(51, 179, 136, 0.8);
+  border-color: rgba(255, 255, 255, 0.9);
+  transform: translateY(-2px);
+}
+
 @media (max-width: 640px) {
   form {
     padding: 30px 24px;

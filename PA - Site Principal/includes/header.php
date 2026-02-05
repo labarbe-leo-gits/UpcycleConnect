@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=SN+Pro:ital,wght@0,200..900;1,200..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/style.css">
+    <script src="../assets/js/button.js"></script>
 </head>
 <body>
     <header>
@@ -16,10 +17,24 @@
             <h1>UpcycleConnect</h1>
         </div>
         <nav>
-            <a href="index.php">Home</a>
-            <a href="">About</a>
-            <a href="">Contact</a>
-            <a href="login.php">Login</a>
+            <div class="btn-wrapper" onClick="openFile('index.php')">
+                <i class="fa-solid fa-house-chimney"></i>
+                <p>Home</p>
+            </div>
+            <div class="btn-wrapper" onClick="openFile('about.php')">
+                <i class="fa-solid fa-circle-info"></i>
+                <p>About</p>
+            </div>
+            <div class="btn-wrapper" onClick="openFile('contact.php')">
+                <i class="fa-solid fa-envelope"></i>
+                <p>Contact</p>
+            </div>
+            <div class="btn-wrapper" onClick="openFile('login.php')">
+                <i class="fa-solid fa-right-to-bracket"></i>
+                <p>Login</p>
+            </div>
+
+            
         </nav>
     </header>
     
