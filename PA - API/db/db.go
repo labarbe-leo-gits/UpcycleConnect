@@ -1,6 +1,6 @@
-package db
+// Connection to the database for the API
 
-// MySQL database connection
+package db
 
 import (
 	"database/sql"

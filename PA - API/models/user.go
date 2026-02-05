@@ -1,10 +1,14 @@
+// User model for the API
+
 package models
 
 import "github.com/google/uuid"
 
 type User struct {
-	ID       uuid.UUID `json:"id" gorm:"type:uuid;primaryKey"`
-	Username string    `json:"username" gorm:"unique;not null"`
-	Password string    `json:"password" gorm:"not null"`
-	LastLogin string   `json:"last_login" gorm:"not null"`
+	ID        uuid.UUID `json:"id" gorm:"type:uuid;primaryKey"`
+	Username  string    `json:"username" gorm:"unique;not null"`
+	Email     string    `json:"email" gorm:"unique;not null"`
+	Password  string    `json:"password,omitempty" gorm:"not null"`
+	CreatedAt string    `json:"created_at,omitempty"`
+	LastLogin string    `json:"last_login,omitempty"`
 }
