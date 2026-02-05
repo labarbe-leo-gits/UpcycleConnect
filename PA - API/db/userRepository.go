@@ -1,3 +1,5 @@
+// All database interactions for the API are handled in this package
+
 package db
 
 import(

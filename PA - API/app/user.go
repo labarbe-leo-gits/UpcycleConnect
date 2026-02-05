@@ -1,3 +1,5 @@
+// User-related handlers for the API
+
 package app
 
 import (
