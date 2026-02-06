@@ -88,3 +88,44 @@ func CreateUserInDB(user models.User) error {
 	return nil
 
 }
+
+func GetUserByIdentifierFromDB(identifier string) (models.User, error) {
+	var user models.User
+	var idStr string
+	var createdAt, lastLogin sql.NullString
+
+	err := Db.QueryRow(
+		"SELECT id, username, email, password_hash, created_at, last_login FROM users WHERE username = ? OR email = ?",
+		identifier, identifier,
+	).Scan(&idStr, &user.Username, &user.Email, &user.Password, &createdAt, &lastLogin)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return user, fmt.Errorf("user not found")
+		}
+		return user, fmt.Errorf("getUserByIdentifier package db : %s", err.Error())
+	}
+
+	user.ID, err = uuid.Parse(idStr)
+	if err != nil {
+		return user, fmt.Errorf("getUserByIdentifier package db uuid parse : %s", err.Error())
+	}
+
+	if createdAt.Valid {
+		user.CreatedAt = createdAt.String
+	}
+	if lastLogin.Valid {
+		user.LastLogin = lastLogin.String
+	}
+
+	return user, nil
+}
+
+func UpdateLastLoginInDB(userID uuid.UUID) error {
+	_, err := Db.Exec("UPDATE users SET last_login = NOW() WHERE id = ?", userID.String())
+
+	if err != nil {
+		return fmt.Errorf("updateLastLogin package db : %s", err.Error())
+	}
+	return nil
+}

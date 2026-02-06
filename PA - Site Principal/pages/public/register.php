@@ -1,6 +1,6 @@
 <?php
 
-include_once '../config/db.php';
+include_once '../../config/db.php';
 
 $error_message = '';
 $success_message = '';
@@ -54,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['recaptcha_token']) &
 }
 
 $title = "Register";
-include_once '../includes/header.php';
+include_once '../../includes/header.php';
 ?>
 
 <div class="container">
@@ -132,5 +132,5 @@ include_once '../includes/header.php';
 </div>
 
 <?php
-include_once '../includes/footer.php';
+include_once '../../includes/footer.php';
 ?>

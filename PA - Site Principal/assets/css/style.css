@@ -8,7 +8,8 @@ body {
 }
 
 header {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 5fr;
   background: linear-gradient(135deg, #10b981, #34d399);
   margin: 0;
   color: white;
@@ -21,6 +22,8 @@ header {
 header > nav {
   display: flex;
   gap: 20px;
+  justify-content: end;
+  padding: 20px;
 }
 
 .container {

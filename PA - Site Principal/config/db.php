@@ -3,7 +3,7 @@
 
 <?php
 
-$ENV_FILE = '../.env';
+$ENV_FILE = '../../.env';
 if (file_exists($ENV_FILE)) {
     $env = parse_ini_file($ENV_FILE);
     foreach ($env as $key => $value) {

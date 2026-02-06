@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func GetAllUsers(w http.ResponseWriter, r *http.Request) {
@@ -139,4 +140,52 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	userDto.Password = ""
 	json.NewEncoder(w).Encode(userDto)
 
+}
+
+type LoginRequest struct {
+	Identifier string `json:"identifier"`
+	Password   string `json:"password"`
+}
+
+func LoginUser(w http.ResponseWriter, r *http.Request) {
+	var loginReq LoginRequest
+	err := json.NewDecoder(r.Body).Decode(&loginReq)
+
+	if err != nil {
+		fmt.Println("[ERROR] LoginUser decode:", err)
+		if err.Error() == "EOF" {
+			sendError(w, "Request body is empty", http.StatusBadRequest)
+		} else {
+			sendError(w, "Invalid JSON format", http.StatusBadRequest)
+		}
+		return
+	}
+
+	if loginReq.Identifier == "" || loginReq.Password == "" {
+		sendError(w, "Username/email and password are required", http.StatusBadRequest)
+		return
+	}
+
+	user, err := db.GetUserByIdentifierFromDB(loginReq.Identifier)
+	if err != nil {
+		fmt.Println("[ERROR] LoginUser get user:", err)
+		sendError(w, "Invalid username/email or password", http.StatusUnauthorized)
+		return
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(loginReq.Password))
+	if err != nil {
+		fmt.Println("[ERROR] LoginUser password mismatch")
+		sendError(w, "Invalid username/email or password", http.StatusUnauthorized)
+		return
+	}
+
+	err = db.UpdateLastLoginInDB(user.ID)
+	if err != nil {
+		fmt.Println("[ERROR] LoginUser update last_login:", err)
+	}
+
+	user.Password = ""
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(user)
 }
