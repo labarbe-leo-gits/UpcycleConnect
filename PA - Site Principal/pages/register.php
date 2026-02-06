@@ -5,7 +5,14 @@ include_once '../config/db.php';
 $error_message = '';
 $success_message = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+function verifyRecaptcha($token) {
+    $secret = getenv('RECAPTCHA_SECRET_KEY');
+    $response = file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret=$secret&response=$token");
+    $data = json_decode($response);
+    return $data->success && $data->score >= 0.5;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['recaptcha_token']) && verifyRecaptcha($_POST['recaptcha_token']))) {
 
     $username_filtered = htmlspecialchars(filter_input(INPUT_POST, 'username', FILTER_SANITIZE_STRING));
     $email_filtered = filter_var($_POST['email'], FILTER_VALIDATE_EMAIL);
@@ -97,6 +104,8 @@ include_once '../includes/header.php';
                 <input type="password" id="confirm_password" name="confirm_password" class="iconInput" placeholder="Confirm your password" required>
             </div>
         </div>
+
+        <input type="hidden" name="recaptcha_token" id="recaptcha_token">
         
         <button type="submit">
             <i class="fa-solid fa-user-plus"></i> Create Account
@@ -105,6 +114,20 @@ include_once '../includes/header.php';
         <div class="form-footer">
             Already have an account? <a href="login.php">Login here</a>
         </div>
+
+        <script>
+            grecaptcha.ready(function() {
+                document.querySelector('form').addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    grecaptcha.execute('<?php echo getenv("RECAPTCHA_SITE_KEY"); ?>', {action: 'register'})
+                    .then(function(token) {
+                        document.getElementById('recaptcha_token').value = token;
+                        e.target.submit();
+                    });
+                });
+            });
+        </script>
+
     </form>
 </div>
 
