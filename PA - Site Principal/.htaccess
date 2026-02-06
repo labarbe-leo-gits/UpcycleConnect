@@ -1,0 +1,9 @@
+RewriteEngine On
+RewriteBase "/PA/PA - Site Principal/"
+
+RewriteCond %{THE_REQUEST} \s/PA/PA%20-%20Site%20Principal/pages/public/([^.]+)\.php [NC]
+RewriteRule ^ pages/public/%1? [R=301,L,NE]
+
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^pages/public/([^/]+)$ pages/public/$1.php [L,QSA]
