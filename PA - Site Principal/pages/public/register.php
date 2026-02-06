@@ -12,7 +12,9 @@ function verifyRecaptcha($token) {
     return $data->success && $data->score >= 0.5;
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['recaptcha_token']) && verifyRecaptcha($_POST['recaptcha_token']))) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    
+    if (isset($_POST['recaptcha_token']) && !empty($_POST['recaptcha_token']) && verifyRecaptcha($_POST['recaptcha_token'])) {
 
     $username_filtered = htmlspecialchars(filter_input(INPUT_POST, 'username', FILTER_SANITIZE_STRING));
     $email_filtered = filter_var($_POST['email'], FILTER_VALIDATE_EMAIL);
@@ -47,10 +49,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['recaptcha_token']) &
             }
             $error_message .= '</p>';
         } else {
-            $error_message = 'An unexpected error occurred';
+            $error_message = 'An unexpected error occurred. API Response: ' . htmlspecialchars($response);
         }
     }
-
+    } else {
+        $error_message = 'Recaptcha validation failed. Please try again.';
+    }
 }
 
 $title = "Register";
@@ -58,7 +62,7 @@ include_once '../../includes/header.php';
 ?>
 
 <div class="container">
-    <form action="register.php" method="POST">
+    <form action="" method="POST">
         <h2>Create Account</h2>
         
         <?php if ($error_message): ?>
