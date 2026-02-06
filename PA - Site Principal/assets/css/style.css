@@ -198,6 +198,99 @@ form a:hover {
   font-size: 14px;
 }
 
+.forgot-password-wrapper {
+  text-align: right;
+  margin: -8px 0 16px 0;
+}
+
+.forgot-password {
+  color: #10b981;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.forgot-password:hover {
+  color: #059669;
+  text-decoration: underline;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 24px 0;
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.divider span {
+  padding: 0 16px;
+}
+
+.social-login-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.social-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 20px;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  background-color: white;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.social-btn:hover {
+  border-color: #cbd5e1;
+  background-color: #f9fafb;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.social-btn:active {
+  transform: translateY(0);
+}
+
+.social-btn i {
+  font-size: 18px;
+}
+
+.google-btn {
+  color: #10b981;
+}
+
+.google-btn:hover {
+  border-color: #10b981;
+  background-color: #f0fdf4;
+}
+
+.microsoft-btn {
+  color: #10b981;
+}
+
+.microsoft-btn:hover {
+  border-color: #10b981;
+  background-color: #f0fdf4;
+}
+
 .btn-wrapper {
   display: flex;
   justify-content: space-between;
@@ -222,6 +315,18 @@ form a:hover {
   background: rgba(51, 179, 136, 0.8);
   border-color: rgba(255, 255, 255, 0.9);
   transform: translateY(-2px);
+}
+
+.btn-wrapper.logout-btn {
+  background: rgba(220, 38, 38, 0.8);
+}
+
+.btn-wrapper.logout-btn:hover {
+  background: rgba(185, 28, 28, 0.9);
+}
+
+.hidden-form {
+  display: none;
 }
 
 @media (max-width: 640px) {

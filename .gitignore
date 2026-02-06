@@ -1,3 +1,4 @@
 *.env
 "PA - API"/.env
 "PA - Site Principal"/.env
+vendor/

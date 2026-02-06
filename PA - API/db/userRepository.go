@@ -14,7 +14,7 @@ import (
 func GetAllUsersFromDB() ([]models.User, error) {
 
 	users := []models.User{}
-	rows, err := Db.Query("SELECT id, username, email, created_at, last_login FROM users")
+	rows, err := Db.Query("SELECT id, username, email, created_at, last_login, oauth_provider, oauth_id, profile_picture FROM users")
 
 	if err != nil {
 		return nil, fmt.Errorf("getUsers package db : %s", err.Error())
@@ -26,7 +26,8 @@ func GetAllUsersFromDB() ([]models.User, error) {
 		var user models.User
 		var idStr string
 		var createdAt, lastLogin sql.NullString
-		err := rows.Scan(&idStr, &user.Username, &user.Email, &createdAt, &lastLogin)
+		var oauthProvider, oauthID, profilePicture sql.NullString
+		err := rows.Scan(&idStr, &user.Username, &user.Email, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture)
 		if err != nil {
 			return nil, fmt.Errorf("getUsers package db scan : %s", err.Error())
 		}
@@ -39,6 +40,15 @@ func GetAllUsersFromDB() ([]models.User, error) {
 		}
 		if lastLogin.Valid {
 			user.LastLogin = lastLogin.String
+		}
+		if oauthProvider.Valid {
+			user.OAuthProvider = oauthProvider.String
+		}
+		if oauthID.Valid {
+			user.OAuthID = oauthID.String
+		}
+		if profilePicture.Valid {
+			user.ProfilePicture = profilePicture.String
 		}
 		users = append(users, user)
 	}
@@ -80,7 +90,10 @@ func CreateUserInDB(user models.User) error {
 	hashed, _ := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	user.Password = string(hashed)
 
-	_, err := Db.Exec("INSERT INTO users (id, username, email, password_hash) VALUES (?, ?, ?, ?)", user.ID.String(), user.Username, user.Email, user.Password)
+	_, err := Db.Exec(
+		"INSERT INTO users (id, username, email, password_hash, oauth_provider, oauth_id, profile_picture) VALUES (?, ?, ?, ?, ?, ?, ?)",
+		user.ID.String(), user.Username, user.Email, user.Password, user.OAuthProvider, user.OAuthID, user.ProfilePicture,
+	)
 
 	if err != nil {
 		return fmt.Errorf("createUser package db : %s", err.Error())
@@ -93,11 +106,12 @@ func GetUserByIdentifierFromDB(identifier string) (models.User, error) {
 	var user models.User
 	var idStr string
 	var createdAt, lastLogin sql.NullString
+	var oauthProvider, oauthID, profilePicture sql.NullString
 
 	err := Db.QueryRow(
-		"SELECT id, username, email, password_hash, created_at, last_login FROM users WHERE username = ? OR email = ?",
+		"SELECT id, username, email, password_hash, created_at, last_login, oauth_provider, oauth_id, profile_picture FROM users WHERE username = ? OR email = ?",
 		identifier, identifier,
-	).Scan(&idStr, &user.Username, &user.Email, &user.Password, &createdAt, &lastLogin)
+	).Scan(&idStr, &user.Username, &user.Email, &user.Password, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -117,6 +131,15 @@ func GetUserByIdentifierFromDB(identifier string) (models.User, error) {
 	if lastLogin.Valid {
 		user.LastLogin = lastLogin.String
 	}
+	if oauthProvider.Valid {
+		user.OAuthProvider = oauthProvider.String
+	}
+	if oauthID.Valid {
+		user.OAuthID = oauthID.String
+	}
+	if profilePicture.Valid {
+		user.ProfilePicture = profilePicture.String
+	}
 
 	return user, nil
 }
@@ -128,4 +151,46 @@ func UpdateLastLoginInDB(userID uuid.UUID) error {
 		return fmt.Errorf("updateLastLogin package db : %s", err.Error())
 	}
 	return nil
+}
+
+func GetUserByEmailFromDB(email string) (models.User, error) {
+	var user models.User
+	var idStr string
+	var createdAt, lastLogin sql.NullString
+	var oauthProvider, oauthID, profilePicture sql.NullString
+
+	err := Db.QueryRow(
+		"SELECT id, username, email, password_hash, created_at, last_login, oauth_provider, oauth_id, profile_picture FROM users WHERE email = ?",
+		email,
+	).Scan(&idStr, &user.Username, &user.Email, &user.Password, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return user, fmt.Errorf("user not found")
+		}
+		return user, fmt.Errorf("getUserByEmail package db : %s", err.Error())
+	}
+
+	user.ID, err = uuid.Parse(idStr)
+	if err != nil {
+		return user, fmt.Errorf("getUserByEmail package db uuid parse : %s", err.Error())
+	}
+
+	if createdAt.Valid {
+		user.CreatedAt = createdAt.String
+	}
+	if lastLogin.Valid {
+		user.LastLogin = lastLogin.String
+	}
+	if oauthProvider.Valid {
+		user.OAuthProvider = oauthProvider.String
+	}
+	if oauthID.Valid {
+		user.OAuthID = oauthID.String
+	}
+	if profilePicture.Valid {
+		user.ProfilePicture = profilePicture.String
+	}
+
+	return user, nil
 }

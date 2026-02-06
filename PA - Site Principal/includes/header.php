@@ -1,3 +1,8 @@
+
+<?php
+require_once '../../includes/auth.php';
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,6 +14,7 @@
     <link href="https://fonts.googleapis.com/css2?family=SN+Pro:ital,wght@0,200..900;1,200..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="../../assets/css/style.css">
+    <link rel="stylesheet" href="../../assets/css/customers.css">
     <script src="https://www.google.com/recaptcha/api.js?render=<?php echo getenv('RECAPTCHA_SITE_KEY'); ?>"></script>
     <script src="../../assets/js/button.js"></script>
 </head>
@@ -30,12 +36,31 @@
                 <i class="fa-solid fa-envelope"></i>
                 <p>Contact</p>
             </div>
-            <div class="btn-wrapper" onClick="openFile('login.php')">
-                <i class="fa-solid fa-right-to-bracket"></i>
-                <p>Login</p>
-            </div>
-
             
+            <?php if (isLoggedIn()): ?>
+                <div class="btn-wrapper" onClick="window.location.href='../customers/test'">
+                    <i class="fa-solid fa-user"></i>
+                    <p>Profile</p>
+                </div>
+                <div class="btn-wrapper" onClick="window.location.href='../customers/index'">
+                    <i class="fa-solid fa-store"></i>
+                    <p>Portal</p>
+                </div>
+                <div class="btn-wrapper logout-btn" onClick="document.getElementById('logout-form').submit()">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <p>Logout</p>
+                </div>
+            <?php else: ?>
+                <div class="btn-wrapper" onClick="openFile('login.php')">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    <p>Login</p>
+                </div>
+            <?php endif; ?>
         </nav>
     </header>
+    <?php if (isLoggedIn()): ?>
+        <form id="logout-form" action="../customers/logout" method="POST" class="hidden-form">
+            <input type="hidden" name="logout" value="1">
+        </form>
+    <?php endif; ?>
     

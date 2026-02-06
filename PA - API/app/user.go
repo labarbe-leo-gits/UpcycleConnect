@@ -69,13 +69,15 @@ func ValidateUserDto(user models.User) []string {
 		errs = append(errs, "Email must be a valid email address.")
 	}
 
-	numbers := "0123456789"
-	uppercases := "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	lowercases := "abcdefghijklmnopqrstuvwxyz"
-	special_chars := "!@#$%^&*()-_=+[]{}|;:,.<>?/~`"
+	if user.OAuthProvider == "" {
+		numbers := "0123456789"
+		uppercases := "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		lowercases := "abcdefghijklmnopqrstuvwxyz"
+		special_chars := "!@#$%^&*()-_=+[]{}|;:,.<>?/~`"
 
-	if user.Password == "" || len(user.Password) < 6 || !strings.ContainsAny(user.Password, numbers) || !strings.ContainsAny(user.Password, special_chars) || !strings.ContainsAny(user.Password, uppercases) || !strings.ContainsAny(user.Password, lowercases) {
-		errs = append(errs, "Password must be at least 6 characters long and contain at least one number, one uppercase letter, one lowercase letter, and one special character.")
+		if user.Password == "" || len(user.Password) < 6 || !strings.ContainsAny(user.Password, numbers) || !strings.ContainsAny(user.Password, special_chars) || !strings.ContainsAny(user.Password, uppercases) || !strings.ContainsAny(user.Password, lowercases) {
+			errs = append(errs, "Password must be at least 6 characters long and contain at least one number, one uppercase letter, one lowercase letter, and one special character.")
+		}
 	}
 
 	return errs
@@ -183,6 +185,36 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 	err = db.UpdateLastLoginInDB(user.ID)
 	if err != nil {
 		fmt.Println("[ERROR] LoginUser update last_login:", err)
+	}
+
+	user.Password = ""
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(user)
+}
+
+func GetUserByEmail(w http.ResponseWriter, r *http.Request) {
+	var requestData struct {
+		Email string `json:"email"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&requestData)
+	if err != nil {
+		fmt.Println("[ERROR] GetUserByEmail decode:", err)
+		sendError(w, "Invalid JSON format", http.StatusBadRequest)
+		return
+	}
+
+	if requestData.Email == "" {
+		sendError(w, "Email is required", http.StatusBadRequest)
+		return
+	}
+
+	user, err := db.GetUserByEmailFromDB(requestData.Email)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(map[string]string{"message": "User not found"})
+		return
 	}
 
 	user.Password = ""

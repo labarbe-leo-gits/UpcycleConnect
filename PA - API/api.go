@@ -71,6 +71,7 @@ func main() {
 	registerRoute("GET", "/{$}", "Health check - verify API and database connection", healthCheck)
 	registerRoute("GET", "/users", "Get all users", app.GetAllUsers)
 	registerRoute("POST", "/users", "Create a new user", app.CreateUser)
+	registerRoute("POST", "/users/email", "Get user by email - for OAuth lookup", app.GetUserByEmail)
 	registerRoute("POST", "/login", "User login - authenticate and return user data", app.LoginUser)
 
 	http.HandleFunc("/", notFoundHandler)

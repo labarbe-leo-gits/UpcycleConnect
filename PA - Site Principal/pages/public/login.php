@@ -12,7 +12,7 @@ function verifyRecaptcha($token) {
     return $data->success && $data->score >= 0.5;
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['recaptcha_token']) && verifyRecaptcha($_POST['recaptcha_token']))) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['recaptcha_token']) && verifyRecaptcha($_POST['recaptcha_token'])) {
 
     $identifier = htmlspecialchars(filter_input(INPUT_POST, 'identifier', FILTER_SANITIZE_STRING));
     $password = htmlspecialchars(filter_input(INPUT_POST, 'password', FILTER_SANITIZE_STRING));
@@ -34,7 +34,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['recaptcha_token']) &
             $_SESSION['username'] = $decoded['username'];
             $_SESSION['email'] = $decoded['email'];
             
-            header('Location: ../customers/index.php');
+            if (isset($_SESSION['page_after_login'])) {
+                $page = $_SESSION['page_after_login'];
+                unset($_SESSION['page_after_login']);
+                header('Location: ../customers/' . $page);
+            } else {
+                header('Location: ../customers/test');
+            }
             exit();
         } elseif (isset($decoded['error'])) {
             $error_message = $decoded['error'];
@@ -46,37 +52,74 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['recaptcha_token']) &
 
 $title = "Login";
 include_once '../../includes/header.php';
+
+if (isLoggedIn()) {
+    header('Location: ../customers/test');
+    exit();
+}
+
 ?>
 
-<?php if ($error_message): ?>
-    <div class="error-message">
-        <?= htmlspecialchars($error_message) ?>
-    </div>
-<?php endif; ?>
+<div class="container">
+    <?php if ($error_message): ?>
+        <div class="error-message">
+            <?= htmlspecialchars($error_message) ?>
+        </div>
+    <?php endif; ?>
 
-<?php if ($success_message): ?>
-    <div class="success-message">
-        <?= htmlspecialchars($success_message) ?>
-    </div>
-<?php endif; ?>
+    <?php if ($success_message): ?>
+        <div class="success-message">
+            <?= htmlspecialchars($success_message) ?>
+        </div>
+    <?php endif; ?>
 
-<form method="POST" action="login.php">
-    <div class="form-group">
-        <label for="identifier">Username or Email:</label>
-        <input type="text" id="identifier" name="identifier" required>
-    </div>
-    
-    <div class="form-group">
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required>
-    </div>
-    
-    <input type="hidden" name="recaptcha_token" id="recaptcha_token">
-    
-    <button type="submit">Login</button>
-</form>
-
-<a href="register.php">Don't have an account? Register here.</a>
+    <form method="POST" action="">
+        <h2>Welcome Back!</h2>
+        
+        <div class="field">
+            <label for="identifier">Username or Email</label>
+            <div class="input-wrapper">
+                <i class="fa-solid fa-user"></i>
+                <input type="text" id="identifier" name="identifier" placeholder="Enter your username or email" required>
+            </div>
+        </div>
+        
+        <div class="field">
+            <label for="password">Password</label>
+            <div class="input-wrapper">
+                <i class="fa-solid fa-lock"></i>
+                <input type="password" id="password" name="password" placeholder="Enter your password" required>
+            </div>
+        </div>
+        
+        <div class="forgot-password-wrapper">
+            <a href="#" class="forgot-password">Forgot Password?</a>
+        </div>
+        
+        <input type="hidden" name="recaptcha_token" id="recaptcha_token">
+        
+        <button type="submit">Login</button>
+        
+        <div class="divider">
+            <span>or continue with</span>
+        </div>
+        
+        <div class="social-login-buttons">
+            <button type="button" class="social-btn google-btn" onclick="loginWithGoogle()">
+                <i class="fa-brands fa-google"></i>
+                <span>Google</span>
+            </button>
+            <button type="button" class="social-btn microsoft-btn" onclick="loginWithMicrosoft()">
+                <i class="fa-brands fa-microsoft"></i>
+                <span>Microsoft</span>
+            </button>
+        </div>
+        
+        <div class="form-footer">
+            Don't have an account? <a href="register.php">Register here</a>
+        </div>
+    </form>
+</div>
 
 <script src="https://www.google.com/recaptcha/api.js?render=<?= getenv('RECAPTCHA_SITE_KEY') ?>"></script>
 <script>
@@ -85,4 +128,12 @@ include_once '../../includes/header.php';
             document.getElementById('recaptcha_token').value = token;
         });
     });
+    
+    function loginWithGoogle() {
+        window.location.href = 'oauth-google.php';
+    }
+    
+    function loginWithMicrosoft() {
+        window.location.href = 'oauth-microsoft.php';
+    }
 </script>

@@ -5,10 +5,13 @@ package models
 import "github.com/google/uuid"
 
 type User struct {
-	ID        uuid.UUID `json:"id" gorm:"type:uuid;primaryKey"`
-	Username  string    `json:"username" gorm:"unique;not null"`
-	Email     string    `json:"email" gorm:"unique;not null"`
-	Password  string    `json:"password,omitempty" gorm:"not null"`
-	CreatedAt string    `json:"created_at,omitempty"`
-	LastLogin string    `json:"last_login,omitempty"`
+	ID             uuid.UUID `json:"id" gorm:"type:uuid;primaryKey"`
+	Username       string    `json:"username" gorm:"unique;not null"`
+	Email          string    `json:"email" gorm:"unique;not null"`
+	Password       string    `json:"password,omitempty" gorm:"not null"`
+	CreatedAt      string    `json:"created_at,omitempty"`
+	LastLogin      string    `json:"last_login,omitempty"`
+	OAuthProvider  string    `json:"oauth_provider,omitempty"`
+	OAuthID        string    `json:"oauth_id,omitempty"`
+	ProfilePicture string    `json:"profile_picture,omitempty"`
 }
