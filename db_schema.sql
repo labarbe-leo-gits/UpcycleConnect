@@ -4,6 +4,7 @@ USE upcycle;
 CREATE TABLE IF NOT EXISTS users (
     id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
     username VARCHAR(255) NOT NULL UNIQUE,
+    user_type INT NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -12,4 +13,109 @@ CREATE TABLE IF NOT EXISTS users (
     oauth_id VARCHAR(255) NULL,
     profile_picture VARCHAR(500) NULL,
     UNIQUE INDEX idx_oauth (oauth_provider, oauth_id)
+);
+
+CREATE TABLE IF NOT EXISTS annonces(
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    user_id CHAR(36) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    price DECIMAL(10, 2) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS images (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    annonce_id CHAR(36) NOT NULL,
+    file_name VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (annonce_id) REFERENCES annonces(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS conteneurs(
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    conteneur_name VARCHAR(120) NOT NULL,
+    conteneur_city VARCHAR(80) NOT NULL,
+    conteneur_road VARCHAR(255) NOT NULL,
+    conteneur_number VARCHAR(20) NOT NULL,
+    conteneur_zip_code CHAR(5) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS demandes_depot (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    user_id CHAR(36) NOT NULL,
+    conteneur_id CHAR(36) NOT NULL,
+    object_name VARCHAR(80) NOT NULL,
+    object_description TEXT NOT NULL,
+    status INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (conteneur_id) REFERENCES conteneurs(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS planning (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    user_id CHAR(36) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS evenements (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    title VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    event_type INT NOT NULL,
+    event_date DATE NOT NULL,
+    event_road VARCHAR(255),
+    event_city VARCHAR(80),
+    event_zip_code CHAR(5),
+    created_by CHAR(36) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS produits(
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    title VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    type INT NOT NULL,
+    price DECIMAL(10, 2) NOT NULL,
+    produitdate DATE NOT NULL,
+    produitroad VARCHAR(255),
+    produitcity VARCHAR(80),
+    produitzip_code CHAR(5),
+    animated_by CHAR(36) NOT NULL,
+    created_by CHAR(36) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (animated_by) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS participations (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    user_id CHAR(36) NOT NULL,
+    event_id CHAR(36),
+    produitid CHAR(36),
+    planning_id CHAR(36) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (event_id) REFERENCES evenements(id) ON DELETE CASCADE,
+    FOREIGN KEY (planning_id) REFERENCES planning(id) ON DELETE CASCADE,
+    FOREIGN KEY (produitid) REFERENCES produits(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS conseils (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    title VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    conseil_type INT NOT NULL,
+    created_by CHAR(36) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
 );
