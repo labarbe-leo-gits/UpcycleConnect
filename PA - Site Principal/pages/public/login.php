@@ -137,3 +137,7 @@ if (isLoggedIn()) {
         window.location.href = 'oauth-microsoft.php';
     }
 </script>
+
+<?php
+include_once '../../includes/footer.php';
+?>

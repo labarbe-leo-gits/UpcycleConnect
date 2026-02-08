@@ -15,6 +15,13 @@ require_once '../../includes/auth.php';
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="../../assets/css/style.css">
     <link rel="stylesheet" href="../../assets/css/customers.css">
+    <link rel="stylesheet" href="../../assets/css/about.css">
+    <?php if (isset($title) && $title === 'About'): ?>
+        <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+        <script src="https://unpkg.com/leaflet/dist/leaflet.js" defer></script>
+        <script src="../../assets/js/about-map.js" defer></script>
+        <script src="../../assets/js/carroussel.js" defer></script>
+    <?php endif; ?>
     <script src="https://www.google.com/recaptcha/api.js?render=<?php echo getenv('RECAPTCHA_SITE_KEY'); ?>"></script>
     <script src="../../assets/js/button.js"></script>
 </head>
