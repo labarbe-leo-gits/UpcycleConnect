@@ -6,11 +6,11 @@ include_once '../../includes/header.php';
 <main class="container page-about">
 	<section class="hero">
 		<h1>About UpcycleConnect</h1>
-		<p class="lead">The intelligent upcycling platform — turning yesterday's waste into tomorrow's resources.</p>
+		<p class="lead">The intelligent upcycling platform - turning yesterday's waste into tomorrow's resources.</p>
 	</section>
 
 	<section class="intro">
-		<p>Founded in 2021, <strong>UpcycleConnect</strong> is an innovative leader in waste reduction and material valorization. We believe that yesterday's waste is tomorrow's resource. By leveraging technology, we breathe new life into unused or obsolete objects through the creative process of upcycling — transforming discarded materials into high-value, aesthetic, and useful products.</p>
+		<p>Founded in 2021, <strong>UpcycleConnect</strong> is an innovative leader in waste reduction and material valorization. We believe that yesterday's waste is tomorrow's resource. By leveraging technology, we breathe new life into unused or obsolete objects through the creative process of upcycling - transforming discarded materials into high-value, aesthetic, and useful products.</p>
 	</section>
 
 	<section class="mission">
@@ -56,7 +56,7 @@ include_once '../../includes/header.php';
 
 	<section class="presence">
 		<h2>Our Presence</h2>
-		<p>Headquartered at <strong>174, rue La Fayette — Paris (10th Arr.)</strong>, we have rapidly expanded our footprint to support local creators. You can find our workshops, conference halls, and smart-box containers in:</p>
+		<p>Headquartered at <strong>174, rue La Fayette - Paris (10th Arr.)</strong>, we have rapidly expanded our footprint to support local creators. You can find our workshops, conference halls, and smart-box containers in:</p>
 		<ul>
 			<li>Paris: 11th, 13th and 16th Arrondissements</li>
 			<li>Greater Paris: Bourg-la-Reine, Ivry and Montreuil</li>

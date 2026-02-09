@@ -22,13 +22,19 @@ require_once '../../includes/auth.php';
         <script src="../../assets/js/about-map.js" defer></script>
         <script src="../../assets/js/carroussel.js" defer></script>
     <?php endif; ?>
+    <?php if (isset($title) && $title === 'Contact'): ?>
+        <link rel="stylesheet" href="../../assets/css/contact.css">
+    <?php endif; ?>
+    <?php if (isset($title) && $title === 'Home'): ?>
+        <link rel="stylesheet" href="../../assets/css/home.css">
+    <?php endif; ?>
     <script src="https://www.google.com/recaptcha/api.js?render=<?php echo getenv('RECAPTCHA_SITE_KEY'); ?>"></script>
     <script src="../../assets/js/button.js"></script>
 </head>
 <body>
     <header>
         <div class="left">
-            <h1>UpcycleConnect</h1>
+            <h3>UpcycleConnect</h3>
         </div>
         <nav>
             <div class="btn-wrapper" onClick="openFile('index.php')">

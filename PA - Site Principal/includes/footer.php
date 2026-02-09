@@ -3,7 +3,7 @@
 			<div class="footer-col brand">
 				<h3>UpcycleConnect</h3>
 				<p>Connecting creators with reclaimed materials to build a more circular future.</p>
-				<p class="small">© <span id="year"></span> UpcycleConnect — All rights reserved.</p>
+				<p class="small">© <span id="year"></span> UpcycleConnect - All rights reserved.</p>
 			</div>
 
 			<div class="footer-col links">

@@ -23,18 +23,39 @@ requireLogin();
             <h1>Customer Portal</h1>
         </div>
         <nav>
-            <div class="btn-wrapper" onClick="window.location.href='test'">
-                <i class="fa-solid fa-user"></i>
-                <p>Profile</p>
+            <div class="nav-dropdown">
+                <a class="btn-wrapper" href="offers">
+                    <i class="fa-solid fa-box-open"></i>
+                    <p>Products</p>
+                </a>
+                <div class="dropdown-menu">
+                    <a href="offers">Offers</a>
+                    <a href="services">Services</a>
+                </div>
             </div>
-            <div class="btn-wrapper" onClick="window.location.href='index'">
-                <i class="fa-solid fa-store"></i>
-                <p>Portal</p>
-            </div>
-            <div class="btn-wrapper" onClick="window.location.href='../public/index.php'">
+            <div class="btn-wrapper" onClick="window.location.href='../public/index'">
                 <i class="fa-solid fa-arrow-left"></i>
                 <p>Main Site</p>
             </div>
+
+            <?php $user = getLoggedInUser();
+                  $profileUrl = 'test';
+            ?>
+            <div class="nav-dropdown profile-dropdown">
+                <a class="btn-wrapper profile-link" href="<?= $profileUrl ?>">
+                    <?php if (!empty($_SESSION['avatar'])): ?>
+                        <img src="<?= htmlspecialchars($_SESSION['avatar']) ?>" alt="Profile" class="profile-pic" />
+                    <?php else: ?>
+                        <i class="fa-solid fa-user fa-lg"></i>
+                    <?php endif; ?>
+                </a>
+                <div class="dropdown-menu">
+                    <a href="tips">Tips</a>
+                    <a href="<?= $profileUrl ?>">Profile</a>
+                    <a href="planning">Planning</a>
+                </div>
+            </div>
+
             <div class="btn-wrapper logout-btn" onClick="document.getElementById('logout-form').submit()">
                 <i class="fa-solid fa-right-from-bracket"></i>
                 <p>Logout</p>

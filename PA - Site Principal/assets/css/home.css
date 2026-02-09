@@ -1,0 +1,190 @@
+/* Home / Hero styles for UpcycleConnect */
+
+.hero-landing-wrapper {
+  width: 100%;
+  background-image: url("../img/web/hero.jpg");
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  padding: 32px 0;
+  position: relative;
+}
+
+.hero-landing-wrapper::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(6, 37, 26, 0.56) 0%,
+    rgba(6, 37, 26, 0.12) 60%,
+    rgba(6, 37, 26, 0.02) 100%
+  );
+  pointer-events: none;
+}
+
+.hero-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 18px;
+  position: relative;
+  z-index: 2;
+}
+
+.hero-landing {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 36px 0;
+}
+
+.hero-content {
+  padding: 12px 8px;
+  background: transparent;
+}
+
+.hero-content h1 {
+  font-size: 56px;
+  margin: 0 0 18px 0;
+  color: #ffffff;
+  line-height: 1.03;
+  font-weight: 800;
+  text-shadow: 0 6px 18px rgba(6, 37, 26, 0.45);
+}
+
+.hero-landing .lead {
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.92);
+  margin-bottom: 18px;
+  max-width: 760px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.hero-ctas {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 22px;
+  border-radius: 999px;
+  font-weight: 700;
+  text-decoration: none;
+  color: white;
+  background: linear-gradient(90deg, #10b981, #34d399);
+  box-shadow: 0 12px 30px rgba(16, 185, 129, 0.14);
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    filter 160ms ease;
+}
+
+.btn-outline {
+  background: rgba(255, 255, 255, 0.92);
+  color: #065f46;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: none;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease,
+    color 160ms ease;
+}
+
+.btn-cta:hover,
+.btn-cta:focus {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 20px 50px rgba(16, 185, 129, 0.18);
+  filter: brightness(1.02);
+}
+
+.btn-outline:hover,
+.btn-outline:focus {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px rgba(6, 37, 26, 0.08);
+  background: rgba(255, 255, 255, 1);
+}
+
+.btn-cta:focus-visible,
+.btn-outline:focus-visible {
+  outline: 3px solid rgba(16, 185, 129, 0.18);
+  outline-offset: 4px;
+}
+
+.hero-visual {
+  display: none;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-top: 28px;
+}
+
+.feature-card {
+  background: white;
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 6px 16px rgba(6, 95, 70, 0.03);
+}
+.feature-card h3 {
+  margin: 0 0 8px 0;
+  color: #064e3b;
+}
+.feature-card p {
+  margin: 0;
+  color: #475569;
+  font-size: 14px;
+}
+
+.hero-down {
+  margin-top: 22px;
+  display: inline-block;
+  opacity: 0.95;
+}
+.hero-down svg {
+  width: 28px;
+  height: 28px;
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.25));
+}
+
+@media (max-width: 960px) {
+  .hero-landing {
+    text-align: center;
+  }
+  .hero-content {
+    background: rgba(255, 255, 255, 0.88);
+    padding: 18px;
+    border-radius: 10px;
+  }
+  .hero-content h1 {
+    color: #064e3b;
+    text-shadow: none;
+    font-size: 34px;
+  }
+}
+
+@media (max-width: 640px) {
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+  .hero-content h1 {
+    font-size: 28px;
+  }
+  .hero-landing-wrapper {
+    min-height: 80vh;
+  }
+}
