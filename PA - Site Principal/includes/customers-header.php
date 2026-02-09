@@ -1,5 +1,6 @@
 
 <?php
+require_once '../../config/db.php';
 require_once '../../includes/auth.php';
 requireLogin();
 ?>
@@ -29,8 +30,8 @@ requireLogin();
                     <p>Products</p>
                 </a>
                 <div class="dropdown-menu">
-                    <a href="offers">Offers</a>
-                    <a href="services">Services</a>
+                    <a href="offers"><i class="fa-solid fa-box-open"></i>Offers</a>
+                    <a href="services"><i class="fa-solid fa-briefcase"></i>Services</a>
                 </div>
             </div>
             <div class="btn-wrapper" onClick="window.location.href='../public/index'">
@@ -39,7 +40,7 @@ requireLogin();
             </div>
 
             <?php $user = getLoggedInUser();
-                  $profileUrl = 'test';
+                  $profileUrl = 'profile';
             ?>
             <div class="nav-dropdown profile-dropdown">
                 <a class="btn-wrapper profile-link" href="<?= $profileUrl ?>">
@@ -50,15 +51,11 @@ requireLogin();
                     <?php endif; ?>
                 </a>
                 <div class="dropdown-menu">
-                    <a href="tips">Tips</a>
-                    <a href="<?= $profileUrl ?>">Profile</a>
-                    <a href="planning">Planning</a>
+                    <a href="tips"><i class="fa-solid fa-lightbulb"></i>Tips</a>
+                    <a href="<?= $profileUrl ?>"><i class="fa-solid fa-user"></i>Profile</a>
+                    <a href="planning"><i class="fa-solid fa-calendar-days"></i>Planning</a>
+                    <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="fa-solid fa-right-from-bracket"></i>Logout</a>
                 </div>
-            </div>
-
-            <div class="btn-wrapper logout-btn" onClick="document.getElementById('logout-form').submit()">
-                <i class="fa-solid fa-right-from-bracket"></i>
-                <p>Logout</p>
             </div>
         </nav>
     </header>

@@ -16,6 +16,7 @@ require_once '../../includes/auth.php';
     <link rel="stylesheet" href="../../assets/css/style.css">
     <link rel="stylesheet" href="../../assets/css/customers.css">
     <link rel="stylesheet" href="../../assets/css/about.css">
+    <link rel="stylesheet" href="../../assets/css/header.css">
     <?php if (isset($title) && $title === 'About'): ?>
         <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
         <script src="https://unpkg.com/leaflet/dist/leaflet.js" defer></script>
@@ -51,11 +52,7 @@ require_once '../../includes/auth.php';
             </div>
             
             <?php if (isLoggedIn()): ?>
-                <div class="btn-wrapper" onClick="window.location.href='../customers/test'">
-                    <i class="fa-solid fa-user"></i>
-                    <p>Profile</p>
-                </div>
-                <div class="btn-wrapper" onClick="window.location.href='../customers/index'">
+                <div class="btn-wrapper" onClick="window.location.href='../customers/profile'">
                     <i class="fa-solid fa-store"></i>
                     <p>Portal</p>
                 </div>

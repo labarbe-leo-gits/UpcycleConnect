@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['recaptcha_token']) &&
                 unset($_SESSION['page_after_login']);
                 header('Location: ../customers/' . $page);
             } else {
-                header('Location: ../customers/test');
+                header('Location: ../customers/profile');
             }
             exit();
         } elseif (isset($decoded['error'])) {

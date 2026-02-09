@@ -1,0 +1,20 @@
+// Service model for the API based on evenement structure in DB
+
+package models
+
+import "github.com/google/uuid"
+
+type Service struct {
+	ID          uuid.UUID `json:"id" gorm:"type:uuid;primaryKey"`
+	Name        string    `json:"name" gorm:"not null"`
+	Description string    `json:"description,omitempty"`
+	Price	   float64   `json:"price,omitempty"`
+	Type		int   	  `json:"type,omitempty"`
+	ServiceDate string    `json:"service_date,omitempty"`
+	ServiceRoad string    `json:"service_road,omitempty"`
+	ServiceCity string    `json:"service_city,omitempty"`
+	ServiceZip  string    `json:"service_zip,omitempty"`
+	CreatedBy   uuid.UUID `json:"created_by" gorm:"type:uuid;not null"`
+	CreatedAt   string    `json:"created_at,omitempty"`
+	UpdatedAt   string    `json:"updated_at,omitempty"`
+}

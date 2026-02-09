@@ -102,6 +102,40 @@ func CreateUserInDB(user models.User) error {
 
 }
 
+func validateUser(user models.User) error {
+
+	return nil
+
+}
+
+func GetUserByIDFromDB(id uuid.UUID) (models.User, error) {
+	var user models.User
+	var idStr string
+	var createdAt, lastLogin sql.NullString
+	var oauthProvider, oauthID, profilePicture sql.NullString
+	err := Db.QueryRow(
+		"SELECT id, username, email, password_hash, created_at, last_login, oauth_provider, oauth_id, profile_picture FROM users WHERE id = ?",
+		id.String(),
+	).Scan(&idStr, &user.Username, &user.Email, &user.Password, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return user, fmt.Errorf("user not found")
+		}
+		return user, fmt.Errorf("getUserByID package db : %s", err.Error())
+	}
+	user.ID, err = uuid.Parse(idStr)
+	if err != nil {
+		return user, fmt.Errorf("getUserByID package db uuid parse : %s", err.Error())
+	}
+	
+	err = validateUser(user)
+	if err != nil {
+		return user, fmt.Errorf("getUserByID package db validate : %s", err.Error())
+	}
+
+	return user, nil
+}
+
 func GetUserByIdentifierFromDB(identifier string) (models.User, error) {
 	var user models.User
 	var idStr string
@@ -125,20 +159,9 @@ func GetUserByIdentifierFromDB(identifier string) (models.User, error) {
 		return user, fmt.Errorf("getUserByIdentifier package db uuid parse : %s", err.Error())
 	}
 
-	if createdAt.Valid {
-		user.CreatedAt = createdAt.String
-	}
-	if lastLogin.Valid {
-		user.LastLogin = lastLogin.String
-	}
-	if oauthProvider.Valid {
-		user.OAuthProvider = oauthProvider.String
-	}
-	if oauthID.Valid {
-		user.OAuthID = oauthID.String
-	}
-	if profilePicture.Valid {
-		user.ProfilePicture = profilePicture.String
+	err = validateUser(user)
+	if err != nil {
+		return user, fmt.Errorf("getUserByIdentifier package db validate : %s", err.Error())
 	}
 
 	return user, nil

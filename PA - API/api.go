@@ -73,6 +73,9 @@ func main() {
 	registerRoute("POST", "/users", "Create a new user", app.CreateUser)
 	registerRoute("POST", "/users/email", "Get user by email - for OAuth lookup", app.GetUserByEmail)
 	registerRoute("POST", "/login", "User login - authenticate and return user data", app.LoginUser)
+	registerRoute("GET", "/products/services", "Services listing - for the catalog", app.GetServices)
+	registerRoute("POST", "/products/services", "Create a new service", app.CreateService)
+	registerRoute("GET", "/users/{id}", "Get a specific user by his UUID", app.GetUserByID)
 
 	http.HandleFunc("/", notFoundHandler)
 

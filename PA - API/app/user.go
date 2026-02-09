@@ -35,6 +35,33 @@ func GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "%s", jsonResponse)
 }
 
+func GetUserByID(w http.ResponseWriter, r *http.Request) {
+	idStr := strings.TrimPrefix(r.URL.Path, "/users/")
+	userID, err := uuid.Parse(idStr)
+	if err != nil {
+		fmt.Println("[ERROR] GetUserByID parse UUID:", err)
+		sendError(w, "Invalid user ID format", http.StatusBadRequest)
+		return
+	}
+
+	user, err := db.GetUserByIDFromDB(userID)
+	if err != nil {
+		fmt.Println("[ERROR] GetUserByID DB query:", err)
+		sendError(w, "User not found", http.StatusNotFound)
+		return
+	}
+
+	user.Password = ""
+	w.Header().Set("Content-Type", "application/json")
+	jsonResponse, err := json.Marshal(user)
+	if err != nil {
+		fmt.Println("[ERROR] GetUserByID marshal:", err)
+		sendError(w, "Unable to process response", http.StatusInternalServerError)
+		return
+	}
+	fmt.Fprintf(w, "%s", jsonResponse)
+}
+
 func sendError(w http.ResponseWriter, message string, statusCode int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
