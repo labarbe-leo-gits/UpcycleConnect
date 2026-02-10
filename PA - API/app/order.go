@@ -40,16 +40,16 @@ func ValidateOrderDto(orderDto models.Order) []string {
 		validationErrors = append(validationErrors, "CustomerID is required and must be a valid UUID")
 	}
 
-	if orderDto.ProductID == uuid.Nil {
-		validationErrors = append(validationErrors, "ServiceID is required and must be a valid UUID")
+	if orderDto.EventID == nil && orderDto.ProductID == nil {
+		validationErrors = append(validationErrors, "EventID or ProductID is required")
 	}
 
-	if orderDto.Amount <= 0 {
-		validationErrors = append(validationErrors, "Quantity must be greater than 0")
+	if orderDto.Amount < 0 {
+		validationErrors = append(validationErrors, "Amount must be 0 or greater")
 	}
 
-	if orderDto.TransactionID == "" {
-		validationErrors = append(validationErrors, "TransactionID is required")
+	if orderDto.Amount > 0 && orderDto.TransactionID == "" {
+		validationErrors = append(validationErrors, "TransactionID is required for paid orders")
 	}
 
 	return validationErrors

@@ -4,6 +4,7 @@ import (
 	"API/models"
 	"database/sql"
 	"fmt"
+
 	"github.com/google/uuid"
 )
 
@@ -38,16 +39,18 @@ func GetOrdersFromDB() ([]models.Order, error) {
 			}
 		}
 		if eventIDStr.Valid {
-			order.EventID, err = uuid.Parse(eventIDStr.String)
-			if err != nil {
-				return nil, fmt.Errorf("getOrders package db uuid parse event_id : %s", err.Error())
+			parsedID, parseErr := uuid.Parse(eventIDStr.String)
+			if parseErr != nil {
+				return nil, fmt.Errorf("getOrders package db uuid parse event_id : %s", parseErr.Error())
 			}
+			order.EventID = &parsedID
 		}
 		if productIDStr.Valid {
-			order.ProductID, err = uuid.Parse(productIDStr.String)
-			if err != nil {
-				return nil, fmt.Errorf("getOrders package db uuid parse product_id : %s", err.Error())
+			parsedID, parseErr := uuid.Parse(productIDStr.String)
+			if parseErr != nil {
+				return nil, fmt.Errorf("getOrders package db uuid parse product_id : %s", parseErr.Error())
 			}
+			order.ProductID = &parsedID
 		}
 		orders = append(orders, order)
 	}
@@ -64,11 +67,20 @@ func GetOrdersFromDB() ([]models.Order, error) {
 func CreateOrderInDB(order models.Order) error {
 
 	newID := uuid.New()
-	_, err := Db.Exec("INSERT INTO orders (id, user_id, event_id, product_id, transaction_id, amount, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())", newID, order.UserID, order.EventID, order.ProductID, order.TransactionID, order.Amount, order.Status)
+	eventID := uuidPointerToValue(order.EventID)
+	productID := uuidPointerToValue(order.ProductID)
+	_, err := Db.Exec("INSERT INTO orders (id, user_id, event_id, product_id, transaction_id, amount, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())", newID, order.UserID, eventID, productID, order.TransactionID, order.Amount, order.Status)
 	if err != nil {
 		return fmt.Errorf("createOrder package db : %s", err.Error())
 	}
 
 	return nil
 
+}
+
+func uuidPointerToValue(id *uuid.UUID) interface{} {
+	if id == nil || *id == uuid.Nil {
+		return nil
+	}
+	return *id
 }

@@ -25,6 +25,28 @@ if (!$user) {
 $services = askAPI("/products/services", "GET");
 $decoded = json_decode($services, true);
 
+$ordersResponse = askAPI("/orders", "GET");
+$ordersDecoded = json_decode($ordersResponse, true);
+$bookedEvents = [];
+
+if (is_array($ordersDecoded)) {
+    foreach ($ordersDecoded as $order) {
+        $orderUser = $order['user_id'] ?? '';
+        $orderStatus = intval($order['status'] ?? 0);
+        $eventId = $order['event_id'] ?? '';
+        $productId = $order['product_id'] ?? '';
+
+        if ($orderUser === ($user['id'] ?? '') && $orderStatus > 0) {
+            if (!empty($eventId)) {
+                $bookedEvents[$eventId] = true;
+            }
+            if (!empty($productId)) {
+                $bookedEvents[$productId] = true;
+            }
+        }
+    }
+}
+
 if (isset($decoded['error'])) {
     http_response_code(500);
     echo json_encode(['error' => $decoded['error']]);
@@ -97,7 +119,8 @@ foreach ($decoded as $service) {
         'typeLabel' => $typeLabel,
         'typeIcon' => $typeIcon,
         'typeClass' => $typeClass,
-        'creatorName' => $creatorName
+        'creatorName' => $creatorName,
+        'booked' => isset($bookedEvents[$service['id'] ?? ''])
     ];
 }
 

@@ -28,6 +28,8 @@ $paymentIntentId = $_GET['payment_intent'] ?? null;
 
 $paymentVerified = false;
 $paymentError = '';
+$orderSaved = false;
+$orderSaveError = '';
 
 if ($price > 0) {
     if (!$paymentIntentId) {
@@ -59,6 +61,46 @@ if ($price > 0) {
     }
 } else {
     $paymentVerified = true;
+}
+
+if ($paymentVerified && $price > 0 && $paymentIntentId) {
+    $ordersResponse = askAPI('/orders', 'GET');
+    $orders = json_decode($ordersResponse, true);
+    $alreadySaved = false;
+
+    if (is_array($orders)) {
+        foreach ($orders as $order) {
+            $orderTransaction = $order['transaction_id'] ?? '';
+            $orderEvent = $order['event_id'] ?? '';
+            $orderUser = $order['user_id'] ?? '';
+
+            if ($orderTransaction === $paymentIntentId || ($orderEvent === $productUuid && $orderUser === ($user['id'] ?? ''))) {
+                $alreadySaved = true;
+                break;
+            }
+        }
+    }
+
+    if (!$alreadySaved) {
+        $payload = json_encode([
+            'user_id' => $user['id'] ?? '',
+            'event_id' => $productUuid,
+            'transaction_id' => $paymentIntentId,
+            'amount' => $price,
+            'status' => 1
+        ]);
+
+        $createResponse = askAPI('/orders', 'POST', $payload);
+        $createDecoded = json_decode($createResponse, true);
+
+        if (isset($createDecoded['error'])) {
+            $orderSaveError = $createDecoded['error'];
+        } else {
+            $orderSaved = true;
+        }
+    } else {
+        $orderSaved = true;
+    }
 }
 ?>
 
@@ -98,6 +140,9 @@ if ($price > 0) {
                     <?php else: ?>
                         <p>Your payment was successful. Thank you for your order.</p>
                         <p>Payment ID: <?php echo htmlspecialchars($paymentIntentId); ?></p>
+                        <?php if (!$orderSaved && $orderSaveError): ?>
+                            <p class="error-message"><?php echo htmlspecialchars($orderSaveError); ?></p>
+                        <?php endif; ?>
                     <?php endif; ?>
                     <a class="btn-primary" href="services">Browse more services</a>
                 <?php else: ?>

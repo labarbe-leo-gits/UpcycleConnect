@@ -106,10 +106,17 @@
 
         const purchaseButton = document.createElement('button');
         purchaseButton.className = 'btn-primary';
-        purchaseButton.textContent = service.priceValue > 0 ? 'Purchase' : 'Get';
-        purchaseButton.onclick = function() {
-            window.location.href = `order?product_uuid=${service.id}`;
-        };
+
+        if (service.booked) {
+            purchaseButton.textContent = 'Booked';
+            purchaseButton.disabled = true;
+            purchaseButton.classList.add('btn-disabled');
+        } else {
+            purchaseButton.textContent = service.priceValue > 0 ? 'Purchase' : 'Get';
+            purchaseButton.onclick = function() {
+                window.location.href = `order?product_uuid=${service.id}`;
+            };
+        }
 
         const detailsButton = document.createElement('button');
         detailsButton.className = 'btn-secondary';
