@@ -87,10 +87,12 @@ foreach ($decoded as $service) {
     }
     
     $processedServices[] = [
+        'id' => $service['id'] ?? null,
         'name' => $service['name'] ?? 'Unnamed Service',
         'description' => $service['description'] ?? '',
         'service_date' => $service['service_date'] ?? null,
         'price' => $priceDisplay,
+        'priceValue' => $price,
         'priceClass' => $priceClass,
         'typeLabel' => $typeLabel,
         'typeIcon' => $typeIcon,

@@ -61,7 +61,7 @@ $title = "Register";
 include_once '../../includes/header.php';
 ?>
 
-<div class="container">
+<div class="container form">
     <form action="" method="POST">
         <h2>Create Account</h2>
         

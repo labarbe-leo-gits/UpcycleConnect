@@ -92,3 +92,38 @@ func CreateService(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(serviceDto)
 
 }
+
+func GetServiceByID(w http.ResponseWriter, r *http.Request) {
+
+	idStr := r.URL.Path[len("/products/services/"):]
+	serviceID, err := uuid.Parse(idStr)
+	if err != nil {
+		fmt.Println("[ERROR] GetServiceByID parse UUID:", err)
+		sendError(w, "Invalid service ID format", http.StatusBadRequest)
+		return
+	}
+
+	service, err := db.GetServiceByIDFromDB(serviceID)
+
+	if err != nil {
+		fmt.Println("[ERROR] GetServiceByID DB query:", err)
+		sendError(w, "Unable to fetch service", http.StatusInternalServerError)
+		return
+	}
+
+	if service.ID == uuid.Nil {
+		sendError(w, "Service not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	jsonResponse, err := json.Marshal(service)
+	
+	if err != nil {
+		fmt.Println("[ERROR] GetServiceByID marshal:", err)
+		sendError(w, "Unable to process response", http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Fprintf(w, "%s", jsonResponse)
+}

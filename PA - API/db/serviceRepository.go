@@ -77,3 +77,40 @@ func CreateServiceInDB(service models.Service) error {
 	return nil
 
 }
+
+func GetServiceByIDFromDB(serviceID uuid.UUID) (models.Service, error) {
+	var service models.Service
+	var idStr string
+	var createdByStr string
+	var createdAt, updatedAt sql.NullString
+
+	err := Db.QueryRow("SELECT id, title, description, price, event_type, event_date, event_road, event_city, event_zip_code, created_by, created_at, updated_at FROM evenements WHERE id = ?", serviceID).Scan(&idStr, &service.Name, &service.Description, &service.Price, &service.Type, &service.ServiceDate, &service.ServiceRoad, &service.ServiceCity, &service.ServiceZip, &createdByStr, &createdAt, &updatedAt)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return service, fmt.Errorf("service not found")
+		}
+		return service, fmt.Errorf("getServiceByID package db : %s", err.Error())
+	}
+
+	service.ID, err = uuid.Parse(idStr)
+	if err != nil {
+		return service, fmt.Errorf("getServiceByID package db uuid parse : %s", err.Error())
+	}
+
+	service.CreatedBy, err = uuid.Parse(createdByStr)
+	if err != nil {
+		return service, fmt.Errorf("getServiceByID package db uuid parse created_by : %s", err.Error())
+	}
+
+	if createdAt.Valid {
+		service.CreatedAt = createdAt.String
+	}
+
+	if updatedAt.Valid {
+		service.UpdatedAt = updatedAt.String
+	}
+
+	return service, nil
+
+}

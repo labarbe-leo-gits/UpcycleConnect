@@ -22,10 +22,13 @@ $user = getLoggedInUser();
             </div>
             <div class="skeleton skeleton-description"></div>
             <div class="skeleton skeleton-description"></div>
-            <div class="skeleton skeleton-description"></div>
             <div class="skeleton skeleton-date"></div>
             <div class="skeleton skeleton-creator"></div>
             <div class="skeleton skeleton-price"></div>
+            <div class="skeleton-buttons">
+                <div class="skeleton skeleton-button"></div>
+                <div class="skeleton skeleton-button"></div>
+            </div>
         </div>
         <?php endfor; ?>
     </div>

@@ -60,7 +60,7 @@ if (isLoggedIn()) {
 
 ?>
 
-<div class="container">
+<div class="container form">
     <?php if ($error_message): ?>
         <div class="error-message">
             <?= htmlspecialchars($error_message) ?>

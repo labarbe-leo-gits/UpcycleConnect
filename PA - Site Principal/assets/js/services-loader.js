@@ -33,7 +33,7 @@
                 return response.text();
             })
             .then(text => {
-                console.log('Response text:', text);
+                // console.log('Response text:', text);
                 const services = JSON.parse(text);
                 
                 container.innerHTML = '';
@@ -76,12 +76,7 @@
         header.appendChild(title);
         header.appendChild(badge);
 
-        const description = document.createElement('p');
-        description.className = 'service-description';
-        description.textContent = service.description;
-
         serviceDiv.appendChild(header);
-        serviceDiv.appendChild(description);
 
         if (service.service_date) {
             const date = document.createElement('p');
@@ -99,8 +94,33 @@
 
         const price = document.createElement('p');
         price.className = `service-price ${service.priceClass}`;
-        price.innerHTML = `<i class="fa-solid fa-tag"></i>${escapeHtml(service.price)}`;
+        if (service.priceValue === 0) {
+            price.innerHTML = `<i class="fa-solid fa-tag"></i>${escapeHtml(service.price)}`;
+        } else {
+            price.textContent = service.price;
+        }
         serviceDiv.appendChild(price);
+
+        const buttonsContainer = document.createElement('div');
+        buttonsContainer.className = 'service-buttons';
+
+        const purchaseButton = document.createElement('button');
+        purchaseButton.className = 'btn-primary';
+        purchaseButton.textContent = service.priceValue > 0 ? 'Purchase' : 'Get';
+        purchaseButton.onclick = function() {
+            window.location.href = `order?product_uuid=${service.id}`;
+        };
+
+        const detailsButton = document.createElement('button');
+        detailsButton.className = 'btn-secondary';
+        detailsButton.textContent = 'See details';
+        detailsButton.onclick = function() {
+            window.location.href = `service?uuid=${service.id}`;
+        };
+
+        buttonsContainer.appendChild(purchaseButton);
+        buttonsContainer.appendChild(detailsButton);
+        serviceDiv.appendChild(buttonsContainer);
 
         return serviceDiv;
     }
