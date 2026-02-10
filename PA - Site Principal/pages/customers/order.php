@@ -274,7 +274,34 @@ form.addEventListener('submit', async function(event) {
         }
 
         if (result.paymentIntent && result.paymentIntent.status === 'succeeded') {
-            window.location.href = 'order-success?payment_intent=' + result.paymentIntent.id + '&product_uuid=<?php echo $productUuid; ?>';
+            const verifyResponse = await fetch('verify-payment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    payment_intent: result.paymentIntent.id,
+                    product_uuid: '<?php echo $productUuid; ?>'
+                })
+            });
+
+            const verifyText = await verifyResponse.text();
+            let verifyData = null;
+
+            try {
+                verifyData = JSON.parse(verifyText);
+            } catch (parseError) {
+                verifyData = null;
+            }
+
+            if (verifyResponse.ok && verifyData && verifyData.status === 'succeeded') {
+                window.location.href = 'order-success?payment_intent=' + result.paymentIntent.id + '&product_uuid=<?php echo $productUuid; ?>';
+                return;
+            }
+
+            const verifyReason = verifyData && verifyData.error ? verifyData.error : (verifyText || 'payment_verification_failed');
+            window.location.href = 'order-cancel?product_uuid=<?php echo $productUuid; ?>&reason=' + encodeURIComponent(verifyReason);
             return;
         }
 

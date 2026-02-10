@@ -60,6 +60,7 @@ CREATE TABLE IF NOT EXISTS evenements (
     title VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
     price DECIMAL(10, 2) NOT NULL,
+    maximum_participants INT,
     event_type INT NOT NULL,
     event_date DATE NOT NULL,
     event_road VARCHAR(255),
@@ -100,4 +101,19 @@ CREATE TABLE IF NOT EXISTS images (
     file_name VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (annonce_id) REFERENCES annonces(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS orders (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    user_id CHAR(36) NOT NULL,
+    event_id CHAR(36),
+    product_id CHAR(36),
+    transaction_id VARCHAR(255) NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    status INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (event_id) REFERENCES evenements(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES annonces(id) ON DELETE CASCADE
 );
