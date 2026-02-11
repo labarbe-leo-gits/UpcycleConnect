@@ -92,6 +92,16 @@
             serviceDiv.appendChild(creator);
         }
 
+        if (service.maximumParticipants !== null && service.maximumParticipants !== undefined) {
+            const maxParticipants = Number(service.maximumParticipants);
+            const currentParticipants = Number(service.currentParticipants || 0);
+            const spotsLeft = Math.max(0, maxParticipants - currentParticipants);
+            const spots = document.createElement('p');
+            spots.className = 'service-date';
+            spots.innerHTML = `<i class="fa-solid fa-users"></i>${spotsLeft} spot${spotsLeft === 1 ? '' : 's'} left`;
+            serviceDiv.appendChild(spots);
+        }
+
         const price = document.createElement('p');
         price.className = `service-price ${service.priceClass}`;
         if (service.priceValue === 0) {

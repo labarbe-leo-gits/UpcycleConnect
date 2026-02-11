@@ -6,12 +6,18 @@ $title = 'Order Canceled';
 include_once '../../includes/customers-header.php';
 
 $productUuid = $_GET['product_uuid'] ?? null;
+$orderToken = $_GET['order_token'] ?? null;
 $reason = $_GET['reason'] ?? 'Payment canceled.';
 
-if (!$productUuid) {
-    header('Location: services');
-    exit;
+if (!$productUuid || !$orderToken) {
+    redirectBackOrServices();
 }
+
+if (!isset($_SESSION['order_token'][$productUuid]) || $_SESSION['order_token'][$productUuid] !== $orderToken) {
+    redirectBackOrServices();
+}
+
+unset($_SESSION['order_token'][$productUuid]);
 
 $serviceData = askAPI('/products/services/' . $productUuid, 'GET');
 $service = json_decode($serviceData, true);

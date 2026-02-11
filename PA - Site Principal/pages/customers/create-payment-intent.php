@@ -46,6 +46,15 @@ if (!$service || isset($service['error'])) {
     exit;
 }
 
+$maxParticipants = $service['maximum_participants'] ?? null;
+$currentParticipants = $service['current_participants'] ?? 0;
+
+if ($maxParticipants !== null && (int) $currentParticipants >= (int) $maxParticipants) {
+    http_response_code(409);
+    echo json_encode(['error' => 'Service is full']);
+    exit;
+}
+
 $price = floatval($service['price'] ?? 0);
 if ($price <= 0) {
     http_response_code(400);

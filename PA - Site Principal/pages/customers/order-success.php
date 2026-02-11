@@ -7,11 +7,17 @@ include_once '../../includes/customers-header.php';
 
 $user = getLoggedInUser();
 $productUuid = $_GET['product_uuid'] ?? null;
+$orderToken = $_GET['order_token'] ?? null;
 
-if (!$productUuid) {
-    header('Location: services');
-    exit;
+if (!$productUuid || !$orderToken) {
+    redirectBackOrServices();
 }
+
+if (!isset($_SESSION['order_token'][$productUuid]) || $_SESSION['order_token'][$productUuid] !== $orderToken) {
+    redirectBackOrServices();
+}
+
+unset($_SESSION['order_token'][$productUuid]);
 
 $serviceData = askAPI('/products/services/' . $productUuid, 'GET');
 $service = json_decode($serviceData, true);
@@ -25,6 +31,10 @@ if (!$service || isset($service['error'])) {
 $price = floatval($service['price'] ?? 0);
 $priceDisplay = ($price == 0) ? 'Free' : '€ ' . number_format($price, 2);
 $paymentIntentId = $_GET['payment_intent'] ?? null;
+
+$maxParticipants = $service['maximum_participants'] ?? null;
+$currentParticipants = $service['current_participants'] ?? 0;
+$isFull = ($maxParticipants !== null && (int) $currentParticipants >= (int) $maxParticipants);
 
 $paymentVerified = false;
 $paymentError = '';
@@ -63,43 +73,53 @@ if ($price > 0) {
     $paymentVerified = true;
 }
 
-if ($paymentVerified && $price > 0 && $paymentIntentId) {
-    $ordersResponse = askAPI('/orders', 'GET');
-    $orders = json_decode($ordersResponse, true);
-    $alreadySaved = false;
+if ($paymentVerified) {
+    if ($isFull) {
+        $orderSaveError = 'Service is fully booked.';
+    } else {
+        $ordersResponse = askAPI('/orders', 'GET');
+        $orders = json_decode($ordersResponse, true);
+        $alreadySaved = false;
 
-    if (is_array($orders)) {
-        foreach ($orders as $order) {
-            $orderTransaction = $order['transaction_id'] ?? '';
-            $orderEvent = $order['event_id'] ?? '';
-            $orderUser = $order['user_id'] ?? '';
+        if (is_array($orders)) {
+            foreach ($orders as $order) {
+                $orderTransaction = $order['transaction_id'] ?? '';
+                $orderEvent = $order['event_id'] ?? '';
+                $orderUser = $order['user_id'] ?? '';
 
-            if ($orderTransaction === $paymentIntentId || ($orderEvent === $productUuid && $orderUser === ($user['id'] ?? ''))) {
-                $alreadySaved = true;
-                break;
+                if (!empty($paymentIntentId) && $orderTransaction === $paymentIntentId) {
+                    $alreadySaved = true;
+                    break;
+                }
+
+                if ($orderEvent === $productUuid && $orderUser === ($user['id'] ?? '')) {
+                    $alreadySaved = true;
+                    break;
+                }
             }
         }
-    }
 
-    if (!$alreadySaved) {
-        $payload = json_encode([
-            'user_id' => $user['id'] ?? '',
-            'event_id' => $productUuid,
-            'transaction_id' => $paymentIntentId,
-            'amount' => $price,
-            'status' => 1
-        ]);
+        if (!$alreadySaved) {
+            $transactionId = $paymentIntentId ?: ('free-' . ($productUuid ?? 'service') . '-' . ($user['id'] ?? 'guest'));
+            $payload = json_encode([
+                'user_id' => $user['id'] ?? '',
+                'event_id' => $productUuid,
+                'transaction_id' => $transactionId,
+                'amount' => $price,
+                'status' => 1
+            ]);
 
-        $createResponse = askAPI('/orders', 'POST', $payload);
-        $createDecoded = json_decode($createResponse, true);
+            $createResponse = askAPI('/orders', 'POST', $payload);
+            $createDecoded = json_decode($createResponse, true);
 
-        if (isset($createDecoded['error'])) {
-            $orderSaveError = $createDecoded['error'];
+            if (isset($createDecoded['error'])) {
+                $orderSaveError = $createDecoded['error'];
+            } else {
+                $orderSaved = true;
+            }
         } else {
             $orderSaved = true;
         }
-    } else {
-        $orderSaved = true;
     }
 }
 ?>
@@ -135,14 +155,16 @@ if ($paymentVerified && $price > 0 && $paymentIntentId) {
             <div class="payment-section">
                 <h2>Status</h2>
                 <?php if ($paymentVerified): ?>
-                    <?php if ($price == 0): ?>
+                    <?php if ($orderSaveError): ?>
+                        <p class="error-message"><?php echo htmlspecialchars($orderSaveError); ?></p>
+                        <?php if ($price > 0 && $paymentIntentId): ?>
+                            <p>Payment ID: <?php echo htmlspecialchars($paymentIntentId); ?></p>
+                        <?php endif; ?>
+                    <?php elseif ($price == 0): ?>
                         <p>Your registration is confirmed. We sent a confirmation to <?php echo htmlspecialchars($user['email'] ?? 'your email'); ?>.</p>
                     <?php else: ?>
                         <p>Your payment was successful. Thank you for your order.</p>
                         <p>Payment ID: <?php echo htmlspecialchars($paymentIntentId); ?></p>
-                        <?php if (!$orderSaved && $orderSaveError): ?>
-                            <p class="error-message"><?php echo htmlspecialchars($orderSaveError); ?></p>
-                        <?php endif; ?>
                     <?php endif; ?>
                     <a class="btn-primary" href="services">Browse more services</a>
                 <?php else: ?>

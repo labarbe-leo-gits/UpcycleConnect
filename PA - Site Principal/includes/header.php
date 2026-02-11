@@ -1,6 +1,7 @@
 
 <?php
 require_once '../../includes/auth.php';
+trackLastPage();
 ?>
 
 <!DOCTYPE html>

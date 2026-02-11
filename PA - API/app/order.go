@@ -78,6 +78,14 @@ func CreateOrder(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		fmt.Println("[ERROR] CreateOrder DB insert:", err)
+		if err.Error() == "event_full" {
+			sendError(w, "Service is full", http.StatusConflict)
+			return
+		}
+		if err.Error() == "event not found" {
+			sendError(w, "Service not found", http.StatusNotFound)
+			return
+		}
 		sendError(w, "Unable to create order", http.StatusInternalServerError)
 		return
 	}

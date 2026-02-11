@@ -27,6 +27,20 @@ if (isset($service['error'])) {
 $price = floatval($service['price'] ?? 0);
 $priceDisplay = ($price == 0) ? "Free" : "€ " . number_format($price, 2);
 
+$orderToken = bin2hex(random_bytes(16));
+if (!isset($_SESSION['order_token'])) {
+    $_SESSION['order_token'] = [];
+}
+$_SESSION['order_token'][$productUuid] = $orderToken;
+
+$maxParticipants = $service['maximum_participants'] ?? null;
+$currentParticipants = $service['current_participants'] ?? 0;
+$isFull = ($maxParticipants !== null && (int) $currentParticipants >= (int) $maxParticipants);
+$spotsLeft = null;
+if ($maxParticipants !== null) {
+    $spotsLeft = max(0, (int) $maxParticipants - (int) $currentParticipants);
+}
+
 if ($price > 0 && empty($stripeConfig['publishable_key'])) {
     echo '<div class="container"><p class="error-message">Stripe is not configured. Please contact support.</p></div>';
     include_once '../../includes/footer.php';
@@ -93,6 +107,12 @@ if (isset($service['service_date']) && !empty($service['service_date'])) {
                         <i class="fa-regular fa-calendar"></i> <?php echo $serviceDate; ?>
                     </p>
                     <?php endif; ?>
+
+                    <?php if ($spotsLeft !== null): ?>
+                    <p class="product-date">
+                        <i class="fa-solid fa-users"></i> <?php echo $spotsLeft; ?> spot<?php echo $spotsLeft === 1 ? '' : 's'; ?> left
+                    </p>
+                    <?php endif; ?>
                 </div>
 
                 <div class="price-breakdown">
@@ -110,7 +130,12 @@ if (isset($service['service_date']) && !empty($service['service_date'])) {
             <div class="payment-section">
                 <h2>Payment Information</h2>
                 
-                <?php if ($price == 0): ?>
+                <?php if ($isFull): ?>
+                    <div class="error-message">
+                        This service is fully booked. Please choose another service.
+                    </div>
+                    <a href="services" class="btn-secondary">Back to Services</a>
+                <?php elseif ($price == 0): ?>
                     <div class="free-notice">
                         <i class="fa-solid fa-gift"></i>
                         <p>This is a free service. Click "Complete Order" to confirm your registration.</p>
@@ -119,9 +144,11 @@ if (isset($service['service_date']) && !empty($service['service_date'])) {
                     <form id="order-form" action="process-order" method="POST">
                         <input type="hidden" name="product_uuid" value="<?php echo htmlspecialchars($productUuid); ?>">
                         <input type="hidden" name="amount" value="0">
+                        <input type="hidden" name="order_token" value="<?php echo htmlspecialchars($orderToken); ?>">
                         
-                        <button type="submit" class="btn-primary btn-complete">
-                            <i class="fa-solid fa-check"></i> Complete Order
+                        <button type="submit" class="btn-primary btn-complete" id="submit-free-order">
+                            <span id="free-button-text"><i class="fa-solid fa-check"></i> Complete Order</span>
+                            <span id="free-spinner" class="spinner" style="display: none;"></span>
                         </button>
                     </form>
                 <?php else: ?>
@@ -166,9 +193,10 @@ if (isset($service['service_date']) && !empty($service['service_date'])) {
     </div>
 </div>
 
-<?php if ($price > 0): ?>
+<?php if ($price > 0 && !$isFull): ?>
 <script src="https://js.stripe.com/v3/"></script>
 <script>
+const orderToken = '<?php echo htmlspecialchars($orderToken); ?>';
 const stripe = Stripe('<?php echo htmlspecialchars($stripeConfig['publishable_key']); ?>');
 const elements = stripe.elements();
 
@@ -238,23 +266,23 @@ form.addEventListener('submit', async function(event) {
 
         if (!data) {
             const reason = responseText ? responseText.slice(0, 200) : 'invalid_response';
-            window.location.href = 'order-cancel?product_uuid=<?php echo $productUuid; ?>&reason=' + encodeURIComponent(reason);
+            window.location.href = 'order-cancel?product_uuid=<?php echo $productUuid; ?>&order_token=' + encodeURIComponent(orderToken) + '&reason=' + encodeURIComponent(reason);
             return;
         }
 
         if (!response.ok) {
             const reason = data && data.error ? data.error : (responseText || 'payment_intent_failed');
-            window.location.href = 'order-cancel?product_uuid=<?php echo $productUuid; ?>&reason=' + encodeURIComponent(reason);
+            window.location.href = 'order-cancel?product_uuid=<?php echo $productUuid; ?>&order_token=' + encodeURIComponent(orderToken) + '&reason=' + encodeURIComponent(reason);
             return;
         }
 
         if (data && data.error) {
-            window.location.href = 'order-cancel?product_uuid=<?php echo $productUuid; ?>&reason=' + encodeURIComponent(data.error);
+            window.location.href = 'order-cancel?product_uuid=<?php echo $productUuid; ?>&order_token=' + encodeURIComponent(orderToken) + '&reason=' + encodeURIComponent(data.error);
             return;
         }
         
         if (!data || !data.clientSecret) {
-            window.location.href = 'order-cancel?product_uuid=<?php echo $productUuid; ?>&reason=' + encodeURIComponent('missing_client_secret');
+            window.location.href = 'order-cancel?product_uuid=<?php echo $productUuid; ?>&order_token=' + encodeURIComponent(orderToken) + '&reason=' + encodeURIComponent('missing_client_secret');
             return;
         }
 
@@ -269,7 +297,7 @@ form.addEventListener('submit', async function(event) {
         });
         
         if (result.error) {
-            window.location.href = 'order-cancel?product_uuid=<?php echo $productUuid; ?>&reason=' + encodeURIComponent(result.error.message || 'payment_failed');
+            window.location.href = 'order-cancel?product_uuid=<?php echo $productUuid; ?>&order_token=' + encodeURIComponent(orderToken) + '&reason=' + encodeURIComponent(result.error.message || 'payment_failed');
             return;
         }
 
@@ -296,20 +324,37 @@ form.addEventListener('submit', async function(event) {
             }
 
             if (verifyResponse.ok && verifyData && verifyData.status === 'succeeded') {
-                window.location.href = 'order-success?payment_intent=' + result.paymentIntent.id + '&product_uuid=<?php echo $productUuid; ?>';
+                window.location.href = 'order-success?payment_intent=' + result.paymentIntent.id + '&product_uuid=<?php echo $productUuid; ?>&order_token=' + encodeURIComponent(orderToken);
                 return;
             }
 
             const verifyReason = verifyData && verifyData.error ? verifyData.error : (verifyText || 'payment_verification_failed');
-            window.location.href = 'order-cancel?product_uuid=<?php echo $productUuid; ?>&reason=' + encodeURIComponent(verifyReason);
+            window.location.href = 'order-cancel?product_uuid=<?php echo $productUuid; ?>&order_token=' + encodeURIComponent(orderToken) + '&reason=' + encodeURIComponent(verifyReason);
             return;
         }
 
-        window.location.href = 'order-cancel?product_uuid=<?php echo $productUuid; ?>&reason=' + encodeURIComponent(result.paymentIntent ? result.paymentIntent.status : 'payment_failed');
+        window.location.href = 'order-cancel?product_uuid=<?php echo $productUuid; ?>&order_token=' + encodeURIComponent(orderToken) + '&reason=' + encodeURIComponent(result.paymentIntent ? result.paymentIntent.status : 'payment_failed');
     } catch (error) {
-        window.location.href = 'order-cancel?product_uuid=<?php echo $productUuid; ?>&reason=' + encodeURIComponent(error.message || 'payment_failed');
+        window.location.href = 'order-cancel?product_uuid=<?php echo $productUuid; ?>&order_token=' + encodeURIComponent(orderToken) + '&reason=' + encodeURIComponent(error.message || 'payment_failed');
     }
 });
+</script>
+<?php endif; ?>
+
+<?php if ($price == 0 && !$isFull): ?>
+<script>
+const freeForm = document.getElementById('order-form');
+if (freeForm) {
+    freeForm.addEventListener('submit', function() {
+        const submitButton = document.getElementById('submit-free-order');
+        const buttonText = document.getElementById('free-button-text');
+        const spinner = document.getElementById('free-spinner');
+
+        submitButton.disabled = true;
+        buttonText.style.display = 'none';
+        spinner.style.display = 'inline-block';
+    });
+}
 </script>
 <?php endif; ?>
 

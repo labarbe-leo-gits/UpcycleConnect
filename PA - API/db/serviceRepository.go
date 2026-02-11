@@ -4,13 +4,14 @@ import (
 	"API/models"
 	"database/sql"
 	"fmt"
+
 	"github.com/google/uuid"
 )
 
 func GetServicesFromDB() ([]models.Service, error) {
 
 	services := []models.Service{}
-	rows, err := Db.Query("SELECT id, title, description, price, event_type, event_date, event_road, event_city, event_zip_code, created_by, created_at, updated_at FROM evenements")
+	rows, err := Db.Query("SELECT id, title, description, price, event_type, event_date, event_road, event_city, event_zip_code, maximum_participants, current_participants, created_by, created_at, updated_at FROM evenements")
 
 	if err != nil {
 		return nil, fmt.Errorf("getServices package db : %s", err.Error())
@@ -23,7 +24,8 @@ func GetServicesFromDB() ([]models.Service, error) {
 		var idStr string
 		var createdByStr string
 		var createdAt, updatedAt sql.NullString
-		err := rows.Scan(&idStr, &service.Name, &service.Description, &service.Price, &service.Type, &service.ServiceDate, &service.ServiceRoad, &service.ServiceCity, &service.ServiceZip, &createdByStr, &createdAt, &updatedAt)
+		var maxParticipants, currentParticipants sql.NullInt64
+		err := rows.Scan(&idStr, &service.Name, &service.Description, &service.Price, &service.Type, &service.ServiceDate, &service.ServiceRoad, &service.ServiceCity, &service.ServiceZip, &maxParticipants, &currentParticipants, &createdByStr, &createdAt, &updatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("getServices package db scan : %s", err.Error())
 		}
@@ -40,6 +42,13 @@ func GetServicesFromDB() ([]models.Service, error) {
 		}
 		if updatedAt.Valid {
 			service.UpdatedAt = updatedAt.String
+		}
+		if maxParticipants.Valid {
+			value := int(maxParticipants.Int64)
+			service.MaximumParticipants = &value
+		}
+		if currentParticipants.Valid {
+			service.CurrentParticipants = int(currentParticipants.Int64)
 		}
 		services = append(services, service)
 	}
@@ -67,9 +76,9 @@ func CreateServiceInDB(service models.Service) error {
 
 	newID := uuid.New()
 	currentTime := getCurrentTime()
-	_, err := Db.Exec("INSERT INTO evenements (id, title, description, price, event_type, event_date, event_road, event_city, event_zip_code, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-		newID, service.Name, service.Description, service.Price, service.Type, service.ServiceDate, service.ServiceRoad, service.ServiceCity, service.ServiceZip, service.CreatedBy, currentTime, currentTime)
-	
+	_, err := Db.Exec("INSERT INTO evenements (id, title, description, price, event_type, event_date, event_road, event_city, event_zip_code, maximum_participants, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		newID, service.Name, service.Description, service.Price, service.Type, service.ServiceDate, service.ServiceRoad, service.ServiceCity, service.ServiceZip, service.MaximumParticipants, service.CreatedBy, currentTime, currentTime)
+
 	if err != nil {
 		return fmt.Errorf("createService package db : %s", err.Error())
 	}
@@ -84,7 +93,8 @@ func GetServiceByIDFromDB(serviceID uuid.UUID) (models.Service, error) {
 	var createdByStr string
 	var createdAt, updatedAt sql.NullString
 
-	err := Db.QueryRow("SELECT id, title, description, price, event_type, event_date, event_road, event_city, event_zip_code, created_by, created_at, updated_at FROM evenements WHERE id = ?", serviceID).Scan(&idStr, &service.Name, &service.Description, &service.Price, &service.Type, &service.ServiceDate, &service.ServiceRoad, &service.ServiceCity, &service.ServiceZip, &createdByStr, &createdAt, &updatedAt)
+	var maxParticipants, currentParticipants sql.NullInt64
+	err := Db.QueryRow("SELECT id, title, description, price, event_type, event_date, event_road, event_city, event_zip_code, maximum_participants, current_participants, created_by, created_at, updated_at FROM evenements WHERE id = ?", serviceID).Scan(&idStr, &service.Name, &service.Description, &service.Price, &service.Type, &service.ServiceDate, &service.ServiceRoad, &service.ServiceCity, &service.ServiceZip, &maxParticipants, &currentParticipants, &createdByStr, &createdAt, &updatedAt)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -109,6 +119,13 @@ func GetServiceByIDFromDB(serviceID uuid.UUID) (models.Service, error) {
 
 	if updatedAt.Valid {
 		service.UpdatedAt = updatedAt.String
+	}
+	if maxParticipants.Valid {
+		value := int(maxParticipants.Int64)
+		service.MaximumParticipants = &value
+	}
+	if currentParticipants.Valid {
+		service.CurrentParticipants = int(currentParticipants.Int64)
 	}
 
 	return service, nil

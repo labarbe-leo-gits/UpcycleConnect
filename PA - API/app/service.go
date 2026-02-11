@@ -57,6 +57,10 @@ func ValidateServiceDto(serviceDto models.Service) []string {
 		validationErrors = append(validationErrors, "CreatedBy is required and must be a valid UUID")
 	}
 
+	if serviceDto.MaximumParticipants != nil && *serviceDto.MaximumParticipants < 0 {
+		validationErrors = append(validationErrors, "MaximumParticipants must be 0 or greater")
+	}
+
 	return validationErrors
 }
 
@@ -118,7 +122,7 @@ func GetServiceByID(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	jsonResponse, err := json.Marshal(service)
-	
+
 	if err != nil {
 		fmt.Println("[ERROR] GetServiceByID marshal:", err)
 		sendError(w, "Unable to process response", http.StatusInternalServerError)

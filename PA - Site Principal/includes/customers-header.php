@@ -3,6 +3,7 @@
 require_once '../../config/db.php';
 require_once '../../includes/auth.php';
 requireUserType(1);
+trackLastPage();
 ?>
 
 <!DOCTYPE html>

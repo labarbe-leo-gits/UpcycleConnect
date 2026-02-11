@@ -53,12 +53,36 @@ if (isset($service['service_date']) && !empty($service['service_date'])) {
     }
 }
 
+$maxParticipants = $service['maximum_participants'] ?? null;
+$currentParticipants = $service['current_participants'] ?? 0;
+$isFull = ($maxParticipants !== null && (int) $currentParticipants >= (int) $maxParticipants);
+$spotsLeft = null;
+if ($maxParticipants !== null) {
+    $spotsLeft = max(0, (int) $maxParticipants - (int) $currentParticipants);
+}
+
 $creatorName = null;
 if (isset($service['created_by']) && !empty($service['created_by'])) {
     $userResponse = askAPI("/users/" . $service['created_by'], "GET");
     $userData = json_decode($userResponse, true);
     if (isset($userData['username'])) {
         $creatorName = $userData['username'];
+    }
+}
+
+$booked = false;
+$ordersResponse = askAPI('/orders', 'GET');
+$ordersDecoded = json_decode($ordersResponse, true);
+if (is_array($ordersDecoded)) {
+    foreach ($ordersDecoded as $order) {
+        $orderUser = $order['user_id'] ?? '';
+        $orderStatus = intval($order['status'] ?? 0);
+        $orderEvent = $order['event_id'] ?? '';
+
+        if ($orderUser === ($user['id'] ?? '') && $orderStatus > 0 && $orderEvent === ($service['id'] ?? '')) {
+            $booked = true;
+            break;
+        }
     }
 }
 ?>
@@ -147,6 +171,16 @@ if (isset($service['created_by']) && !empty($service['created_by'])) {
                     </div>
                 </div>
                 <?php endif; ?>
+
+                <?php if ($spotsLeft !== null): ?>
+                <div class="info-item">
+                    <i class="fa-solid fa-users"></i>
+                    <div class="info-content">
+                        <span class="label">Spots left</span>
+                        <span class="value"><?php echo $spotsLeft; ?></span>
+                    </div>
+                </div>
+                <?php endif; ?>
                 
                 <?php if (!empty($service['service_road']) || !empty($service['service_city']) || !empty($service['service_zip'])): ?>
                 <div class="info-item location">
@@ -178,8 +212,12 @@ if (isset($service['created_by']) && !empty($service['created_by'])) {
             </div>
             
             <div class="service-actions">
-                <button class="btn-primary" onclick="handlePurchase()">
-                    <?php echo $price > 0 ? 'Purchase' : 'Get'; ?>
+                <?php
+                $buttonClass = ($isFull || $booked) ? 'btn-primary btn-disabled' : 'btn-primary';
+                $buttonLabel = $booked ? 'Booked' : ($isFull ? 'Full' : ($price > 0 ? 'Purchase' : 'Get'));
+                ?>
+                <button class="<?php echo $buttonClass; ?>" onclick="handlePurchase()" <?php echo ($isFull || $booked) ? 'disabled' : ''; ?>>
+                    <?php echo $buttonLabel; ?>
                 </button>
                 <a href="services" class="btn-secondary">Back to Services</a>
             </div>

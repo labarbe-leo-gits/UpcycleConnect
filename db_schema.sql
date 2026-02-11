@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS evenements (
     description TEXT NOT NULL,
     price DECIMAL(10, 2) NOT NULL,
     maximum_participants INT,
+    current_participants INT DEFAULT 0,
     event_type INT NOT NULL,
     event_date DATE NOT NULL,
     event_road VARCHAR(255),

@@ -69,8 +69,31 @@ func CreateOrderInDB(order models.Order) error {
 	newID := uuid.New()
 	eventID := uuidPointerToValue(order.EventID)
 	productID := uuidPointerToValue(order.ProductID)
-	_, err := Db.Exec("INSERT INTO orders (id, user_id, event_id, product_id, transaction_id, amount, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())", newID, order.UserID, eventID, productID, order.TransactionID, order.Amount, order.Status)
+
+	tx, err := Db.Begin()
 	if err != nil {
+		return fmt.Errorf("createOrder package db : %s", err.Error())
+	}
+
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		}
+	}()
+
+	if order.EventID != nil && *order.EventID != uuid.Nil {
+		err = checkAndIncrementParticipants(tx, *order.EventID)
+		if err != nil {
+			return err
+		}
+	}
+
+	_, err = tx.Exec("INSERT INTO orders (id, user_id, event_id, product_id, transaction_id, amount, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())", newID, order.UserID, eventID, productID, order.TransactionID, order.Amount, order.Status)
+	if err != nil {
+		return fmt.Errorf("createOrder package db : %s", err.Error())
+	}
+
+	if err = tx.Commit(); err != nil {
 		return fmt.Errorf("createOrder package db : %s", err.Error())
 	}
 
@@ -83,4 +106,34 @@ func uuidPointerToValue(id *uuid.UUID) interface{} {
 		return nil
 	}
 	return *id
+}
+
+func checkAndIncrementParticipants(tx *sql.Tx, eventID uuid.UUID) error {
+	var maxParticipants, currentParticipants sql.NullInt64
+	err := tx.QueryRow("SELECT maximum_participants, current_participants FROM evenements WHERE id = ? FOR UPDATE", eventID).Scan(&maxParticipants, &currentParticipants)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return fmt.Errorf("event not found")
+		}
+		return fmt.Errorf("checkParticipants package db : %s", err.Error())
+	}
+
+	currentValue := 0
+	if currentParticipants.Valid {
+		currentValue = int(currentParticipants.Int64)
+	}
+
+	if maxParticipants.Valid {
+		maxValue := int(maxParticipants.Int64)
+		if currentValue >= maxValue {
+			return fmt.Errorf("event_full")
+		}
+	}
+
+	_, err = tx.Exec("UPDATE evenements SET current_participants = ? WHERE id = ?", currentValue+1, eventID)
+	if err != nil {
+		return fmt.Errorf("updateParticipants package db : %s", err.Error())
+	}
+
+	return nil
 }

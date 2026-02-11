@@ -61,6 +61,13 @@ if (!is_array($decoded)) {
 
 $processedServices = [];
 foreach ($decoded as $service) {
+    $maxParticipants = $service['maximum_participants'] ?? null;
+    $currentParticipants = $service['current_participants'] ?? 0;
+
+    if ($maxParticipants !== null && (int) $currentParticipants >= (int) $maxParticipants) {
+        continue;
+    }
+
     $price = floatval($service['price'] ?? 0);
     $priceDisplay = ($price == 0) ? "Free" : "€ " . number_format($price, 2);
     $priceClass = ($price == 0) ? "free" : "";
@@ -120,7 +127,9 @@ foreach ($decoded as $service) {
         'typeIcon' => $typeIcon,
         'typeClass' => $typeClass,
         'creatorName' => $creatorName,
-        'booked' => isset($bookedEvents[$service['id'] ?? ''])
+        'booked' => isset($bookedEvents[$service['id'] ?? '']),
+        'maximumParticipants' => $maxParticipants,
+        'currentParticipants' => $currentParticipants
     ];
 }
 

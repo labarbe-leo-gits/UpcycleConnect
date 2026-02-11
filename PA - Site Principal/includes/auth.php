@@ -45,6 +45,57 @@ function requireUserType($expectedType) {
     }
 }
 
+function redirectBackOrServices() {
+    $fallback = 'err';
+    $referrer = $_SERVER['HTTP_REFERER'] ?? '';
+    $lastPage = $_SESSION['last_page'] ?? '';
+    $currentUri = $_SERVER['REQUEST_URI'] ?? '';
+
+    if (!empty($referrer)) {
+        header('Location: ' . $referrer);
+        exit();
+    }
+
+    if (!empty($lastPage) && $lastPage !== $currentUri) {
+        header('Location: ' . $lastPage);
+        exit();
+    }
+
+    header('Location: ' . $fallback);
+    exit();
+}
+
+function trackLastPage() {
+    if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'GET') {
+        return;
+    }
+
+    if (!empty($_SERVER['HTTP_X_REQUESTED_WITH'])) {
+        return;
+    }
+
+    $uri = $_SERVER['REQUEST_URI'] ?? '';
+    if ($uri === '') {
+        return;
+    }
+
+    $excludedPaths = [
+        '/order-success',
+        '/order-cancel',
+        '/process-order',
+        '/create-payment-intent',
+        '/verify-payment'
+    ];
+
+    foreach ($excludedPaths as $excluded) {
+        if (strpos($uri, $excluded) !== false) {
+            return;
+        }
+    }
+
+    $_SESSION['last_page'] = $uri;
+}
+
 function getLoggedInUser() {
     if (!isLoggedIn()) {
         return null;
