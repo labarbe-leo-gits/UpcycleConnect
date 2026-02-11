@@ -78,7 +78,47 @@ if (isset($service['service_date']) && !empty($service['service_date'])) {
 ?>
 
 <div class="container">
-    <div class="checkout-container">
+    <div class="checkout-container skeleton-checkout-container">
+        <div class="checkout-header">
+            <div class="skeleton skeleton-checkout-title"></div>
+            <div class="skeleton skeleton-checkout-link"></div>
+        </div>
+
+        <div class="checkout-content">
+            <div class="order-summary skeleton-checkout-card">
+                <div class="skeleton skeleton-section-title"></div>
+                <div class="product-item">
+                    <div class="product-header">
+                        <div class="skeleton skeleton-item-title"></div>
+                        <div class="skeleton skeleton-item-badge"></div>
+                    </div>
+                    <div class="skeleton skeleton-item-line"></div>
+                    <div class="skeleton skeleton-item-line" style="width: 55%;"></div>
+                    <div class="skeleton skeleton-item-line" style="width: 45%;"></div>
+                </div>
+                <div class="price-breakdown">
+                    <div class="price-row total">
+                        <div class="skeleton skeleton-price-label"></div>
+                        <div class="skeleton skeleton-price-value" style="width: 90px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="payment-section skeleton-checkout-card">
+                <div class="skeleton skeleton-section-title"></div>
+                <div class="skeleton skeleton-form-label"></div>
+                <div class="skeleton skeleton-form-input"></div>
+                <div class="skeleton skeleton-form-label"></div>
+                <div class="skeleton skeleton-form-input"></div>
+                <div class="skeleton skeleton-form-label"></div>
+                <div class="skeleton skeleton-form-input"></div>
+                <div class="skeleton skeleton-checkout-button"></div>
+                <div class="skeleton skeleton-checkout-secure"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="checkout-container actual-content" style="display: none;">
         <div class="checkout-header">
             <h1><i class="fa-solid fa-shopping-cart"></i> Checkout</h1>
             <a href="service?uuid=<?php echo htmlspecialchars($productUuid); ?>" class="back-link">
@@ -116,10 +156,6 @@ if (isset($service['service_date']) && !empty($service['service_date'])) {
                 </div>
 
                 <div class="price-breakdown">
-                    <div class="price-row">
-                        <span>Subtotal</span>
-                        <span><?php echo $priceDisplay; ?></span>
-                    </div>
                     <div class="price-row total">
                         <span>Total</span>
                         <span class="total-price"><?php echo $priceDisplay; ?></span>
@@ -192,6 +228,21 @@ if (isset($service['service_date']) && !empty($service['service_date'])) {
         </div>
     </div>
 </div>
+
+<script>
+window.addEventListener('load', function() {
+    setTimeout(function() {
+        const skeleton = document.querySelector('.skeleton-checkout-container');
+        const content = document.querySelector('.actual-content');
+        if (skeleton) {
+            skeleton.style.display = 'none';
+        }
+        if (content) {
+            content.style.display = 'block';
+        }
+    }, 500);
+});
+</script>
 
 <?php if ($price > 0 && !$isFull): ?>
 <script src="https://js.stripe.com/v3/"></script>
