@@ -6,7 +6,7 @@ $user = getLoggedInUser();
 ?>
 
 <div class="container">
-    <h1>Welcome, <?= htmlspecialchars($user['username']) ?>!</h1>
+    <h1>Welcome, <?= htmlspecialchars($user['first_name']) . " " . $user['last_name'] ?>!</h1>
     
     <div class="profile-card">
         <h2>Your Profile</h2>

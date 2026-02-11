@@ -33,6 +33,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['recaptcha_token']) &&
             session_start();
             $_SESSION['user_id'] = $decoded['id'];
             $_SESSION['username'] = $decoded['username'];
+            $_SESSION['first_name'] = $decoded['first_name'] ?? '';
+            $_SESSION['last_name'] = $decoded['last_name'] ?? '';
             $_SESSION['email'] = $decoded['email'];
             $_SESSION['user_type'] = isset($decoded['user_type']) ? (int) $decoded['user_type'] : 1;
             
@@ -89,9 +91,12 @@ if (isLoggedIn()) {
         
         <div class="field">
             <label for="password">Password</label>
-            <div class="input-wrapper">
+            <div class="input-wrapper password-wrapper">
                 <i class="fa-solid fa-lock"></i>
                 <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false">
+                    <i class="fa-solid fa-eye"></i>
+                </button>
             </div>
         </div>
         
@@ -125,6 +130,7 @@ if (isLoggedIn()) {
 </div>
 
 <script src="https://www.google.com/recaptcha/api.js?render=<?= getenv('RECAPTCHA_SITE_KEY') ?>"></script>
+<script src="../../assets/js/login.js"></script>
 <script>
     grecaptcha.ready(function() {
         grecaptcha.execute('<?= getenv('RECAPTCHA_SITE_KEY') ?>', {action: 'login'}).then(function(token) {

@@ -76,6 +76,7 @@ func main() {
 	registerRoute("GET", "/products/services", "Services listing - for the catalog", app.GetServices)
 	registerRoute("POST", "/products/services", "Create a new service", app.CreateService)
 	registerRoute("GET", "/users/{id}", "Get a specific user by his UUID", app.GetUserByID)
+	registerRoute("GET", "/users/{id}/orders", "Get all orders for a specific user by their UUID", app.GetOrdersByUserID)
 	registerRoute("GET", "/products/services/{id}", "Get a specific service by its UUID", app.GetServiceByID)
 	registerRoute("GET", "/orders", "List all orders", app.GetOrders)
 	registerRoute("POST", "/orders", "Create a new order", app.CreateOrder)

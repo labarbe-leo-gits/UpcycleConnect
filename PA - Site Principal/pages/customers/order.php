@@ -77,7 +77,7 @@ if (isset($service['service_date']) && !empty($service['service_date'])) {
 }
 ?>
 
-<div class="container">
+<div class="container" id="order-page" data-order-token="<?php echo htmlspecialchars($orderToken); ?>" data-product-uuid="<?php echo htmlspecialchars($productUuid); ?>" data-stripe-key="<?php echo htmlspecialchars($stripeConfig['publishable_key'] ?? ''); ?>" data-is-full="<?php echo $isFull ? '1' : '0'; ?>" data-is-free="<?php echo $price == 0 ? '1' : '0'; ?>">
     <div class="checkout-container skeleton-checkout-container">
         <div class="checkout-header">
             <div class="skeleton skeleton-checkout-title"></div>
@@ -229,185 +229,11 @@ if (isset($service['service_date']) && !empty($service['service_date'])) {
     </div>
 </div>
 
-<script>
-window.addEventListener('load', function() {
-    setTimeout(function() {
-        const skeleton = document.querySelector('.skeleton-checkout-container');
-        const content = document.querySelector('.actual-content');
-        if (skeleton) {
-            skeleton.style.display = 'none';
-        }
-        if (content) {
-            content.style.display = 'block';
-        }
-    }, 500);
-});
-</script>
-
 <?php if ($price > 0 && !$isFull): ?>
 <script src="https://js.stripe.com/v3/"></script>
-<script>
-const orderToken = '<?php echo htmlspecialchars($orderToken); ?>';
-const stripe = Stripe('<?php echo htmlspecialchars($stripeConfig['publishable_key']); ?>');
-const elements = stripe.elements();
-
-const cardElement = elements.create('card', {
-    hidePostalCode: true,
-    style: {
-        base: {
-            fontSize: '16px',
-            color: '#32325d',
-            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-            '::placeholder': {
-                color: '#aab7c4'
-            }
-        },
-        invalid: {
-            color: '#dc2626',
-            iconColor: '#dc2626'
-        }
-    }
-});
-
-cardElement.mount('#card-element');
-
-cardElement.on('change', function(event) {
-    const displayError = document.getElementById('card-errors');
-    if (event.error) {
-        displayError.textContent = event.error.message;
-        displayError.style.display = 'block';
-    } else {
-        displayError.textContent = '';
-        displayError.style.display = 'none';
-    }
-});
-
-const form = document.getElementById('payment-form');
-form.addEventListener('submit', async function(event) {
-    event.preventDefault();
-    
-    const submitButton = document.getElementById('submit-payment');
-    const buttonText = document.getElementById('button-text');
-    const spinner = document.getElementById('spinner');
-    
-    submitButton.disabled = true;
-    buttonText.style.display = 'none';
-    spinner.style.display = 'inline-block';
-    
-    try {
-        const response = await fetch('create-payment-intent', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: JSON.stringify({
-                product_uuid: '<?php echo $productUuid; ?>'
-            })
-        });
-        
-        const responseText = await response.text();
-        let data = null;
-
-        try {
-            data = JSON.parse(responseText);
-        } catch (parseError) {
-            data = null;
-        }
-
-        if (!data) {
-            const reason = responseText ? responseText.slice(0, 200) : 'invalid_response';
-            window.location.href = 'order-cancel?product_uuid=<?php echo $productUuid; ?>&order_token=' + encodeURIComponent(orderToken) + '&reason=' + encodeURIComponent(reason);
-            return;
-        }
-
-        if (!response.ok) {
-            const reason = data && data.error ? data.error : (responseText || 'payment_intent_failed');
-            window.location.href = 'order-cancel?product_uuid=<?php echo $productUuid; ?>&order_token=' + encodeURIComponent(orderToken) + '&reason=' + encodeURIComponent(reason);
-            return;
-        }
-
-        if (data && data.error) {
-            window.location.href = 'order-cancel?product_uuid=<?php echo $productUuid; ?>&order_token=' + encodeURIComponent(orderToken) + '&reason=' + encodeURIComponent(data.error);
-            return;
-        }
-        
-        if (!data || !data.clientSecret) {
-            window.location.href = 'order-cancel?product_uuid=<?php echo $productUuid; ?>&order_token=' + encodeURIComponent(orderToken) + '&reason=' + encodeURIComponent('missing_client_secret');
-            return;
-        }
-
-        const result = await stripe.confirmCardPayment(data.clientSecret, {
-            payment_method: {
-                card: cardElement,
-                billing_details: {
-                    name: document.getElementById('cardholder-name').value,
-                    email: document.getElementById('billing-email').value
-                }
-            }
-        });
-        
-        if (result.error) {
-            window.location.href = 'order-cancel?product_uuid=<?php echo $productUuid; ?>&order_token=' + encodeURIComponent(orderToken) + '&reason=' + encodeURIComponent(result.error.message || 'payment_failed');
-            return;
-        }
-
-        if (result.paymentIntent && result.paymentIntent.status === 'succeeded') {
-            const verifyResponse = await fetch('verify-payment', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify({
-                    payment_intent: result.paymentIntent.id,
-                    product_uuid: '<?php echo $productUuid; ?>'
-                })
-            });
-
-            const verifyText = await verifyResponse.text();
-            let verifyData = null;
-
-            try {
-                verifyData = JSON.parse(verifyText);
-            } catch (parseError) {
-                verifyData = null;
-            }
-
-            if (verifyResponse.ok && verifyData && verifyData.status === 'succeeded') {
-                window.location.href = 'order-success?payment_intent=' + result.paymentIntent.id + '&product_uuid=<?php echo $productUuid; ?>&order_token=' + encodeURIComponent(orderToken);
-                return;
-            }
-
-            const verifyReason = verifyData && verifyData.error ? verifyData.error : (verifyText || 'payment_verification_failed');
-            window.location.href = 'order-cancel?product_uuid=<?php echo $productUuid; ?>&order_token=' + encodeURIComponent(orderToken) + '&reason=' + encodeURIComponent(verifyReason);
-            return;
-        }
-
-        window.location.href = 'order-cancel?product_uuid=<?php echo $productUuid; ?>&order_token=' + encodeURIComponent(orderToken) + '&reason=' + encodeURIComponent(result.paymentIntent ? result.paymentIntent.status : 'payment_failed');
-    } catch (error) {
-        window.location.href = 'order-cancel?product_uuid=<?php echo $productUuid; ?>&order_token=' + encodeURIComponent(orderToken) + '&reason=' + encodeURIComponent(error.message || 'payment_failed');
-    }
-});
-</script>
 <?php endif; ?>
 
-<?php if ($price == 0 && !$isFull): ?>
-<script>
-const freeForm = document.getElementById('order-form');
-if (freeForm) {
-    freeForm.addEventListener('submit', function() {
-        const submitButton = document.getElementById('submit-free-order');
-        const buttonText = document.getElementById('free-button-text');
-        const spinner = document.getElementById('free-spinner');
-
-        submitButton.disabled = true;
-        buttonText.style.display = 'none';
-        spinner.style.display = 'inline-block';
-    });
-}
-</script>
-<?php endif; ?>
+<script src="../../assets/js/order.js"></script>
 
 <?php
 include_once '../../includes/footer.php';

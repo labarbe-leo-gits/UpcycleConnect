@@ -95,3 +95,34 @@ func CreateOrder(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(orderDto)
 
 }
+
+func GetOrdersByUserID(w http.ResponseWriter, r *http.Request) {
+
+	userIDStr := r.URL.Path[len("/users/") : len(r.URL.Path)-len("/orders")]
+	userID, err := uuid.Parse(userIDStr)
+
+	if err != nil {
+		fmt.Println("[ERROR] GetOrdersByUserID parse UUID:", err)
+		sendError(w, "Invalid user ID format", http.StatusBadRequest)
+		return
+	}
+
+	orders, err := db.GetOrdersByUserIDFromDB(userID)
+
+	if err != nil {
+		fmt.Println("[ERROR] GetOrdersByUserID DB query:", err)
+		sendError(w, "Unable to fetch orders for user", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	jsonResponse, err := json.Marshal(orders)
+
+	if err != nil {
+		fmt.Println("[ERROR] GetOrdersByUserID marshal:", err)
+		sendError(w, "Unable to process response", http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Fprintf(w, "%s", jsonResponse)
+}

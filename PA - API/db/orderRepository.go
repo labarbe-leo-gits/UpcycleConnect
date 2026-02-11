@@ -137,3 +137,62 @@ func checkAndIncrementParticipants(tx *sql.Tx, eventID uuid.UUID) error {
 
 	return nil
 }
+
+func GetOrdersByUserIDFromDB(userID uuid.UUID) ([]models.Order, error) {
+
+	orders := []models.Order{}
+	rows, err := Db.Query("SELECT id, user_id, event_id, product_id, transaction_id, amount, status FROM orders WHERE user_id = ?", userID)
+
+	if err != nil {
+		return nil, fmt.Errorf("getOrdersByUserID package db : %s", err.Error())
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var order models.Order
+		var idStr, userIDStr, eventIDStr, productIDStr sql.NullString
+		err := rows.Scan(&idStr, &userIDStr, &eventIDStr, &productIDStr, &order.TransactionID, &order.Amount, &order.Status)
+		if err != nil {
+			return nil, fmt.Errorf("getOrdersByUserID package db scan : %s", err.Error())
+		}
+		if idStr.Valid {
+			order.ID, err = uuid.Parse(idStr.String)
+			if err != nil {
+				return nil, fmt.Errorf("getOrdersByUserID package db uuid parse id : %s", err.Error())
+			}
+		}
+		if userIDStr.Valid {
+			order.UserID, err = uuid.Parse(userIDStr.String)
+			if err != nil {
+				return nil, fmt.Errorf("getOrdersByUserID package db uuid parse user_id : %s", err.Error())
+			}
+		}
+
+		if eventIDStr.Valid {
+			parsedID, parseErr := uuid.Parse(eventIDStr.String)
+			if parseErr != nil {
+				return nil, fmt.Errorf("getOrdersByUserID package db uuid parse event_id : %s", parseErr.Error())
+			}
+			order.EventID = &parsedID
+		}
+
+		if productIDStr.Valid {
+			parsedID, parseErr := uuid.Parse(productIDStr.String)
+			if parseErr != nil {
+				return nil, fmt.Errorf("getOrdersByUserID package db uuid parse product_id : %s", parseErr.Error())
+			}
+
+			order.ProductID = &parsedID
+		}
+
+		orders = append(orders, order)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return nil, fmt.Errorf("getOrdersByUserID package db rows : %s", err.Error())
+	}
+
+	return orders, nil
+}

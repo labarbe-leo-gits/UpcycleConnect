@@ -104,6 +104,8 @@ function getLoggedInUser() {
     return [
         'id' => $_SESSION['user_id'],
         'username' => $_SESSION['username'] ?? '',
+        'first_name' => $_SESSION['first_name'] ?? '',
+        'last_name' => $_SESSION['last_name'] ?? '',
         'email' => $_SESSION['email'] ?? '',
         'user_type' => $_SESSION['user_type'] ?? null,
         'oauth_provider' => $_SESSION['oauth_provider'] ?? null
