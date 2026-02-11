@@ -1,6 +1,7 @@
 <?php
 
 include_once '../../config/db.php';
+include_once '../../includes/auth.php';
 
 $error_message = '';
 $success_message = '';
@@ -33,13 +34,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['recaptcha_token']) &&
             $_SESSION['user_id'] = $decoded['id'];
             $_SESSION['username'] = $decoded['username'];
             $_SESSION['email'] = $decoded['email'];
+            $_SESSION['user_type'] = isset($decoded['user_type']) ? (int) $decoded['user_type'] : 1;
             
-            if (isset($_SESSION['page_after_login'])) {
+            if (isset($_SESSION['page_after_login']) && (int) $_SESSION['user_type'] === 1) {
                 $page = $_SESSION['page_after_login'];
                 unset($_SESSION['page_after_login']);
                 header('Location: ../customers/' . $page);
             } else {
-                header('Location: ../customers/profile');
+                header('Location: ' . getUserHomePath($_SESSION['user_type']));
             }
             exit();
         } elseif (isset($decoded['error'])) {
@@ -54,7 +56,8 @@ $title = "Login";
 include_once '../../includes/header.php';
 
 if (isLoggedIn()) {
-    header('Location: ../customers/test');
+    $userType = getLoggedInUserType() ?? 1;
+    header('Location: ' . getUserHomePath($userType));
     exit();
 }
 

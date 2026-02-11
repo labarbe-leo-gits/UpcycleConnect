@@ -52,7 +52,8 @@ require_once '../../includes/auth.php';
             </div>
             
             <?php if (isLoggedIn()): ?>
-                <div class="btn-wrapper" onClick="window.location.href='../customers/profile'">
+                <?php $portalPath = getUserHomePath(getLoggedInUserType() ?? 1); ?>
+                <div class="btn-wrapper" onClick="window.location.href='<?= $portalPath ?>'">
                     <i class="fa-solid fa-store"></i>
                     <p>Portal</p>
                 </div>

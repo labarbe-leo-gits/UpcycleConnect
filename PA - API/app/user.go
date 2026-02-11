@@ -92,6 +92,18 @@ func ValidateUserDto(user models.User) []string {
 		errs = append(errs, "Username must be between 3 and 20 characters long.")
 	}
 
+	if user.FirstName == "" || len(user.FirstName) > 60 {
+		errs = append(errs, "First name is required and must be at most 60 characters long.")
+	}
+
+	if user.LastName == "" || len(user.LastName) > 60 {
+		errs = append(errs, "Last name is required and must be at most 60 characters long.")
+	}
+
+	if user.UserType != 1 && user.UserType != 2 {
+		errs = append(errs, "User type must be 1 (customer) or 2 (artisan/professional).")
+	}
+
 	if user.Email == "" || !strings.Contains(user.Email, "@") || !strings.Contains(user.Email, ".") {
 		errs = append(errs, "Email must be a valid email address.")
 	}

@@ -2,6 +2,7 @@
 session_start();
 require_once '../../vendor/autoload.php';
 require_once '../../config/db.php';
+require_once '../../includes/auth.php';
 
 $config = require_once '../../config/oauth-google.php';
 
@@ -65,14 +66,15 @@ if (isset($_GET['code'])) {
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['username'] = $user['username'];
         $_SESSION['email'] = $user['email'];
+        $_SESSION['user_type'] = isset($user['user_type']) ? (int) $user['user_type'] : 1;
         $_SESSION['oauth_provider'] = 'google';
 
-        if (isset($_SESSION['page_after_login'])) {
+        if (isset($_SESSION['page_after_login']) && (int) $_SESSION['user_type'] === 1) {
             $page = $_SESSION['page_after_login'];
             unset($_SESSION['page_after_login']);
             header('Location: ../customers/' . $page);
         } else {
-            header('Location: ../customers/test');
+            header('Location: ' . getUserHomePath($_SESSION['user_type']));
         }
         exit();
 

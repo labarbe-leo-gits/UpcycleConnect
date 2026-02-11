@@ -3,6 +3,8 @@ USE upcycle;
 
 CREATE TABLE IF NOT EXISTS users (
     id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    first_name VARCHAR(60) NOT NULL,
+    last_name VARCHAR(60) NOT NULL,
     username VARCHAR(255) NOT NULL UNIQUE,
     user_type INT NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,

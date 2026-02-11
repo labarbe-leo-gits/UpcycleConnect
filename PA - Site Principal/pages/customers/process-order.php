@@ -5,7 +5,7 @@
 require_once '../../config/db.php';
 require_once '../../includes/auth.php';
 
-requireLogin();
+requireUserType(1);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: services');

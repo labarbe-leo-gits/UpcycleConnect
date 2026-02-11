@@ -6,6 +6,9 @@ import "github.com/google/uuid"
 
 type User struct {
 	ID             uuid.UUID `json:"id" gorm:"type:uuid;primaryKey"`
+	FirstName      string    `json:"first_name"`
+	LastName       string    `json:"last_name"`
+	UserType       int       `json:"user_type"`
 	Username       string    `json:"username" gorm:"unique;not null"`
 	Email          string    `json:"email" gorm:"unique;not null"`
 	Password       string    `json:"password,omitempty" gorm:"not null"`
