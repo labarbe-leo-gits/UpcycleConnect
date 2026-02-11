@@ -74,7 +74,7 @@ $title = "Register";
 include_once '../../includes/header.php';
 ?>
 
-<div class="container register-forms">
+<div class="container register-forms" data-site-key="<?php echo htmlspecialchars(getenv('RECAPTCHA_SITE_KEY')); ?>" data-active-form="<?php echo htmlspecialchars($active_form); ?>">
     <?php if ($error_message): ?>
         <div class="error-message">
             <?php echo $error_message; ?>
@@ -134,17 +134,27 @@ include_once '../../includes/header.php';
         
         <div class="field">
             <label for="password_customer">Password</label>
-            <div class="input-wrapper">
+            <div class="input-wrapper password-wrapper">
                 <i class="fa-solid fa-lock"></i>
-                <input type="password" id="password_customer" name="password" class="iconInput" placeholder="Create a password" required>
+                <input type="password" id="password_customer" name="password" class="iconInput password-input" placeholder="Create a password" required data-strength="true">
+                <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false">
+                    <i class="fa-solid fa-eye"></i>
+                </button>
+            </div>
+            <div class="password-meter" aria-live="polite">
+                <div class="password-meter-bar"></div>
+                <span class="password-meter-text">Strength: </span>
             </div>
         </div>
         
         <div class="field">
             <label for="confirm_password_customer">Confirm Password</label>
-            <div class="input-wrapper">
+            <div class="input-wrapper password-wrapper">
                 <i class="fa-solid fa-lock"></i>
                 <input type="password" id="confirm_password_customer" name="confirm_password" class="iconInput" placeholder="Confirm your password" required>
+                <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false">
+                    <i class="fa-solid fa-eye"></i>
+                </button>
             </div>
         </div>
 
@@ -197,17 +207,27 @@ include_once '../../includes/header.php';
         
         <div class="field">
             <label for="password_artisan">Password</label>
-            <div class="input-wrapper">
+            <div class="input-wrapper password-wrapper">
                 <i class="fa-solid fa-lock"></i>
-                <input type="password" id="password_artisan" name="password" class="iconInput" placeholder="Create a password" required>
+                <input type="password" id="password_artisan" name="password" class="iconInput password-input" placeholder="Create a password" required data-strength="true">
+                <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false">
+                    <i class="fa-solid fa-eye"></i>
+                </button>
+            </div>
+            <div class="password-meter" aria-live="polite">
+                <div class="password-meter-bar"></div>
+                <span class="password-meter-text">Strength: </span>
             </div>
         </div>
         
         <div class="field">
             <label for="confirm_password_artisan">Confirm Password</label>
-            <div class="input-wrapper">
+            <div class="input-wrapper password-wrapper">
                 <i class="fa-solid fa-lock"></i>
                 <input type="password" id="confirm_password_artisan" name="confirm_password" class="iconInput" placeholder="Confirm your password" required>
+                <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false">
+                    <i class="fa-solid fa-eye"></i>
+                </button>
             </div>
         </div>
 
@@ -225,64 +245,7 @@ include_once '../../includes/header.php';
     </div>
 </div>
 
-<script>
-    grecaptcha.ready(function() {
-        document.querySelectorAll('form.register-form').forEach(function(form) {
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                grecaptcha.execute('<?php echo getenv("RECAPTCHA_SITE_KEY"); ?>', {action: 'register'})
-                .then(function(token) {
-                    var tokenField = form.querySelector('.recaptcha-token');
-                    if (tokenField) {
-                        tokenField.value = token;
-                    }
-                    form.submit();
-                });
-            });
-        });
-    });
-
-    (function() {
-        var switcherButtons = document.querySelectorAll('.switcher-btn');
-        var forms = document.querySelectorAll('form.register-form');
-        var stage = document.querySelector('.register-forms-stage');
-
-        function updateStageHeight() {
-            var activeForm = document.querySelector('form.register-form.is-active');
-            if (stage && activeForm) {
-                stage.style.minHeight = activeForm.scrollHeight + 'px';
-            }
-        }
-
-        function setActive(target) {
-            forms.forEach(function(form) {
-                var isActive = form.getAttribute('data-form') === target;
-                form.classList.toggle('is-active', isActive);
-                form.setAttribute('aria-hidden', isActive ? 'false' : 'true');
-            });
-
-            switcherButtons.forEach(function(button) {
-                var isPressed = button.getAttribute('data-target') === target;
-                button.classList.toggle('is-active', isPressed);
-                button.setAttribute('aria-pressed', isPressed ? 'true' : 'false');
-            });
-            requestAnimationFrame(updateStageHeight);
-        }
-
-        switcherButtons.forEach(function(button) {
-            button.addEventListener('click', function() {
-                setActive(button.getAttribute('data-target'));
-            });
-        });
-
-        setActive('<?php echo $active_form; ?>');
-        window.addEventListener('resize', updateStageHeight);
-        window.addEventListener('load', updateStageHeight);
-        forms.forEach(function(form) {
-            form.addEventListener('transitionend', updateStageHeight);
-        });
-    })();
-</script>
+<script src="../../assets/js/register.js"></script>
 
 <?php
 include_once '../../includes/footer.php';
