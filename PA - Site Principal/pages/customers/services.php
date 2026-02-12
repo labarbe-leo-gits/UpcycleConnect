@@ -14,7 +14,7 @@ $user = getLoggedInUser();
 
 <div class="container">
     <div class="services-list" id="services-container">
-        <?php for ($i = 0; $i < 6; $i++): ?>
+        <?php for ($i = 0; $i < 4; $i++): ?>
         <div class="skeleton-service-item">
             <div class="skeleton-service-header">
                 <div class="skeleton skeleton-title"></div>
@@ -32,6 +32,7 @@ $user = getLoggedInUser();
         </div>
         <?php endfor; ?>
     </div>
+    <div class="offers-pagination" id="services-pagination"></div>
 </div>
 
 <script src="../../assets/js/services-loader.js"></script>

@@ -355,6 +355,58 @@ header nav {
   gap: 12px;
 }
 
+.offer-item {
+  padding: 20px 22px 24px;
+}
+
+.offer-image {
+  width: 100%;
+  height: clamp(180px, 22vw, 240px);
+  border-radius: 10px;
+  overflow: hidden;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  position: relative;
+}
+
+.offer-image img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.offer-image.loading::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0.8),
+    rgba(255, 255, 255, 0.35)
+  );
+}
+
+.offer-image.loading::after {
+  content: "";
+  position: absolute;
+  width: 36px;
+  height: 36px;
+  top: 50%;
+  left: 50%;
+  margin: -18px 0 0 -18px;
+  border-radius: 50%;
+  border: 3px solid rgba(16, 185, 129, 0.2);
+  border-top-color: #10b981;
+  animation: offer-spin 0.8s linear infinite;
+}
+
+@keyframes offer-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .service-item:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 24px rgba(16, 185, 129, 0.15);
@@ -497,6 +549,44 @@ header nav {
   font-size: 12px;
 }
 
+.offers-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin: 24px 0 12px;
+}
+
+.page-btn {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #064e3b;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.page-btn:hover {
+  border-color: #10b981;
+  color: #10b981;
+  box-shadow: 0 6px 14px rgba(16, 185, 129, 0.15);
+}
+
+.page-btn.active {
+  background: linear-gradient(135deg, #10b981, #34d399);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 8px 18px rgba(16, 185, 129, 0.2);
+}
+
+.page-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
 @media (max-width: 768px) {
   .services-list {
     grid-template-columns: 1fr;
@@ -533,6 +623,11 @@ header nav {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.skeleton-image {
+  height: clamp(180px, 22vw, 240px);
+  border-radius: 10px;
 }
 
 .skeleton-service-header {

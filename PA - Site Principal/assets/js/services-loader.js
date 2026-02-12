@@ -2,12 +2,17 @@
 (function() {
     'use strict';
 
+    const pageSize = 4;
+    let allServices = [];
+    let currentPage = 1;
+
     document.addEventListener('DOMContentLoaded', function() {
         loadServices();
     });
 
     function loadServices() {
         const container = document.getElementById('services-container');
+        const pagination = document.getElementById('services-pagination');
         
         if (!container) {
             console.error('Services container not found');
@@ -37,26 +42,113 @@
                 const services = JSON.parse(text);
                 
                 container.innerHTML = '';
+                if (pagination) {
+                    pagination.innerHTML = '';
+                }
 
                 if (!services || services.length === 0) {
                     container.innerHTML = '<p>No services available at the moment.</p>';
                     return;
                 }
 
-                renderServices(services, container);
+                allServices = services;
+                currentPage = getPageFromUrl();
+                clampCurrentPage();
+                updateUrlPage(currentPage, true);
+                renderPage(container, pagination);
             })
             .catch(error => {
                 console.error('Error loading services:', error);
                 console.error('Error details:', error.message);
                 container.innerHTML = '<p class="error-message">An error occurred while loading services. Please try again later.</p>';
+                if (pagination) {
+                    pagination.innerHTML = '';
+                }
             });
     }
 
-    function renderServices(services, container) {
-        services.forEach(service => {
+    function renderPage(container, pagination) {
+        renderSkeletons(container, pageSize);
+
+        const start = (currentPage - 1) * pageSize;
+        const pageServices = allServices.slice(start, start + pageSize);
+
+        window.setTimeout(function() {
+            container.innerHTML = '';
+
+            if (pageServices.length === 0) {
+                container.innerHTML = '<p>No services available at the moment.</p>';
+                if (pagination) {
+                    pagination.innerHTML = '';
+                }
+                return;
+            }
+
+            pageServices.forEach(service => {
             const serviceItem = createServiceElement(service);
             container.appendChild(serviceItem);
         });
+
+            renderPagination(pagination);
+        }, 180);
+    }
+
+    function renderPagination(pagination) {
+        if (!pagination) {
+            return;
+        }
+
+        const totalPages = Math.ceil(allServices.length / pageSize);
+        pagination.innerHTML = '';
+
+        if (totalPages <= 1) {
+            return;
+        }
+
+        const prevButton = createPageButton('Prev', currentPage === 1, function() {
+            if (currentPage > 1) {
+                currentPage -= 1;
+                updateUrlPage(currentPage);
+                renderPage(document.getElementById('services-container'), pagination);
+            }
+        });
+        pagination.appendChild(prevButton);
+
+        for (let i = 1; i <= totalPages; i += 1) {
+            const pageButton = createPageButton(String(i), false, function() {
+                currentPage = i;
+                updateUrlPage(currentPage);
+                renderPage(document.getElementById('services-container'), pagination);
+            });
+            if (i === currentPage) {
+                pageButton.classList.add('active');
+                pageButton.setAttribute('aria-current', 'page');
+            }
+            pagination.appendChild(pageButton);
+        }
+
+        const nextButton = createPageButton('Next', currentPage === totalPages, function() {
+            if (currentPage < totalPages) {
+                currentPage += 1;
+                updateUrlPage(currentPage);
+                renderPage(document.getElementById('services-container'), pagination);
+            }
+        });
+        pagination.appendChild(nextButton);
+    }
+
+    function createPageButton(label, disabled, onClick) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'page-btn';
+        button.textContent = label;
+        if (disabled) {
+            button.disabled = true;
+            button.classList.add('disabled');
+        } else {
+            button.addEventListener('click', onClick);
+        }
+        return button;
     }
 
     function createServiceElement(service) {
@@ -146,5 +238,57 @@
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    function getPageFromUrl() {
+        const params = new URLSearchParams(window.location.search);
+        const pageParam = parseInt(params.get('page'), 10);
+        if (Number.isNaN(pageParam) || pageParam < 1) {
+            return 1;
+        }
+        return pageParam;
+    }
+
+    function clampCurrentPage() {
+        const totalPages = Math.max(1, Math.ceil(allServices.length / pageSize));
+        if (currentPage > totalPages) {
+            currentPage = totalPages;
+        }
+    }
+
+    function updateUrlPage(page, replace) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('page', String(page));
+        if (replace) {
+            window.history.replaceState({}, '', url.toString());
+        } else {
+            window.history.pushState({}, '', url.toString());
+        }
+    }
+
+    function renderSkeletons(container, count) {
+        const skeletons = [];
+
+        for (let i = 0; i < count; i += 1) {
+            skeletons.push(
+                '<div class="skeleton-service-item">' +
+                    '<div class="skeleton-service-header">' +
+                        '<div class="skeleton skeleton-title"></div>' +
+                        '<div class="skeleton skeleton-badge"></div>' +
+                    '</div>' +
+                    '<div class="skeleton skeleton-description"></div>' +
+                    '<div class="skeleton skeleton-description"></div>' +
+                    '<div class="skeleton skeleton-date"></div>' +
+                    '<div class="skeleton skeleton-creator"></div>' +
+                    '<div class="skeleton skeleton-price"></div>' +
+                    '<div class="skeleton-buttons">' +
+                        '<div class="skeleton skeleton-button"></div>' +
+                        '<div class="skeleton skeleton-button"></div>' +
+                    '</div>' +
+                '</div>'
+            );
+        }
+
+        container.innerHTML = skeletons.join('');
     }
 })();
