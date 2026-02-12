@@ -13,6 +13,7 @@
 					<li><a href="../public/about">About</a></li>
 					<li><a href="../public/contact">Contact</a></li>
 					<li><a href="../customers/index">Portal</a></li>
+					<li><a href="../public/cgu">Terms & Conditions</a></li>
 				</ul>
 			</div>
 

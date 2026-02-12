@@ -84,11 +84,27 @@ include_once '../../includes/header.php';
 					</figcaption>
 				</figure>
 
+				<figure class="carousel-item" data-name="Pierre Chabrier">
+					<img src="../../assets/img/team/pierre-chabrier.jpg" alt="Pierre Chabrier">
+					<figcaption>
+						<strong>Pierre Chabrier</strong>
+						<span>HR</span>
+					</figcaption>
+				</figure>
+
 				<figure class="carousel-item" data-name="Norman Thavaud">
 					<img src="../../assets/img/team/norman-thavaud.jpg" alt="Norman Thavaud">
 					<figcaption>
 						<strong>Norman Thavaud</strong>
 						<span>CTO</span>
+					</figcaption>
+				</figure>
+
+				<figure class="carousel-item" data-name="Ronnand Peuplus">
+					<img src="../../assets/img/team/ronnand-peuplus.jpg" alt="Ronnand Peuplus">
+					<figcaption>
+						<strong>Ronnand Peuplus</strong>
+						<span>Sales Director</span>
 					</figcaption>
 				</figure>
 
@@ -105,6 +121,14 @@ include_once '../../includes/header.php';
 					<figcaption>
 						<strong>Antoine Maclair</strong>
 						<span>Happiness Manager (Montreuil)</span>
+					</figcaption>
+				</figure>
+
+				<figure class="carousel-item" data-name="Frédéric Molas">
+					<img src="../../assets/img/team/frederic-molas.jpg" alt="Frédéric Molas">
+					<figcaption>
+						<strong>Frédéric Molas</strong>
+						<span>Regional Director (Swiss)</span>
 					</figcaption>
 				</figure>
 			</div>

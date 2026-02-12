@@ -8,5 +8,4 @@ type Image struct {
 	ProductID string `json:"product_id,omitempty"`
 	FileName string `json:"file_name"`
 	CreatedAt string `json:"created_at,omitempty"`
-	UploadedBy uuid.UUID `json:"uploaded_by" gorm:"type:uuid;not null"`
 }

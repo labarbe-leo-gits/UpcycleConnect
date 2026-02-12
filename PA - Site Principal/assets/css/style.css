@@ -348,6 +348,10 @@ button[type="submit"]:active,
   cursor: pointer;
 }
 
+.cgu-field input[type="checkbox"] {
+  accent-color: #10b981;
+}
+
 form a {
   color: #10b981;
   text-decoration: none;

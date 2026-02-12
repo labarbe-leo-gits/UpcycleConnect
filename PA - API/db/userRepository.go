@@ -6,6 +6,7 @@ import (
 	"API/models"
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -14,7 +15,7 @@ import (
 func GetAllUsersFromDB() ([]models.User, error) {
 
 	users := []models.User{}
-	rows, err := Db.Query("SELECT id, first_name, last_name, user_type, username, email, created_at, last_login, oauth_provider, oauth_id, profile_picture FROM users")
+	rows, err := Db.Query("SELECT id, first_name, last_name, company_name, user_type, username, email, created_at, last_login, oauth_provider, oauth_id, profile_picture FROM users")
 
 	if err != nil {
 		return nil, fmt.Errorf("getUsers package db : %s", err.Error())
@@ -26,8 +27,9 @@ func GetAllUsersFromDB() ([]models.User, error) {
 		var user models.User
 		var idStr string
 		var createdAt, lastLogin sql.NullString
+		var companyName sql.NullString
 		var oauthProvider, oauthID, profilePicture sql.NullString
-		err := rows.Scan(&idStr, &user.FirstName, &user.LastName, &user.UserType, &user.Username, &user.Email, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture)
+		err := rows.Scan(&idStr, &user.FirstName, &user.LastName, &companyName, &user.UserType, &user.Username, &user.Email, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture)
 		if err != nil {
 			return nil, fmt.Errorf("getUsers package db scan : %s", err.Error())
 		}
@@ -46,6 +48,9 @@ func GetAllUsersFromDB() ([]models.User, error) {
 		}
 		if oauthID.Valid {
 			user.OAuthID = oauthID.String
+		}
+		if companyName.Valid {
+			user.CompanyName = companyName.String
 		}
 		if profilePicture.Valid {
 			user.ProfilePicture = profilePicture.String
@@ -92,10 +97,11 @@ func CreateUserInDB(user models.User) error {
 
 	oauthProvider := sql.NullString{String: user.OAuthProvider, Valid: user.OAuthProvider != ""}
 	oauthID := sql.NullString{String: user.OAuthID, Valid: user.OAuthID != ""}
+	companyName := sql.NullString{String: user.CompanyName, Valid: strings.TrimSpace(user.CompanyName) != ""}
 
 	_, err := Db.Exec(
-		"INSERT INTO users (id, first_name, last_name, user_type, username, email, password_hash, oauth_provider, oauth_id, profile_picture) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-		user.ID.String(), user.FirstName, user.LastName, user.UserType, user.Username, user.Email, user.Password, oauthProvider, oauthID, user.ProfilePicture,
+		"INSERT INTO users (id, first_name, last_name, company_name, user_type, username, email, password_hash, oauth_provider, oauth_id, profile_picture) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		user.ID.String(), user.FirstName, user.LastName, companyName, user.UserType, user.Username, user.Email, user.Password, oauthProvider, oauthID, user.ProfilePicture,
 	)
 
 	if err != nil {
@@ -115,20 +121,25 @@ func GetUserByIDFromDB(id uuid.UUID) (models.User, error) {
 	var user models.User
 	var idStr string
 	var createdAt, lastLogin sql.NullString
-	var oauthProvider, oauthID, profilePicture sql.NullString
+	var companyName, oauthProvider, oauthID, profilePicture sql.NullString
+
 	err := Db.QueryRow(
-		"SELECT id, first_name, last_name, user_type, username, email, password_hash, created_at, last_login, oauth_provider, oauth_id, profile_picture FROM users WHERE id = ?",
+		"SELECT id, first_name, last_name, company_name, user_type, username, email, password_hash, created_at, last_login, oauth_provider, oauth_id, profile_picture FROM users WHERE id = ?",
 		id.String(),
-	).Scan(&idStr, &user.FirstName, &user.LastName, &user.UserType, &user.Username, &user.Email, &user.Password, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture)
+	).Scan(&idStr, &user.FirstName, &user.LastName, &companyName, &user.UserType, &user.Username, &user.Email, &user.Password, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return user, fmt.Errorf("user not found")
 		}
 		return user, fmt.Errorf("getUserByID package db : %s", err.Error())
 	}
+
 	user.ID, err = uuid.Parse(idStr)
 	if err != nil {
 		return user, fmt.Errorf("getUserByID package db uuid parse : %s", err.Error())
+	}
+	if companyName.Valid {
+		user.CompanyName = companyName.String
 	}
 
 	err = validateUser(user)
@@ -143,12 +154,12 @@ func GetUserByIdentifierFromDB(identifier string) (models.User, error) {
 	var user models.User
 	var idStr string
 	var createdAt, lastLogin sql.NullString
-	var oauthProvider, oauthID, profilePicture sql.NullString
+	var companyName, oauthProvider, oauthID, profilePicture sql.NullString
 
 	err := Db.QueryRow(
-		"SELECT id, first_name, last_name, user_type, username, email, password_hash, created_at, last_login, oauth_provider, oauth_id, profile_picture FROM users WHERE username = ? OR email = ?",
+		"SELECT id, first_name, last_name, company_name, user_type, username, email, password_hash, created_at, last_login, oauth_provider, oauth_id, profile_picture FROM users WHERE username = ? OR email = ?",
 		identifier, identifier,
-	).Scan(&idStr, &user.FirstName, &user.LastName, &user.UserType, &user.Username, &user.Email, &user.Password, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture)
+	).Scan(&idStr, &user.FirstName, &user.LastName, &companyName, &user.UserType, &user.Username, &user.Email, &user.Password, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -160,6 +171,9 @@ func GetUserByIdentifierFromDB(identifier string) (models.User, error) {
 	user.ID, err = uuid.Parse(idStr)
 	if err != nil {
 		return user, fmt.Errorf("getUserByIdentifier package db uuid parse : %s", err.Error())
+	}
+	if companyName.Valid {
+		user.CompanyName = companyName.String
 	}
 
 	err = validateUser(user)
@@ -183,12 +197,12 @@ func GetUserByEmailFromDB(email string) (models.User, error) {
 	var user models.User
 	var idStr string
 	var createdAt, lastLogin sql.NullString
-	var oauthProvider, oauthID, profilePicture sql.NullString
+	var companyName, oauthProvider, oauthID, profilePicture sql.NullString
 
 	err := Db.QueryRow(
-		"SELECT id, first_name, last_name, user_type, username, email, password_hash, created_at, last_login, oauth_provider, oauth_id, profile_picture FROM users WHERE email = ?",
+		"SELECT id, first_name, last_name, company_name, user_type, username, email, password_hash, created_at, last_login, oauth_provider, oauth_id, profile_picture FROM users WHERE email = ?",
 		email,
-	).Scan(&idStr, &user.FirstName, &user.LastName, &user.UserType, &user.Username, &user.Email, &user.Password, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture)
+	).Scan(&idStr, &user.FirstName, &user.LastName, &companyName, &user.UserType, &user.Username, &user.Email, &user.Password, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -213,6 +227,9 @@ func GetUserByEmailFromDB(email string) (models.User, error) {
 	}
 	if oauthID.Valid {
 		user.OAuthID = oauthID.String
+	}
+	if companyName.Valid {
+		user.CompanyName = companyName.String
 	}
 	if profilePicture.Valid {
 		user.ProfilePicture = profilePicture.String

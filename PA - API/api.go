@@ -80,6 +80,10 @@ func main() {
 	registerRoute("GET", "/products/services/{id}", "Get a specific service by its UUID", app.GetServiceByID)
 	registerRoute("GET", "/orders", "List all orders", app.GetOrders)
 	registerRoute("POST", "/orders", "Create a new order", app.CreateOrder)
+	registerRoute("GET", "/annonces", "List all annonces", app.GetAnnonces)
+	registerRoute("GET", "/annonces/{id}/images", "List all images associated with an annonce", app.GetAnnonceImages)
+	registerRoute("POST", "/annonces", "Create a new annonce", app.CreateAnnonce)
+	registerRoute("POST", "/annonces/{id}/images", "Upload an image for a specific annonce", app.UploadAnnonceImage)
 
 	http.HandleFunc("/", notFoundHandler)
 

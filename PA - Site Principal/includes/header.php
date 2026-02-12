@@ -27,6 +27,9 @@ trackLastPage();
     <?php if (isset($title) && $title === 'Contact'): ?>
         <link rel="stylesheet" href="../../assets/css/contact.css">
     <?php endif; ?>
+    <?php if (isset($title) && $title === 'Terms and Conditions'): ?>
+        <link rel="stylesheet" href="../../assets/css/cgu.css">
+    <?php endif; ?>
     <?php if (isset($title) && $title === 'Home'): ?>
         <link rel="stylesheet" href="../../assets/css/home.css">
     <?php endif; ?>
