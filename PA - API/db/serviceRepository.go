@@ -62,6 +62,84 @@ func GetServicesFromDB() ([]models.Service, error) {
 
 }
 
+func GetServicesPageFromDB(limit int, offset int, availableOnly bool) ([]models.Service, error) {
+
+	services := []models.Service{}
+	query := "SELECT id, title, description, price, event_type, event_date, event_road, event_city, event_zip_code, maximum_participants, current_participants, created_by, created_at, updated_at FROM evenements"
+	args := []interface{}{}
+
+	if availableOnly {
+		query += " WHERE maximum_participants IS NULL OR current_participants < maximum_participants"
+	}
+
+	query += " ORDER BY created_at DESC LIMIT ? OFFSET ?"
+	args = append(args, limit, offset)
+
+	rows, err := Db.Query(query, args...)
+
+	if err != nil {
+		return nil, fmt.Errorf("getServicesPage package db : %s", err.Error())
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var service models.Service
+		var idStr string
+		var createdByStr string
+		var createdAt, updatedAt sql.NullString
+		var maxParticipants, currentParticipants sql.NullInt64
+		err := rows.Scan(&idStr, &service.Name, &service.Description, &service.Price, &service.Type, &service.ServiceDate, &service.ServiceRoad, &service.ServiceCity, &service.ServiceZip, &maxParticipants, &currentParticipants, &createdByStr, &createdAt, &updatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("getServicesPage package db scan : %s", err.Error())
+		}
+		service.ID, err = uuid.Parse(idStr)
+		if err != nil {
+			return nil, fmt.Errorf("getServicesPage package db uuid parse : %s", err.Error())
+		}
+		service.CreatedBy, err = uuid.Parse(createdByStr)
+		if err != nil {
+			return nil, fmt.Errorf("getServicesPage package db uuid parse created_by : %s", err.Error())
+		}
+		if createdAt.Valid {
+			service.CreatedAt = createdAt.String
+		}
+		if updatedAt.Valid {
+			service.UpdatedAt = updatedAt.String
+		}
+		if maxParticipants.Valid {
+			value := int(maxParticipants.Int64)
+			service.MaximumParticipants = &value
+		}
+		if currentParticipants.Valid {
+			service.CurrentParticipants = int(currentParticipants.Int64)
+		}
+		services = append(services, service)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return nil, fmt.Errorf("getServicesPage package db rows : %s", err.Error())
+	}
+
+	return services, nil
+}
+
+func CountServicesFromDB(availableOnly bool) (int, error) {
+	query := "SELECT COUNT(*) FROM evenements"
+	args := []interface{}{}
+	if availableOnly {
+		query += " WHERE maximum_participants IS NULL OR current_participants < maximum_participants"
+	}
+
+	var total int
+	err := Db.QueryRow(query, args...).Scan(&total)
+	if err != nil {
+		return 0, fmt.Errorf("countServices package db : %s", err.Error())
+	}
+	return total, nil
+}
+
 func getCurrentTime() string {
 	var currentTime string
 	err := Db.QueryRow("SELECT NOW()").Scan(&currentTime)

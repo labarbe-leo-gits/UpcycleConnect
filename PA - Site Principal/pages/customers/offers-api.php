@@ -22,7 +22,13 @@ if (!$user) {
     exit;
 }
 
-$annoncesResponse = askAPI('/annonces', 'GET');
+$page = isset($_GET['page']) ? max(1, (int) $_GET['page']) : 1;
+$limit = isset($_GET['limit']) ? max(1, (int) $_GET['limit']) : 4;
+if ($limit > 50) {
+    $limit = 50;
+}
+
+$annoncesResponse = askAPI('/annonces?page=' . $page . '&limit=' . $limit, 'GET');
 $annoncesDecoded = json_decode($annoncesResponse, true);
 
 if (isset($annoncesDecoded['error'])) {
@@ -37,8 +43,11 @@ if (!is_array($annoncesDecoded)) {
     exit;
 }
 
+$annoncesList = $annoncesDecoded['items'] ?? $annoncesDecoded;
+$total = $annoncesDecoded['total'] ?? (is_array($annoncesList) ? count($annoncesList) : 0);
+
 $processedAnnonces = [];
-foreach ($annoncesDecoded as $annonce) {
+foreach ($annoncesList as $annonce) {
     $annonceId = $annonce['id'] ?? '';
     if ($annonceId === '') {
         continue;
@@ -53,9 +62,6 @@ foreach ($annoncesDecoded as $annonce) {
         $fileName = is_array($firstImage) ? ($firstImage['file_name'] ?? '') : '';
         if ($fileName !== '') {
             $imagePath = '../../../files/uploads/annonce/' . $fileName;
-        }
-        else {
-            $imagePath = '../../assets/img/defaults/placeholder.png';
         }
     }
 
@@ -74,4 +80,9 @@ foreach ($annoncesDecoded as $annonce) {
     ];
 }
 
-echo json_encode($processedAnnonces);
+echo json_encode([
+    'items' => $processedAnnonces,
+    'total' => $total,
+    'page' => $page,
+    'limit' => $limit
+]);

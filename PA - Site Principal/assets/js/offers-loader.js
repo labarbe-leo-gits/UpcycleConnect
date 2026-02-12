@@ -2,14 +2,15 @@
     'use strict';
 
     const pageSize = 4;
-    let allOffers = [];
     let currentPage = 1;
+    let totalPages = 1;
 
     document.addEventListener('DOMContentLoaded', function() {
-        loadOffers();
+        currentPage = getPageFromUrl();
+        requestPage(currentPage, true);
     });
 
-    function loadOffers() {
+    function requestPage(page, replaceHistory) {
         const container = document.getElementById('offers-container');
         const pagination = document.getElementById('offers-pagination');
 
@@ -18,7 +19,9 @@
             return;
         }
 
-        fetch('offers-api', {
+        renderSkeletons(container, pageSize);
+
+        fetch(`offers-api?page=${page}&limit=${pageSize}`, {
             method: 'GET',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest'
@@ -33,23 +36,37 @@
                 return response.text();
             })
             .then(text => {
-                const offers = JSON.parse(text);
+                const data = JSON.parse(text);
+                const offers = Array.isArray(data.items) ? data.items : (Array.isArray(data) ? data : []);
+                const total = Number.isFinite(data.total) ? data.total : offers.length;
+                totalPages = total > 0 ? Math.ceil(total / pageSize) : 1;
+
+                if (!offers || offers.length === 0) {
+                    container.innerHTML = '<p>No offers available at the moment.</p>';
+                    if (pagination) {
+                        pagination.innerHTML = '';
+                    }
+                    updateUrlPage(1, true);
+                    return;
+                }
+
+                if (page > totalPages) {
+                    currentPage = totalPages;
+                    updateUrlPage(currentPage, true);
+                    requestPage(currentPage, true);
+                    return;
+                }
+
+                currentPage = page;
+                updateUrlPage(currentPage, replaceHistory);
 
                 container.innerHTML = '';
                 if (pagination) {
                     pagination.innerHTML = '';
                 }
 
-                if (!offers || offers.length === 0) {
-                    container.innerHTML = '<p>No offers available at the moment.</p>';
-                    return;
-                }
-
-                allOffers = offers;
-                currentPage = getPageFromUrl();
-                clampCurrentPage();
-                updateUrlPage(currentPage, true);
-                renderPage(container, pagination);
+                renderOffers(offers, container);
+                renderPagination(pagination);
             })
             .catch(error => {
                 console.error('Error loading offers:', error);
@@ -60,30 +77,11 @@
             });
     }
 
-    function renderPage(container, pagination) {
-        renderSkeletons(container, pageSize);
-
-        const start = (currentPage - 1) * pageSize;
-        const pageOffers = allOffers.slice(start, start + pageSize);
-
-        window.setTimeout(function() {
-            container.innerHTML = '';
-
-            if (pageOffers.length === 0) {
-                container.innerHTML = '<p>No offers available at the moment.</p>';
-                if (pagination) {
-                    pagination.innerHTML = '';
-                }
-                return;
-            }
-
-            pageOffers.forEach(offer => {
-                const offerItem = createOfferElement(offer);
-                container.appendChild(offerItem);
-            });
-
-            renderPagination(pagination);
-        }, 180);
+    function renderOffers(offers, container) {
+        offers.forEach(offer => {
+            const offerItem = createOfferElement(offer);
+            container.appendChild(offerItem);
+        });
     }
 
     function renderPagination(pagination) {
@@ -91,7 +89,6 @@
             return;
         }
 
-        const totalPages = Math.ceil(allOffers.length / pageSize);
         pagination.innerHTML = '';
 
         if (totalPages <= 1) {
@@ -100,18 +97,14 @@
 
         const prevButton = createPageButton('Prev', currentPage === 1, function() {
             if (currentPage > 1) {
-                currentPage -= 1;
-                updateUrlPage(currentPage);
-                renderPage(document.getElementById('offers-container'), pagination);
+                requestPage(currentPage - 1);
             }
         });
         pagination.appendChild(prevButton);
 
         for (let i = 1; i <= totalPages; i += 1) {
             const pageButton = createPageButton(String(i), false, function() {
-                currentPage = i;
-                updateUrlPage(currentPage);
-                renderPage(document.getElementById('offers-container'), pagination);
+                requestPage(i);
             });
             if (i === currentPage) {
                 pageButton.classList.add('active');
@@ -122,9 +115,7 @@
 
         const nextButton = createPageButton('Next', currentPage === totalPages, function() {
             if (currentPage < totalPages) {
-                currentPage += 1;
-                updateUrlPage(currentPage);
-                renderPage(document.getElementById('offers-container'), pagination);
+                requestPage(currentPage + 1);
             }
         });
         pagination.appendChild(nextButton);
@@ -136,13 +127,6 @@
             return 1;
         }
         return pageParam;
-    }
-
-    function clampCurrentPage() {
-        const totalPages = Math.max(1, Math.ceil(allOffers.length / pageSize));
-        if (currentPage > totalPages) {
-            currentPage = totalPages;
-        }
     }
 
     function updateUrlPage(page, replace) {

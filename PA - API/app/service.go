@@ -6,22 +6,81 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/google/uuid"
 )
 
 func GetServices(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+	pageParam := query.Get("page")
+	limitParam := query.Get("limit")
+	availableParam := query.Get("available")
+	availableOnly := availableParam == "1" || availableParam == "true"
 
-	services, err := db.GetServicesFromDB()
+	if pageParam == "" && limitParam == "" {
+		services, err := db.GetServicesFromDB()
 
+		if err != nil {
+			fmt.Println("[ERROR] GetServices:", err)
+			sendError(w, "Unable to fetch services", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		jsonResponse, err := json.Marshal(services)
+
+		if err != nil {
+			fmt.Println("[ERROR] GetServices marshal:", err)
+			sendError(w, "Unable to process response", http.StatusInternalServerError)
+			return
+		}
+
+		fmt.Fprintf(w, "%s", jsonResponse)
+		return
+	}
+
+	page := 1
+	limit := 20
+	if pageParam != "" {
+		if parsed, err := strconv.Atoi(pageParam); err == nil && parsed > 0 {
+			page = parsed
+		}
+	}
+	if limitParam != "" {
+		if parsed, err := strconv.Atoi(limitParam); err == nil && parsed > 0 {
+			limit = parsed
+		}
+	}
+	if limit > 100 {
+		limit = 100
+	}
+
+	offset := (page - 1) * limit
+
+	total, err := db.CountServicesFromDB(availableOnly)
 	if err != nil {
-		fmt.Println("[ERROR] GetServices:", err)
+		fmt.Println("[ERROR] GetServices count:", err)
 		sendError(w, "Unable to fetch services", http.StatusInternalServerError)
 		return
 	}
 
+	services, err := db.GetServicesPageFromDB(limit, offset, availableOnly)
+	if err != nil {
+		fmt.Println("[ERROR] GetServices page:", err)
+		sendError(w, "Unable to fetch services", http.StatusInternalServerError)
+		return
+	}
+
+	response := map[string]interface{}{
+		"items": services,
+		"total": total,
+		"page":  page,
+		"limit": limit,
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	jsonResponse, err := json.Marshal(services)
+	jsonResponse, err := json.Marshal(response)
 
 	if err != nil {
 		fmt.Println("[ERROR] GetServices marshal:", err)

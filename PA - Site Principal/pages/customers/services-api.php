@@ -22,7 +22,13 @@ if (!$user) {
     exit;
 }
 
-$services = askAPI("/products/services", "GET");
+$page = isset($_GET['page']) ? max(1, (int) $_GET['page']) : 1;
+$limit = isset($_GET['limit']) ? max(1, (int) $_GET['limit']) : 4;
+if ($limit > 50) {
+    $limit = 50;
+}
+
+$services = askAPI("/products/services?page=$page&limit=$limit&available=1", "GET");
 $decoded = json_decode($services, true);
 
 $ordersResponse = askAPI("/orders", "GET");
@@ -59,14 +65,13 @@ if (!is_array($decoded)) {
     exit;
 }
 
+$servicesList = $decoded['items'] ?? $decoded;
+$total = $decoded['total'] ?? (is_array($servicesList) ? count($servicesList) : 0);
+
 $processedServices = [];
-foreach ($decoded as $service) {
+foreach ($servicesList as $service) {
     $maxParticipants = $service['maximum_participants'] ?? null;
     $currentParticipants = $service['current_participants'] ?? 0;
-
-    if ($maxParticipants !== null && (int) $currentParticipants >= (int) $maxParticipants) {
-        continue;
-    }
 
     $price = floatval($service['price'] ?? 0);
     $priceDisplay = ($price == 0) ? "Free" : "€ " . number_format($price, 2);
@@ -133,4 +138,9 @@ foreach ($decoded as $service) {
     ];
 }
 
-echo json_encode($processedServices);
+echo json_encode([
+    'items' => $processedServices,
+    'total' => $total,
+    'page' => $page,
+    'limit' => $limit
+]);

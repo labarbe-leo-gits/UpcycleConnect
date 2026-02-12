@@ -3,14 +3,15 @@
     'use strict';
 
     const pageSize = 4;
-    let allServices = [];
     let currentPage = 1;
+    let totalPages = 1;
 
     document.addEventListener('DOMContentLoaded', function() {
-        loadServices();
+        currentPage = getPageFromUrl();
+        requestPage(currentPage, true);
     });
 
-    function loadServices() {
+    function requestPage(page, replaceHistory) {
         const container = document.getElementById('services-container');
         const pagination = document.getElementById('services-pagination');
         
@@ -19,7 +20,9 @@
             return;
         }
 
-        fetch('services-api', {
+        renderSkeletons(container, pageSize);
+
+        fetch(`services-api?page=${page}&limit=${pageSize}`, {
             method: 'GET',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest'
@@ -38,24 +41,37 @@
                 return response.text();
             })
             .then(text => {
-                // console.log('Response text:', text);
-                const services = JSON.parse(text);
-                
+                const data = JSON.parse(text);
+                const services = Array.isArray(data.items) ? data.items : (Array.isArray(data) ? data : []);
+                const total = Number.isFinite(data.total) ? data.total : services.length;
+                totalPages = total > 0 ? Math.ceil(total / pageSize) : 1;
+
+                if (!services || services.length === 0) {
+                    container.innerHTML = '<p>No services available at the moment.</p>';
+                    if (pagination) {
+                        pagination.innerHTML = '';
+                    }
+                    updateUrlPage(1, true);
+                    return;
+                }
+
+                if (page > totalPages) {
+                    currentPage = totalPages;
+                    updateUrlPage(currentPage, true);
+                    requestPage(currentPage, true);
+                    return;
+                }
+
+                currentPage = page;
+                updateUrlPage(currentPage, replaceHistory);
+
                 container.innerHTML = '';
                 if (pagination) {
                     pagination.innerHTML = '';
                 }
 
-                if (!services || services.length === 0) {
-                    container.innerHTML = '<p>No services available at the moment.</p>';
-                    return;
-                }
-
-                allServices = services;
-                currentPage = getPageFromUrl();
-                clampCurrentPage();
-                updateUrlPage(currentPage, true);
-                renderPage(container, pagination);
+                renderServices(services, container);
+                renderPagination(pagination);
             })
             .catch(error => {
                 console.error('Error loading services:', error);
@@ -67,30 +83,11 @@
             });
     }
 
-    function renderPage(container, pagination) {
-        renderSkeletons(container, pageSize);
-
-        const start = (currentPage - 1) * pageSize;
-        const pageServices = allServices.slice(start, start + pageSize);
-
-        window.setTimeout(function() {
-            container.innerHTML = '';
-
-            if (pageServices.length === 0) {
-                container.innerHTML = '<p>No services available at the moment.</p>';
-                if (pagination) {
-                    pagination.innerHTML = '';
-                }
-                return;
-            }
-
-            pageServices.forEach(service => {
+    function renderServices(services, container) {
+        services.forEach(service => {
             const serviceItem = createServiceElement(service);
             container.appendChild(serviceItem);
         });
-
-            renderPagination(pagination);
-        }, 180);
     }
 
     function renderPagination(pagination) {
@@ -98,7 +95,6 @@
             return;
         }
 
-        const totalPages = Math.ceil(allServices.length / pageSize);
         pagination.innerHTML = '';
 
         if (totalPages <= 1) {
@@ -107,18 +103,14 @@
 
         const prevButton = createPageButton('Prev', currentPage === 1, function() {
             if (currentPage > 1) {
-                currentPage -= 1;
-                updateUrlPage(currentPage);
-                renderPage(document.getElementById('services-container'), pagination);
+                requestPage(currentPage - 1);
             }
         });
         pagination.appendChild(prevButton);
 
         for (let i = 1; i <= totalPages; i += 1) {
             const pageButton = createPageButton(String(i), false, function() {
-                currentPage = i;
-                updateUrlPage(currentPage);
-                renderPage(document.getElementById('services-container'), pagination);
+                requestPage(i);
             });
             if (i === currentPage) {
                 pageButton.classList.add('active');
@@ -129,9 +121,7 @@
 
         const nextButton = createPageButton('Next', currentPage === totalPages, function() {
             if (currentPage < totalPages) {
-                currentPage += 1;
-                updateUrlPage(currentPage);
-                renderPage(document.getElementById('services-container'), pagination);
+                requestPage(currentPage + 1);
             }
         });
         pagination.appendChild(nextButton);
@@ -247,13 +237,6 @@
             return 1;
         }
         return pageParam;
-    }
-
-    function clampCurrentPage() {
-        const totalPages = Math.max(1, Math.ceil(allServices.length / pageSize));
-        if (currentPage > totalPages) {
-            currentPage = totalPages;
-        }
     }
 
     function updateUrlPage(page, replace) {
