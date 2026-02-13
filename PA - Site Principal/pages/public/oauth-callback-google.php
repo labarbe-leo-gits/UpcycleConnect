@@ -40,43 +40,44 @@ if (isset($_GET['code'])) {
         $data = json_encode(['email' => $email]);
         $response = askAPI('users/email', 'POST', $data);
         $user = json_decode($response, true);
-
         if (!isset($user['id'])) {
-    
             $username = explode('@', $email)[0] . '_' . substr($googleId, -4);
             $randomPassword = bin2hex(random_bytes(16));
 
-            $newUserData = json_encode([
+            $firstName = '';
+            $lastName = '';
+            if (method_exists($userInfo, 'getGivenName')) {
+                $firstName = $userInfo->getGivenName();
+            }
+            if (method_exists($userInfo, 'getFamilyName')) {
+                $lastName = $userInfo->getFamilyName();
+            }
+
+            // Store SSO prefill details in session
+            $_SESSION['sso_prefill'] = [
                 'username' => $username,
                 'email' => $email,
                 'password' => $randomPassword,
                 'oauth_provider' => 'google',
                 'oauth_id' => $googleId,
-                'profile_picture' => $picture
-            ]);
-
-            $createResponse = askAPI('users', 'POST', $newUserData);
-            $user = json_decode($createResponse, true);
-
-            if (!isset($user['id'])) {
-                throw new Exception('Failed to create user account');
-            }
-        }
-
-        $_SESSION['user_id'] = $user['id'];
-        $_SESSION['username'] = $user['username'];
-        $_SESSION['email'] = $user['email'];
-        $_SESSION['user_type'] = isset($user['user_type']) ? (int) $user['user_type'] : 1;
-        $_SESSION['oauth_provider'] = 'google';
-
-        if (isset($_SESSION['page_after_login']) && (int) $_SESSION['user_type'] === 1) {
-            $page = $_SESSION['page_after_login'];
-            unset($_SESSION['page_after_login']);
-            header('Location: ../customers/' . $page);
+                'profile_picture' => $picture,
+                'first_name' => $firstName,
+                'last_name' => $lastName
+            ];
+            $_SESSION['sso_active'] = true;
+            header('Location: configure.php');
+            exit();
         } else {
-            header('Location: ' . getUserHomePath($_SESSION['user_type']));
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['username'] = $user['username'];
+            $_SESSION['email'] = $user['email'];
+            $_SESSION['user_type'] = isset($user['user_type']) ? (int) $user['user_type'] : 1;
+            $_SESSION['oauth_provider'] = $user['oauth_provider'] ?? 'google';
+            $_SESSION['first_name'] = $user['first_name'] ?? '';
+            $_SESSION['last_name'] = $user['last_name'] ?? '';
+            header('Location: ../customers/profile');
+            exit();
         }
-        exit();
 
     } catch (Exception $e) {
         $_SESSION['error_message'] = 'Authentication failed: ' . $e->getMessage();

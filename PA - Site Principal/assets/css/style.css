@@ -587,3 +587,9 @@ form a:hover {
   height: 80px;
   width: auto;
 }
+
+.small-text {
+  font-size: 13px;
+  color: #6b7280;
+  text-align: center;
+}

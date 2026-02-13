@@ -1,8 +1,11 @@
 <?php
-
-include_once '../../config/db.php';
-include_once '../../includes/auth.php';
-
+session_start();
+session_unset();
+session_destroy();
+session_start();
+require_once '../../config/db.php';
+require_once '../../includes/auth.php';
+$title = "Login";
 $error_message = '';
 $success_message = '';
 

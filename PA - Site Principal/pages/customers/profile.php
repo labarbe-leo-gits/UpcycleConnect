@@ -147,7 +147,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php echo htmlspecialchars($paymentSuccess); ?>
         </div>
     <?php endif; ?>
-    <h1>Welcome, <?= htmlspecialchars($user['first_name']) . " " . $user['last_name'] ?>!</h1>
+    <h1>Welcome, 
+        <?php
+        $first = isset($user['first_name']) && !empty($user['first_name']) ? htmlspecialchars($user['first_name']) : htmlspecialchars($user['username']);
+        $last = isset($user['last_name']) && !empty($user['last_name']) ? ' ' . htmlspecialchars($user['last_name']) : '';
+        echo $first . $last;
+        ?>!
+    </h1>
     
     <div class="profile-card">
         <h2>Your Profile</h2>
