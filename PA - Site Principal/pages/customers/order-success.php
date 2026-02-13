@@ -19,22 +19,60 @@ if (!isset($_SESSION['order_token'][$productUuid]) || $_SESSION['order_token'][$
 
 unset($_SESSION['order_token'][$productUuid]);
 
+function findOfferById($offerUuid) {
+    $offersResponse = askAPI('/annonces/' . $offerUuid, 'GET');
+    $offersDecoded = json_decode($offersResponse, true);
+    if (!is_array($offersDecoded) || isset($offersDecoded['error'])) {
+        return null;
+    }
+    if (isset($offersDecoded['id'])) {
+        return ($offersDecoded['id'] ?? '') === $offerUuid ? $offersDecoded : null;
+    }
+    $offersList = $offersDecoded['items'] ?? $offersDecoded;
+    if (!is_array($offersList)) {
+        return null;
+    }
+    foreach ($offersList as $item) {
+        if (is_array($item) && ($item['id'] ?? '') === $offerUuid) {
+            return $item;
+        }
+    }
+    return null;
+}
+
 $serviceData = askAPI('/products/services/' . $productUuid, 'GET');
 $service = json_decode($serviceData, true);
+$offer = null;
+$productType = 'service';
 
 if (!$service || isset($service['error'])) {
-    echo '<div class="container"><p class="error-message">Service not found.</p></div>';
+    $service = null;
+    $offer = findOfferById($productUuid);
+    if ($offer) {
+        $productType = 'offer';
+    }
+}
+
+if (!$service && !$offer) {
+    echo '<div class="container"><p class="error-message">Product not found.</p></div>';
     include_once '../../includes/footer.php';
     exit;
 }
 
-$price = floatval($service['price'] ?? 0);
+$productName = $service ? ($service['name'] ?? 'Unnamed Service') : ($offer['title'] ?? 'Untitled offer');
+$productDescription = $service ? ($service['description'] ?? '') : ($offer['description'] ?? '');
+$price = floatval($service ? ($service['price'] ?? 0) : ($offer['price'] ?? 0));
 $priceDisplay = ($price == 0) ? 'Free' : '€ ' . number_format($price, 2);
 $paymentIntentId = $_GET['payment_intent'] ?? null;
 
-$maxParticipants = $service['maximum_participants'] ?? null;
-$currentParticipants = $service['current_participants'] ?? 0;
-$isFull = ($maxParticipants !== null && (int) $currentParticipants >= (int) $maxParticipants);
+$maxParticipants = null;
+$currentParticipants = 0;
+$isFull = false;
+if ($productType === 'service') {
+    $maxParticipants = $service['maximum_participants'] ?? null;
+    $currentParticipants = $service['current_participants'] ?? 0;
+    $isFull = ($maxParticipants !== null && (int) $currentParticipants >= (int) $maxParticipants);
+}
 
 $paymentVerified = false;
 $paymentError = '';
@@ -92,18 +130,29 @@ if ($paymentVerified) {
                     break;
                 }
 
-                if ($orderEvent === $productUuid && $orderUser === ($user['id'] ?? '')) {
-                    $alreadySaved = true;
-                    break;
+                if ($productType === 'service') {
+                    if ($orderEvent === $productUuid && $orderUser === ($user['id'] ?? '')) {
+                        $alreadySaved = true;
+                        break;
+                    }
+                } else {
+                    $orderProduct = $order['product_id'] ?? '';
+                    if ($orderProduct === $productUuid && $orderUser === ($user['id'] ?? '')) {
+                        $alreadySaved = true;
+                        break;
+                    }
                 }
             }
         }
 
-        if (!$alreadySaved) {
+        if ($alreadySaved) {
+            $orderSaved = true;
+        } else {
             $transactionId = $paymentIntentId ?: ('free-' . ($productUuid ?? 'service') . '-' . ($user['id'] ?? 'guest'));
             $payload = json_encode([
                 'user_id' => $user['id'] ?? '',
-                'event_id' => $productUuid,
+                'event_id' => $productType === 'service' ? $productUuid : null,
+                'product_id' => $productType === 'offer' ? $productUuid : null,
                 'transaction_id' => $transactionId,
                 'amount' => $price,
                 'status' => 1
@@ -117,19 +166,30 @@ if ($paymentVerified) {
             } else {
                 $orderSaved = true;
             }
-        } else {
-            $orderSaved = true;
+        }
+
+        if ($orderSaved && $productType === 'offer') {
+            $markPayload = json_encode(['status' => 1]);
+            askAPI('/annonces/' . $productUuid, 'PATCH', $markPayload);
         }
     }
 }
+
+$hasOrderError = (!$paymentVerified) || !empty($orderSaveError);
 ?>
 
 <div class="container">
     <div class="checkout-container">
         <div class="checkout-header">
-            <h1><i class="fa-solid fa-circle-check"></i> Order Confirmed</h1>
-            <a href="services" class="back-link">
-                <i class="fa-solid fa-arrow-left"></i> Back to services
+            <h1>
+                <?php if ($hasOrderError): ?>
+                    <i class="fa-solid fa-circle-xmark"></i> Order Issue
+                <?php else: ?>
+                    <i class="fa-solid fa-circle-check"></i> Order Confirmed
+                <?php endif; ?>
+            </h1>
+            <a href="<?php echo $productType === 'offer' ? 'offers' : 'services'; ?>" class="back-link">
+                <i class="fa-solid fa-arrow-left"></i> <?php echo $productType === 'offer' ? 'Back to offers' : 'Back to services'; ?>
             </a>
         </div>
 
@@ -138,10 +198,10 @@ if ($paymentVerified) {
                 <h2>Summary</h2>
                 <div class="product-item">
                     <div class="product-header">
-                        <h3><i class="fa-solid fa-briefcase"></i> <?php echo htmlspecialchars($service['name'] ?? 'Unnamed Service'); ?></h3>
+                        <h3><i class="fa-solid <?php echo $productType === 'offer' ? 'fa-box-open' : 'fa-briefcase'; ?>"></i> <?php echo htmlspecialchars($productName); ?></h3>
                     </div>
-                    <?php if (!empty($service['description'])): ?>
-                        <p class="product-description"><?php echo htmlspecialchars($service['description']); ?></p>
+                    <?php if (!empty($productDescription)): ?>
+                        <p class="product-description"><?php echo htmlspecialchars($productDescription); ?></p>
                     <?php endif; ?>
                 </div>
                 <div class="price-breakdown">
@@ -161,12 +221,18 @@ if ($paymentVerified) {
                             <p>Payment ID: <?php echo htmlspecialchars($paymentIntentId); ?></p>
                         <?php endif; ?>
                     <?php elseif ($price == 0): ?>
-                        <p>Your registration is confirmed. We sent a confirmation to <?php echo htmlspecialchars($user['email'] ?? 'your email'); ?>.</p>
+                        <?php if ($productType === 'offer'): ?>
+                            <p>Your order is confirmed. We sent a confirmation to <?php echo htmlspecialchars($user['email'] ?? 'your email'); ?>.</p>
+                        <?php else: ?>
+                            <p>Your registration is confirmed. We sent a confirmation to <?php echo htmlspecialchars($user['email'] ?? 'your email'); ?>.</p>
+                        <?php endif; ?>
                     <?php else: ?>
                         <p>Your payment was successful. Thank you for your order.</p>
                         <p>Payment ID: <?php echo htmlspecialchars($paymentIntentId); ?></p>
                     <?php endif; ?>
-                    <a class="btn-primary" href="services">Browse more services</a>
+                    <?php if (!$orderSaveError): ?>
+                        <a class="btn-primary" href="<?php echo $productType === 'offer' ? 'offers' : 'services'; ?>">Browse more <?php echo $productType === 'offer' ? 'offers' : 'services'; ?></a>
+                    <?php endif; ?>
                 <?php else: ?>
                     <p class="error-message"><?php echo htmlspecialchars($paymentError ?: 'Payment could not be verified.'); ?></p>
                     <a class="btn-primary" href="order?product_uuid=<?php echo htmlspecialchars($productUuid); ?>">Try again</a>

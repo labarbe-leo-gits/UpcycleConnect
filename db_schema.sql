@@ -122,3 +122,14 @@ CREATE TABLE IF NOT EXISTS orders (
     FOREIGN KEY (event_id) REFERENCES evenements(id) ON DELETE CASCADE,
     FOREIGN KEY (product_id) REFERENCES annonces(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS notifications (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    annonce_id CHAR(36),
+    user_id CHAR(36) NOT NULL,
+    message TEXT NOT NULL,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (annonce_id) REFERENCES annonces(id) ON DELETE CASCADE
+);

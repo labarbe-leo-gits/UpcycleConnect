@@ -15,16 +15,58 @@ if (!$productUuid) {
     exit;
 }
 
+function findOfferById($offerUuid) {
+    $offersResponse = askAPI('/annonces/' . $offerUuid, 'GET');
+    $offersDecoded = json_decode($offersResponse, true);
+    if (!is_array($offersDecoded) || isset($offersDecoded['error'])) {
+        return null;
+    }
+    if (isset($offersDecoded['id'])) {
+        return ($offersDecoded['id'] ?? '') === $offerUuid ? $offersDecoded : null;
+    }
+    $offersList = $offersDecoded['items'] ?? $offersDecoded;
+    if (!is_array($offersList)) {
+        return null;
+    }
+    foreach ($offersList as $item) {
+        if (is_array($item) && ($item['id'] ?? '') === $offerUuid) {
+            return $item;
+        }
+    }
+    return null;
+}
+
 $serviceData = askAPI("/products/services/" . $productUuid, "GET");
 $service = json_decode($serviceData, true);
+$offer = null;
+$productType = 'service';
 
 if (isset($service['error'])) {
+    $service = null;
+    $offer = findOfferById($productUuid);
+    if ($offer) {
+        $productType = 'offer';
+    }
+}
+
+if (!$service && !$offer) {
     echo '<div class="container"><p class="error-message">Product not found.</p></div>';
     include_once '../../includes/footer.php';
     exit;
 }
 
-$price = floatval($service['price'] ?? 0);
+if ($productType === 'offer') {
+    $offerStatus = intval($offer['status'] ?? 0);
+    if ($offerStatus !== 0) {
+        echo '<div class="container"><p class="error-message">Offer is no longer available.</p></div>';
+        include_once '../../includes/footer.php';
+        exit;
+    }
+}
+
+$productName = $service ? ($service['name'] ?? 'Unnamed Service') : ($offer['title'] ?? 'Untitled offer');
+$productDescription = $service ? ($service['description'] ?? '') : ($offer['description'] ?? '');
+$price = floatval($service ? ($service['price'] ?? 0) : ($offer['price'] ?? 0));
 $priceDisplay = ($price == 0) ? "Free" : "€ " . number_format($price, 2);
 
 $orderToken = bin2hex(random_bytes(16));
@@ -33,12 +75,17 @@ if (!isset($_SESSION['order_token'])) {
 }
 $_SESSION['order_token'][$productUuid] = $orderToken;
 
-$maxParticipants = $service['maximum_participants'] ?? null;
-$currentParticipants = $service['current_participants'] ?? 0;
-$isFull = ($maxParticipants !== null && (int) $currentParticipants >= (int) $maxParticipants);
+$maxParticipants = null;
+$currentParticipants = 0;
+$isFull = false;
 $spotsLeft = null;
-if ($maxParticipants !== null) {
-    $spotsLeft = max(0, (int) $maxParticipants - (int) $currentParticipants);
+if ($productType === 'service') {
+    $maxParticipants = $service['maximum_participants'] ?? null;
+    $currentParticipants = $service['current_participants'] ?? 0;
+    $isFull = ($maxParticipants !== null && (int) $currentParticipants >= (int) $maxParticipants);
+    if ($maxParticipants !== null) {
+        $spotsLeft = max(0, (int) $maxParticipants - (int) $currentParticipants);
+    }
 }
 
 if ($price > 0 && empty($stripeConfig['publishable_key'])) {
@@ -47,34 +94,49 @@ if ($price > 0 && empty($stripeConfig['publishable_key'])) {
     exit;
 }
 
-$serviceType = intval($service['type'] ?? 0);
 $typeLabel = '';
 $typeIcon = '';
-switch($serviceType) {
-    case 1:
-        $typeLabel = 'Formation';
-        $typeIcon = 'fa-graduation-cap';
-        break;
-    case 2:
-        $typeLabel = 'Event';
-        $typeIcon = 'fa-calendar-days';
-        break;
-    case 3:
-        $typeLabel = 'Consulting';
-        $typeIcon = 'fa-user-tie';
-        break;
-    default:
-        $typeLabel = 'Other';
-        $typeIcon = 'fa-circle-question';
+$serviceDate = null;
+
+if ($productType === 'service') {
+    $serviceType = intval($service['type'] ?? 0);
+    switch($serviceType) {
+        case 1:
+            $typeLabel = 'Formation';
+            $typeIcon = 'fa-graduation-cap';
+            break;
+        case 2:
+            $typeLabel = 'Event';
+            $typeIcon = 'fa-calendar-days';
+            break;
+        case 3:
+            $typeLabel = 'Consulting';
+            $typeIcon = 'fa-user-tie';
+            break;
+        default:
+            $typeLabel = 'Other';
+            $typeIcon = 'fa-circle-question';
+    }
+
+    if (isset($service['service_date']) && !empty($service['service_date'])) {
+        $dateObj = DateTime::createFromFormat('Y-m-d', $service['service_date']);
+        if ($dateObj) {
+            $serviceDate = $dateObj->format('d/m/Y');
+        }
+    }
+} else {
+    $typeLabel = 'Offer';
+    $typeIcon = 'fa-tag';
 }
 
-$serviceDate = null;
-if (isset($service['service_date']) && !empty($service['service_date'])) {
-    $dateObj = DateTime::createFromFormat('Y-m-d', $service['service_date']);
-    if ($dateObj) {
-        $serviceDate = $dateObj->format('d/m/Y');
-    }
-}
+$backLink = $productType === 'offer' ? ('offer?uuid=' . urlencode($productUuid)) : ('service?uuid=' . urlencode($productUuid));
+$backLabel = $productType === 'offer' ? 'Back to offer' : 'Back to service';
+$backListLink = $productType === 'offer' ? 'offers' : 'services';
+$backListLabel = $productType === 'offer' ? 'Back to Offers' : 'Back to Services';
+$productIcon = $productType === 'offer' ? 'fa-box-open' : 'fa-briefcase';
+$freeNotice = $productType === 'offer'
+    ? 'This is a free offer. Click "Complete Order" to confirm your request.'
+    : 'This is a free service. Click "Complete Order" to confirm your registration.';
 ?>
 
 <div class="container" id="order-page" data-order-token="<?php echo htmlspecialchars($orderToken); ?>" data-product-uuid="<?php echo htmlspecialchars($productUuid); ?>" data-stripe-key="<?php echo htmlspecialchars($stripeConfig['publishable_key'] ?? ''); ?>" data-is-full="<?php echo $isFull ? '1' : '0'; ?>" data-is-free="<?php echo $price == 0 ? '1' : '0'; ?>">
@@ -121,8 +183,8 @@ if (isset($service['service_date']) && !empty($service['service_date'])) {
     <div class="checkout-container actual-content" style="display: none;">
         <div class="checkout-header">
             <h1><i class="fa-solid fa-shopping-cart"></i> Checkout</h1>
-            <a href="service?uuid=<?php echo htmlspecialchars($productUuid); ?>" class="back-link">
-                <i class="fa-solid fa-arrow-left"></i> Back to service
+            <a href="<?php echo htmlspecialchars($backLink); ?>" class="back-link">
+                <i class="fa-solid fa-arrow-left"></i> <?php echo htmlspecialchars($backLabel); ?>
             </a>
         </div>
 
@@ -132,14 +194,20 @@ if (isset($service['service_date']) && !empty($service['service_date'])) {
                 
                 <div class="product-item">
                     <div class="product-header">
-                        <h3><i class="fa-solid fa-briefcase"></i> <?php echo htmlspecialchars($service['name'] ?? 'Unnamed Service'); ?></h3>
-                        <span class="service-type-badge type-<?php echo strtolower($typeLabel); ?>">
-                            <i class="fa-solid <?php echo $typeIcon; ?>"></i> <?php echo $typeLabel; ?>
-                        </span>
+                        <h3><i class="fa-solid <?php echo $productIcon; ?>"></i> <?php echo htmlspecialchars($productName); ?></h3>
+                        <?php if ($productType === 'service'): ?>
+                            <span class="service-type-badge type-<?php echo strtolower($typeLabel); ?>">
+                                <i class="fa-solid <?php echo $typeIcon; ?>"></i> <?php echo $typeLabel; ?>
+                            </span>
+                        <?php else: ?>
+                            <span class="service-type-badge type-other">
+                                <i class="fa-solid <?php echo $typeIcon; ?>"></i> <?php echo $typeLabel; ?>
+                            </span>
+                        <?php endif; ?>
                     </div>
                     
-                    <?php if (!empty($service['description'])): ?>
-                    <p class="product-description"><?php echo htmlspecialchars($service['description']); ?></p>
+                    <?php if (!empty($productDescription)): ?>
+                    <p class="product-description"><?php echo htmlspecialchars($productDescription); ?></p>
                     <?php endif; ?>
                     
                     <?php if ($serviceDate): ?>
@@ -166,15 +234,15 @@ if (isset($service['service_date']) && !empty($service['service_date'])) {
             <div class="payment-section">
                 <h2>Payment Information</h2>
                 
-                <?php if ($isFull): ?>
+                <?php if ($productType === 'service' && $isFull): ?>
                     <div class="error-message">
                         This service is fully booked. Please choose another service.
                     </div>
-                    <a href="services" class="btn-secondary">Back to Services</a>
+                    <a href="<?php echo htmlspecialchars($backListLink); ?>" class="btn-secondary"><?php echo htmlspecialchars($backListLabel); ?></a>
                 <?php elseif ($price == 0): ?>
                     <div class="free-notice">
                         <i class="fa-solid fa-gift"></i>
-                        <p>This is a free service. Click "Complete Order" to confirm your registration.</p>
+                        <p><?php echo htmlspecialchars($freeNotice); ?></p>
                     </div>
                     
                     <form id="order-form" action="process-order" method="POST">

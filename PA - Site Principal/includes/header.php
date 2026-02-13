@@ -50,6 +50,10 @@ trackLastPage();
                 <i class="fa-solid fa-circle-info"></i>
                 <p>About</p>
             </div>
+            <div class="btn-wrapper" onClick="window.location.href='../common/community'">
+                <i class="fa-solid fa-users"></i>
+                <p>Community</p>
+            </div>
             <div class="btn-wrapper" onClick="openFile('contact.php')">
                 <i class="fa-solid fa-envelope"></i>
                 <p>Contact</p>

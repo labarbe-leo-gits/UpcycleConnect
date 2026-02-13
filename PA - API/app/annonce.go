@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/google/uuid"
 )
@@ -15,9 +16,25 @@ func GetAnnonces(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	pageParam := query.Get("page")
 	limitParam := query.Get("limit")
+	statusParam := query.Get("status")
+	statusFilter := (*int)(nil)
+	if statusParam != "" {
+		parsedStatus, err := strconv.Atoi(statusParam)
+		if err != nil {
+			sendError(w, "Invalid status value", http.StatusBadRequest)
+			return
+		}
+		statusFilter = &parsedStatus
+	}
 
 	if pageParam == "" && limitParam == "" {
-		annonces, err := db.GetAnnoncesFromDB()
+		var annonces []models.Annonce
+		var err error
+		if statusFilter != nil {
+			annonces, err = db.GetAnnoncesByStatusFromDB(*statusFilter)
+		} else {
+			annonces, err = db.GetAnnoncesFromDB()
+		}
 
 		if err != nil {
 			fmt.Println("[ERROR] GetAnnonces:", err)
@@ -56,14 +73,25 @@ func GetAnnonces(w http.ResponseWriter, r *http.Request) {
 
 	offset := (page - 1) * limit
 
-	total, err := db.CountAnnoncesFromDB()
+	var total int
+	var err error
+	if statusFilter != nil {
+		total, err = db.CountAnnoncesByStatusFromDB(*statusFilter)
+	} else {
+		total, err = db.CountAnnoncesFromDB()
+	}
 	if err != nil {
 		fmt.Println("[ERROR] GetAnnonces count:", err)
 		sendError(w, "Unable to fetch annonces", http.StatusInternalServerError)
 		return
 	}
 
-	annonces, err := db.GetAnnoncesPageFromDB(limit, offset)
+	var annonces []models.Annonce
+	if statusFilter != nil {
+		annonces, err = db.GetAnnoncesPageByStatusFromDB(limit, offset, *statusFilter)
+	} else {
+		annonces, err = db.GetAnnoncesPageFromDB(limit, offset)
+	}
 	if err != nil {
 		fmt.Println("[ERROR] GetAnnonces page:", err)
 		sendError(w, "Unable to fetch annonces", http.StatusInternalServerError)
@@ -142,4 +170,104 @@ func CreateAnnonce(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(annonceDto)
+}
+
+func UpdateAnnonce(w http.ResponseWriter, r *http.Request) {
+
+	idStr := r.URL.Query().Get("id")
+	if idStr == "" {
+		path := strings.TrimPrefix(r.URL.Path, "/annonces/")
+		if path != "" {
+			parts := strings.Split(path, "/")
+			if len(parts) > 0 {
+				idStr = parts[0]
+			}
+		}
+	}
+	if idStr == "" {
+		sendError(w, "Annonce ID is required", http.StatusBadRequest)
+		return
+	}
+
+	var annonceDto models.Annonce
+	err := json.NewDecoder(r.Body).Decode(&annonceDto)
+
+	if err != nil {
+		fmt.Println("[ERROR] UpdateAnnonce decode:", err)
+		sendError(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	if annonceDto.Title == "" && annonceDto.Description == "" && annonceDto.UserID == uuid.Nil && annonceDto.Price == 0 {
+		updated, updateErr := db.UpdateAnnonceStatusInDB(idStr, annonceDto.Status)
+		if updateErr != nil {
+			fmt.Println("[ERROR] UpdateAnnonce status DB:", updateErr)
+			sendError(w, "Unable to update annonce", http.StatusInternalServerError)
+			return
+		}
+		if !updated {
+			sendError(w, "Annonce not available", http.StatusConflict)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	validationErrors := ValidateAnnonceDto(annonceDto)
+
+	if len(validationErrors) > 0 {
+		fmt.Println("[ERROR] UpdateAnnonce validation:", validationErrors)
+		sendError(w, "Validation errors: "+fmt.Sprintf("%v", validationErrors), http.StatusBadRequest)
+		return
+	}
+
+	err = db.UpdateAnnonceInDB(idStr, annonceDto)
+
+	if err != nil {
+		fmt.Println("[ERROR] UpdateAnnonce DB:", err)
+		sendError(w, "Unable to update annonce", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusNoContent)
+
+}
+
+func GetAnnonceByID(w http.ResponseWriter, r *http.Request) {
+	idStr := r.URL.Query().Get("id")
+
+	if idStr == "" {
+		path := strings.TrimPrefix(r.URL.Path, "/annonces/")
+		if path != "" {
+			parts := strings.Split(path, "/")
+			if len(parts) > 0 {
+				idStr = parts[0]
+			}
+		}
+	}
+
+	if idStr == "" || idStr == "images" {
+		sendError(w, "Annonce ID is required", http.StatusBadRequest)
+		return
+	}
+
+	annonce, err := db.GetAnnonceByIDFromDB(idStr)
+
+	if err != nil {
+		fmt.Println("[ERROR] GetAnnonceByID DB:", err)
+		sendError(w, "Unable to fetch annonce", http.StatusInternalServerError)
+		return
+	}
+
+	if annonce == nil {
+		sendError(w, "Annonce not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(annonce)
+
 }

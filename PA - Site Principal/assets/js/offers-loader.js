@@ -42,7 +42,7 @@
                 totalPages = total > 0 ? Math.ceil(total / pageSize) : 1;
 
                 if (!offers || offers.length === 0) {
-                    container.innerHTML = '<p>No offers available at the moment.</p>';
+                    container.innerHTML = '<p class="offers-empty">No offers available at the moment.</p>';
                     if (pagination) {
                         pagination.innerHTML = '';
                     }
@@ -167,6 +167,10 @@
                     '<div class="skeleton skeleton-description"></div>' +
                     '<div class="skeleton skeleton-description"></div>' +
                     '<div class="skeleton skeleton-price"></div>' +
+                    '<div class="skeleton-buttons">' +
+                        '<div class="skeleton skeleton-button"></div>' +
+                        '<div class="skeleton skeleton-button"></div>' +
+                    '</div>' +
                 '</div>'
             );
         }
@@ -216,6 +220,39 @@
             price.textContent = offer.price;
         }
         offerDiv.appendChild(price);
+
+        const buttonsWrapper = document.createElement('div');
+        buttonsWrapper.className = 'service-buttons';
+
+        const actionButton = document.createElement('button');
+        actionButton.type = 'button';
+        actionButton.className = 'offer-action-btn btn-primary';
+        actionButton.textContent = offer.priceValue === 0 ? 'Get Now' : 'Buy Now';
+        const orderLink = offer.id ? `order?product_uuid=${encodeURIComponent(offer.id)}` : '';
+        if (orderLink) {
+            actionButton.addEventListener('click', function() {
+                window.location.href = orderLink;
+            });
+        } else {
+            actionButton.disabled = true;
+        }
+        buttonsWrapper.appendChild(actionButton);
+
+        const detailsButton = document.createElement('button');
+        detailsButton.type = 'button';
+        detailsButton.className = 'offer-details-btn btn-secondary';
+        detailsButton.textContent = 'View Details';
+        const detailsLink = offer.id ? `offer?uuid=${encodeURIComponent(offer.id)}` : '';
+        if (detailsLink) {
+            detailsButton.addEventListener('click', function() {
+                window.location.href = detailsLink;
+            });
+        } else {
+            detailsButton.disabled = true;
+        }
+        buttonsWrapper.appendChild(detailsButton);
+
+        offerDiv.appendChild(buttonsWrapper);
 
         return offerDiv;
     }

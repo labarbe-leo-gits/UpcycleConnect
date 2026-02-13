@@ -343,6 +343,19 @@ header nav {
   padding: 0;
 }
 
+.offers-empty {
+  grid-column: 1 / -1;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 26px 24px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 15px;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.08);
+}
+
 .service-item {
   background: white;
   border-radius: 12px;
@@ -918,6 +931,10 @@ header nav {
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
+}
+
+.offer-title-wrapper {
+  margin-top: 20px;
 }
 
 .service-details .service-header h1 {

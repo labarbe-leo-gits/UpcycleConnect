@@ -83,7 +83,12 @@ func main() {
 	registerRoute("GET", "/annonces", "List all annonces", app.GetAnnonces)
 	registerRoute("GET", "/annonces/{id}/images", "List all images associated with an annonce", app.GetAnnonceImages)
 	registerRoute("POST", "/annonces", "Create a new annonce", app.CreateAnnonce)
+	registerRoute("GET", "/annonces/{id}", "Get a specific annonce by its UUID", app.GetAnnonceByID)
 	registerRoute("POST", "/annonces/{id}/images", "Upload an image for a specific annonce", app.UploadAnnonceImage)
+	registerRoute("PATCH", "/annonces/{id}", "Update an existing annonce", app.UpdateAnnonce)
+	registerRoute("GET", "/notifications", "List all notifications in the system", app.GetNotifications)
+
+	registerRoute("GET", "/docs", "Show the API documentation", notFoundHandler)
 
 	http.HandleFunc("/", notFoundHandler)
 

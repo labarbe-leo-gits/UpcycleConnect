@@ -28,7 +28,7 @@ if ($limit > 50) {
     $limit = 50;
 }
 
-$annoncesResponse = askAPI('/annonces?page=' . $page . '&limit=' . $limit, 'GET');
+$annoncesResponse = askAPI('/annonces?page=' . $page . '&limit=' . $limit . '&status=0', 'GET');
 $annoncesDecoded = json_decode($annoncesResponse, true);
 
 if (isset($annoncesDecoded['error'])) {
@@ -65,6 +65,11 @@ foreach ($annoncesList as $annonce) {
         }
     }
 
+    $status = intval($annonce['status'] ?? 0);
+    if ($status !== 0) {
+        continue;
+    }
+
     $price = floatval($annonce['price'] ?? 0);
     $priceDisplay = ($price == 0) ? 'Free' : '€ ' . number_format($price, 2);
     $priceClass = ($price == 0) ? 'free' : '';
@@ -76,7 +81,8 @@ foreach ($annoncesList as $annonce) {
         'price' => $priceDisplay,
         'priceValue' => $price,
         'priceClass' => $priceClass,
-        'image' => $imagePath
+        'image' => $imagePath,
+        'status' => $status
     ];
 }
 

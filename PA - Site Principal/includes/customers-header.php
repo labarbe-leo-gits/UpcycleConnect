@@ -25,6 +25,10 @@ trackLastPage();
             <h1>Customer Portal</h1>
         </div>
         <nav>
+            <div class="btn-wrapper" onClick="window.location.href='../common/community'">
+                <i class="fa-solid fa-users"></i>
+                <p>Community</p>
+            </div>
             <div class="nav-dropdown">
                 <a class="btn-wrapper" href="offers">
                     <i class="fa-solid fa-box-open"></i>
