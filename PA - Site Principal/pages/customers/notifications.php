@@ -67,40 +67,37 @@ if (empty($notificationsError) && !empty($notifications)) {
 						return empty($notification['read']);
 					}));
 				?>
-				<?php if (empty($unreadNotifications)): ?>
-					<p class="balance-note" id="notifications-empty">You have no notifications yet.</p>
-				<?php else: ?>
-					<div class="notifications-list" id="notifications-list">
-						<?php foreach ($unreadNotifications as $notification): ?>
-							<?php
-								$notificationId = $notification['id'] ?? '';
-								$message = $notification['message'] ?? '';
-								$createdAt = $notification['created_at'] ?? '';
-								$annonceId = $notification['annonce_id'] ?? '';
-								$annonceTitle = $annonceTitles[$annonceId] ?? '';
-								$formattedDate = '';
-								if (!empty($createdAt)) {
-									$timestamp = strtotime($createdAt);
-									if ($timestamp !== false) {
-										$formattedDate = date('d/m/Y H:i', $timestamp);
-									}
+				<p class="balance-note" id="notifications-empty" style="display: <?php echo empty($unreadNotifications) ? 'block' : 'none'; ?>;">You have no notifications yet.</p>
+				<div class="notifications-list" id="notifications-list">
+					<?php foreach ($unreadNotifications as $notification): ?>
+						<?php
+							$notificationId = $notification['id'] ?? '';
+							$message = $notification['message'] ?? '';
+							$createdAt = $notification['created_at'] ?? '';
+							$annonceId = $notification['annonce_id'] ?? '';
+							$annonceTitle = $annonceTitles[$annonceId] ?? '';
+							$formattedDate = '';
+							if (!empty($createdAt)) {
+								$timestamp = strtotime($createdAt);
+								if ($timestamp !== false) {
+									$formattedDate = date('d/m/Y H:i', $timestamp);
 								}
-							?>
-							<div class="notification-item is-unread" data-notification-id="<?php echo htmlspecialchars($notificationId); ?>">
-								<?php if ($annonceTitle !== ''): ?>
-									<div class="notification-title">Annonce: <?php echo htmlspecialchars($annonceTitle); ?></div>
+							}
+						?>
+						<div class="notification-item is-unread" data-notification-id="<?php echo htmlspecialchars($notificationId); ?>">
+							<?php if ($annonceTitle !== ''): ?>
+								<div class="notification-title">Annonce: <?php echo htmlspecialchars($annonceTitle); ?></div>
+							<?php endif; ?>
+							<div class="notification-message"><?php echo htmlspecialchars($message); ?></div>
+							<div class="notification-footer">
+								<?php if ($formattedDate): ?>
+									<div class="notification-date"><?php echo htmlspecialchars($formattedDate); ?></div>
 								<?php endif; ?>
-								<div class="notification-message"><?php echo htmlspecialchars($message); ?></div>
-								<div class="notification-footer">
-									<?php if ($formattedDate): ?>
-										<div class="notification-date"><?php echo htmlspecialchars($formattedDate); ?></div>
-									<?php endif; ?>
-									<button class="btn-secondary notif-read-btn" type="button" data-notification-id="<?php echo htmlspecialchars($notificationId); ?>"><i class="fa-solid fa-envelope-circle-check"></i> Mark as read</button>
-								</div>
+								<button class="btn-secondary notif-read-btn" type="button" data-notification-id="<?php echo htmlspecialchars($notificationId); ?>"><i class="fa-solid fa-envelope-circle-check"></i> Mark as read</button>
 							</div>
-						<?php endforeach; ?>
-					</div>
-				<?php endif; ?>
+						</div>
+					<?php endforeach; ?>
+				</div>
 			<?php endif; ?>
 		</div>
 	</div>

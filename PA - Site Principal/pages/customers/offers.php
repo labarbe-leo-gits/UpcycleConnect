@@ -45,7 +45,13 @@ $user = getLoggedInUser();
 				<textarea id="offer-description" name="offer-description" required></textarea>
 			</div>
 			<div class="form-group">
-				<label for="offer-price">Price:</label>
+				<label for="offer-price">
+					Price:
+					<span class="help-icon" title="Put 0 to mark the offer as free. You'll receive 85% of the price (15% platform fee).">
+						<i class="fa-solid fa-circle-question"></i>
+						<span class="help-tooltip">Put 0 to mark the offer as free. You'll receive 85% of the price (15% platform fee).</span>
+					</span>
+				</label>
 				<input type="number" id="offer-price" name="offer-price" required>
 			</div>
 			<div class="form-group">

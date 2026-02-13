@@ -14,6 +14,8 @@
         var emptyState = document.getElementById('notifications-empty');
         var readUrl = root ? root.getAttribute('data-read-url') : '';
         var badge = document.getElementById('notifications-count');
+        var pollUrl = 'notifications-poll';
+        var lastUnreadCount = list ? list.children.length : 0;
 
         if (!root || !readUrl) {
             return;
@@ -37,8 +39,9 @@
                 item.parentNode.removeChild(item);
             }
 
-            if (list && list.children.length === 0 && emptyState) {
-                emptyState.style.display = 'block';
+            if (list && emptyState) {
+                emptyState.style.display = list.children.length === 0 ? 'block' : 'none';
+                lastUnreadCount = list.children.length;
             }
 
             target.disabled = true;
@@ -83,6 +86,11 @@
                         return;
                     }
 
+                    if (list && emptyState) {
+                        emptyState.style.display = list.children.length === 0 ? 'block' : 'none';
+                        lastUnreadCount = list.children.length;
+                    }
+
                     if (badge) {
                         var currentCount = parseInt(badge.textContent || '0', 10);
                         var nextCount = Number.isFinite(currentCount) ? Math.max(currentCount - 1, 0) : 0;
@@ -94,12 +102,39 @@
                     if (placeholder && list) {
                         list.appendChild(placeholder);
                     }
-                    if (list && list.children.length > 0 && emptyState) {
-                        emptyState.style.display = 'none';
+                    if (list && emptyState) {
+                        emptyState.style.display = list.children.length === 0 ? 'block' : 'none';
+                        lastUnreadCount = list.children.length;
                     }
                     target.disabled = false;
                 });
         });
+
+        setInterval(function() {
+            fetch(pollUrl, {
+                cache: 'no-store',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+                .then(function(response) {
+                    if (!response.ok) {
+                        return null;
+                    }
+                    return response.json();
+                })
+                .then(function(data) {
+                    if (!Array.isArray(data)) {
+                        return;
+                    }
+                    var unreadCount = data.filter(function(item) { return !item.read; }).length;
+                    if (unreadCount > lastUnreadCount) {
+                        window.location.reload();
+                    }
+                    lastUnreadCount = unreadCount;
+                })
+                .catch(function() {});
+        }, 5000);
     }
 
     window.addEventListener('load', function() {

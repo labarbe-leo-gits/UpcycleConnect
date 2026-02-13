@@ -4,6 +4,7 @@ import (
 	"API/models"
 	"database/sql"
 	"fmt"
+
 	"github.com/google/uuid"
 )
 
@@ -48,12 +49,12 @@ func GetAnnonceImagesFromDB(annonceID uuid.UUID) ([]models.Image, error) {
 	return images, nil
 }
 
-func CreateAnnonceImageInDB(image models.Image) (error) {
+func CreateAnnonceImageInDB(image models.Image) error {
 
 	newID := uuid.New()
 	currentTime := getCurrentTime()
 
-	_, err := Db.Exec("INSERT INTO images (id, annonce_id, file_name, created_at) VALUES (?, ?, ?, ?)", newID, image.ProductID, image.FileName, currentTime)
+	_, err := Db.Exec("INSERT INTO images (id, annonce_id, file_name, created_at) VALUES (?, ?, ?, ?)", newID, image.AnnonceID, image.FileName, currentTime)
 	if err != nil {
 		return fmt.Errorf("createAnnonceImage package db : %s", err.Error())
 	}

@@ -182,3 +182,15 @@ CREATE TABLE IF NOT EXISTS payouts (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (payment_request_id) REFERENCES paymentsRequests(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS reports (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    reporter_id CHAR(36) NOT NULL,
+    reported_user_id CHAR(36),
+    reported_annonce_id CHAR(36),
+    reason TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (reporter_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (reported_user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (reported_annonce_id) REFERENCES annonces(id) ON DELETE CASCADE
+);

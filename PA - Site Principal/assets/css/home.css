@@ -161,6 +161,27 @@
   filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.25));
 }
 
+.by-petisign-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 8px 16px;
+  border-radius: 999px;
+  margin: 16px auto;
+  width: fit-content;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  font-size: 13px;
+  font-weight: 600;
+  color: #065f46;
+}
+
+.by-petisign-badge .petisign-logo {
+  height: 24px;
+  width: auto;
+}
+
 @media (max-width: 960px) {
   .hero-landing {
     text-align: center;

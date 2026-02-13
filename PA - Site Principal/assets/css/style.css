@@ -327,6 +327,7 @@ button[type="submit"]:active,
   background-color: #fef2f2;
   border: 2px solid #fecaca;
   text-align: center;
+  grid-column: 1 / -1;
 }
 
 .error-message ul {
@@ -580,4 +581,9 @@ form a:hover {
   .site-footer {
     padding: 40px 16px;
   }
+}
+
+.logo {
+  height: 80px;
+  width: auto;
 }

@@ -18,6 +18,7 @@ trackLastPage();
     <link rel="stylesheet" href="../../assets/css/customers.css">
     <link rel="stylesheet" href="../../assets/css/about.css">
     <link rel="stylesheet" href="../../assets/css/header.css">
+    <link rel="icon" type="image/png" href="../../assets/img/brand/UpcycleDiminutif.png">
     <?php if (isset($title) && $title === 'About'): ?>
         <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
         <script src="https://unpkg.com/leaflet/dist/leaflet.js" defer></script>

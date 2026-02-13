@@ -271,4 +271,9 @@
         div.textContent = text;
         return div.innerHTML;
     }
+
+    window.loadOffers = function() {
+        currentPage = 1;
+        requestPage(1, true);
+    };
 })();

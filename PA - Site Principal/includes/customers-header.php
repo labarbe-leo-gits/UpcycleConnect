@@ -4,6 +4,8 @@ require_once '../../config/db.php';
 require_once '../../includes/auth.php';
 requireUserType(1);
 trackLastPage();
+
+$user = getLoggedInUser();
 ?>
 
 <!DOCTYPE html>
@@ -18,6 +20,7 @@ trackLastPage();
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="../../assets/css/style.css">
     <link rel="stylesheet" href="../../assets/css/customers.css">
+    <link rel="icon" type="image/png" href="../../assets/img/brand/UpcycleDiminutif.png">
 </head>
 <body>
     <header data-api-base="<?php echo htmlspecialchars($API_URL ?? ''); ?>" data-user-id="<?php echo htmlspecialchars($user['id'] ?? ''); ?>">
@@ -44,8 +47,8 @@ trackLastPage();
                 <p>Main Site</p>
             </div>
 
-            <?php $user = getLoggedInUser();
-                  $profileUrl = 'profile';
+            <?php
+                $profileUrl = 'profile';
             ?>
             <div class="nav-dropdown profile-dropdown">
                 <a class="btn-wrapper profile-link" href="<?= $profileUrl ?>">

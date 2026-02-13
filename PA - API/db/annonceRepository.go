@@ -295,10 +295,9 @@ func CountAnnoncesByStatusFromDB(status int) (int, error) {
 
 func CreateAnnonceInDB(annonce models.Annonce) error {
 
-	newID := uuid.New()
 	currentTime := getCurrentTime()
 
-	_, err := Db.Exec("INSERT INTO annonces (id, user_id, title, description, price, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)", newID.String(), annonce.UserID.String(), annonce.Title, annonce.Description, annonce.Price, currentTime, currentTime)
+	_, err := Db.Exec("INSERT INTO annonces (id, user_id, title, description, price, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)", annonce.ID.String(), annonce.UserID.String(), annonce.Title, annonce.Description, annonce.Price, currentTime, currentTime)
 
 	if err != nil {
 		return fmt.Errorf("createAnnonce package db : %s", err.Error())

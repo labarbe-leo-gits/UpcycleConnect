@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/google/uuid"
 )
@@ -41,8 +42,8 @@ func ValidateImageDto(imageDto models.Image) []string {
 		validationErrors = append(validationErrors, "FileName is required")
 	}
 
-	if imageDto.EventID == "" && imageDto.ProductID == "" {
-		validationErrors = append(validationErrors, "At least one of EventID, ProductID, or AnnonceID must be provided")
+	if imageDto.AnnonceID == "" {
+		validationErrors = append(validationErrors, "AnnonceID is required")
 	}
 
 	return validationErrors
@@ -57,6 +58,13 @@ func UploadAnnonceImage(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("[ERROR] UploadAnnonceImage decode:", err)
 		sendError(w, "Invalid request payload", http.StatusBadRequest)
 		return
+	}
+
+	if imageDto.AnnonceID == "" {
+		pathSegments := strings.Split(strings.TrimPrefix(r.URL.Path, "/"), "/")
+		if len(pathSegments) >= 2 {
+			imageDto.AnnonceID = pathSegments[1]
+		}
 	}
 
 	validationErrors := ValidateImageDto(imageDto)

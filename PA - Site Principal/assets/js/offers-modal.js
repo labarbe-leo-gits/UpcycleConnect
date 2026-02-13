@@ -213,4 +213,155 @@
             setFiles(droppedFiles);
         });
     }
+
+    var form = document.getElementById('add-offer-form');
+    if (form) {
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            var titleInput = document.getElementById('offer-title');
+            var descInput = document.getElementById('offer-description');
+            var priceInput = document.getElementById('offer-price');
+            var submitButton = form.querySelector('button[type="submit"]');
+
+            var title = titleInput.value.trim();
+            var description = descInput.value.trim();
+            var price = priceInput.value;
+
+            var errors = [];
+            if (!title) {
+                errors.push('Title is required');
+            } else if (title.length > 60) {
+                errors.push('Title must be 60 characters or less');
+            }
+
+            if (!description) {
+                errors.push('Description is required');
+            } else if (description.length > 1000) {
+                errors.push('Description must be 1000 characters or less');
+            }
+
+            if (!price || isNaN(price) || parseFloat(price) < 0) {
+                errors.push('Price must be a valid positive number');
+            }
+
+            if (!selectedFiles.length) {
+                errors.push('Please add at least one image');
+            } else if (selectedFiles.length > 10) {
+                errors.push('Maximum 10 images allowed');
+            }
+
+            submitButton.disabled = true;
+            var originalText = submitButton.innerHTML;
+            submitButton.innerHTML = '<i class="fa-solid fa-spinner"></i> Creating...';
+
+            fetch('create-annonce', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    title: title,
+                    description: description,
+                    price: parseFloat(price),
+                    user_id: window.currentUserId
+                })
+            })
+            .then(function(response) {
+                return response.text().then(function(text) {
+                    try {
+                        return JSON.parse(text);
+                    } catch (e) {
+                        console.log('Raw response:', text);
+                        throw new Error('Invalid response: ' + text.substring(0, 200));
+                    }
+                });
+            })
+            .then(function(result) {
+                if (result.error) {
+                    throw new Error(result.error);
+                }
+                return result;
+            })
+            .then(function(annonce) {
+                var imagePromises = selectedFiles.map(function(file) {
+                    return uploadImage(file, annonce.id);
+                });
+                return Promise.allSettled(imagePromises).then(function(results) {
+                    results.forEach(function(result, index) {
+                        if (result.status === 'rejected') {
+                        }
+                    });
+                    return annonce;
+                });
+            })
+            .then(function() {
+                form.reset();
+                selectedFiles = [];
+                syncFileInput();
+                renderPreview();
+                closeModal();
+                if (window.loadOffers) {
+                    window.loadOffers();
+                }
+            })
+            .catch(function(error) {
+                if (window.loadOffers) {
+                    window.loadOffers();
+                }
+            })
+            .finally(function() {
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalText;
+            });
+        });
+    }
+
+    function uploadImage(file, annonceId) {
+        return new Promise(function(resolve, reject) {
+            var reader = new FileReader();
+
+            reader.onload = function(event) {
+                var base64String = event.target.result.split(',')[1];
+
+                fetch('create-image?annonce_id=' + encodeURIComponent(annonceId), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        annonce_id: annonceId,
+                        file_name: file.name,
+                        file_data: base64String
+                    })
+                })
+                .then(function(response) {
+                    return response.text().then(function(text) {
+                        try {
+                            return JSON.parse(text);
+                        } catch (e) {
+                            throw new Error('Invalid response: ' + text.substring(0, 200));
+                        }
+                    });
+                })
+                .then(function(result) {
+                    if (result.error) {
+                        throw new Error(result.error);
+                    }
+                    resolve();
+                })
+                .catch(function(error) {
+                    reject(error);
+                });
+            };
+
+            reader.onerror = function() {
+                reject(new Error('Failed to read file: ' + file.name));
+            };
+
+            reader.readAsDataURL(file);
+        });
+    }
 })();

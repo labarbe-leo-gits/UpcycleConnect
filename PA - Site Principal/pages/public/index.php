@@ -7,9 +7,15 @@ include_once '../../includes/header.php';
 	<div class="hero-inner">
 		<section class="hero-landing">
 			<div class="hero-content">
-				<h1>Welcome to UpcycleConnect</h1>
+				<div class="header-text">
+					<h1>Welcome to</h1>
+					<img src="../../assets/img/brand/UpcyclePetiSignVersion.png" alt="UpcycleConnect logo" class="logo">
+					<div class="by-petisign-badge">
+						<img src="../../assets/img/brand/petisign.png" alt="PétiSign logo" class="petisign-logo">
+						<span>By PétiSign</span>
+					</div>
+				</div>
 				<p class="lead">Connecting people, artisans and businesses to give new life to used materials - simple, local, and sustainable.</p>
-
 				<div class="hero-ctas">
 					<a class="btn-cta" href="about">Get to know us</a>
 					<a class="btn-cta btn-outline" href="contact">Contact us</a>

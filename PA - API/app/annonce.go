@@ -159,6 +159,8 @@ func CreateAnnonce(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	annonceDto.ID = uuid.New()
+
 	err = db.CreateAnnonceInDB(annonceDto)
 
 	if err != nil {
