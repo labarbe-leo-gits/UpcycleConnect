@@ -87,6 +87,18 @@ func main() {
 	registerRoute("POST", "/annonces/{id}/images", "Upload an image for a specific annonce", app.UploadAnnonceImage)
 	registerRoute("PATCH", "/annonces/{id}", "Update an existing annonce", app.UpdateAnnonce)
 	registerRoute("GET", "/notifications", "List all notifications in the system", app.GetNotifications)
+	registerRoute("POST", "/notifications", "Create a new notification", app.CreateNotification)
+	registerRoute("GET", "/users/{id}/notifications", "List all notifications for a specific user by their UUID", app.GetNotificationsByUserID)
+	registerRoute("GET", "/payment-requests", "List all payment requests in the system", app.GetPaymentRequests)
+	registerRoute("POST", "/payment-requests", "Create a new payment request", app.CreatePaymentRequest)
+	registerRoute("GET", "/payouts", "List all payouts in the system", app.GetPayouts)
+	registerRoute("POST", "/payouts", "Create a new payout", app.CreatePayout)
+	registerRoute("GET", "/users/{id}/payouts", "List use's payout", app.GetPayoutsByUserID)
+	registerRoute("GET", "/banking-details", "List all banking details in the system", app.GetBankingDetails)
+	registerRoute("GET", "/users/{id}/banking-details", "Get banking details for a specific user by their UUID", app.GetBankingDetailsByUserID)
+	registerRoute("POST", "/banking-details", "Create banking details for a user", app.CreateBankingDetails)
+	registerRoute("GET", "/users/{id}/annonces", "List all annonces for a specific user by their UUID", app.GetAnnoncesByUserID)
+	registerRoute("PATCH", "/notifications/{id}/read", "Mark a notification as read by its UUID", app.MarkNotificationAsRead)
 
 	registerRoute("GET", "/docs", "Show the API documentation", notFoundHandler)
 

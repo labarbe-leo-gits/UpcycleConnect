@@ -6,7 +6,9 @@ CREATE TABLE IF NOT EXISTS users (
     first_name VARCHAR(60) NOT NULL,
     last_name VARCHAR(60) NOT NULL,
     company_name VARCHAR(255) NULL,
+    stripe_account_id VARCHAR(255) NULL,
     username VARCHAR(255) NOT NULL UNIQUE,
+    balance DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
     user_type INT NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
@@ -142,4 +144,41 @@ CREATE TABLE IF NOT EXISTS ban (
     banned_by CHAR(36) NOT NULL,
     duration_days INT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS bankingDetails (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    user_id CHAR(36) NOT NULL,
+    rib VARCHAR(255) NOT NULL,
+    iban VARCHAR(255) NOT NULL,
+    bic VARCHAR(11) NOT NULL,
+    account_holder_name VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS paymentsRequests (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    user_id CHAR(36) NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    status INT NOT NULL DEFAULT 0,
+    banking_details_id CHAR(36) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (banking_details_id) REFERENCES bankingDetails(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS payouts (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    user_id CHAR(36) NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    status INT NOT NULL DEFAULT 0,
+    payment_request_id CHAR(36) NOT NULL,
+    done_by CHAR(36) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (payment_request_id) REFERENCES paymentsRequests(id) ON DELETE CASCADE
 );

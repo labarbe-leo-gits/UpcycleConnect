@@ -62,6 +62,11 @@ if ($productType === 'offer') {
         include_once '../../includes/footer.php';
         exit;
     }
+
+    if (!empty($offer['user_id']) && !empty($user['id']) && $offer['user_id'] === $user['id']) {
+        header('Location: offers');
+        exit;
+    }
 }
 
 $productName = $service ? ($service['name'] ?? 'Unnamed Service') : ($offer['title'] ?? 'Untitled offer');

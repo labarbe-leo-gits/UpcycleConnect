@@ -9,7 +9,10 @@ $user = getLoggedInUser();
 <div class="container">
 
 	<div class="offers-header">
-		<button class="add-offer-button" id="add-offer">Add Offer</button>
+		<button class="add-offer-button" id="add-offer">
+			<i class="fa-solid fa-plus"></i>
+			Add Offer
+		</button>
 	</div>
 
 	<div class="services-list" id="offers-container">
@@ -61,13 +64,19 @@ $user = getLoggedInUser();
 					<div class="pictures-preview" id="pictures-preview"></div>
 				</div>
 			</div>
-			<button type="submit">Add Offer</button>
+			<button type="submit">
+				<i class="fa-solid fa-plus"></i>
+				Add Offer
+			</button>
 		</form>
 	</div>
 </div>
 
 <script src="../../assets/js/offers-loader.js"></script>
 <script src="../../assets/js/offers-modal.js"></script>
+<script>
+	window.currentUserId = <?php echo json_encode($user['id'] ?? ''); ?>;
+</script>
 
 <?php
 include_once '../../includes/footer.php';

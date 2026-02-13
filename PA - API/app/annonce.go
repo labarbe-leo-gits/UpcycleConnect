@@ -271,3 +271,38 @@ func GetAnnonceByID(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(annonce)
 
 }
+
+func GetAnnoncesByUserID(w http.ResponseWriter, r *http.Request) {
+
+	idStr := strings.TrimPrefix(r.URL.Path, "/users/")
+
+	idStr = strings.TrimSuffix(idStr, "/annonces")
+
+	userID, err := uuid.Parse(idStr)
+
+	if err != nil {
+		fmt.Println("[ERROR] GetAnnoncesByUserID parse UUID:", err)
+		sendError(w, "Invalid user ID format", http.StatusBadRequest)
+		return
+	}
+
+	annonces, err := db.GetAnnoncesByUserIDFromDB(userID.String())
+
+	if err != nil {
+		fmt.Println("[ERROR] GetAnnoncesByUserID DB:", err)
+		sendError(w, "Unable to fetch annonces for user", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	jsonResponse, err := json.Marshal(annonces)
+
+	if err != nil {
+		fmt.Println("[ERROR] GetAnnoncesByUserID marshal:", err)
+		sendError(w, "Unable to process response", http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Fprintf(w, "%s", jsonResponse)
+
+}

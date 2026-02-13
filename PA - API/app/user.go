@@ -260,3 +260,28 @@ func GetUserByEmail(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(user)
 }
+
+func GetNotificationsByUserID(w http.ResponseWriter, r *http.Request) {
+
+	idStr := strings.TrimPrefix(r.URL.Path, "/users/")
+	idStr = strings.TrimSuffix(idStr, "/notifications")
+	userID, err := uuid.Parse(idStr)
+	if err != nil {
+		fmt.Println("[ERROR] GetNotificationsByUserID parse UUID:", err)
+		sendError(w, "Invalid user ID format", http.StatusBadRequest)
+		return
+	}
+
+	notifications, err := db.GetNotificationsByUserIDFromDB(userID)
+
+	if err != nil {
+		fmt.Println("[ERROR] GetNotificationsByUserID:", err)
+		sendError(w, "Unable to fetch notifications for user", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(notifications)
+
+}

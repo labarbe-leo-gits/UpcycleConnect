@@ -20,7 +20,7 @@ trackLastPage();
     <link rel="stylesheet" href="../../assets/css/customers.css">
 </head>
 <body>
-    <header>
+    <header data-api-base="<?php echo htmlspecialchars($API_URL ?? ''); ?>" data-user-id="<?php echo htmlspecialchars($user['id'] ?? ''); ?>">
         <div class="left">
             <h1>Customer Portal</h1>
         </div>
@@ -58,6 +58,7 @@ trackLastPage();
                 <div class="dropdown-menu">
                     <a href="tips"><i class="fa-solid fa-lightbulb"></i>Tips</a>
                     <a href="<?= $profileUrl ?>"><i class="fa-solid fa-user"></i>Profile</a>
+                    <a href="notifications"><i class="fa-solid fa-bell"></i></i>Notifications <span class="notif-badge" id="notifications-count" hidden>0</span></a>
                     <a href="planning"><i class="fa-solid fa-calendar-days"></i>Planning</a>
                     <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="fa-solid fa-right-from-bracket"></i>Logout</a>
                 </div>
@@ -68,4 +69,6 @@ trackLastPage();
     <form id="logout-form" action="logout" method="POST" class="hidden-form">
         <input type="hidden" name="logout" value="1">
     </form>
+
+    <script src="../../assets/js/notifications-poll.js"></script>
     

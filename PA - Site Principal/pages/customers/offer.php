@@ -44,6 +44,7 @@ if (!$offer) {
 
 $price = floatval($offer['price'] ?? 0);
 $priceDisplay = ($price == 0) ? "Free" : "€ " . number_format($price, 2);
+$isOwnOffer = !empty($offer['user_id']) && !empty($user['id']) && $offer['user_id'] === $user['id'];
 
 $creatorName = null;
 if (isset($offer['user_id']) && !empty($offer['user_id'])) {
@@ -169,9 +170,15 @@ if (!empty($offer['created_at'])) {
 			</div>
 
 			<div class="service-actions">
-				<button class="btn-primary" onclick="handlePurchase()">
-					<?php echo $price > 0 ? 'Buy Now' : 'Get Now'; ?>
-				</button>
+				<?php if ($isOwnOffer): ?>
+					<button class="btn-primary" type="button" disabled>
+						Your Offer
+					</button>
+				<?php else: ?>
+					<button class="btn-primary" onclick="handlePurchase()">
+						<?php echo $price > 0 ? 'Buy Now' : 'Get Now'; ?>
+					</button>
+				<?php endif; ?>
 				<a href="offers" class="btn-secondary">Back to Offers</a>
 			</div>
 		</div>

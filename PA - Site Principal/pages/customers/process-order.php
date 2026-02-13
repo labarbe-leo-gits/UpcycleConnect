@@ -68,6 +68,11 @@ if ($productType === 'offer') {
         header('Location: order-cancel?product_uuid=' . urlencode($productUuid) . '&reason=' . urlencode('Offer is no longer available.'));
         exit;
     }
+
+    if (!empty($offer['user_id']) && !empty($_SESSION['user_id']) && $offer['user_id'] === $_SESSION['user_id']) {
+        header('Location: order-cancel?product_uuid=' . urlencode($productUuid) . '&reason=' . urlencode('You cannot purchase your own offer.'));
+        exit;
+    }
 }
 
 $maxParticipants = null;

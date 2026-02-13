@@ -76,6 +76,7 @@ foreach ($annoncesList as $annonce) {
 
     $processedAnnonces[] = [
         'id' => $annonceId,
+        'user_id' => $annonce['user_id'] ?? '',
         'title' => $annonce['title'] ?? 'Untitled offer',
         'description' => $annonce['description'] ?? '',
         'price' => $priceDisplay,

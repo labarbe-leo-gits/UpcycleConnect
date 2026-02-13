@@ -8,6 +8,7 @@ type User struct {
 	ID             uuid.UUID `json:"id" gorm:"type:uuid;primaryKey"`
 	FirstName      string    `json:"first_name"`
 	LastName       string    `json:"last_name"`
+	Balance		   float64   `json:"balance"`
 	CompanyName    string    `json:"company_name,omitempty"`
 	UserType       int       `json:"user_type"`
 	Username       string    `json:"username" gorm:"unique;not null"`

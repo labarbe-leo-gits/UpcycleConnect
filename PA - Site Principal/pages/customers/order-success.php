@@ -171,6 +171,23 @@ if ($paymentVerified) {
         if ($orderSaved && $productType === 'offer') {
             $markPayload = json_encode(['status' => 1]);
             askAPI('/annonces/' . $productUuid, 'PATCH', $markPayload);
+
+            $ownerId = $offer['user_id'] ?? '';
+            if (!empty($ownerId) && $ownerId !== ($user['id'] ?? '')) {
+                $buyerName = trim(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? ''));
+                if ($buyerName === '') {
+                    $buyerName = $user['username'] ?? 'A customer';
+                }
+                $annonceName = $offer['title'] ?? 'your annonce';
+                $creditedAmount = number_format($price * 0.85, 2);
+                $message = $buyerName . ' bought ' . $annonceName . '! Your balance was credited ' . $creditedAmount . '€ (after 15% of platform fees). You will be able to withdraw it from your profile.';
+                $notificationPayload = json_encode([
+                    'annonce_id' => $productUuid,
+                    'user_id' => $ownerId,
+                    'message' => $message
+                ]);
+                askAPI('/notifications', 'POST', $notificationPayload);
+            }
         }
     }
 }

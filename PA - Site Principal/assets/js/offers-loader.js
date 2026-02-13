@@ -227,14 +227,23 @@
         const actionButton = document.createElement('button');
         actionButton.type = 'button';
         actionButton.className = 'offer-action-btn btn-primary';
-        actionButton.textContent = offer.priceValue === 0 ? 'Get Now' : 'Buy Now';
-        const orderLink = offer.id ? `order?product_uuid=${encodeURIComponent(offer.id)}` : '';
-        if (orderLink) {
-            actionButton.addEventListener('click', function() {
-                window.location.href = orderLink;
-            });
-        } else {
+
+        const currentUserId = typeof window !== 'undefined' ? window.currentUserId : '';
+        const isOwner = currentUserId && offer.user_id && offer.user_id === currentUserId;
+
+        if (isOwner) {
+            actionButton.textContent = 'Your Offer';
             actionButton.disabled = true;
+        } else {
+            actionButton.textContent = offer.priceValue === 0 ? 'Get Now' : 'Buy Now';
+            const orderLink = offer.id ? `order?product_uuid=${encodeURIComponent(offer.id)}` : '';
+            if (orderLink) {
+                actionButton.addEventListener('click', function() {
+                    window.location.href = orderLink;
+                });
+            } else {
+                actionButton.disabled = true;
+            }
         }
         buttonsWrapper.appendChild(actionButton);
 

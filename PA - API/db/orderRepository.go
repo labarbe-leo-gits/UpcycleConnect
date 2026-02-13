@@ -4,6 +4,7 @@ import (
 	"API/models"
 	"database/sql"
 	"fmt"
+	"math"
 
 	"github.com/google/uuid"
 )
@@ -91,6 +92,30 @@ func CreateOrderInDB(order models.Order) error {
 	_, err = tx.Exec("INSERT INTO orders (id, user_id, event_id, product_id, transaction_id, amount, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())", newID, order.UserID, eventID, productID, order.TransactionID, order.Amount, order.Status)
 	if err != nil {
 		return fmt.Errorf("createOrder package db : %s", err.Error())
+	}
+
+	if order.ProductID != nil && *order.ProductID != uuid.Nil && order.Amount > 0 {
+		var ownerIDStr string
+		err = tx.QueryRow("SELECT user_id FROM annonces WHERE id = ? FOR UPDATE", order.ProductID.String()).Scan(&ownerIDStr)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				return fmt.Errorf("annonce not found")
+			}
+			return fmt.Errorf("createOrder package db annonce: %s", err.Error())
+		}
+
+		ownerID, parseErr := uuid.Parse(ownerIDStr)
+		if parseErr != nil {
+			return fmt.Errorf("createOrder package db annonce owner uuid: %s", parseErr.Error())
+		}
+
+		if ownerID != order.UserID {
+			credit := math.Round((order.Amount*0.85)*100) / 100
+			_, err = tx.Exec("UPDATE users SET balance = balance + ? WHERE id = ?", credit, ownerID.String())
+			if err != nil {
+				return fmt.Errorf("createOrder package db credit owner: %s", err.Error())
+			}
+		}
 	}
 
 	if err = tx.Commit(); err != nil {

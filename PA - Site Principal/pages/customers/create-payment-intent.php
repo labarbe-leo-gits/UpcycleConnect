@@ -84,6 +84,12 @@ if ($productType === 'offer') {
         echo json_encode(['error' => 'Offer is no longer available']);
         exit;
     }
+
+    if (!empty($offer['user_id']) && !empty($_SESSION['user_id']) && $offer['user_id'] === $_SESSION['user_id']) {
+        http_response_code(403);
+        echo json_encode(['error' => 'You cannot purchase your own offer']);
+        exit;
+    }
 }
 
 $maxParticipants = null;

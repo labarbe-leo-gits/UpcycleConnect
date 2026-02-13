@@ -4,7 +4,7 @@ import "github.com/google/uuid"
 
 type Notification struct {
 	ID        uuid.UUID `json:"id"`
-	AnnonceID uuid.UUID `json:"annonce_id,omitempty"`
+	AnnonceID uuid.UUID `json:"annonce_id"`
 	UserID    uuid.UUID `json:"user_id"`
 	Message   string    `json:"message"`
 	Read      bool      `json:"read"`
