@@ -133,3 +133,13 @@ CREATE TABLE IF NOT EXISTS notifications (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (annonce_id) REFERENCES annonces(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS ban (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    user_id CHAR(36) NOT NULL,
+    reason TEXT NOT NULL,
+    banned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    banned_by CHAR(36) NOT NULL,
+    duration_days INT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
