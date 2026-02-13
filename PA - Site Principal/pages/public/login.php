@@ -31,16 +31,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['recaptcha_token']) &&
 
         $response = askAPI('login', 'POST', $data);
         $decoded = json_decode($response, true);
-        
-        if (isset($decoded['id'])) {
+        if (isset($decoded['token'])) {
+            $_SESSION['jwt_token'] = $decoded['token'];
+        }
+        $user = $decoded['user'] ?? $decoded;
+        if (isset($user['id'])) {
             session_start();
-            $_SESSION['user_id'] = $decoded['id'];
-            $_SESSION['username'] = $decoded['username'];
-            $_SESSION['first_name'] = $decoded['first_name'] ?? '';
-            $_SESSION['last_name'] = $decoded['last_name'] ?? '';
-            $_SESSION['email'] = $decoded['email'];
-            $_SESSION['user_type'] = isset($decoded['user_type']) ? (int) $decoded['user_type'] : 1;
-            
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['username'] = $user['username'];
+            $_SESSION['first_name'] = $user['first_name'] ?? '';
+            $_SESSION['last_name'] = $user['last_name'] ?? '';
+            $_SESSION['email'] = $user['email'];
+            $_SESSION['user_type'] = isset($user['user_type']) ? (int) $user['user_type'] : 1;
             if (isset($_SESSION['page_after_login']) && (int) $_SESSION['user_type'] === 1) {
                 $page = $_SESSION['page_after_login'];
                 unset($_SESSION['page_after_login']);

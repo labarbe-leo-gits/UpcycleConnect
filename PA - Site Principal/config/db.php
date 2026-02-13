@@ -19,7 +19,9 @@ $API_URL = "http://$API_HOST:$API_PORT";
 
 function askAPI($endpoint, $method, $data = null){
     global $API_URL;
-
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
     $base = rtrim($API_URL, '/');
     $path = '/' . ltrim($endpoint, '/');
     $url = $base . $path;
@@ -29,12 +31,18 @@ function askAPI($endpoint, $method, $data = null){
     curl_setopt($ch, CURLOPT_TIMEOUT, 10);
     curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
 
+    $headers = [];
     if ($data !== null && in_array(strtoupper($method), ['POST', 'PUT', 'PATCH'])) {
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Content-Type: application/json',
-            'Content-Length: ' . strlen($data)
-        ]);
+        $headers[] = 'Content-Type: application/json';
+        $headers[] = 'Content-Length: ' . strlen($data);
+    }
+    // Attach JWT if available and not calling login or registration
+    if (!preg_match('/login|register/i', $endpoint) && isset($_SESSION['jwt_token'])) {
+        $headers[] = 'Authorization: Bearer ' . $_SESSION['jwt_token'];
+    }
+    if (!empty($headers)) {
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
     }
 
     $response = curl_exec($ch);

@@ -10,6 +10,11 @@ import (
 	"net/http"
 	"strings"
 
+	"os"
+	"time"
+
+	"github.com/golang-jwt/jwt/v4"
+
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -226,9 +231,57 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("[ERROR] LoginUser update last_login:", err)
 	}
 
+	// Generate JWT
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		jwtSecret = "changeme_secret" // fallback for dev
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"user_id": user.ID.String(),
+		"email":   user.Email,
+		"exp":     time.Now().Add(time.Hour * 24).Unix(),
+	})
+	tokenString, err := token.SignedString([]byte(jwtSecret))
+	if err != nil {
+		fmt.Println("[ERROR] JWT signing:", err)
+		sendError(w, "Could not generate token", http.StatusInternalServerError)
+		return
+	}
+
 	user.Password = ""
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(user)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"user":  user,
+		"token": tokenString,
+	})
+}
+
+// JWT Middleware for protected endpoints
+func JWTAuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+			sendError(w, "Missing or invalid Authorization header", http.StatusUnauthorized)
+			return
+		}
+		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+		jwtSecret := os.Getenv("JWT_SECRET")
+		if jwtSecret == "" {
+			jwtSecret = "changeme_secret"
+		}
+		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+			}
+			return []byte(jwtSecret), nil
+		})
+		if err != nil || !token.Valid {
+			sendError(w, "Invalid or expired token", http.StatusUnauthorized)
+			return
+		}
+		// Optionally, set user info in context here
+		next(w, r)
+	}
 }
 
 func GetUserByEmail(w http.ResponseWriter, r *http.Request) {
