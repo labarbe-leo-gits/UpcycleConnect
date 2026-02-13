@@ -9,9 +9,9 @@ include_once '../../includes/header.php';
 			<div class="hero-content">
 				<div class="header-text">
 					<h1>Welcome to</h1>
-					<img src="../../assets/img/brand/UpcyclePetiSignVersion.png" alt="UpcycleConnect logo" class="logo">
+					<img data-blob-src="../../assets/img/brand/UpcyclePetiSignVersion.png" alt="UpcycleConnect logo" class="logo">
 					<div class="by-petisign-badge">
-						<img src="../../assets/img/brand/petisign.png" alt="PétiSign logo" class="petisign-logo">
+						<img data-blob-src="../../assets/img/brand/petisign.png" alt="PétiSign logo" class="petisign-logo">
 						<span>By PétiSign</span>
 					</div>
 				</div>

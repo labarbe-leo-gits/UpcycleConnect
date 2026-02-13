@@ -74,4 +74,4 @@ $user = getLoggedInUser();
     </form>
 
     <script src="../../assets/js/notifications-poll.js"></script>
-    
+    <script src="../../assets/js/blob-images.js"></script>

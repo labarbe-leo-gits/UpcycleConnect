@@ -77,7 +77,7 @@ include_once '../../includes/header.php';
 			<button class="carousel-btn prev" aria-label="Previous member">‹</button>
 			<div class="carousel-track">
 				<figure class="carousel-item" data-name="Sylvain Levy">
-					<img src="../../assets/img/team/sylvain-levy.jpg" alt="Sylvain Levy">
+					<img data-blob-src="../../assets/img/team/sylvain-levy.jpg" alt="Sylvain Levy">
 					<figcaption>
 						<strong>Sylvain Levy</strong>
 						<span>CEO</span>
@@ -85,7 +85,7 @@ include_once '../../includes/header.php';
 				</figure>
 
 				<figure class="carousel-item" data-name="Pierre Chabrier">
-					<img src="../../assets/img/team/pierre-chabrier.jpg" alt="Pierre Chabrier">
+					<img data-blob-src="../../assets/img/team/pierre-chabrier.jpg" alt="Pierre Chabrier">
 					<figcaption>
 						<strong>Pierre Chabrier</strong>
 						<span>HR</span>
@@ -93,7 +93,7 @@ include_once '../../includes/header.php';
 				</figure>
 
 				<figure class="carousel-item" data-name="Norman Thavaud">
-					<img src="../../assets/img/team/norman-thavaud.jpg" alt="Norman Thavaud">
+					<img data-blob-src="../../assets/img/team/norman-thavaud.jpg" alt="Norman Thavaud">
 					<figcaption>
 						<strong>Norman Thavaud</strong>
 						<span>CTO</span>
@@ -101,7 +101,7 @@ include_once '../../includes/header.php';
 				</figure>
 
 				<figure class="carousel-item" data-name="Ronnand Peuplus">
-					<img src="../../assets/img/team/ronnand-peuplus.jpg" alt="Ronnand Peuplus">
+					<img data-blob-src="../../assets/img/team/ronnand-peuplus.jpg" alt="Ronnand Peuplus">
 					<figcaption>
 						<strong>Ronnand Peuplus</strong>
 						<span>Sales Director</span>
@@ -109,7 +109,7 @@ include_once '../../includes/header.php';
 				</figure>
 
 				<figure class="carousel-item" data-name="Laink Terracid">
-					<img src="../../assets/img/team/laink-terracid.png" alt="Laink Terracid">
+					<img data-blob-src="../../assets/img/team/laink-terracid.png" alt="Laink Terracid">
 					<figcaption>
 						<strong>Laink Terracid</strong>
 						<span>Marketing Director</span>
@@ -117,7 +117,7 @@ include_once '../../includes/header.php';
 				</figure>
 
 				<figure class="carousel-item" data-name="Antoine Maclair">
-					<img src="../../assets/img/team/antoine-maclair.jpg" alt="Antoine Maclair">
+					<img data-blob-src="../../assets/img/team/antoine-maclair.jpg" alt="Antoine Maclair">
 					<figcaption>
 						<strong>Antoine Maclair</strong>
 						<span>Happiness Manager (Montreuil)</span>
@@ -125,7 +125,7 @@ include_once '../../includes/header.php';
 				</figure>
 
 				<figure class="carousel-item" data-name="Frédéric Molas">
-					<img src="../../assets/img/team/frederic-molas.jpg" alt="Frédéric Molas">
+					<img data-blob-src="../../assets/img/team/frederic-molas.jpg" alt="Frédéric Molas">
 					<figcaption>
 						<strong>Frédéric Molas</strong>
 						<span>Regional Director (Swiss)</span>

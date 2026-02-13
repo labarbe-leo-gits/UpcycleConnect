@@ -36,6 +36,7 @@ trackLastPage();
     <?php endif; ?>
     <script src="https://www.google.com/recaptcha/api.js?render=<?php echo getenv('RECAPTCHA_SITE_KEY'); ?>"></script>
     <script src="../../assets/js/button.js"></script>
+    <script src="../../assets/js/blob-images.js"></script>
 </head>
 <body>
     <header>

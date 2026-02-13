@@ -2,3 +2,4 @@
 "PA - API"/.env
 "PA - Site Principal"/.env
 vendor/
+files/uploads
