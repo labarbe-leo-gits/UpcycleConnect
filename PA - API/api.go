@@ -105,6 +105,21 @@ func main() {
 	registerRoute("POST", "/banking-details", "Create banking details for a user", app.CreateBankingDetails, app.JWTAuthMiddleware)
 	registerRoute("GET", "/users/{id}/annonces", "List all annonces for a specific user by their UUID", app.GetAnnoncesByUserID, app.JWTAuthMiddleware)
 	registerRoute("PATCH", "/notifications/{id}/read", "Mark a notification as read by its UUID", app.MarkNotificationAsRead, app.JWTAuthMiddleware)
+	
+	// Delete routes
+	/* registerRoute("DELETE", "/annonces/{id}", "Delete an annonce by its UUID", app.DeleteAnnonce, app.JWTAuthMiddleware)
+	registerRoute("DELETE", "/users/{id}", "Delete a user by their UUID", app.DeleteUser, app.JWTAuthMiddleware)
+	registerRoute("DELETE", "/orders/{id}", "Delete an order by its UUID", app.DeleteOrder, app.JWTAuthMiddleware)
+	registerRoute("DELETE", "/notifications/{id}", app.DeleteNotification, app.JWTAuthMiddleware)
+	registerRoute("DELETE", "/payment-requests/{id}", "Delete a payment request by its UUID", app.DeletePaymentRequest, app.JWTAuthMiddleware)
+	registerRoute("DELETE", "/payouts/{id}", "Delete a payout by its UUID", app.DeletePayout, app.JWTAuthMiddleware)
+	registerRoute("DELETE", "/banking-details/{id}", "Delete banking details by its UUID", app.DeleteBankingDetails, app.JWTAuthMiddleware)
+	registerRoute("DELETE", "/products/services/{id}", "Delete a service by its UUID", app.DeleteService, app.JWTAuthMiddleware)
+	registerRoute("DELETE", "/annonces/{id}/images/{image_id}", "Delete an image from an annonce by their UUIDs", app.DeleteAnnonceImage, app.JWTAuthMiddleware)
+	registerRoute("DELETE", "/images/{id}", "Delete an image by its UUID", app.DeleteImage, app.JWTAuthMiddleware) */
+
+	registerRoute("GET", "/forums", "List all forums", app.GetForums)
+	//registerRoute("GET", "/forums/{id}/posts", "List all posts in a specific forum by its UUID", app.GetForumPosts)
 
 	http.HandleFunc("/", notFoundHandler)
 

@@ -256,7 +256,6 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// JWT Middleware for protected endpoints
 func JWTAuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")

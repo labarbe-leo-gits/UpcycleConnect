@@ -180,6 +180,7 @@
 .by-petisign-badge .petisign-logo {
   height: 24px;
   width: auto;
+  border-radius: 4px;
 }
 
 @media (max-width: 960px) {

@@ -1,0 +1,13 @@
+{
+  "400": "Bad Request: The server could not understand your request.",
+  "401": "Unauthorized: You must be logged in to access this page.",
+  "403": "Forbidden: You do not have permission to view this page.",
+  "404": "Not Found: The page you are looking for does not exist.",
+  "405": "Method Not Allowed: The method is not allowed for the requested URL.",
+  "408": "Request Timeout: The server timed out waiting for the request.",
+  "429": "Too Many Requests: You have sent too many requests in a given amount of time.",
+  "500": "Internal Server Error: Something went wrong on our end.",
+  "502": "Bad Gateway: The server received an invalid response from the upstream server.",
+  "503": "Service Unavailable: The server is currently unable to handle the request.",
+  "504": "Gateway Timeout: The upstream server failed to send a request in time."
+}
