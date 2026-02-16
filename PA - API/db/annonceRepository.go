@@ -11,7 +11,7 @@ import (
 func GetAnnoncesFromDB() ([]models.Annonce, error) {
 
 	annonces := []models.Annonce{}
-	rows, err := Db.Query("SELECT id, user_id, title, description, price, status, created_at, updated_at FROM annonces")
+	rows, err := Db.Query("SELECT id, user_id, title, description, price, status, view_count, created_at, updated_at FROM annonces")
 
 	if err != nil {
 		return nil, fmt.Errorf("getAnnonces package db : %s", err.Error())
@@ -27,7 +27,7 @@ func GetAnnoncesFromDB() ([]models.Annonce, error) {
 		var price sql.NullFloat64
 		var status sql.NullInt64
 
-		err := rows.Scan(&idStr, &userIDStr, &annonce.Title, &description, &price, &status, &createdAt, &updatedAt)
+		err := rows.Scan(&idStr, &userIDStr, &annonce.Title, &description, &price, &status, &annonce.ViewCount ,&createdAt, &updatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("getAnnonces package db scan : %s", err.Error())
 		}
@@ -453,4 +453,14 @@ func GetAnnoncesByUserIDFromDB(userID string) ([]models.Annonce, error) {
 
 	return annonces, nil
 
+}
+
+func IncrementAnnonceViewCountInDB(id string) error {
+
+	_, err := Db.Exec("UPDATE annonces SET view_count = view_count + 1 WHERE id = ?", id)
+	if err != nil {
+		return fmt.Errorf("incrementAnnonceViewCount package db : %s", err.Error())
+	}
+
+	return nil
 }

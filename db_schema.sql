@@ -9,12 +9,16 @@ CREATE TABLE IF NOT EXISTS users (
     stripe_account_id VARCHAR(255) NULL,
     username VARCHAR(255) NOT NULL UNIQUE,
     balance DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    is_premium INT DEFAULT 0,
     user_type INT NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_login TIMESTAMP NULL DEFAULT NULL,
     oauth_provider VARCHAR(20) NULL,
+    user_secret VARCHAR(255) NULL,
+    twofa_enabled BOOLEAN DEFAULT FALSE,
+    twofa_secret VARCHAR(64) NULL,
     oauth_id VARCHAR(255) NULL,
     profile_picture VARCHAR(500) NULL,
     UNIQUE INDEX idx_oauth (oauth_provider, oauth_id)
@@ -26,6 +30,7 @@ CREATE TABLE IF NOT EXISTS annonces(
     status INT NOT NULL DEFAULT 0,
     title VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
+    view_count INT NOT NULL DEFAULT 0,
     price DECIMAL(10, 2) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -58,7 +63,15 @@ CREATE TABLE IF NOT EXISTS demandes_depot (
 
 CREATE TABLE IF NOT EXISTS planning (
     id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
-    user_id CHAR(36) NOT NULL
+    title VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    start_time DATETIME NOT NULL,
+    end_time DATETIME NOT NULL,
+    date DATE NOT NULL,
+    user_id CHAR(36) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS evenements (
@@ -77,17 +90,6 @@ CREATE TABLE IF NOT EXISTS evenements (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS participations (
-    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
-    user_id CHAR(36) NOT NULL,
-    event_id CHAR(36),
-    planning_id CHAR(36) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (event_id) REFERENCES evenements(id) ON DELETE CASCADE,
-    FOREIGN KEY (planning_id) REFERENCES planning(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS conseils (

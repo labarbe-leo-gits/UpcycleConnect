@@ -5,11 +5,11 @@ requireUserType(1);
 
 header('Content-Type: application/json');
 
-if (!isset($_SERVER['HTTP_X_REQUESTED_WITH']) || strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) !== 'xmlhttprequest') {
+/* if (!isset($_SERVER['HTTP_X_REQUESTED_WITH']) || strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) !== 'xmlhttprequest') {
     http_response_code(400);
     echo json_encode(['error' => 'Invalid request']);
     exit;
-}
+} */
 
 $user = getLoggedInUser();
 $userId = $user['id'] ?? '';

@@ -1,4 +1,4 @@
 <?php
-require_once '../../includes/auth.php';
-requireUserType(2);
+$title = 'Dashboard';
+include_once '../../includes/pro-header.php';
 ?>

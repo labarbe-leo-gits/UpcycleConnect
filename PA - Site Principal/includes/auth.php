@@ -100,8 +100,7 @@ function getLoggedInUser() {
     if (!isLoggedIn()) {
         return null;
     }
-    
-    return [
+    $user = [
         'id' => $_SESSION['user_id'],
         'username' => $_SESSION['username'] ?? '',
         'first_name' => $_SESSION['first_name'] ?? '',
@@ -110,6 +109,9 @@ function getLoggedInUser() {
         'user_type' => $_SESSION['user_type'] ?? null,
         'oauth_provider' => $_SESSION['oauth_provider'] ?? null
     ];
+
+
+    return $user;
 }
 
 function logout() {

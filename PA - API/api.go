@@ -105,7 +105,7 @@ func main() {
 	registerRoute("POST", "/banking-details", "Create banking details for a user", app.CreateBankingDetails, app.JWTAuthMiddleware)
 	registerRoute("GET", "/users/{id}/annonces", "List all annonces for a specific user by their UUID", app.GetAnnoncesByUserID, app.JWTAuthMiddleware)
 	registerRoute("PATCH", "/notifications/{id}/read", "Mark a notification as read by its UUID", app.MarkNotificationAsRead, app.JWTAuthMiddleware)
-	
+
 	// Delete routes
 	/* registerRoute("DELETE", "/annonces/{id}", "Delete an annonce by its UUID", app.DeleteAnnonce, app.JWTAuthMiddleware)
 	registerRoute("DELETE", "/users/{id}", "Delete a user by their UUID", app.DeleteUser, app.JWTAuthMiddleware)
@@ -117,9 +117,19 @@ func main() {
 	registerRoute("DELETE", "/products/services/{id}", "Delete a service by its UUID", app.DeleteService, app.JWTAuthMiddleware)
 	registerRoute("DELETE", "/annonces/{id}/images/{image_id}", "Delete an image from an annonce by their UUIDs", app.DeleteAnnonceImage, app.JWTAuthMiddleware)
 	registerRoute("DELETE", "/images/{id}", "Delete an image by its UUID", app.DeleteImage, app.JWTAuthMiddleware) */
+	registerRoute("DELETE", "/users/{id}/planning", "Delete a planning entry for a user", app.DeletePlanning, app.JWTAuthMiddleware)
 
 	registerRoute("GET", "/forums", "List all forums", app.GetForums)
 	//registerRoute("GET", "/forums/{id}/posts", "List all posts in a specific forum by its UUID", app.GetForumPosts)
+
+	registerRoute("GET", "/users/{id}/planning", "Get the planning data for the next 7 days", app.GetPlanning, app.JWTAuthMiddleware)
+	registerRoute("POST", "/users/{id}/planning", "Create a new planning entry for a user", app.CreatePlanning, app.JWTAuthMiddleware)
+	registerRoute("GET", "/planning", "Get all planning entries in the system (admin only)", app.GetAllPlanning)
+	registerRoute("PATCH", "/users/{id}", "Update a user's profile", app.UpdateUser, app.JWTAuthMiddleware)
+	registerRoute("PATCH", "/annonces/{id}/views", "Increment the view count for an annonce", app.IncrementAnnonceViewCount, app.JWTAuthMiddleware)
+
+	// Get annonce routes without auth (for development/testing purposes)
+	registerRoute("GET", "/annonces/noauth", "List all annonces in the system", app.GetAnnoncesWithoutAuth)
 
 	http.HandleFunc("/", notFoundHandler)
 

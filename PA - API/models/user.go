@@ -8,7 +8,7 @@ type User struct {
 	ID             uuid.UUID `json:"id" gorm:"type:uuid;primaryKey"`
 	FirstName      string    `json:"first_name"`
 	LastName       string    `json:"last_name"`
-	Balance		   float64   `json:"balance"`
+	Balance        float64   `json:"balance"`
 	CompanyName    string    `json:"company_name,omitempty"`
 	UserType       int       `json:"user_type"`
 	Username       string    `json:"username" gorm:"unique;not null"`
@@ -19,4 +19,7 @@ type User struct {
 	OAuthProvider  string    `json:"oauth_provider,omitempty"`
 	OAuthID        string    `json:"oauth_id,omitempty"`
 	ProfilePicture string    `json:"profile_picture,omitempty"`
+	UserSecret     string    `json:"user_secret,omitempty"`
+	TwoFASecret    string    `json:"twofa_secret,omitempty"`
+	TwoFAEnabled   bool      `json:"twofa_enabled,omitempty"`
 }

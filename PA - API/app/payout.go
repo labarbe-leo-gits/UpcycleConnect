@@ -2,10 +2,11 @@ package app
 
 import (
 	"API/db"
+	"API/models"
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"API/models"
+
 	"github.com/google/uuid"
 )
 
@@ -41,6 +42,12 @@ func CreatePayout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if validationErrors := ValidatePayoutDto(payout); len(validationErrors) > 0 {
+		fmt.Println("[ERROR] CreatePayout validation:", validationErrors)
+		sendError(w, fmt.Sprintf("Validation errors: %v", validationErrors), http.StatusBadRequest)
+		return
+	}
+
 	err = db.CreatePayoutInDB(payout)
 	if err != nil {
 		fmt.Println("[ERROR] CreatePayout:", err)
@@ -57,6 +64,23 @@ func CreatePayout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintf(w, "%s", jsonResponse)
+}
+
+func ValidatePayoutDto(p models.Payout) []string {
+	var errs []string
+	if p.Amount <= 0 {
+		errs = append(errs, "Amount must be greater than 0")
+	}
+	if p.PaymentRequestID == uuid.Nil {
+		errs = append(errs, "PaymentRequestID is required and must be a valid UUID")
+	}
+	if p.UserID == uuid.Nil {
+		errs = append(errs, "UserID is required and must be a valid UUID")
+	}
+	if p.DoneBy == uuid.Nil {
+		errs = append(errs, "DoneBy is required and must be a valid UUID")
+	}
+	return errs
 }
 
 func GetPayoutsByUserID(w http.ResponseWriter, r *http.Request) {
@@ -81,4 +105,3 @@ func GetPayoutsByUserID(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprintf(w, "%s", jsonResponse)
 }
-

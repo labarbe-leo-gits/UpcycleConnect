@@ -1,5 +1,7 @@
 {
     "require": {
-        "stripe/stripe-php": "^19.3"
+        "stripe/stripe-php": "^19.3",
+        "robthree/twofactorauth": "^3.0",
+        "endroid/qr-code": "4.0"
     }
 }

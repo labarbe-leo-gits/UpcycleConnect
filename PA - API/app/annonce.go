@@ -308,3 +308,48 @@ func GetAnnoncesByUserID(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "%s", jsonResponse)
 
 }
+
+func IncrementAnnonceViewCount(w http.ResponseWriter, r *http.Request) {
+
+	idStr := strings.TrimPrefix(r.URL.Path, "/annonces/")
+	idStr = strings.TrimSuffix(idStr, "/views")
+
+	if idStr == "" {
+		sendError(w, "Annonce ID is required", http.StatusBadRequest)
+		return
+	}
+
+	err := db.IncrementAnnonceViewCountInDB(idStr)
+
+	if err != nil {
+		fmt.Println("[ERROR] IncrementAnnonceViewCount DB:", err)
+		sendError(w, "Unable to increment view count", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func GetAnnoncesWithoutAuth(w http.ResponseWriter, r *http.Request) {
+
+	annonces, err := db.GetAnnoncesFromDB()
+
+	if err != nil {
+		fmt.Println("[ERROR] GetAnnoncesWithoutAuth DB:", err)
+		sendError(w, "Unable to fetch annonces", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	jsonResponse, err := json.Marshal(annonces)
+
+	if err != nil {
+		fmt.Println("[ERROR] GetAnnoncesWithoutAuth marshal:", err)
+		sendError(w, "Unable to process response", http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Fprintf(w, "%s", jsonResponse)
+
+}

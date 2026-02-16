@@ -55,16 +55,25 @@ if (isset($offer['user_id']) && !empty($offer['user_id'])) {
 	}
 }
 
+function length($array) {
+	return is_array($array) ? count($array) : 0;
+}
+
 $imagePath = '../../assets/img/defaults/placeholder.png';
 $imagesResponse = askAPI('/annonces/' . $offerUuid . '/images', 'GET');
 $imagesDecoded = json_decode($imagesResponse, true);
-if (is_array($imagesDecoded) && !empty($imagesDecoded)) {
+if (is_array($imagesDecoded) && !empty($imagesDecoded) && length($imagesDecoded) > 0) {
+	echo '<script>console.log("Images found for offer: ", ' . json_encode($imagesDecoded) . ');</script>';
 	$firstImage = $imagesDecoded[0] ?? null;
 	$fileName = is_array($firstImage) ? ($firstImage['file_name'] ?? '') : '';
 	if ($fileName !== '') {
 		$imagePath = '../../../files/uploads/annonce/' . $fileName;
 	}
 }
+
+$views = intval($offer['view_count'] ?? 0);
+
+askAPI('/annonces/' . $offerUuid . '/views', 'PATCH');
 
 $createdAt = null;
 if (!empty($offer['created_at'])) {
@@ -94,6 +103,20 @@ if (!empty($offer['created_at'])) {
 			</div>
 
 			<div class="info-grid">
+				<div class="skeleton-detail-info-item">
+					<div class="skeleton skeleton-detail-icon"></div>
+					<div style="flex: 1;">
+						<div class="skeleton skeleton-detail-label"></div>
+						<div class="skeleton skeleton-detail-value"></div>
+					</div>
+				</div>
+				<div class="skeleton-detail-info-item">
+					<div class="skeleton skeleton-detail-icon"></div>
+					<div style="flex: 1;">
+						<div class="skeleton skeleton-detail-label"></div>
+						<div class="skeleton skeleton-detail-value"></div>
+					</div>
+				</div>
 				<div class="skeleton-detail-info-item">
 					<div class="skeleton skeleton-detail-icon"></div>
 					<div style="flex: 1;">
@@ -167,6 +190,17 @@ if (!empty($offer['created_at'])) {
 						<span class="value price"><?php echo $priceDisplay; ?></span>
 					</div>
 				</div>
+
+
+				<?php if ($views): ?>
+				<div class="info-item">
+					<i class="fa-regular fa-eye"></i>
+					<div class="info-content">
+						<span class="label">Views</span>
+						<span class="value"><?php echo $views; ?></span>
+					</div>
+				</div>
+				<?php endif; ?>
 			</div>
 
 			<div class="service-actions">

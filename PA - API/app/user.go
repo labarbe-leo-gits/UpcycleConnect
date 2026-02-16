@@ -67,13 +67,6 @@ func GetUserByID(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "%s", jsonResponse)
 }
 
-func sendError(w http.ResponseWriter, message string, statusCode int) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(statusCode)
-	errorResponse := map[string]string{"error": message}
-	json.NewEncoder(w).Encode(errorResponse)
-}
-
 func CheckForExistingUsername(username string) (bool, error) {
 
 	existing, err := db.GetUserByUsernameFromDB(username)
@@ -278,7 +271,6 @@ func JWTAuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			sendError(w, "Invalid or expired token", http.StatusUnauthorized)
 			return
 		}
-		// Optionally, set user info in context here
 		next(w, r)
 	}
 }
@@ -336,4 +328,8 @@ func GetNotificationsByUserID(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(notifications)
 
+}
+
+func UpdateUser(w http.ResponseWriter, r *http.Request) {
+	// Do something
 }
