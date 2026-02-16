@@ -306,13 +306,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <label>Banking details</label>
                     <label>
                         <input type="radio" name="banking_option" value="saved" <?php echo $hasSavedBankingDetails ? 'checked' : 'disabled'; ?> />
-                        Use saved banking details
-                    </label>
-                    <label>
-                        <input type="radio" name="banking_option" value="new" <?php echo $hasSavedBankingDetails ? '' : 'checked'; ?> />
-                        Provide new details
-                    </label>
-                </div>
+
 
                 <div id="saved-details-section">
                     <div class="field">
@@ -504,6 +498,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         feedback.textContent = data.message || 'Unable to create payment request.';
                         feedback.className = 'error-message';
                     }
+                        hideLoader(true);
                     return;
                 }
 
@@ -523,16 +518,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 closeModal();
+                    hideLoader(true);
             } catch (error) {
                 if (feedback) {
                     feedback.textContent = 'Unable to create payment request.';
                     feedback.className = 'error-message';
                 }
+                    hideLoader(true);
             } finally {
                 if (submitButton) submitButton.disabled = false;
             }
         });
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        hideLoader(true);
+    });
 
 document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', function() {
@@ -570,15 +571,21 @@ document.querySelectorAll('.btn-edit-inline').forEach(btn => {
     });
 });
 
-document.addEventListener('DOMContentLoaded', function() {
+function hideLoader(immediate = false) {
     var loader = document.getElementById('planning-preloader');
     if (loader) {
-        setTimeout(function(){ loader.style.display = 'none'; }, 350);
+        if (immediate) {
+            loader.style.display = 'none';
+        } else {
+            setTimeout(function() {
+                loader.style.display = 'none';
+            }, 5000);
+        }
     }
-});
-window.addEventListener('load', function() {
-    var loader = document.getElementById('planning-preloader');
-    if (loader) loader.style.display = 'none';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    hideLoader(false);
 });
 </script>
 </script>
