@@ -203,6 +203,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="profile-tabs">
             <button class="tab-btn active" data-tab="general">General</button>
             <button class="tab-btn" data-tab="security">Security</button>
+            <button class="tab-btn" data-tab="mfa">MFA</button>
         </div>
         <div class="tab-content" id="general-tab">
             <h3>General Settings</h3>
@@ -240,17 +241,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <form class="change-password-form" autocomplete="off">
                 <div class="field">
                     <label for="current-password">Current Password</label>
-                    <div class="password-wrapper" style="position:relative;">
+                    <div class="input-wrapper password-wrapper">
+                        <i class="fa-solid fa-lock"></i>
                         <input type="password" id="current-password" name="current_password" required autocomplete="current-password">
-                        <button type="button" class="password-toggle" tabindex="-1" aria-label="Show password" style="position:absolute; right:12px; top:50%; transform:translateY(-50%);"><i class="fa-solid fa-eye"></i></button>
+                        <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false"><i class="fa-solid fa-eye"></i></button>
                     </div>
                 </div>
                 <div class="field">
                     <label for="new-password">New Password</label>
-                    <div class="password-wrapper" style="position:relative;">
+                    <div class="input-wrapper password-wrapper">
                         <i class="fa-solid fa-lock"></i>
                         <input type="password" id="new-password" name="new_password" class="password-input" data-strength="true" required autocomplete="new-password">
-                        <button type="button" class="password-toggle" tabindex="-1" aria-label="Show password" style="position:absolute; right:12px; top:50%; transform:translateY(-50%);"><i class="fa-solid fa-eye"></i></button>
+                        <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false"><i class="fa-solid fa-eye"></i></button>
                     </div>
                     <div class="password-meter">
                         <div class="password-meter-bar"></div>
@@ -259,9 +261,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 <div class="field">
                     <label for="confirm-password">Confirm New Password</label>
-                    <div class="password-wrapper" style="position:relative;">
+                    <div class="input-wrapper password-wrapper">
+                        <i class="fa-solid fa-lock"></i>
                         <input type="password" id="confirm-password" name="confirm_password" required autocomplete="new-password">
-                        <button type="button" class="password-toggle" tabindex="-1" aria-label="Show password" style="position:absolute; right:12px; top:50%; transform:translateY(-50%);"><i class="fa-solid fa-eye"></i></button>
+                        <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false"><i class="fa-solid fa-eye"></i></button>
                     </div>
                 </div>
                 <button type="submit" class="btn-primary">Change Password</button>
@@ -406,7 +409,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 </div>
 
-<!-- Planning-style loader at very top of body for instant render -->
 <div id="planning-preloader" class="planning-preloader" style="display:flex;z-index:10000;">
     <div class="recycle-spinner">
         <div class="rec-arc a"></div>
@@ -567,7 +569,7 @@ document.querySelectorAll('.btn-edit-inline').forEach(btn => {
         });
     });
 });
-// Planning-style loader: hide after DOM ready
+
 document.addEventListener('DOMContentLoaded', function() {
     var loader = document.getElementById('planning-preloader');
     if (loader) {
