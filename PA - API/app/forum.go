@@ -2,9 +2,12 @@ package app
 
 import (
 	"API/db"
+	"API/models"
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/google/uuid"
 )
 
 func sendError(w http.ResponseWriter, message string, statusCode int) {
@@ -31,4 +34,128 @@ func GetForums(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintf(w, "%s", jsonResponse)
+}
+
+func GetForumPosts(w http.ResponseWriter, r *http.Request) {
+
+	idStr := r.URL.Path[len("/forums/") : len(r.URL.Path)-len("/posts")]
+	posts, err := db.GetForumPostsFromDB(idStr)
+	if err != nil {
+		fmt.Println("[ERROR] GetForumPosts:", err)
+		sendError(w, "Unable to fetch forum posts", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	jsonResponse, err := json.Marshal(posts)
+
+	if err != nil {
+		fmt.Println("[ERROR] GetForumPosts marshal:", err)
+		sendError(w, "Unable to process response", http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Fprintf(w, "%s", jsonResponse)
+}
+
+func ValidateForumDTO(dto models.Forum) []string {
+
+	var validationErrors []string
+
+	if dto.Title == "" {
+		validationErrors = append(validationErrors, "Title is required")
+	}
+
+	if dto.Description == "" {
+		validationErrors = append(validationErrors, "Description is required")
+	}
+
+	return validationErrors
+
+}
+
+func CreateForum(w http.ResponseWriter, r *http.Request) {
+
+	var forumDto models.Forum
+
+	err := json.NewDecoder(r.Body).Decode(&forumDto)
+
+	if err != nil {
+		fmt.Println("[ERROR] CreateForum decode:", err)
+		sendError(w, "Unable to process request body", http.StatusBadRequest)
+		return
+	}
+
+	validationErrors := ValidateForumDTO(forumDto)
+
+	if len(validationErrors) > 0 {
+		sendError(w, fmt.Sprintf("Validation errors: %s", validationErrors), http.StatusBadRequest)
+		return
+	}
+
+	err = db.CreateForumInDB(forumDto)
+
+	if err != nil {
+		fmt.Println("[ERROR] CreateForum DB:", err)
+		sendError(w, "Unable to create forum", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Forum created successfully"})
+
+}
+
+func ValidatePostDTO(dto models.ForumPost) []string {
+
+	var validationErrors []string
+
+	if dto.ForumID == uuid.Nil {
+		validationErrors = append(validationErrors, "ForumID is required")
+	}
+
+	if dto.AuthorID == uuid.Nil {
+		validationErrors = append(validationErrors, "AuthorID is required")
+	}
+
+	if dto.Content == "" {
+		validationErrors = append(validationErrors, "Content is required")
+	}
+
+	return validationErrors
+
+}
+
+func CreateForumPost(w http.ResponseWriter, r *http.Request) {
+
+	var postDto models.ForumPost
+
+	err := json.NewDecoder(r.Body).Decode(&postDto)
+
+	if err != nil {
+		fmt.Println("[ERROR] CreateForumPost decode:", err)
+		sendError(w, "Unable to process request body", http.StatusBadRequest)
+		return
+	}
+
+	validationErrors := ValidatePostDTO(postDto)
+
+	if len(validationErrors) > 0 {
+		sendError(w, fmt.Sprintf("Validation errors: %s", validationErrors), http.StatusBadRequest)
+		return
+	}
+
+	err = db.CreateForumPostInDB(postDto)
+
+	if err != nil {
+		fmt.Println("[ERROR] CreateForumPost DB:", err)
+		sendError(w, "Unable to create forum post", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Forum post created successfully"})
+
 }

@@ -12,7 +12,7 @@ func GetBankingDetailsFromDB() ([]models.BankingDetails, error) {
 
 	var bankingDetailsList []models.BankingDetails
 
-	rows, err := Db.Query("SELECT id, user_id, rib, iban, bic, account_holder_name, created_at, updated_at FROM bankingDetails")
+	rows, err := Db.Query("SELECT id, user_id, rib, iban, bic, account_holder_name, is_saved, created_at, updated_at FROM bankingDetails")
 	if err != nil {
 		return nil, fmt.Errorf("getBankingDetailsFromDB: %s", err.Error())
 	}
@@ -24,8 +24,9 @@ func GetBankingDetailsFromDB() ([]models.BankingDetails, error) {
 		var bankingDetails models.BankingDetails
 		var idStr, userIDStr string
 		var createdAt, updatedAt string
+		var isSavedInt int
 
-		err := rows.Scan(&idStr, &userIDStr, &bankingDetails.RIB, &bankingDetails.IBAN, &bankingDetails.BIC, &bankingDetails.HolderName, &createdAt, &updatedAt)
+		err := rows.Scan(&idStr, &userIDStr, &bankingDetails.RIB, &bankingDetails.IBAN, &bankingDetails.BIC, &bankingDetails.HolderName, &isSavedInt, &createdAt, &updatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("getBankingDetailsFromDB scan: %s", err.Error())
 		}
@@ -40,6 +41,7 @@ func GetBankingDetailsFromDB() ([]models.BankingDetails, error) {
 			return nil, fmt.Errorf("getBankingDetailsFromDB uuid parse user_id: %s", err.Error())
 		}
 
+		bankingDetails.IsSaved = isSavedInt == 1
 		bankingDetails.CreatedAt = createdAt
 		bankingDetails.UpdatedAt = updatedAt
 		bankingDetailsList = append(bankingDetailsList, bankingDetails)
@@ -58,9 +60,10 @@ func GetBankingDetailsByIDFromDB(id uuid.UUID) (models.BankingDetails, error) {
 	var bankingDetails models.BankingDetails
 	var idStr, userIDStr string
 
-	row := Db.QueryRow("SELECT id, user_id, rib, iban, bic, account_holder_name, created_at, updated_at FROM bankingDetails WHERE id = ?", id.String())
+	row := Db.QueryRow("SELECT id, user_id, rib, iban, bic, account_holder_name, is_saved, created_at, updated_at FROM bankingDetails WHERE id = ?", id.String())
 	var createdAt, updatedAt string
-	err := row.Scan(&idStr, &userIDStr, &bankingDetails.RIB, &bankingDetails.IBAN, &bankingDetails.BIC, &bankingDetails.HolderName, &createdAt, &updatedAt)
+	var isSavedInt int
+	err := row.Scan(&idStr, &userIDStr, &bankingDetails.RIB, &bankingDetails.IBAN, &bankingDetails.BIC, &bankingDetails.HolderName, &isSavedInt, &createdAt, &updatedAt)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -69,6 +72,7 @@ func GetBankingDetailsByIDFromDB(id uuid.UUID) (models.BankingDetails, error) {
 		return bankingDetails, fmt.Errorf("getBankingDetailsByIDFromDB scan: %s", err.Error())
 	}
 
+	bankingDetails.IsSaved = isSavedInt == 1
 	bankingDetails.CreatedAt = createdAt
 	bankingDetails.UpdatedAt = updatedAt
 
@@ -89,7 +93,7 @@ func GetBankingDetailsByUserIDFromDB(userID uuid.UUID) ([]models.BankingDetails,
 
 	var bankingDetailsList []models.BankingDetails
 
-	rows, err := Db.Query("SELECT id, user_id, rib, iban, bic, account_holder_name, created_at, updated_at FROM bankingDetails WHERE user_id = ? ORDER BY created_at DESC", userID.String())
+	rows, err := Db.Query("SELECT id, user_id, rib, iban, bic, account_holder_name, is_saved, created_at, updated_at FROM bankingDetails WHERE user_id = ? AND is_saved = 1 ORDER BY created_at DESC", userID.String())
 	if err != nil {
 		return nil, fmt.Errorf("getBankingDetailsByUserIDFromDB: %s", err.Error())
 	}
@@ -100,8 +104,9 @@ func GetBankingDetailsByUserIDFromDB(userID uuid.UUID) ([]models.BankingDetails,
 		var bankingDetails models.BankingDetails
 		var idStr, userIDStr string
 		var createdAt, updatedAt string
+		var isSavedInt int
 
-		err := rows.Scan(&idStr, &userIDStr, &bankingDetails.RIB, &bankingDetails.IBAN, &bankingDetails.BIC, &bankingDetails.HolderName, &createdAt, &updatedAt)
+		err := rows.Scan(&idStr, &userIDStr, &bankingDetails.RIB, &bankingDetails.IBAN, &bankingDetails.BIC, &bankingDetails.HolderName, &isSavedInt, &createdAt, &updatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("getBankingDetailsByUserIDFromDB scan: %s", err.Error())
 		}
@@ -116,6 +121,7 @@ func GetBankingDetailsByUserIDFromDB(userID uuid.UUID) ([]models.BankingDetails,
 			return nil, fmt.Errorf("getBankingDetailsByUserIDFromDB uuid parse user_id: %s", err.Error())
 		}
 
+		bankingDetails.IsSaved = isSavedInt == 1
 		bankingDetails.CreatedAt = createdAt
 		bankingDetails.UpdatedAt = updatedAt
 		bankingDetailsList = append(bankingDetailsList, bankingDetails)
@@ -128,17 +134,26 @@ func GetBankingDetailsByUserIDFromDB(userID uuid.UUID) ([]models.BankingDetails,
 	return bankingDetailsList, nil
 }
 
-func CreateBankingDetailsInDB(bankingDetails models.BankingDetails) error {
+func CreateBankingDetailsInDB(bankingDetails *models.BankingDetails) (uuid.UUID, error) {
 
 	newID := uuid.New()
 	currentTime := getCurrentTime()
 
-	_, err := Db.Exec("INSERT INTO bankingDetails (id, user_id, rib, iban, bic, account_holder_name, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-		newID.String(), bankingDetails.UserID.String(), bankingDetails.RIB, bankingDetails.IBAN, bankingDetails.BIC, bankingDetails.HolderName, currentTime, currentTime)
-
-	if err != nil {
-		return fmt.Errorf("createBankingDetailsInDB: %s", err.Error())
+	isSavedInt := 0
+	if bankingDetails.IsSaved {
+		isSavedInt = 1
 	}
 
-	return nil
+	_, err := Db.Exec("INSERT INTO bankingDetails (id, user_id, rib, iban, bic, account_holder_name, is_saved, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		newID.String(), bankingDetails.UserID.String(), bankingDetails.RIB, bankingDetails.IBAN, bankingDetails.BIC, bankingDetails.HolderName, isSavedInt, currentTime, currentTime)
+
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("createBankingDetailsInDB: %s", err.Error())
+	}
+
+	bankingDetails.ID = newID
+	bankingDetails.CreatedAt = currentTime
+	bankingDetails.UpdatedAt = currentTime
+
+	return newID, nil
 }

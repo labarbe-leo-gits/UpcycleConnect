@@ -42,8 +42,7 @@ header > nav {
 .container {
   margin: 50px auto;
   padding: 0 20px;
-  width: 80vw;
-}
+  width: 80vw;}
 
 .form {
   max-width: 500px;

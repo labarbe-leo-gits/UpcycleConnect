@@ -111,13 +111,15 @@ func CreateBankingDetails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = db.CreateBankingDetailsInDB(bankingDetailsDto)
+	newID, err := db.CreateBankingDetailsInDB(&bankingDetailsDto)
 
 	if err != nil {
 		fmt.Println("[ERROR] CreateBankingDetails:", err)
 		sendError(w, "Unable to create banking details", http.StatusInternalServerError)
 		return
 	}
+
+	bankingDetailsDto.ID = newID
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)

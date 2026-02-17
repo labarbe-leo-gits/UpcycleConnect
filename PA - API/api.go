@@ -78,7 +78,7 @@ func main() {
 	registerRoute("POST", "/users/email", "Get user by email - for OAuth lookup", app.GetUserByEmail)
 	registerRoute("GET", "/docs", "Show the API documentation", notFoundHandler)
 
-	registerRoute("GET", "/users", "Get all users", app.GetAllUsers, app.JWTAuthMiddleware)
+	registerRoute("GET", "/users", "Get all users", app.GetAllUsers)
 	registerRoute("GET", "/users/{id}", "Get a specific user by his UUID", app.GetUserByID, app.JWTAuthMiddleware)
 	registerRoute("GET", "/users/{id}/orders", "Get all orders for a specific user by their UUID", app.GetOrdersByUserID, app.JWTAuthMiddleware)
 	registerRoute("GET", "/products/services", "Services listing - for the catalog", app.GetServices, app.JWTAuthMiddleware)
@@ -120,16 +120,14 @@ func main() {
 	registerRoute("DELETE", "/users/{id}/planning", "Delete a planning entry for a user", app.DeletePlanning, app.JWTAuthMiddleware)
 
 	registerRoute("GET", "/forums", "List all forums", app.GetForums)
-	//registerRoute("GET", "/forums/{id}/posts", "List all posts in a specific forum by its UUID", app.GetForumPosts)
-
+	registerRoute("GET", "/forums/{id}/posts", "List all posts in a specific forum by its UUID", app.GetForumPosts)
+	registerRoute("POST", "/forums", "Create a new forum", app.CreateForum, app.JWTAuthMiddleware)
+	registerRoute("POST", "/forums/{id}/posts", "Create a new post in a specific forum by its UUID", app.CreateForumPost, app.JWTAuthMiddleware)
 	registerRoute("GET", "/users/{id}/planning", "Get the planning data for the next 7 days", app.GetPlanning, app.JWTAuthMiddleware)
 	registerRoute("POST", "/users/{id}/planning", "Create a new planning entry for a user", app.CreatePlanning, app.JWTAuthMiddleware)
 	registerRoute("GET", "/planning", "Get all planning entries in the system (admin only)", app.GetAllPlanning)
 	registerRoute("PATCH", "/users/{id}", "Update a user's profile", app.UpdateUser, app.JWTAuthMiddleware)
 	registerRoute("PATCH", "/annonces/{id}/views", "Increment the view count for an annonce", app.IncrementAnnonceViewCount, app.JWTAuthMiddleware)
-
-	// Get annonce routes without auth (for development/testing purposes)
-	registerRoute("GET", "/annonces/noauth", "List all annonces in the system", app.GetAnnoncesWithoutAuth)
 
 	http.HandleFunc("/", notFoundHandler)
 

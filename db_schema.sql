@@ -155,6 +155,7 @@ CREATE TABLE IF NOT EXISTS bankingDetails (
     iban VARCHAR(255) NOT NULL,
     bic VARCHAR(11) NOT NULL,
     account_holder_name VARCHAR(255) NOT NULL,
+    is_saved TINYINT(1) NOT NULL DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -217,3 +218,42 @@ CREATE TABLE IF NOT EXISTS forum_posts (
     FOREIGN KEY (forum_id) REFERENCES forum(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS discussions (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    user1_id CHAR(36) NOT NULL,
+    user2_id CHAR(36) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user1_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (user2_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS group_discussions (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    title VARCHAR(255) NOT NULL,
+    created_by CHAR(36) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS group_discussion_members (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    group_discussion_id CHAR(36) NOT NULL,
+    user_id CHAR(36) NOT NULL,
+    joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (group_discussion_id) REFERENCES group_discussions(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS messages (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    discussion_id CHAR(36),
+    group_discussion_id CHAR(36),
+    sender_id CHAR(36) NOT NULL,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (discussion_id) REFERENCES discussions(id) ON DELETE CASCADE,
+    FOREIGN KEY (group_discussion_id) REFERENCES group_discussions(id) ON DELETE CASCADE,
+    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
+);
+

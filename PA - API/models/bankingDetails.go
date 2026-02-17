@@ -9,6 +9,7 @@ type BankingDetails struct {
 	IBAN       string    `json:"iban" gorm:"not null"`
 	BIC        string    `json:"bic" gorm:"not null"`
 	HolderName string    `json:"holder_name" gorm:"not null"`
-	CreatedAt  string    `json:"created_at,omitempty"`
-	UpdatedAt  string    `json:"updated_at,omitempty"`
+	IsSaved   bool   `json:"is_saved" gorm:"default:true"`
+	CreatedAt string `json:"created_at,omitempty"`
+	UpdatedAt string `json:"updated_at,omitempty"`
 }

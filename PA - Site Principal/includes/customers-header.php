@@ -28,9 +28,15 @@ $user = getLoggedInUser();
             <h1>Customer Portal</h1>
         </div>
         <nav>
-            <div class="btn-wrapper" onClick="window.location.href='../common/community'">
-                <i class="fa-solid fa-users"></i>
-                <p>Community</p>
+            <div class="nav-dropdown community-dropdown">
+                <a class="btn-wrapper" href="../common/forums">
+                    <i class="fa-solid fa-users"></i>
+                    <p>Community</p>
+                </a>
+                <div class="dropdown-menu">
+                    <a href="../common/forums"><i class="fa-solid fa-indent"></i>Forums</a>
+                    <a href="../common/chat"><i class="fa-solid fa-comment"></i>Chat</a>
+                </div>
             </div>
             <div class="nav-dropdown">
                 <a class="btn-wrapper" href="offers">
@@ -38,8 +44,9 @@ $user = getLoggedInUser();
                     <p>Products</p>
                 </a>
                 <div class="dropdown-menu">
-                    <a href="offers"><i class="fa-solid fa-box-open"></i>Offers</a>
-                    <a href="services"><i class="fa-solid fa-briefcase"></i>Services</a>
+                    <a href="../customers/offers"><i class="fa-solid fa-box-open"></i>Offers</a>
+                    <a href="../customers/services"><i class="fa-solid fa-briefcase"></i>Services</a>
+                    <a href="../customers/deposits"><i class="fa-solid fa-warehouse"></i>Deposit</a>
                 </div>
             </div>
             <div class="btn-wrapper" onClick="window.location.href='../public/index'">
@@ -48,7 +55,7 @@ $user = getLoggedInUser();
             </div>
 
             <?php
-                $profileUrl = 'profile';
+                $profileUrl = '../customers/profile';
             ?>
             <div class="nav-dropdown profile-dropdown">
                 <a class="btn-wrapper profile-link" href="<?= $profileUrl ?>">
@@ -59,10 +66,11 @@ $user = getLoggedInUser();
                     <?php endif; ?>
                 </a>
                 <div class="dropdown-menu">
-                    <a href="tips"><i class="fa-solid fa-lightbulb"></i>Tips</a>
+                    <a href="../customers/tips"><i class="fa-solid fa-lightbulb"></i>Tips</a>
                     <a href="<?= $profileUrl ?>"><i class="fa-solid fa-user"></i>Profile</a>
-                    <a href="notifications"><i class="fa-solid fa-bell"></i></i>Notifications <span class="notif-badge" id="notifications-count" hidden>0</span></a>
-                    <a href="planning"><i class="fa-solid fa-calendar-days"></i>Planning</a>
+                    <a href="../customers/notifications"><i class="fa-solid fa-bell"></i>Notifications <span class="notif-badge" id="notifications-count" hidden>0</span></a>
+                    <a href="../customers/planning"><i class="fa-solid fa-calendar-days"></i>Planning</a>
+                    <a href="../customers/support"><i class="fa-solid fa-headset"></i>Support</a> 
                     <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="fa-solid fa-right-from-bracket"></i>Logout</a>
                 </div>
             </div>
