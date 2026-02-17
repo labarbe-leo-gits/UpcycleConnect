@@ -3,13 +3,6 @@ session_start();
 require_once '../../vendor/autoload.php';
 
 $config = require_once '../../config/oauth-google.php';
-
-echo '<script>';
-echo 'alert("GOOGLE_CLIENT_ID: ' . $config['client_id'] . '");';
-echo 'alert("GOOGLE_CLIENT_SECRET: ' . $config['client_secret'] . '
-");';
-echo '</script>';
-
 $client = new Google_Client();
 $client->setClientId($config['client_id']);
 $client->setClientSecret($config['client_secret']);

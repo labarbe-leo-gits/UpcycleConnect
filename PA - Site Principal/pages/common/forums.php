@@ -7,7 +7,7 @@ $user = getLoggedInUser();
 trackLastPage();
 
 if (!$user) {
-    header('Location: ../public/login.php');
+    include_once '../../includes/header.php';
 }
 
 if ($user['user_type'] == 1) {

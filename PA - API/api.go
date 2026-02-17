@@ -105,20 +105,7 @@ func main() {
 	registerRoute("POST", "/banking-details", "Create banking details for a user", app.CreateBankingDetails, app.JWTAuthMiddleware)
 	registerRoute("GET", "/users/{id}/annonces", "List all annonces for a specific user by their UUID", app.GetAnnoncesByUserID, app.JWTAuthMiddleware)
 	registerRoute("PATCH", "/notifications/{id}/read", "Mark a notification as read by its UUID", app.MarkNotificationAsRead, app.JWTAuthMiddleware)
-
-	// Delete routes
-	/* registerRoute("DELETE", "/annonces/{id}", "Delete an annonce by its UUID", app.DeleteAnnonce, app.JWTAuthMiddleware)
-	registerRoute("DELETE", "/users/{id}", "Delete a user by their UUID", app.DeleteUser, app.JWTAuthMiddleware)
-	registerRoute("DELETE", "/orders/{id}", "Delete an order by its UUID", app.DeleteOrder, app.JWTAuthMiddleware)
-	registerRoute("DELETE", "/notifications/{id}", app.DeleteNotification, app.JWTAuthMiddleware)
-	registerRoute("DELETE", "/payment-requests/{id}", "Delete a payment request by its UUID", app.DeletePaymentRequest, app.JWTAuthMiddleware)
-	registerRoute("DELETE", "/payouts/{id}", "Delete a payout by its UUID", app.DeletePayout, app.JWTAuthMiddleware)
-	registerRoute("DELETE", "/banking-details/{id}", "Delete banking details by its UUID", app.DeleteBankingDetails, app.JWTAuthMiddleware)
-	registerRoute("DELETE", "/products/services/{id}", "Delete a service by its UUID", app.DeleteService, app.JWTAuthMiddleware)
-	registerRoute("DELETE", "/annonces/{id}/images/{image_id}", "Delete an image from an annonce by their UUIDs", app.DeleteAnnonceImage, app.JWTAuthMiddleware)
-	registerRoute("DELETE", "/images/{id}", "Delete an image by its UUID", app.DeleteImage, app.JWTAuthMiddleware) */
 	registerRoute("DELETE", "/users/{id}/planning", "Delete a planning entry for a user", app.DeletePlanning, app.JWTAuthMiddleware)
-
 	registerRoute("GET", "/forums", "List all forums", app.GetForums)
 	registerRoute("GET", "/forums/{id}/posts", "List all posts in a specific forum by its UUID", app.GetForumPosts)
 	registerRoute("POST", "/forums", "Create a new forum", app.CreateForum, app.JWTAuthMiddleware)
@@ -128,6 +115,22 @@ func main() {
 	registerRoute("GET", "/planning", "Get all planning entries in the system (admin only)", app.GetAllPlanning)
 	registerRoute("PATCH", "/users/{id}", "Update a user's profile", app.UpdateUser, app.JWTAuthMiddleware)
 	registerRoute("PATCH", "/annonces/{id}/views", "Increment the view count for an annonce", app.IncrementAnnonceViewCount, app.JWTAuthMiddleware)
+	
+	registerRoute("GET", "/conteneurs", "List all conteneurs in the system", app.GetConteneurs, app.JWTAuthMiddleware)
+	registerRoute("POST", "/conteneurs", "Create a new conteneur", app.CreateConteneur, app.JWTAuthMiddleware)
+	registerRoute("GET", "/deposits", "List all deposits in the system", app.GetDeposits, app.JWTAuthMiddleware)
+	registerRoute("POST", "/deposits", "Create a new deposit request", app.CreateDeposit, app.JWTAuthMiddleware)
+	registerRoute("PATCH", "/deposits/{id}/status", "Update the status of a deposit request", app.UpdateDepositStatus, app.JWTAuthMiddleware)
+	registerRoute("GET", "/users/{id}/deposits", "List all deposits for a specific user by their UUID", app.GetDepositsByUserID, app.JWTAuthMiddleware)
+	registerRoute("GET", "/conteneurs/{id}", "Get details of a specific conteneur by its UUID", app.GetConteneurByID, app.JWTAuthMiddleware)
+	registerRoute("PATCH", "/conteneurs/{id}", "Update details of a specific conteneur by its UUID", app.UpdateConteneur, app.JWTAuthMiddleware)
+	registerRoute("GET", "/users/{id}/deposits/{depid}", "Get a specific user's deposit", app.GetDepositByID, app.JWTAuthMiddleware)
+	registerRoute("PATCH", "/users/{id}/password", "Change a user's password", app.ChangePassword, app.JWTAuthMiddleware)
+	/* registerRoute("GET", "/users/{id}/discussions", "List all discussions for a specific user by their UUID", app.GetUserDiscussions, app.JWTAuthMiddleware)
+	registerRoute("POST", "/users/{id}/discussions", "Create a new discussion for a specific user by their UUID", app.CreateDiscussion, app.JWTAuthMiddleware)
+	registerRoute("GET", "/discussions/{id}/messages", "List all messages in a specific discussion by its UUID", app.GetDiscussionMessages, app.JWTAuthMiddleware)
+	registerRoute("POST", "/discussions/{id}/messages", "Create a new message in a specific discussion by its UUID", app.CreateMessage, app.JWTAuthMiddleware) */
+
 
 	http.HandleFunc("/", notFoundHandler)
 

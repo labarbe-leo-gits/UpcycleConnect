@@ -52,9 +52,15 @@ trackLastPage();
                 <i class="fa-solid fa-circle-info"></i>
                 <p>About</p>
             </div>
-            <div class="btn-wrapper" onClick="window.location.href='../common/community'">
-                <i class="fa-solid fa-users"></i>
-                <p>Community</p>
+
+            <div class="nav-dropdown community-dropdown">
+                <a class="btn-wrapper" href="../common/forums">
+                    <i class="fa-solid fa-users"></i>
+                    <p>Community</p>
+                </a>
+                <div class="dropdown-menu">
+                    <a href="../common/forums"><i class="fa-solid fa-indent"></i>Forums</a>
+                </div>
             </div>
             <div class="btn-wrapper" onClick="openFile('contact.php')">
                 <i class="fa-solid fa-envelope"></i>

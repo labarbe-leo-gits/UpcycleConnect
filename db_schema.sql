@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS users (
     user_secret VARCHAR(255) NULL,
     twofa_enabled BOOLEAN DEFAULT FALSE,
     twofa_secret VARCHAR(64) NULL,
+    twofa_backup_codes TEXT NULL,
     oauth_id VARCHAR(255) NULL,
     profile_picture VARCHAR(500) NULL,
     UNIQUE INDEX idx_oauth (oauth_provider, oauth_id)

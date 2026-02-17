@@ -220,8 +220,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <hr>
         <div class="profile-tabs">
             <button class="tab-btn active" data-tab="general">General</button>
-            <button class="tab-btn" data-tab="security">Security</button>
-            <button class="tab-btn" data-tab="mfa">MFA</button>
+            <button class="tab-btn" data-tab="myupdoc">My UpDoc</button>
+
+            <?php 
+
+                if (empty($user['oauth_provider'])) {
+                    echo '<button class="tab-btn" data-tab="security">Security</button>';
+                    echo '<button class="tab-btn" data-tab="mfa">MFA</button>';
+                }
+
+            ?>
         </div>
         <div class="tab-content" id="general-tab">
             

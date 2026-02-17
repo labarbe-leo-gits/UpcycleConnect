@@ -1289,7 +1289,8 @@ body.modal-open {
 .add-modal input[type="text"],
 .add-modal input[type="number"],
 .add-modal textarea,
-.add-modal input[type="file"] {
+.add-modal input[type="file"],
+.add-modal select {
   width: 100%;
   padding: 14px 16px;
   border: 2px solid #e5e7eb;
@@ -1299,6 +1300,13 @@ body.modal-open {
   background: #f9fafb;
   transition: all 0.3s ease;
   box-sizing: border-box;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'><path d='M1 1l5 5 5-5' stroke='%239ca3af' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 48px;
 }
 
 .add-modal textarea {
@@ -1307,7 +1315,8 @@ body.modal-open {
 }
 
 .add-modal input:focus,
-.add-modal textarea:focus {
+.add-modal textarea:focus,
+.add-modal select:focus {
   outline: none;
   border-color: #10b981;
   background: #ffffff;
@@ -1315,7 +1324,8 @@ body.modal-open {
 }
 
 .add-modal input:hover,
-.add-modal textarea:hover {
+.add-modal textarea:hover,
+.add-modal select:hover {
   border-color: #cbd5e1;
 }
 

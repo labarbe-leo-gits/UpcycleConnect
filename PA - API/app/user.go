@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"os"
@@ -332,4 +333,148 @@ func GetNotificationsByUserID(w http.ResponseWriter, r *http.Request) {
 
 func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	// Do something
+}
+
+func GetDepositsByUserID(w http.ResponseWriter, r *http.Request) {
+	idStr := strings.TrimPrefix(r.URL.Path, "/users/")
+	idStr = strings.TrimSuffix(idStr, "/deposits")
+	userID, err := uuid.Parse(idStr)
+
+	if err != nil {
+		fmt.Println("[ERROR] GetDepositsByUserID parse UUID:", err)
+		sendError(w, "Invalid user ID format", http.StatusBadRequest)
+		return
+	}
+
+	query := r.URL.Query()
+	pageParam := query.Get("page")
+	limitParam := query.Get("limit")
+
+	if pageParam == "" && limitParam == "" {
+		deposits, err := db.GetDepositsByUserIDFromDB(userID)
+		if err != nil {
+			fmt.Println("[ERROR] GetDepositsByUserID:", err)
+			sendError(w, "Unable to fetch deposits for user", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(deposits)
+		return
+	}
+
+	page := 1
+	limit := 20
+	if pageParam != "" {
+		if p, err := strconv.Atoi(pageParam); err == nil && p > 0 {
+			page = p
+		}
+	}
+	if limitParam != "" {
+		if l, err := strconv.Atoi(limitParam); err == nil && l > 0 {
+			limit = l
+		}
+	}
+	if limit > 100 {
+		limit = 100
+	}
+	offset := (page - 1) * limit
+
+	total, err := db.CountDepositsByUserID(userID)
+	if err != nil {
+		fmt.Println("[ERROR] GetDepositsByUserID count:", err)
+		sendError(w, "Unable to fetch deposits", http.StatusInternalServerError)
+		return
+	}
+
+	items, err := db.GetDepositsPageByUserIDFromDB(userID, limit, offset)
+	if err != nil {
+		fmt.Println("[ERROR] GetDepositsByUserID page:", err)
+		sendError(w, "Unable to fetch deposits", http.StatusInternalServerError)
+		return
+	}
+
+	response := map[string]interface{}{
+		"items": items,
+		"total": total,
+		"page":  page,
+		"limit": limit,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+
+}
+
+func ValidatePasswordChangeRequest(req struct {
+	OldPassword string `json:"old_password"`
+	NewPassword string `json:"new_password"`
+}) []string {
+
+	var validationErrors []string
+
+	if req.OldPassword == "" {
+		validationErrors = append(validationErrors, "Old password is required")
+	}
+
+	if req.NewPassword == "" {
+		validationErrors = append(validationErrors, "New password is required")
+	}
+
+	if req.NewPassword != "" {
+		numbers := "0123456789"
+		uppercases := "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		lowercases := "abcdefghijklmnopqrstuvwxyz"
+		special_chars := "!@#$%^&*()-_=+[]{}|;:,.<>?/~`"
+		if len(req.NewPassword) < 8 || !strings.ContainsAny(req.NewPassword, numbers) || !strings.ContainsAny(req.NewPassword, special_chars) || !strings.ContainsAny(req.NewPassword, uppercases) || !strings.ContainsAny(req.NewPassword, lowercases) {
+			validationErrors = append(validationErrors, "New password must be at least 6 characters long and contain at least one number, one uppercase letter, one lowercase letter, and one special character.")
+		}
+	}
+
+	return validationErrors
+
+}
+
+func ChangePassword(w http.ResponseWriter, r *http.Request) {
+
+	var passwordChangeRequest struct {
+		OldPassword string `json:"old_password"`
+		NewPassword string `json:"new_password"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&passwordChangeRequest)
+	if err != nil {
+		fmt.Println("[ERROR] ChangePassword decode:", err)
+		sendError(w, "Invalid JSON format", http.StatusBadRequest)
+		return
+	}
+
+	validationsErrors := ValidatePasswordChangeRequest(passwordChangeRequest)
+
+	if len(validationsErrors) > 0 {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"errors": validationsErrors,
+		})
+		return
+	}
+
+	userID := strings.TrimPrefix(r.URL.Path, "/users/")
+	userID = strings.TrimSuffix(userID, "/password")
+
+	err = db.ChangeUserPasswordInDB(userID, passwordChangeRequest.NewPassword)
+
+	if err != nil {
+		fmt.Println("[ERROR] ChangePassword DB update:", err)
+		sendError(w, "Unable to change password", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Password changed successfully"})
+
 }

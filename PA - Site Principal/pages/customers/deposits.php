@@ -1,0 +1,103 @@
+<?php 
+
+$title = "Deposits";
+include_once '../../includes/customers-header.php';
+
+?>
+
+<div class="container deposits-container">
+    <div class="deposits-header">
+        <h2>My Deposit Requests</h2>
+        <div class="small-muted">Review and track your deposit requests</div>
+        <button class="add-offer-button" id="add-deposit">
+            <i class="fa-solid fa-plus"></i>
+            New Deposit Request
+        </button>
+    </div>
+
+    <div id="deposits-root">
+        <div id="deposits-container" class="deposits-list"></div>
+        <div id="deposits-pagination" class="pagination"></div>
+    </div>
+</div>
+
+<div class="deposit-modal add-modal" id="deposit-modal" role="dialog" aria-hidden="true">
+    <div class="deposit-modal-content add-modal-content">
+        <span class="close-button">&times;</span>
+        <h2 id="deposit-modal-title">Deposit details</h2>
+        <div class="deposit-modal-grid">
+            <div>
+                <div id="deposit-info" class="deposit-details">
+                    <p>Loading...</p>
+                </div>
+
+                <div style="height:12px"></div>
+                <div id="conteneur-info"></div>
+                <div style="height:12px"></div>
+                <div id="deposit-map"></div>
+            </div>
+
+            <aside>
+                <div class="deposit-image">
+                    <img src="../../assets/img/defaults/container.png" alt="Conteneur" />
+                </div>
+            </aside>
+        </div>
+    </div>
+</div>
+
+<?php
+$conteneurs = [];
+try {
+    $cResp = askAPI('/conteneurs', 'GET');
+    $decoded = json_decode($cResp, true);
+    if (is_array($decoded)) $conteneurs = $decoded;
+} catch (\Exception $e) {
+    $conteneurs = [];
+}
+?>
+
+<div class="add-modal" id="add-deposit-modal">
+    <div class="add-modal-content">
+        <span class="close-button" id="close-add-deposit">&times;</span>
+        <h2>New Deposit Request</h2>
+        <form id="add-deposit-form">
+            <div class="form-group">
+                <label for="deposit-conteneur">Select conteneur</label>
+                <select id="deposit-conteneur" name="deposit-conteneur" required>
+                    <option value="">-- Select One --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="deposit-object-name">Object name</label>
+                <input type="text" id="deposit-object-name" name="deposit-object-name" maxlength="60" required />
+            </div>
+            <div class="form-group">
+                <label for="deposit-object-description">Description</label>
+                <textarea id="deposit-object-description" name="deposit-object-description" maxlength="1000" rows="4" required></textarea>
+            </div>
+            <div class="form-group">
+                <small><i>The platform administrator might contact you for additionnal information such as pictures of the item. They will use the e-mail associated with your account for that.</i></small>
+            </div>
+            <div class="form-group">
+                <div id="add-deposit-error" class="form-error" style="display:none;color:#b00020;margin-bottom:8px"></div>
+                <button type="submit" id="add-deposit-submit">
+                    <i class="fa-solid fa-paper-plane"></i>
+                    Send Request
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    window.AVAILABLE_CONTENEURS = <?php echo json_encode($conteneurs); ?> || [];
+    window.CURRENT_USER_ID = '<?php echo isset($user["id"]) ? $user["id"] : ""; ?>';
+</script>
+
+<link rel="stylesheet" href="../../assets/css/deposits.css">
+<script src="../../assets/js/deposits.js" defer></script>
+
+<?php
+include_once '../../includes/footer.php';
+?>

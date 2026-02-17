@@ -9,7 +9,7 @@ if (file_exists($ENV_FILE)) {
         putenv("$key=$value");
     }
 } else {
-    echo "Warning: .env file not found. Using system environment variables."; // TODO : Redirect to custom error page
+    error_log("Warning: .env file not found. Using system environment variables."); // do not send echo to response body
 
 }
 
@@ -52,14 +52,17 @@ function askAPI($endpoint, $method, $data = null){
     curl_close($ch);
 
     if ($errno) {
+        error_log("askAPI: curl error ($errno) $error calling $url");
         return json_encode(['error' => "Connection failed: ($errno) $error"]);
     }
 
     if ($response === false || $response === null || $response === '') {
+        error_log("askAPI: empty response from API at $url");
         return json_encode(['error' => "Empty response from API at $url"]);
     }
 
     if ($httpCode < 200 || $httpCode >= 300) {
+        error_log(sprintf("askAPI: non-2xx response from %s -> %d, body=%s", $url, $httpCode, substr($response, 0, 300)));
         return json_encode([
             'error' => "API returned HTTP $httpCode",
             'http_code' => $httpCode,

@@ -20,6 +20,7 @@ type User struct {
 	OAuthID        string    `json:"oauth_id,omitempty"`
 	ProfilePicture string    `json:"profile_picture,omitempty"`
 	UserSecret     string    `json:"user_secret,omitempty"`
-	TwoFASecret    string    `json:"twofa_secret,omitempty"`
-	TwoFAEnabled   bool      `json:"twofa_enabled,omitempty"`
+	TwoFASecret  string `json:"-"`
+	TwoFAEnabled bool   `json:"twofa_enabled,omitempty"`
+	TwoFABackupCodes []string `json:"-"`
 }

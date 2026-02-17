@@ -237,3 +237,85 @@ func GetUserByEmailFromDB(email string) (models.User, error) {
 
 	return user, nil
 }
+
+func GetDepositsByUserIDFromDB(userID uuid.UUID) ([]models.Deposit, error) {
+
+	rows, err := Db.Query("SELECT id, user_id, conteneur_id, object_name, object_description, status, created_at, updated_at FROM demandes_depot WHERE user_id = ?", userID.String())
+	if err != nil {
+		return nil, fmt.Errorf("failed to query deposits: %v", err)
+	}
+
+	defer rows.Close()
+
+	var deposits []models.Deposit
+
+	for rows.Next() {
+		var deposit models.Deposit
+		err := rows.Scan(&deposit.ID, &deposit.UserID, &deposit.ConteneurID, &deposit.ObjectName, &deposit.ObjectDescription, &deposit.Status, &deposit.CreatedAt, &deposit.UpdatedAt)
+
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan deposit: %v", err)
+		}
+
+		deposits = append(deposits, deposit)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating over deposit rows: %v", err)
+	}
+
+	return deposits, nil
+
+}
+
+func GetDepositsPageByUserIDFromDB(userID uuid.UUID, limit int, offset int) ([]models.Deposit, error) {
+	rows, err := Db.Query(
+		"SELECT id, user_id, conteneur_id, object_name, object_description, status, created_at, updated_at FROM demandes_depot WHERE user_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?",
+		userID.String(), limit, offset,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query deposits page: %v", err)
+	}
+	defer rows.Close()
+
+	var deposits []models.Deposit
+	for rows.Next() {
+		var deposit models.Deposit
+		err := rows.Scan(&deposit.ID, &deposit.UserID, &deposit.ConteneurID, &deposit.ObjectName, &deposit.ObjectDescription, &deposit.Status, &deposit.CreatedAt, &deposit.UpdatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan deposit row: %v", err)
+		}
+		deposits = append(deposits, deposit)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating deposit page rows: %v", err)
+	}
+
+	return deposits, nil
+}
+
+func CountDepositsByUserID(userID uuid.UUID) (int, error) {
+	var count int
+	err := Db.QueryRow("SELECT COUNT(*) FROM demandes_depot WHERE user_id = ?", userID.String()).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("failed to count deposits: %v", err)
+	}
+	return count, nil
+}
+
+func ChangeUserPasswordInDB(userID string, newPassword string) error {
+
+	hashed, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return fmt.Errorf("failed to hash password: %v", err)
+	}
+
+	_, err = Db.Exec("UPDATE users SET password_hash = ? WHERE id = ?", string(hashed), userID)
+	if err != nil {
+		return fmt.Errorf("failed to update password: %v", err)
+	}
+
+	return nil
+
+}
