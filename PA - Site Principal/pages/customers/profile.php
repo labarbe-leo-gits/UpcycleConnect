@@ -9,6 +9,14 @@ if ($isAjax) {
     requireUserType(1);
 } else {
     include_once '../../includes/customers-header.php';
+
+    if (!empty($isAjax) && $isAjax) {
+
+    } else {
+        echo '<div id="initial-loader" aria-hidden="false"><span class="loader" role="status" aria-label="Loading"></span></div>';
+        if (ob_get_level()) { @ob_flush(); }
+        @flush();
+    }
 }
 
 $user = getLoggedInUser();
@@ -68,6 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $rib = trim($_POST['rib'] ?? '');
             $iban = trim($_POST['iban'] ?? '');
             $bic = trim($_POST['bic'] ?? '');
+            $saveDetailsChecked = isset($_POST['save_details']) && $_POST['save_details'] !== '';
 
             if ($holderName === '') {
                 $paymentErrors[] = 'Account holder name is required.';
@@ -77,22 +86,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'rib' => $rib,
                     'iban' => $iban,
                     'bic' => $bic,
-                    'holder_name' => $holderName
+                    'holder_name' => $holderName,
+                    'is_saved' => $saveDetailsChecked
                 ]);
 
                 $createResponse = askAPI('/banking-details', 'POST', $createPayload);
                 $createData = json_decode($createResponse, true);
                 if (!is_array($createData) || isset($createData['error'])) {
-                    $paymentErrors[] = 'Unable to save banking details.';
+                    $paymentErrors[] = 'Unable to create banking details.';
                 } else {
-                    $bankingDetailsResponse = askAPI("/users/{$user['id']}/banking-details", 'GET');
-                    $bankingDetailsData = json_decode($bankingDetailsResponse, true);
-                    if (is_array($bankingDetailsData) && !isset($bankingDetailsData['error']) && !empty($bankingDetailsData)) {
-                        $savedBankingDetailsList = $bankingDetailsData;
-                        $hasSavedBankingDetails = count($savedBankingDetailsList) > 0;
-                        $bankingDetailsId = $savedBankingDetailsList[0]['id'] ?? '';
+                    if ($saveDetailsChecked) {
+                        $bankingDetailsResponse = askAPI("/users/{$user['id']}/banking-details", 'GET');
+                        $bankingDetailsData = json_decode($bankingDetailsResponse, true);
+                        if (is_array($bankingDetailsData) && !isset($bankingDetailsData['error']) && !empty($bankingDetailsData)) {
+                            $savedBankingDetailsList = $bankingDetailsData;
+                            $hasSavedBankingDetails = count($savedBankingDetailsList) > 0;
+                            $bankingDetailsId = $savedBankingDetailsList[0]['id'] ?? '';
+                        } else {
+                            $paymentErrors[] = 'Unable to retrieve saved banking details.';
+                        }
                     } else {
-                        $paymentErrors[] = 'Unable to retrieve saved banking details.';
+                        $bankingDetailsId = $createData['id'] ?? '';
+                        if ($bankingDetailsId === '') {
+                            $paymentErrors[] = 'Unable to use provided banking details.';
+                        }
                     }
                 }
             }
@@ -133,16 +150,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             echo json_encode([
                 'success' => true,
                 'message' => $paymentSuccess,
-                'balance' => (float) $balance
+                'balance' => (float) $balance,
+                'banking_details' => is_array($savedBankingDetailsList) && count($savedBankingDetailsList) ? $savedBankingDetailsList : []
             ]);
             exit;
         }
     }
-    // 2FA form handled below in the HTML section
 }
 ?>
 
-<div class="container">
+<div class="container" id="main-content" style="visibility:hidden;">
     <div id="payment-feedback"></div>
     <?php if (!empty($paymentErrors)): ?>
         <div class="error-message">
@@ -164,8 +181,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="profile-card">
         <div class="profile-header-flex">
             <div class="profile-picture-section">
-                <img src="/files/uploads/user/<?= htmlspecialchars($user['profile_picture'] ?? 'default.png') ?>" alt="Profile Picture" class="profile-pic-large" id="profile-pic-preview">
-                <button class="btn-secondary btn-edit-pic" id="edit-pic-btn" title="Edit profile picture"><i class="fa-solid fa-pen"></i></button>
+                <div class="img-spinner" aria-hidden="true"></div>
+                <img data-blob-src="../../../files/uploads/user/<?= htmlspecialchars($user['profile_picture'] ?? 'defaultUser.png') ?>" src="data:image/gif;base64,R0lGODlhAQABAPAAAP///wAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==" alt="Profile Picture" class="profile-pic-large" id="profile-pic-preview">
             </div>
             <div class="profile-info-section">
                 <h2>Your Profile</h2>
@@ -173,6 +190,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="profile-field-row">
                         <span class="profile-label">User ID:</span>
                         <span><?= htmlspecialchars($user['id']) ?></span>
+                        <button class="btn-copy" data-copy="<?= htmlspecialchars($user['id']) ?>" title="Copy User ID"><i class="fa-solid fa-copy"></i></button>
                     </div>
                     <div class="profile-field-row editable-row">
                         <span class="profile-label">Username:</span>
@@ -206,35 +224,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <button class="tab-btn" data-tab="mfa">MFA</button>
         </div>
         <div class="tab-content" id="general-tab">
-            <h3>General Settings</h3>
-            <form class="settings-form">
-                <div class="field">
-                    <label for="setting-language">Language</label>
-                    <select id="setting-language" name="language">
-                        <option value="en">English</option>
-                        <option value="fr">Français</option>
-                        <option value="es">Español</option>
-                    </select>
-                </div>
-                <div class="field">
-                    <label for="setting-theme">Theme</label>
-                    <select id="setting-theme" name="theme">
-                        <option value="light">Light</option>
-                        <option value="dark">Dark</option>
-                        <option value="system">System Default</option>
-                    </select>
-                </div>
-                <div class="field">
-                    <label><input type="checkbox" name="newsletter" checked> Receive newsletter</label>
-                </div>
-                <div class="field">
-                    <label><input type="checkbox" name="email_notifications" checked> Email notifications</label>
-                </div>
-                <div class="field">
-                    <label><input type="checkbox" name="privacy_mode"> Privacy mode</label>
-                </div>
-                <button type="submit" class="btn-primary">Save Settings</button>
-            </form>
+            
         </div>
         <div class="tab-content" id="security-tab" style="display:none">
             <h3>Change Password</h3>
@@ -270,7 +260,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <button type="submit" class="btn-primary">Change Password</button>
             </form>
         </div>
-        </div>
     </div>
 </div>
 <div class="modal-overlay" id="payment-modal" aria-hidden="true">
@@ -304,9 +293,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <div class="field">
                     <label>Banking details</label>
-                    <label>
-                        <input type="radio" name="banking_option" value="saved" <?php echo $hasSavedBankingDetails ? 'checked' : 'disabled'; ?> />
-
+                    <div class="radio-options">
+                        <label class="radio-option">
+                            <input type="radio" name="banking_option" value="saved" <?php echo $hasSavedBankingDetails ? 'checked' : 'disabled'; ?> />
+                            Saved banking details
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="banking_option" value="new" <?php echo $hasSavedBankingDetails ? '' : 'checked'; ?> />
+                            Use new banking details
+                        </label>
+                    </div>
+                </div>
 
                 <div id="saved-details-section">
                     <div class="field">
@@ -403,250 +400,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 </div>
 
-<div id="planning-preloader" class="planning-preloader" style="display:flex;z-index:10000;">
+<div id="planning-preloader" class="planning-preloader" style="display:none;z-index:10000;">
     <div class="recycle-spinner">
         <div class="rec-arc a"></div>
         <div class="rec-arc b"></div>
         <div class="rec-arc c"></div>
     </div>
 </div>
-<script>
-    const paymentModal = document.getElementById('payment-modal');
-    const openPaymentModal = document.getElementById('open-payment-modal');
-    const closePaymentModal = document.getElementById('close-payment-modal');
-    const cancelPaymentModal = document.getElementById('cancel-payment-modal');
-    const savedRadio = document.querySelector('input[name="banking_option"][value="saved"]');
-    const newRadio = document.querySelector('input[name="banking_option"][value="new"]');
-    const savedSection = document.getElementById('saved-details-section');
-    const newSection = document.getElementById('new-details-section');
-    const savedIdInput = document.getElementById('banking_details_id');
-    const ribInput = document.getElementById('rib');
-    const ibanInput = document.getElementById('iban');
-    const bicInput = document.getElementById('bic');
-    const holderInput = document.getElementById('account_holder_name');
-    const paymentForm = document.getElementById('payment-request-form');
-    const feedback = document.getElementById('payment-feedback');
-    const balanceTotal = document.getElementById('balance-total');
-    const balanceAvailable = document.getElementById('balance-available');
-    const amountInput = document.getElementById('amount');
-
-    function toggleBankingSections() {
-        const useSaved = savedRadio.checked;
-        savedSection.style.display = useSaved ? 'block' : 'none';
-        newSection.style.display = useSaved ? 'none' : 'block';
-        if (savedIdInput) savedIdInput.required = useSaved;
-        if (ribInput) ribInput.required = false;
-        if (ibanInput) ibanInput.required = false;
-        if (bicInput) bicInput.required = false;
-        if (holderInput) holderInput.required = !useSaved;
-    }
-
-    function openModal() {
-        paymentModal.classList.add('is-visible');
-        document.body.classList.add('modal-open');
-        paymentModal.setAttribute('aria-hidden', 'false');
-    }
-
-    function closeModal() {
-        paymentModal.classList.remove('is-visible');
-        document.body.classList.remove('modal-open');
-        paymentModal.setAttribute('aria-hidden', 'true');
-    }
-
-    openPaymentModal.addEventListener('click', openModal);
-    closePaymentModal.addEventListener('click', closeModal);
-    cancelPaymentModal.addEventListener('click', closeModal);
-    paymentModal.addEventListener('click', (event) => {
-        if (event.target === paymentModal) {
-            closeModal();
-        }
-    });
-
-    savedRadio.addEventListener('change', toggleBankingSections);
-    newRadio.addEventListener('change', toggleBankingSections);
-    toggleBankingSections();
-
-    if (paymentForm) {
-        paymentForm.addEventListener('submit', async (event) => {
-            event.preventDefault();
-
-            if (feedback) {
-                feedback.textContent = '';
-                feedback.className = '';
-            }
-
-            const submitButton = paymentForm.querySelector('button[type="submit"]');
-            if (submitButton) submitButton.disabled = true;
-
-            try {
-                const formData = new FormData(paymentForm);
-                const response = await fetch(window.location.href, {
-                    method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: formData
-                });
-
-                const data = await response.json().catch(() => null);
-                if (!data) {
-                    throw new Error('Invalid response');
-                }
-
-                if (!data.success) {
-                    if (feedback) {
-                        feedback.textContent = data.message || 'Unable to create payment request.';
-                        feedback.className = 'error-message';
-                    }
-                        hideLoader(true);
-                    return;
-                }
-
-                if (feedback) {
-                    feedback.textContent = data.message || 'Payment request created successfully.';
-                    feedback.className = 'success-message';
-                }
-
-                if (typeof data.balance === 'number') {
-                    const formatted = data.balance.toFixed(2);
-                    if (balanceTotal) balanceTotal.textContent = formatted;
-                    if (balanceAvailable) balanceAvailable.textContent = formatted;
-                    if (amountInput) {
-                        amountInput.max = formatted;
-                        amountInput.value = formatted;
-                    }
-                }
-
-                closeModal();
-                    hideLoader(true);
-            } catch (error) {
-                if (feedback) {
-                    feedback.textContent = 'Unable to create payment request.';
-                    feedback.className = 'error-message';
-                }
-                    hideLoader(true);
-            } finally {
-                if (submitButton) submitButton.disabled = false;
-            }
-        });
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        hideLoader(true);
-    });
-
-document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        this.classList.add('active');
-        const tab = this.getAttribute('data-tab');
-        document.querySelectorAll('.tab-content').forEach(tc => tc.style.display = 'none');
-        if (tab === 'general') {
-            document.getElementById('general-tab').style.display = '';
-        } else if (tab === 'security') {
-            document.getElementById('security-tab').style.display = '';
-        }
-    });
-});
-
-document.querySelectorAll('.btn-edit-inline').forEach(btn => {
-    btn.addEventListener('click', function() {
-        const field = this.getAttribute('data-edit');
-        const valueSpan = document.getElementById(field + '-value');
-        if (!valueSpan) return;
-        const currentValue = valueSpan.textContent;
-        const input = document.createElement('input');
-        input.type = field === 'email' ? 'email' : 'text';
-        input.value = currentValue;
-        input.className = 'profile-edit-input';
-        valueSpan.replaceWith(input);
-        input.focus();
-        input.addEventListener('blur', function() {
-            const newValue = input.value;
-            const newSpan = document.createElement('span');
-            newSpan.id = field + '-value';
-            newSpan.textContent = newValue;
-            input.replaceWith(newSpan);
-        });
-    });
-});
-
-function hideLoader(immediate = false) {
-    var loader = document.getElementById('planning-preloader');
-    if (loader) {
-        if (immediate) {
-            loader.style.display = 'none';
-        } else {
-            setTimeout(function() {
-                loader.style.display = 'none';
-            }, 5000);
-        }
-    }
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    hideLoader(false);
-});
-</script>
-</script>
-<script>
-document.querySelectorAll('.password-toggle').forEach(function(toggle) {
-    toggle.addEventListener('click', function() {
-        var wrapper = toggle.closest('.password-wrapper');
-        var input = wrapper ? wrapper.querySelector('input') : null;
-        if (!input) return;
-        var isHidden = input.type === 'password';
-        input.type = isHidden ? 'text' : 'password';
-        toggle.setAttribute('aria-pressed', isHidden ? 'true' : 'false');
-        toggle.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
-        toggle.innerHTML = isHidden ? '<i class="fa-solid fa-eye-slash"></i>' : '<i class="fa-solid fa-eye"></i>';
-    });
-});
-
-var newPasswordInput = document.querySelector('.password-input[data-strength="true"]');
-if (newPasswordInput) {
-    var meter = newPasswordInput.closest('.field').querySelector('.password-meter');
-    var text = meter ? meter.querySelector('.password-meter-text') : null;
-    if (meter && text) {
-        function meetsCriteria(value) {
-            return {
-                length: value.length >= 8,
-                lower: /[a-z]/.test(value),
-                upper: /[A-Z]/.test(value),
-                number: /\d/.test(value),
-                special: /[^a-zA-Z0-9]/.test(value)
-            };
-        }
-        function getStrength(value) {
-            var criteria = meetsCriteria(value);
-            var allRequired = criteria.length && criteria.lower && criteria.upper && criteria.number && criteria.special;
-            if (!value.length) {
-                return { label: '', className: '' };
-            }
-            if (!allRequired) {
-                return { label: 'Weak', className: 'is-weak' };
-            }
-            if (value.length >= 12) {
-                return { label: 'Strong', className: 'is-strong' };
-            }
-            return { label: 'Medium', className: 'is-medium' };
-        }
-        function updateMeter() {
-            var value = newPasswordInput.value || '';
-            var strength = getStrength(value);
-            meter.classList.remove('is-weak', 'is-medium', 'is-strong');
-            if (!strength.label) {
-                text.textContent = 'Strength';
-                return;
-            }
-            meter.classList.add(strength.className);
-            text.textContent = 'Strength: ' + strength.label;
-        }
-        newPasswordInput.addEventListener('input', updateMeter);
-        updateMeter();
-    }
-}
-</script>
-</script>
-
+<script src="../../assets/js/profile.js"></script>
 <?php if (!$isAjax) { include_once '../../includes/footer.php'; } ?>
