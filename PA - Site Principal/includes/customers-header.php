@@ -41,7 +41,7 @@ $user = getLoggedInUser();
                 </div>
             </div>
             <div class="nav-dropdown">
-                <a class="btn-wrapper" href="offers">
+                <a class="btn-wrapper" href="../customers/offers">
                     <i class="fa-solid fa-box-open"></i>
                     <p>Products</p>
                 </a>

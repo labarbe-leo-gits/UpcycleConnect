@@ -7,7 +7,7 @@
         return;
     }
 
-    var endpoint = 'notifications-poll';
+    var endpoint = '../customers/notifications-poll';
 
     var lastUnreadCount = null;
     var audioContext = null;

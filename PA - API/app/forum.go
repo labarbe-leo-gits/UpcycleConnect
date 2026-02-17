@@ -17,6 +17,47 @@ func sendError(w http.ResponseWriter, message string, statusCode int) {
 }
 
 func GetForums(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	pageStr := q.Get("page")
+	limitStr := q.Get("limit")
+	sort := q.Get("sort")
+
+	if pageStr != "" || limitStr != "" {
+		page := 1
+		limit := 100
+		if pageStr != "" {
+			fmt.Sscanf(pageStr, "%d", &page)
+			if page < 1 {
+				page = 1
+			}
+		}
+		if limitStr != "" {
+			fmt.Sscanf(limitStr, "%d", &limit)
+			if limit < 1 {
+				limit = 1
+			}
+			if limit > 200 {
+				limit = 200
+			}
+		}
+
+		offset := (page - 1) * limit
+		forums, total, err := db.GetForumsPageFromDB(offset, limit, sort)
+		if err != nil {
+			fmt.Println("[ERROR] GetForums (paged):", err)
+			sendError(w, "Unable to fetch forums", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"items": forums,
+			"total": total,
+			"page":  page,
+			"limit": limit,
+		})
+		return
+	}
 
 	forums, err := db.GetForumsFromDB()
 	if err != nil {

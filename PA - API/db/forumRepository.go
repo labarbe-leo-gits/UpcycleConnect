@@ -1,6 +1,6 @@
 package db
 
-import(
+import (
 	"API/models"
 	"database/sql"
 	"fmt"
@@ -59,10 +59,88 @@ func GetForumsFromDB() ([]models.Forum, error) {
 	return forums, nil
 }
 
+func GetForumsPageFromDB(offset int, limit int, sort string) ([]models.Forum, int, error) {
+	forums := []models.Forum{}
+
+	var total int
+	err := Db.QueryRow("SELECT COUNT(id) FROM forum").Scan(&total)
+	if err != nil {
+		return nil, 0, fmt.Errorf("getForumsPage count: %v", err)
+	}
+
+	baseQuery := `SELECT f.id, f.title, f.description, f.created_by, f.created_at, f.updated_at, COALESCE(fp.post_count,0) as post_count
+	FROM forum f
+	LEFT JOIN (SELECT forum_id, COUNT(*) as post_count FROM forum_posts GROUP BY forum_id) fp ON fp.forum_id = f.id`
+
+	orderClause := " ORDER BY f.updated_at DESC"
+	if sort == "trending" {
+		orderClause = " ORDER BY COALESCE(fp.post_count,0) DESC, f.updated_at DESC"
+	}
+
+	query := baseQuery + orderClause + " LIMIT ? OFFSET ?"
+
+	rows, err := Db.Query(query, limit, offset)
+	if err != nil {
+		return nil, 0, fmt.Errorf("getForumsPage query: %v", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var forum models.Forum
+		var idStr string
+		var createdByStr string
+		var createdAt sql.NullString
+		var updatedAt sql.NullString
+		var postCount sql.NullInt64
+
+		err := rows.Scan(&idStr, &forum.Title, &forum.Description, &createdByStr, &createdAt, &updatedAt, &postCount)
+		if err != nil {
+			return nil, 0, fmt.Errorf("getForumsPage scan: %v", err)
+		}
+
+		forum.ID, err = uuid.Parse(idStr)
+		if err != nil {
+			return nil, 0, fmt.Errorf("getForumsPage uuid: %v", err)
+		}
+
+		forum.CreatedBy, err = uuid.Parse(createdByStr)
+		if err != nil {
+			return nil, 0, fmt.Errorf("getForumsPage created_by uuid: %v", err)
+		}
+
+		if createdAt.Valid {
+			forum.CreatedAt = createdAt.String
+		}
+		if updatedAt.Valid {
+			forum.UpdatedAt = updatedAt.String
+		}
+
+		if postCount.Valid {
+			forum.PostCount = int(postCount.Int64)
+		} else {
+			forum.PostCount = 0
+		}
+
+		var latest sql.NullString
+		row := Db.QueryRow("SELECT content FROM forum_posts WHERE forum_id = ? ORDER BY created_at DESC LIMIT 1", forum.ID.String())
+		if err2 := row.Scan(&latest); err2 == nil && latest.Valid {
+			forum.LatestPost = latest.String
+		}
+
+		forums = append(forums, forum)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, 0, fmt.Errorf("getForumsPage rows: %v", err)
+	}
+
+	return forums, total, nil
+}
+
 func GetForumPostsFromDB(forumIDStr string) ([]models.ForumPost, error) {
 
 	posts := []models.ForumPost{}
-	rows, err := Db.Query("SELECT id, forum_id, content, author_id, created_at FROM forum_post WHERE forum_id = ?", forumIDStr)
+	rows, err := Db.Query("SELECT id, forum_id, content, author_id, created_at FROM forum_posts WHERE forum_id = ?", forumIDStr)
 
 	if err != nil {
 		return nil, fmt.Errorf("getForumPosts package db : %s", err.Error())
@@ -131,7 +209,7 @@ func CreateForumPostInDB(post models.ForumPost) error {
 	newID := uuid.New()
 	currentTime := getCurrentTime()
 
-	_, err := Db.Exec("INSERT INTO forum_post (id, forum_id, content, author_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)", newID.String(), post.ForumID.String(), post.Content, post.AuthorID.String(), currentTime, currentTime)
+	_, err := Db.Exec("INSERT INTO forum_posts (id, forum_id, content, author_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)", newID.String(), post.ForumID.String(), post.Content, post.AuthorID.String(), currentTime, currentTime)
 	if err != nil {
 		return fmt.Errorf("createForumPost package db : %s", err.Error())
 	}
