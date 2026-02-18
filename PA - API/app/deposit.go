@@ -106,11 +106,9 @@ func UpdateDepositStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetDepositByID(w http.ResponseWriter, r *http.Request) {
-	// support both query param (?id=...) and path-style /users/{id}/deposits/{depid}
 	idStr := r.URL.Query().Get("id")
 	if idStr == "" {
 		parts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
-		// expected path: users/{userId}/deposits/{depositId}
 		if len(parts) >= 4 && parts[len(parts)-2] == "deposits" {
 			idStr = parts[len(parts)-1]
 		}
@@ -124,7 +122,6 @@ func GetDepositByID(w http.ResponseWriter, r *http.Request) {
 	deposit, err := db.GetDepositByIDFromDB(idStr)
 	if err != nil {
 		fmt.Println("[ERROR] GetDepositByID - id=", idStr, "error=", err)
-		// return 404 when not found
 		if strings.Contains(err.Error(), "no rows") {
 			http.Error(w, "Deposit not found", http.StatusNotFound)
 			return

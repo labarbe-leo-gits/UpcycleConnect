@@ -140,7 +140,7 @@ func GetForumsPageFromDB(offset int, limit int, sort string) ([]models.Forum, in
 func GetForumPostsFromDB(forumIDStr string) ([]models.ForumPost, error) {
 
 	posts := []models.ForumPost{}
-	rows, err := Db.Query("SELECT id, forum_id, content, author_id, created_at FROM forum_posts WHERE forum_id = ?", forumIDStr)
+	rows, err := Db.Query("SELECT id, forum_id, content, user_id, created_at FROM forum_posts WHERE forum_id = ?", forumIDStr)
 
 	if err != nil {
 		return nil, fmt.Errorf("getForumPosts package db : %s", err.Error())
@@ -209,11 +209,52 @@ func CreateForumPostInDB(post models.ForumPost) error {
 	newID := uuid.New()
 	currentTime := getCurrentTime()
 
-	_, err := Db.Exec("INSERT INTO forum_posts (id, forum_id, content, author_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)", newID.String(), post.ForumID.String(), post.Content, post.AuthorID.String(), currentTime, currentTime)
+	_, err := Db.Exec("INSERT INTO forum_posts (id, forum_id, content, user_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)", newID.String(), post.ForumID.String(), post.Content, post.AuthorID.String(), currentTime, currentTime)
 	if err != nil {
 		return fmt.Errorf("createForumPost package db : %s", err.Error())
 	}
 
 	return nil
+
+}
+
+func GetForumByIDFromDB(forumIDStr string) (*models.Forum, error) {
+
+	var forum models.Forum
+
+	row := Db.QueryRow("SELECT id, title, description, created_by, created_at, updated_at FROM forum WHERE id = ?", forumIDStr)
+
+	var idStr string
+	var createdByStr string
+	var createdAt sql.NullString
+	var updatedAt sql.NullString
+
+	err := row.Scan(&idStr, &forum.Title, &forum.Description, &createdByStr, &createdAt, &updatedAt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("getForumByID package db scan : %s", err.Error())
+	}
+
+	forum.ID, err = uuid.Parse(idStr)
+	if err != nil {
+		return nil, fmt.Errorf("getForumByID package db uuid parse : %s", err.Error())
+	}
+
+	forum.CreatedBy, err = uuid.Parse(createdByStr)
+	if err != nil {
+		return nil, fmt.Errorf("getForumByID package db uuid parse created_by : %s", err.Error())
+	}
+
+	if createdAt.Valid {
+		forum.CreatedAt = createdAt.String
+	}
+
+	if updatedAt.Valid {
+		forum.UpdatedAt = updatedAt.String
+	}
+
+	return &forum, nil
 
 }

@@ -200,3 +200,25 @@ func CreateForumPost(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"message": "Forum post created successfully"})
 
 }
+
+func GetForumByID(w http.ResponseWriter, r *http.Request) {
+
+	idStr := r.URL.Path[len("/forums/"):]
+	forum, err := db.GetForumByIDFromDB(idStr)
+
+	if err != nil {
+		fmt.Println("[ERROR] GetForumByID:", err)
+		sendError(w, "Unable to fetch forum details", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	jsonResponse, err := json.Marshal(forum)
+	if err != nil {
+		fmt.Println("[ERROR] GetForumByID marshal:", err)
+		sendError(w, "Unable to process response", http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Fprintf(w, "%s", jsonResponse)
+}
