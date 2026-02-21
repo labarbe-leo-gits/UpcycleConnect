@@ -10,12 +10,32 @@ require_once '../../config/db.php';
 require_once '../../includes/auth.php';
 header('Content-Type: application/json');
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['forum_id']) && $_GET['forum_id'] !== '') {
+    $forumId = rawurldecode($_GET['forum_id']);
+    $rawBody = file_get_contents('php://input');
+    $resp = askAPI('/forums/' . $forumId . '/posts', 'POST', $rawBody);
+    if (ob_get_length()) ob_clean();
+    $decoded = json_decode($resp, true);
+    if ($decoded === null) {
+        error_log("forums-api POST returned non-JSON response: $resp");
+        http_response_code(500);
+        echo json_encode(['error' => 'Upstream returned invalid response', 'body' => substr($resp, 0, 300)]);
+    } else {
+        echo $resp;
+    }
+    exit;
+}
+
 $page = isset($_GET['page']) ? max(1, (int) $_GET['page']) : null;
 $limit = isset($_GET['limit']) ? max(1, min(100, (int) $_GET['limit'])) : 5;
 $sort = isset($_GET['sort']) ? $_GET['sort'] : '';
 
+
 $apiPath = '/forums';
-if ($page !== null) {
+if (isset($_GET['forum_id']) && $_GET['forum_id'] !== '') {
+    $forumId = rawurldecode($_GET['forum_id']);
+    $apiPath = '/forums/' . $forumId . '/posts';
+} else if ($page !== null) {
     $apiPath .= '?page=' . $page . '&limit=' . $limit . ($sort ? '&sort=' . urlencode($sort) : '');
 } else {
     if ($sort) $apiPath .= '?sort=' . urlencode($sort);

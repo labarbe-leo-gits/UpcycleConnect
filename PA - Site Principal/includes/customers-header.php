@@ -23,6 +23,22 @@ $user = getLoggedInUser();
     <link rel="stylesheet" href="../../assets/css/style.css">
     <link rel="stylesheet" href="../../assets/css/customers.css">
     <link rel="icon" type="image/png" href="../../assets/img/brand/UpcycleDiminutif.png">
+    <?php
+    if (!empty(
+        isset($extraCss) ? $extraCss : null
+    ) && is_array($extraCss)) {
+        foreach ($extraCss as $cssFile) {
+            echo "    <link rel=\"stylesheet\" href=\"{$cssFile}\">\n";
+        }
+    }
+    if (!empty(
+        isset($extraJs) ? $extraJs : null
+    ) && is_array($extraJs)) {
+        foreach ($extraJs as $jsFile) {
+            echo "    <script src=\"{$jsFile}\" defer></script>\n";
+        }
+    }
+    ?>
 </head>
 <body>
     <header data-api-base="<?php echo htmlspecialchars($API_URL ?? ''); ?>" data-user-id="<?php echo htmlspecialchars($user['id'] ?? ''); ?>">

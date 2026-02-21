@@ -5,6 +5,7 @@ package app
 import (
 	"API/db"
 	"API/models"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -271,6 +272,11 @@ func JWTAuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		if err != nil || !token.Valid {
 			sendError(w, "Invalid or expired token", http.StatusUnauthorized)
 			return
+		}
+		if claims, ok := token.Claims.(jwt.MapClaims); ok {
+			if uid, ok2 := claims["user_id"].(string); ok2 && uid != "" {
+				r = r.WithContext(context.WithValue(r.Context(), "user_id", uid))
+			}
 		}
 		next(w, r)
 	}

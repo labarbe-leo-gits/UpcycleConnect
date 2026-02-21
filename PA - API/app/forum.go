@@ -164,6 +164,10 @@ func ValidatePostDTO(dto models.ForumPost) []string {
 		validationErrors = append(validationErrors, "Content is required")
 	}
 
+	if len(dto.Content) > 300 || len(dto.Content) < 5 {
+		validationErrors = append(validationErrors, "The content must be between 5 and 300 characters")
+	}
+
 	return validationErrors
 
 }
@@ -180,15 +184,30 @@ func CreateForumPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	validationErrors := ValidatePostDTO(postDto)
+	if postDto.ForumID == uuid.Nil {
+		idStr := r.URL.Path[len("/forums/") : len(r.URL.Path)-len("/posts")]
+		if idStr != "" {
+			if fid, err2 := uuid.Parse(idStr); err2 == nil {
+				postDto.ForumID = fid
+			}
+		}
+	}
 
+	if postDto.AuthorID == uuid.Nil {
+		if uid, ok := r.Context().Value("user_id").(string); ok && uid != "" {
+			if parsed, err2 := uuid.Parse(uid); err2 == nil {
+				postDto.AuthorID = parsed
+			}
+		}
+	}
+
+	validationErrors := ValidatePostDTO(postDto)
 	if len(validationErrors) > 0 {
 		sendError(w, fmt.Sprintf("Validation errors: %s", validationErrors), http.StatusBadRequest)
 		return
 	}
 
 	err = db.CreateForumPostInDB(postDto)
-
 	if err != nil {
 		fmt.Println("[ERROR] CreateForumPost DB:", err)
 		sendError(w, "Unable to create forum post", http.StatusInternalServerError)

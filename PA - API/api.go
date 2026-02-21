@@ -131,7 +131,10 @@ func main() {
 	registerRoute("POST", "/users/{id}/discussions", "Create a new discussion for a specific user by their UUID", app.CreateDiscussion, app.JWTAuthMiddleware)
 	registerRoute("GET", "/discussions/{id}/messages", "List all messages in a specific discussion by its UUID", app.GetDiscussionMessages, app.JWTAuthMiddleware)
 	registerRoute("POST", "/discussions/{id}/messages", "Create a new message in a specific discussion by its UUID", app.CreateMessage, app.JWTAuthMiddleware) */
-
+	/* registerRoute("GET", "/tips", "Get the tips from the Database", app.GetTips, app.JWTAuthMiddleware)
+	registerRoute("POST", "/tips", "Create a tip in the Database", app.CreateTip, app.JWTAuthMiddleware)
+	registerRoute("PATCH", "/tips/{id}", "Update a tip in the database", app.UpdateTip, app.JWTAuthMiddleware)
+	registerRoute("DELETE", "/tips/{id}", "Delete a tip from the database", app.DeleteTip, app.JWTAuthMiddleware) */
 
 	http.HandleFunc("/", notFoundHandler)
 

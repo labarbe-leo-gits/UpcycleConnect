@@ -140,7 +140,7 @@ func GetForumsPageFromDB(offset int, limit int, sort string) ([]models.Forum, in
 func GetForumPostsFromDB(forumIDStr string) ([]models.ForumPost, error) {
 
 	posts := []models.ForumPost{}
-	rows, err := Db.Query("SELECT id, forum_id, content, user_id, created_at FROM forum_posts WHERE forum_id = ?", forumIDStr)
+	rows, err := Db.Query("SELECT id, forum_id, parent_id, content, user_id, created_at, updated_at FROM forum_posts WHERE forum_id = ? ORDER BY created_at DESC", forumIDStr)
 
 	if err != nil {
 		return nil, fmt.Errorf("getForumPosts package db : %s", err.Error())
@@ -152,9 +152,11 @@ func GetForumPostsFromDB(forumIDStr string) ([]models.ForumPost, error) {
 		var post models.ForumPost
 		var idStr string
 		var forumIDStr string
+		var parentIDStr sql.NullString
 		var createdByStr string
 		var createdAt sql.NullString
-		err := rows.Scan(&idStr, &forumIDStr, &post.Content, &createdByStr, &createdAt)
+		var updatedAt sql.NullString
+		err := rows.Scan(&idStr, &forumIDStr, &parentIDStr, &post.Content, &createdByStr, &createdAt, &updatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("getForumPosts package db scan : %s", err.Error())
 		}
@@ -173,9 +175,17 @@ func GetForumPostsFromDB(forumIDStr string) ([]models.ForumPost, error) {
 		if err != nil {
 			return nil, fmt.Errorf("getForumPosts package db uuid parse created_by : %s", err.Error())
 		}
-
+		if parentIDStr.Valid {
+			post.ParentID, err = uuid.Parse(parentIDStr.String)
+			if err != nil {
+				return nil, fmt.Errorf("getForumPosts package db uuid parse parent_id : %s", err.Error())
+			}
+		}
 		if createdAt.Valid {
 			post.CreatedAt = createdAt.String
+		}
+		if updatedAt.Valid {
+			post.UpdatedAt = updatedAt.String
 		}
 
 		posts = append(posts, post)
@@ -209,7 +219,20 @@ func CreateForumPostInDB(post models.ForumPost) error {
 	newID := uuid.New()
 	currentTime := getCurrentTime()
 
-	_, err := Db.Exec("INSERT INTO forum_posts (id, forum_id, content, user_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)", newID.String(), post.ForumID.String(), post.Content, post.AuthorID.String(), currentTime, currentTime)
+	var parent sql.NullString
+	if post.ParentID != uuid.Nil {
+		parent.String = post.ParentID.String()
+		parent.Valid = true
+	}
+
+	_, err := Db.Exec("INSERT INTO forum_posts (id, forum_id, parent_id, content, user_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+		newID.String(),
+		post.ForumID.String(),
+		parent,
+		post.Content,
+		post.AuthorID.String(),
+		currentTime,
+		currentTime)
 	if err != nil {
 		return fmt.Errorf("createForumPost package db : %s", err.Error())
 	}

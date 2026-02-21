@@ -37,6 +37,23 @@ trackLastPage();
     <script src="https://www.google.com/recaptcha/api.js?render=<?php echo getenv('RECAPTCHA_SITE_KEY'); ?>"></script>
     <script src="../../assets/js/button.js"></script>
     <script src="../../assets/js/blob-images.js"></script>
+    <?php
+
+    if (!empty(
+        isset($extraCss) ? $extraCss : null
+    ) && is_array($extraCss)) {
+        foreach ($extraCss as $cssFile) {
+            echo "    <link rel=\"stylesheet\" href=\"{$cssFile}\">\n";
+        }
+    }
+    if (!empty(
+        isset($extraJs) ? $extraJs : null
+    ) && is_array($extraJs)) {
+        foreach ($extraJs as $jsFile) {
+            echo "    <script src=\"{$jsFile}\" defer></script>\n";
+        }
+    }
+    ?>
 </head>
 <body>
     <header>
