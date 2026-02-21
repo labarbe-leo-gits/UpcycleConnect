@@ -54,6 +54,23 @@ $user = getLoggedInUser();
 				</label>
 				<input type="number" id="offer-price" name="offer-price" required>
 			</div>
+                    <div class="form-group">
+                            <label for="offer-weight">Material weight (kg):</label>
+                            <input type="number" step="0.01" id="offer-weight" name="offer-weight" min="0">
+                    </div>
+                    <div class="form-group">
+                            <label for="offer-material">Material type:</label>
+                            <select id="offer-material" name="offer-material">
+                                <option value="">-- select --</option>
+
+                                <option value="other">Other...</option>
+                            </select>
+                            <input type="text" id="offer-material-custom" name="offer-material-custom" placeholder="Specify material" style="display:none; margin-top:5px;">
+                    </div>
+                    <div class="form-group" id="offer-estimation-group" style="display:none;">
+                            <label for="offer-estimation">Estimated upcycling score:</label>
+                            <input type="number" step="0.01" id="offer-estimation" name="offer-estimation" min="0">
+                    </div>
 			<div class="form-group">
 				<div class="pictures-area drop-zone" id="pictures-drop-zone">
 					<div class="drop-zone-content">

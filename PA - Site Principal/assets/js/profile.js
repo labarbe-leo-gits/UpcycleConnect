@@ -154,10 +154,26 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
         this.classList.add('active');
         const tab = this.getAttribute('data-tab');
         document.querySelectorAll('.tab-content').forEach(tc => tc.style.display = 'none');
+
         if (tab === 'general') {
             document.getElementById('general-tab').style.display = '';
         } else if (tab === 'security') {
             document.getElementById('security-tab').style.display = '';
+        } else if (tab === 'upcyclingScore') {
+            document.getElementById('upcyclingScore-tab').style.display = '';
+            if (window.currentUserId) {
+                fetch(window.location.origin + '/api/users/' + encodeURIComponent(window.currentUserId), {
+                    headers: {'X-Requested-With': 'XMLHttpRequest'}
+                })
+                .then(r => r.json())
+                .then(d => {
+                    if (d && typeof d.upcycling_score !== 'undefined') {
+                        var el = document.getElementById('upcycling-score-value');
+                        if (el) el.textContent = d.upcycling_score + ' kg CO₂ avoided';
+                    }
+                })
+                .catch(() => {});
+            }
         }
     });
 });

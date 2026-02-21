@@ -44,17 +44,24 @@ $user = getLoggedInUser();
             <h1>Professional Portal</h1>
         </div>
         <nav>
-            <div class="btn-wrapper" onClick="window.location.href='../common/community'">
-                <i class="fa-solid fa-users"></i>
-                <p>Community</p>
+            <div class="nav-dropdown community-dropdown">
+                <a class="btn-wrapper" href="../common/forums">
+                    <i class="fa-solid fa-users"></i>
+                    <p>Community</p>
+                </a>
+                <div class="dropdown-menu">
+                    <a href="../common/forums"><i class="fa-solid fa-indent"></i>Forums</a>
+                    <a href="../common/chat"><i class="fa-solid fa-comment"></i>Chat</a>
+                </div>
             </div>
             <div class="nav-dropdown">
-                <a class="btn-wrapper" href="offers">
+                <a class="btn-wrapper" href="../common/offers">
                     <i class="fa-solid fa-box-open"></i>
                     <p>Products</p>
                 </a>
                 <div class="dropdown-menu">
-                    <a href="offers"><i class="fa-solid fa-box-open"></i>Offers</a>
+                    <a href="../common/offers"><i class="fa-solid fa-box-open"></i>Offers</a>
+                    <a href="offers"><i class="fa-solid fa-warehouse"></i>Containers</a>
                 </div>
             </div>
             <div class="btn-wrapper" onClick="window.location.href='../public/index'">

@@ -87,6 +87,7 @@ func main() {
 	registerRoute("GET", "/orders", "List all orders", app.GetOrders, app.JWTAuthMiddleware)
 	registerRoute("POST", "/orders", "Create a new order", app.CreateOrder, app.JWTAuthMiddleware)
 	registerRoute("GET", "/annonces", "List all annonces", app.GetAnnonces, app.JWTAuthMiddleware)
+	registerRoute("GET", "/facteurs", "List all available material factors", app.GetFacteurs, app.JWTAuthMiddleware)
 	registerRoute("GET", "/annonces/{id}/images", "List all images associated with an annonce", app.GetAnnonceImages, app.JWTAuthMiddleware)
 	registerRoute("POST", "/annonces", "Create a new annonce", app.CreateAnnonce, app.JWTAuthMiddleware)
 	registerRoute("GET", "/annonces/{id}", "Get a specific annonce by its UUID", app.GetAnnonceByID, app.JWTAuthMiddleware)
@@ -116,7 +117,7 @@ func main() {
 	registerRoute("PATCH", "/users/{id}", "Update a user's profile", app.UpdateUser, app.JWTAuthMiddleware)
 	registerRoute("PATCH", "/annonces/{id}/views", "Increment the view count for an annonce", app.IncrementAnnonceViewCount, app.JWTAuthMiddleware)
 	registerRoute("GET", "/forums/{id}", "Get details of a specific forum by its UUID", app.GetForumByID)
-	
+
 	registerRoute("GET", "/conteneurs", "List all conteneurs in the system", app.GetConteneurs, app.JWTAuthMiddleware)
 	registerRoute("POST", "/conteneurs", "Create a new conteneur", app.CreateConteneur, app.JWTAuthMiddleware)
 	registerRoute("GET", "/deposits", "List all deposits in the system", app.GetDeposits, app.JWTAuthMiddleware)

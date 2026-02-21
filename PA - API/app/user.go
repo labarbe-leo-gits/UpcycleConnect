@@ -210,7 +210,11 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 	user, err := db.GetUserByIdentifierFromDB(loginReq.Identifier)
 	if err != nil {
 		fmt.Println("[ERROR] LoginUser get user:", err)
-		sendError(w, "Invalid username/email or password", http.StatusUnauthorized)
+		message := "Invalid username or password"
+		if strings.Contains(err.Error(), "user not found") {
+			message = "Username or password incorrect"
+		}
+		sendError(w, message, http.StatusUnauthorized)
 		return
 	}
 
@@ -226,10 +230,9 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("[ERROR] LoginUser update last_login:", err)
 	}
 
-	// Generate JWT
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
-		jwtSecret = "changeme_secret" // fallback for dev
+		jwtSecret = "changeme_secret"
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id": user.ID.String(),

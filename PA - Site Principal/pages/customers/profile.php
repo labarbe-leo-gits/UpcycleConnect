@@ -21,6 +21,15 @@ if ($isAjax) {
 
 $user = getLoggedInUser();
 
+if (!empty($user['id'])) {
+    $apiUser = json_decode(askAPI('/users/' . $user['id'], 'GET'), true);
+    if (is_array($apiUser) && isset($apiUser['upcycling_score'])) {
+        $user['upcycling_score'] = $apiUser['upcycling_score'];
+    } else {
+        $user['upcycling_score'] = 0;
+    }
+}
+
 $userDetailsResponse = askAPI("/users/{$user['id']}", 'GET');
 $userDetails = json_decode($userDetailsResponse, true);
 if (!is_array($userDetails)) {
@@ -206,6 +215,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <span class="profile-label">Total sales value:</span>
                         <span id="balance-total"><?= htmlspecialchars((string) $balance) ?></span> €
                     </div>
+                    <div class="profile-field-row">
+                        <span class="profile-label">Upcycling Score:</span>
+                        <span id="profile-upcycling-score"><?= isset($user['upcycling_score']) ? htmlspecialchars((string)$user['upcycling_score']) . ' kg CO₂' : 'N/A' ?></span>
+                    </div>
                 </div>
                 <div class="profile-actions">
                     <button type="button" class="btn-primary btn-inline" id="open-payment-modal">
@@ -230,9 +243,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
             ?>
+            <button class="tab-btn" data-tab="upcyclingScore-tab">Upcycling Score</button>
         </div>
         <div class="tab-content" id="general-tab">
             
+        </div>
+        <div class="tab-content" id="upcyclingScore-tab" style="display:none">
+            <h3>Your Upcycling Score</h3>
+            <p id="upcycling-score-value"><?= isset($user['upcycling_score']) ? htmlspecialchars((string)$user['upcycling_score']) . ' kg CO₂ avoided' : 'Loading...' ?></p>
+            <p class="upcycling-note">This figure represents the total environmental benefit of your offers. Add material details to your listings to improve your score!</p>
         </div>
         <div class="tab-content" id="security-tab" style="display:none">
             <h3>Change Password</h3>
@@ -415,5 +434,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="rec-arc c"></div>
     </div>
 </div>
+<script>
+    window.currentUserId = <?= json_encode($user['id'] ?? '') ?>;
+</script>
 <script src="../../assets/js/profile.js"></script>
 <?php if (!$isAjax) { include_once '../../includes/footer.php'; } ?>

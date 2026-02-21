@@ -1,9 +1,18 @@
 <?php
 
 $title = "Offer Details";
-include_once '../../includes/customers-header.php';
-
+include_once '../../config/db.php';
+include_once '../../includes/auth.php';
 $user = getLoggedInUser();
+trackLastPage();
+
+if (!$user) {
+    include_once '../../includes/header.php';
+} else if (isset($user['user_type']) && $user['user_type'] == 1) {
+    include_once '../../includes/customers-header.php';
+} else {
+    include_once '../../includes/pro-header.php';
+}
 
 $offerUuid = isset($_GET['uuid']) ? $_GET['uuid'] : null;
 
@@ -189,24 +198,8 @@ if (!empty($offer['created_at'])) {
 						<span class="label">Price</span>
 						<span class="value price"><?php echo $priceDisplay; ?></span>
 					</div>
-				</div>				<?php if (!empty($offer['poids_materiaux'])): ?>
-				<div class="info-item">
-					<i class="fa-solid fa-weight-hanging"></i>
-					<div class="info-content">
-						<span class="label">Weight</span>
-						<span class="value"><?php echo htmlspecialchars($offer['poids_materiaux']); ?> kg</span>
-					</div>
 				</div>
-				<?php endif; ?>
-				<?php if (!empty($offer['type_materiaux'])): ?>
-				<div class="info-item">
-					<i class="fa-solid fa-recycle"></i>
-					<div class="info-content">
-						<span class="label">Material</span>
-						<span class="value"><?php echo htmlspecialchars($offer['type_materiaux']); ?></span>
-					</div>
-				</div>
-				<?php endif; ?>
+
 
 				<?php if ($views): ?>
 				<div class="info-item">

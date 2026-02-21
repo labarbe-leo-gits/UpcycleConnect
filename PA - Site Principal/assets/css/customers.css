@@ -219,6 +219,12 @@
   margin-bottom: 0;
 }
 
+.upcycling-note {
+  margin-top: 12px;
+  color: #555;
+  font-style: italic;
+}
+
 header {
   display: flex;
   align-items: center;
@@ -1307,6 +1313,7 @@ body.modal-open {
   transition:
     transform 0.15s ease,
     box-shadow 0.15s ease;
+  align-content: center;
 }
 .forum-card:hover {
   transform: translateY(-6px);

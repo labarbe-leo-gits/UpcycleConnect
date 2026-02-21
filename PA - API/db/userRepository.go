@@ -15,7 +15,7 @@ import (
 func GetAllUsersFromDB() ([]models.User, error) {
 
 	users := []models.User{}
-	rows, err := Db.Query("SELECT id, first_name, last_name, company_name, user_type, username, email, created_at, last_login, oauth_provider, oauth_id, profile_picture FROM users")
+	rows, err := Db.Query("SELECT id, first_name, last_name, company_name, user_type, username, email, balance, upcycling_score, created_at, last_login, oauth_provider, oauth_id, profile_picture FROM users")
 
 	if err != nil {
 		return nil, fmt.Errorf("getUsers package db : %s", err.Error())
@@ -29,7 +29,7 @@ func GetAllUsersFromDB() ([]models.User, error) {
 		var createdAt, lastLogin sql.NullString
 		var companyName sql.NullString
 		var oauthProvider, oauthID, profilePicture sql.NullString
-		err := rows.Scan(&idStr, &user.FirstName, &user.LastName, &companyName, &user.UserType, &user.Username, &user.Email, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture)
+		err := rows.Scan(&idStr, &user.FirstName, &user.LastName, &companyName, &user.UserType, &user.Username, &user.Email, &user.Balance, &user.UpcyclingScore, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture)
 		if err != nil {
 			return nil, fmt.Errorf("getUsers package db scan : %s", err.Error())
 		}
@@ -124,9 +124,9 @@ func GetUserByIDFromDB(id uuid.UUID) (models.User, error) {
 	var companyName, oauthProvider, oauthID, profilePicture sql.NullString
 
 	err := Db.QueryRow(
-		"SELECT id, first_name, last_name, company_name, user_type, username, email, password_hash, created_at, last_login, oauth_provider, oauth_id, profile_picture, balance FROM users WHERE id = ?",
+		"SELECT id, first_name, last_name, company_name, user_type, username, email, password_hash, balance, upcycling_score, created_at, last_login, oauth_provider, oauth_id, profile_picture FROM users WHERE id = ?",
 		id.String(),
-	).Scan(&idStr, &user.FirstName, &user.LastName, &companyName, &user.UserType, &user.Username, &user.Email, &user.Password, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture, &user.Balance)
+	).Scan(&idStr, &user.FirstName, &user.LastName, &companyName, &user.UserType, &user.Username, &user.Email, &user.Password, &user.Balance, &user.UpcyclingScore, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return user, fmt.Errorf("user not found")
@@ -157,9 +157,9 @@ func GetUserByIdentifierFromDB(identifier string) (models.User, error) {
 	var companyName, oauthProvider, oauthID, profilePicture sql.NullString
 
 	err := Db.QueryRow(
-		"SELECT id, first_name, last_name, company_name, user_type, username, email, password_hash, created_at, last_login, oauth_provider, oauth_id, profile_picture FROM users WHERE username = ? OR email = ?",
+		"SELECT id, first_name, last_name, company_name, user_type, username, email, password_hash, balance, upcycling_score, created_at, last_login, oauth_provider, oauth_id, profile_picture FROM users WHERE username = ? OR email = ?",
 		identifier, identifier,
-	).Scan(&idStr, &user.FirstName, &user.LastName, &companyName, &user.UserType, &user.Username, &user.Email, &user.Password, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture)
+	).Scan(&idStr, &user.FirstName, &user.LastName, &companyName, &user.UserType, &user.Username, &user.Email, &user.Password, &user.Balance, &user.UpcyclingScore, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -189,6 +189,23 @@ func UpdateLastLoginInDB(userID uuid.UUID) error {
 
 	if err != nil {
 		return fmt.Errorf("updateLastLogin package db : %s", err.Error())
+	}
+	return nil
+}
+
+func UpdateUserUpcyclingScore(userID uuid.UUID) error {
+	var total sql.NullFloat64
+	err := Db.QueryRow("SELECT COALESCE(SUM(upcycling_score),0) FROM annonces WHERE user_id = ?", userID.String()).Scan(&total)
+	if err != nil {
+		return fmt.Errorf("updateUserUpcyclingScore sum: %s", err.Error())
+	}
+	val := 0.0
+	if total.Valid {
+		val = total.Float64
+	}
+	_, err = Db.Exec("UPDATE users SET upcycling_score = ? WHERE id = ?", val, userID.String())
+	if err != nil {
+		return fmt.Errorf("updateUserUpcyclingScore update: %s", err.Error())
 	}
 	return nil
 }

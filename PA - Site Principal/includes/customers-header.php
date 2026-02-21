@@ -57,12 +57,12 @@ $user = getLoggedInUser();
                 </div>
             </div>
             <div class="nav-dropdown">
-                <a class="btn-wrapper" href="../customers/offers">
+                <a class="btn-wrapper" href="../common/offers">
                     <i class="fa-solid fa-box-open"></i>
                     <p>Products</p>
                 </a>
                 <div class="dropdown-menu">
-                    <a href="../customers/offers"><i class="fa-solid fa-box-open"></i>Offers</a>
+                    <a href="../common/offers"><i class="fa-solid fa-box-open"></i>Offers</a>
                     <a href="../customers/services"><i class="fa-solid fa-briefcase"></i>Services</a>
                     <a href="../customers/deposits"><i class="fa-solid fa-warehouse"></i>Deposit</a>
                 </div>

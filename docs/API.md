@@ -318,11 +318,22 @@ Retrieves user information by email address (used for OAuth lookup).
 
 **Error Response** (404 Not Found):
 
-```json
+````json
 {
   "error": "User not found"
+
+> **Error responses** always include an `error` field with a human‑readable
+> message.  The HTTP status code still indicates the general outcome; clients
+> should read the body when available to display a friendly phrase.  For
+> example, a login failure returns 401 plus a descriptive string:
+>
+> ```json
+> {
+>   "error": "Username or password incorrect"
+> }
+> ```
 }
-```
+````
 
 **Use Case**:
 

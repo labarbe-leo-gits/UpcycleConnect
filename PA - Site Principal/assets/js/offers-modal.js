@@ -23,6 +23,8 @@
         document.body.classList.add('modal-open');
         modal.setAttribute('aria-hidden', 'false');
 
+        loadMaterials();
+
         var focusTarget = modal.querySelector('#offer-title') || modal.querySelector(focusableSelector);
         if (focusTarget) {
             focusTarget.focus();
@@ -214,19 +216,58 @@
         });
     }
 
+    function loadMaterials() {
+        var select = document.getElementById('offer-material');
+        if (!select) return;
+        fetch('facteurs-api', {headers:{'X-Requested-With':'XMLHttpRequest'}})
+            .then(function(res){ return res.json(); })
+            .then(function(list){
+                if (!Array.isArray(list)) return;
+                list.forEach(function(f){
+                    var opt = document.createElement('option');
+                    opt.value = f.nom || '';
+                    opt.textContent = f.nom || '';
+                    select.insertBefore(opt, select.querySelector('option[value="other"]'));
+                });
+            });
+    }
+
     var form = document.getElementById('add-offer-form');
     if (form) {
+        var materialSelect = document.getElementById('offer-material');
+        var customInput = document.getElementById('offer-material-custom');
+        var estimationGroup = document.getElementById('offer-estimation-group');
+        if (materialSelect) {
+            materialSelect.addEventListener('change', function() {
+                if (materialSelect.value === 'other') {
+                    if (customInput) customInput.style.display = 'block';
+                    if (estimationGroup) estimationGroup.style.display = 'block';
+                } else {
+                    if (customInput) customInput.style.display = 'none';
+                    if (estimationGroup) estimationGroup.style.display = 'none';
+                }
+            });
+        }
+
         form.addEventListener('submit', function(event) {
             event.preventDefault();
 
             var titleInput = document.getElementById('offer-title');
             var descInput = document.getElementById('offer-description');
             var priceInput = document.getElementById('offer-price');
+            var weightInput = document.getElementById('offer-weight');
+            var materialSelect = document.getElementById('offer-material');
+            var customInput = document.getElementById('offer-material-custom');
+            var estimateInput = document.getElementById('offer-estimation');
             var submitButton = form.querySelector('button[type="submit"]');
 
             var title = titleInput.value.trim();
             var description = descInput.value.trim();
             var price = priceInput.value;
+            var weight = weightInput ? weightInput.value : '';
+            var material = materialSelect ? materialSelect.value.trim() : '';
+            var customMat = customInput ? customInput.value.trim() : '';
+            var estimate = estimateInput ? estimateInput.value : '';
 
             var errors = [];
             if (!title) {
@@ -244,6 +285,20 @@
             if (!price || isNaN(price) || parseFloat(price) < 0) {
                 errors.push('Price must be a valid positive number');
             }
+            if (weight && (isNaN(weight) || parseFloat(weight) < 0)) {
+                errors.push('Weight must be a positive number');
+            }
+            if (weight && !material) {
+                errors.push('Material type is required when weight is provided');
+            }
+            if (material === 'other') {
+                if (!customMat) {
+                    errors.push('Please specify material when "Other" is selected');
+                }
+                if (!estimate || isNaN(estimate) || parseFloat(estimate) <= 0) {
+                    errors.push('Please provide a valid estimated upcycling score');
+                }
+            }
 
             if (!selectedFiles.length) {
                 errors.push('Please add at least one image');
@@ -255,18 +310,27 @@
             var originalText = submitButton.innerHTML;
             submitButton.innerHTML = '<i class="fa-solid fa-spinner"></i> Creating...';
 
+            var payload = {
+                title: title,
+                description: description,
+                price: parseFloat(price),
+                poids_materiaux: weight ? parseFloat(weight) : 0,
+                user_id: window.currentUserId
+            };
+            if (material === 'other') {
+                payload.type_materiaux = customMat;
+                payload.estimation_score = parseFloat(estimate);
+            } else if (material) {
+                payload.type_materiaux = material;
+            }
+
             fetch('create-annonce', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest'
                 },
-                body: JSON.stringify({
-                    title: title,
-                    description: description,
-                    price: parseFloat(price),
-                    user_id: window.currentUserId
-                })
+                body: JSON.stringify(payload)
             })
             .then(function(response) {
                 return response.text().then(function(text) {

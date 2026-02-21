@@ -63,8 +63,15 @@ function askAPI($endpoint, $method, $data = null){
 
     if ($httpCode < 200 || $httpCode >= 300) {
         error_log(sprintf("askAPI: non-2xx response from %s -> %d, body=%s", $url, $httpCode, substr($response, 0, 300)));
+
+        $message = "API returned HTTP $httpCode";
+        $decoded = json_decode($response, true);
+        if (is_array($decoded) && isset($decoded['error']) && is_string($decoded['error'])) {
+            $message = $decoded['error'];
+        }
+
         return json_encode([
-            'error' => "API returned HTTP $httpCode",
+            'error' => $message,
             'http_code' => $httpCode,
             'body' => $response
         ]);

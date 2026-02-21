@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
     stripe_account_id VARCHAR(255) NULL,
     username VARCHAR(255) NOT NULL UNIQUE,
     balance DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    upcycling_score DOUBLE NOT NULL DEFAULT 0.0,
     is_premium INT DEFAULT 0,
     user_type INT NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
@@ -33,6 +34,9 @@ CREATE TABLE IF NOT EXISTS annonces(
     description TEXT NOT NULL,
     view_count INT NOT NULL DEFAULT 0,
     price DECIMAL(10, 2) NOT NULL,
+    poids_materiaux DOUBLE DEFAULT NULL,
+    type_materiaux VARCHAR(100) DEFAULT NULL,
+    upcycling_score DOUBLE DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -137,6 +141,13 @@ CREATE TABLE IF NOT EXISTS notifications (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (annonce_id) REFERENCES annonces(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS facteurs_materiaux (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    nom VARCHAR(100) UNIQUE NOT NULL,
+    facteur_co2 DOUBLE NOT NULL,
+    facteur_energie DOUBLE NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS ban (

@@ -5,6 +5,7 @@ import (
 	"API/models"
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -137,6 +138,16 @@ func ValidateAnnonceDto(annonceDto models.Annonce) []string {
 		validationErrors = append(validationErrors, "Description must be between 1 and 1000 characters")
 	}
 
+	if annonceDto.PoidsMateriaux < 0 {
+		validationErrors = append(validationErrors, "PoidsMateriaux cannot be negative")
+	}
+	if annonceDto.PoidsMateriaux > 0 && annonceDto.TypeMateriaux == "" {
+		validationErrors = append(validationErrors, "TypeMateriaux is required when PoidsMateriaux is provided")
+	}
+	if strings.ToLower(annonceDto.TypeMateriaux) == "other" && annonceDto.EstimationScore <= 0 {
+		validationErrors = append(validationErrors, "EstimationScore is required when material type is other")
+	}
+
 	return validationErrors
 }
 
@@ -157,6 +168,12 @@ func CreateAnnonce(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("[ERROR] CreateAnnonce validation:", validationErrors)
 		sendError(w, "Validation errors: "+fmt.Sprintf("%v", validationErrors), http.StatusBadRequest)
 		return
+	}
+
+	if annonceDto.EstimationScore > 0 {
+		annonceDto.UpcyclingScore = annonceDto.EstimationScore
+	} else {
+		annonceDto.UpcyclingScore = CalculateUpcyclingScore(annonceDto.PoidsMateriaux, annonceDto.TypeMateriaux)
 	}
 
 	annonceDto.ID = uuid.New()
@@ -224,6 +241,11 @@ func UpdateAnnonce(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if annonceDto.EstimationScore > 0 {
+		annonceDto.UpcyclingScore = annonceDto.EstimationScore
+	} else {
+		annonceDto.UpcyclingScore = CalculateUpcyclingScore(annonceDto.PoidsMateriaux, annonceDto.TypeMateriaux)
+	}
 	err = db.UpdateAnnonceInDB(idStr, annonceDto)
 
 	if err != nil {
@@ -272,6 +294,18 @@ func GetAnnonceByID(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(annonce)
 
+}
+
+func CalculateUpcyclingScore(poids float64, matType string) float64 {
+	if poids <= 0 || matType == "" {
+		return 0
+	}
+	f, err := db.GetFacteurByName(matType)
+	if err != nil || f == nil {
+		return 0
+	}
+	score := poids * f.FacteurCO2
+	return math.Round(score*100) / 100
 }
 
 func GetAnnoncesByUserID(w http.ResponseWriter, r *http.Request) {
