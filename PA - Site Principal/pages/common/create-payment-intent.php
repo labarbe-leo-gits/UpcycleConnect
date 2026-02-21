@@ -5,8 +5,7 @@
 require_once '../../config/db.php';
 require_once '../../includes/auth.php';
 
-// Require type 1 or 2
-requireUserType(1 || 2);
+requireLogin();
 
 header('Content-Type: application/json');
 
