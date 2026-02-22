@@ -10,18 +10,51 @@ import (
 
 func GetFacteurByName(name string) (*models.FacteurMateriaux, error) {
 	var f models.FacteurMateriaux
+	// first try exact case-insensitive match
 	row := Db.QueryRow("SELECT id, nom, facteur_co2, facteur_energie FROM facteurs_materiaux WHERE LOWER(nom) = LOWER(?)", name)
+	var idStr string
+	var factorCO2, factorEnergie sql.NullFloat64
+	if err := row.Scan(&idStr, &f.Nom, &factorCO2, &factorEnergie); err != nil {
+		if err == sql.ErrNoRows {
+			subRow := Db.QueryRow("SELECT id, nom, facteur_co2, facteur_energie FROM facteurs_materiaux WHERE LOWER(nom) LIKE LOWER(?) LIMIT 1", "%"+name+"%")
+			if err2 := subRow.Scan(&idStr, &f.Nom, &factorCO2, &factorEnergie); err2 != nil {
+				if err2 == sql.ErrNoRows {
+					return nil, nil
+				}
+				return nil, fmt.Errorf("getFacteurByName substring scan: %s", err2.Error())
+			}
+		} else {
+			return nil, fmt.Errorf("getFacteurByName scan: %s", err.Error())
+		}
+	}
+	uid, err := uuid.Parse(idStr)
+	if err != nil {
+		return nil, fmt.Errorf("getFacteurByName uuid parse: %s", err.Error())
+	}
+	f.ID = uid
+	if factorCO2.Valid {
+		f.FacteurCO2 = factorCO2.Float64
+	}
+	if factorEnergie.Valid {
+		f.FacteurEnergie = factorEnergie.Float64
+	}
+	return &f, nil
+}
+
+func GetFacteurByID(id string) (*models.FacteurMateriaux, error) {
+	var f models.FacteurMateriaux
+	row := Db.QueryRow("SELECT id, nom, facteur_co2, facteur_energie FROM facteurs_materiaux WHERE id = ?", id)
 	var idStr string
 	var factorCO2, factorEnergie sql.NullFloat64
 	if err := row.Scan(&idStr, &f.Nom, &factorCO2, &factorEnergie); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
-		return nil, fmt.Errorf("getFacteurByName scan: %s", err.Error())
+		return nil, fmt.Errorf("getFacteurByID scan: %s", err.Error())
 	}
 	uid, err := uuid.Parse(idStr)
 	if err != nil {
-		return nil, fmt.Errorf("getFacteurByName uuid parse: %s", err.Error())
+		return nil, fmt.Errorf("getFacteurByID uuid parse: %s", err.Error())
 	}
 	f.ID = uid
 	if factorCO2.Valid {

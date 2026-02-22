@@ -281,3 +281,27 @@ func GetForumByIDFromDB(forumIDStr string) (*models.Forum, error) {
 	return &forum, nil
 
 }
+
+func UpdateForumPostInDB(postIDStr string, content string) error {
+
+	currentTime := getCurrentTime()
+
+	_, err := Db.Exec("UPDATE forum_posts SET content = ?, updated_at = ? WHERE id = ?", content, currentTime, postIDStr)
+	if err != nil {
+		return fmt.Errorf("updateForumPost package db : %s", err.Error())
+	}
+
+	return nil
+
+}
+
+func DeleteForumPostFromDB(postIDStr string) error {
+
+	_, err := Db.Exec("DELETE FROM forum_posts WHERE id = ?", postIDStr)
+
+	if err != nil {
+		return fmt.Errorf("deleteForumPost package db : %s", err.Error())
+	}
+
+	return nil
+}

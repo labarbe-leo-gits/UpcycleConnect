@@ -35,11 +35,13 @@ CREATE TABLE IF NOT EXISTS annonces(
     view_count INT NOT NULL DEFAULT 0,
     price DECIMAL(10, 2) NOT NULL,
     poids_materiaux DOUBLE DEFAULT NULL,
+    facteur_id CHAR(36) DEFAULT NULL,
     type_materiaux VARCHAR(100) DEFAULT NULL,
     upcycling_score DOUBLE DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (facteur_id) REFERENCES facteurs_materiaux(id)
 );
 
 CREATE TABLE IF NOT EXISTS conteneurs(

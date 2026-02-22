@@ -195,7 +195,7 @@ func UpdateLastLoginInDB(userID uuid.UUID) error {
 
 func UpdateUserUpcyclingScore(userID uuid.UUID) error {
 	var total sql.NullFloat64
-	err := Db.QueryRow("SELECT COALESCE(SUM(upcycling_score),0) FROM annonces WHERE user_id = ?", userID.String()).Scan(&total)
+	err := Db.QueryRow("SELECT COALESCE(SUM(upcycling_score),0) FROM annonces WHERE user_id = ? AND status > 0", userID.String()).Scan(&total)
 	if err != nil {
 		return fmt.Errorf("updateUserUpcyclingScore sum: %s", err.Error())
 	}

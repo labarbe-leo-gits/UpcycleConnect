@@ -241,3 +241,65 @@ func GetForumByID(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprintf(w, "%s", jsonResponse)
 }
+
+func UpdatePost(w http.ResponseWriter, r *http.Request) {
+
+	idStr := r.URL.Path[len("/forums/") : len(r.URL.Path)-len("/posts/{pID}")]
+	pID := r.URL.Path[len("/forums/{id}/posts/"):]
+
+	if idStr == "" || pID == "" {
+		sendError(w, "Forum ID and Post ID are required", http.StatusBadRequest)
+		return
+	}
+
+	var postDto models.ForumPost
+
+	err := json.NewDecoder(r.Body).Decode(&postDto)
+
+	if err != nil {
+		fmt.Println("[ERROR] UpdatePost decode:", err)
+		sendError(w, "Unable to process request body", http.StatusBadRequest)
+		return
+	}
+
+	validationErrors := ValidatePostDTO(postDto)
+	if len(validationErrors) > 0 {
+		sendError(w, fmt.Sprintf("Validation errors: %s", validationErrors), http.StatusBadRequest)
+		return
+	}
+
+	contentString := postDto.Content
+
+	err = db.UpdateForumPostInDB(pID, contentString)
+	if err != nil {
+		fmt.Println("[ERROR] UpdatePost DB:", err)
+		sendError(w, "Unable to update forum post", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Forum post updated successfully"})
+
+}
+
+func DeletePost(w http.ResponseWriter, r *http.Request) {
+
+	forumID := r.URL.Path[len("/forums/") : len(r.URL.Path)-len("/posts/{pID}")]
+	pID := r.URL.Path[len("/forums/{id}/posts/"):]
+
+	if forumID == "" || pID == "" {
+		sendError(w, "Forum ID and Post ID are required", http.StatusBadRequest)
+		return
+	}
+
+	err := db.DeleteForumPostFromDB(pID)
+	if err != nil {
+		fmt.Println("[ERROR] DeletePost DB:", err)
+		sendError(w, "Unable to delete forum post", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusNoContent)
+}

@@ -141,8 +141,13 @@ func ValidateAnnonceDto(annonceDto models.Annonce) []string {
 	if annonceDto.PoidsMateriaux < 0 {
 		validationErrors = append(validationErrors, "PoidsMateriaux cannot be negative")
 	}
-	if annonceDto.PoidsMateriaux > 0 && annonceDto.TypeMateriaux == "" {
-		validationErrors = append(validationErrors, "TypeMateriaux is required when PoidsMateriaux is provided")
+	if annonceDto.PoidsMateriaux > 0 && annonceDto.FacteurID == nil && annonceDto.TypeMateriaux == "" {
+		validationErrors = append(validationErrors, "TypeMateriaux or FacteurID is required when PoidsMateriaux is provided")
+	}
+	if annonceDto.FacteurID != nil {
+		if f, err := db.GetFacteurByID(annonceDto.FacteurID.String()); err != nil || f == nil {
+			validationErrors = append(validationErrors, "FacteurID must reference an existing material")
+		}
 	}
 	if strings.ToLower(annonceDto.TypeMateriaux) == "other" && annonceDto.EstimationScore <= 0 {
 		validationErrors = append(validationErrors, "EstimationScore is required when material type is other")
@@ -173,7 +178,17 @@ func CreateAnnonce(w http.ResponseWriter, r *http.Request) {
 	if annonceDto.EstimationScore > 0 {
 		annonceDto.UpcyclingScore = annonceDto.EstimationScore
 	} else {
-		annonceDto.UpcyclingScore = CalculateUpcyclingScore(annonceDto.PoidsMateriaux, annonceDto.TypeMateriaux)
+		if annonceDto.FacteurID != nil {
+			if f, _ := db.GetFacteurByID(annonceDto.FacteurID.String()); f == nil {
+				annonceDto.FacteurID = nil
+			}
+		}
+		annonceDto.UpcyclingScore = CalculateUpcyclingScore(annonceDto.PoidsMateriaux, annonceDto.FacteurID, annonceDto.TypeMateriaux)
+		if annonceDto.FacteurID == nil && annonceDto.TypeMateriaux != "" {
+			if f, _ := db.GetFacteurByName(annonceDto.TypeMateriaux); f != nil {
+				annonceDto.FacteurID = &f.ID
+			}
+		}
 	}
 
 	annonceDto.ID = uuid.New()
@@ -228,6 +243,25 @@ func UpdateAnnonce(w http.ResponseWriter, r *http.Request) {
 			sendError(w, "Annonce not available", http.StatusConflict)
 			return
 		}
+
+		if annonceDto.Status > 0 {
+
+			ann, annErr := db.GetAnnonceByIDFromDB(idStr)
+			if annErr == nil && ann != nil {
+				if ann.UpcyclingScore == 0 {
+					ann.UpcyclingScore = CalculateUpcyclingScore(ann.PoidsMateriaux, ann.FacteurID, ann.TypeMateriaux)
+					if ann.FacteurID == nil && ann.TypeMateriaux != "" {
+						if f, _ := db.GetFacteurByName(ann.TypeMateriaux); f != nil {
+							ann.FacteurID = &f.ID
+						}
+					}
+					_ = db.UpdateAnnonceInDB(idStr, *ann)
+				}
+				if uid, parseErr := uuid.Parse(ann.UserID.String()); parseErr == nil {
+					_ = db.UpdateUserUpcyclingScore(uid)
+				}
+			}
+		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusNoContent)
 		return
@@ -244,7 +278,18 @@ func UpdateAnnonce(w http.ResponseWriter, r *http.Request) {
 	if annonceDto.EstimationScore > 0 {
 		annonceDto.UpcyclingScore = annonceDto.EstimationScore
 	} else {
-		annonceDto.UpcyclingScore = CalculateUpcyclingScore(annonceDto.PoidsMateriaux, annonceDto.TypeMateriaux)
+		// drop invalid factor id when updating
+		if annonceDto.FacteurID != nil {
+			if f, _ := db.GetFacteurByID(annonceDto.FacteurID.String()); f == nil {
+				annonceDto.FacteurID = nil
+			}
+		}
+		annonceDto.UpcyclingScore = CalculateUpcyclingScore(annonceDto.PoidsMateriaux, annonceDto.FacteurID, annonceDto.TypeMateriaux)
+		if annonceDto.FacteurID == nil && annonceDto.TypeMateriaux != "" {
+			if f, _ := db.GetFacteurByName(annonceDto.TypeMateriaux); f != nil {
+				annonceDto.FacteurID = &f.ID
+			}
+		}
 	}
 	err = db.UpdateAnnonceInDB(idStr, annonceDto)
 
@@ -296,16 +341,47 @@ func GetAnnonceByID(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func CalculateUpcyclingScore(poids float64, matType string) float64 {
-	if poids <= 0 || matType == "" {
+func CalculateUpcyclingScore(poids float64, facteurID *uuid.UUID, matType string) float64 {
+	if poids <= 0 {
 		return 0
 	}
-	f, err := db.GetFacteurByName(matType)
-	if err != nil || f == nil {
+	var f *models.FacteurMateriaux
+	if facteurID != nil {
+		if fetched, err := db.GetFacteurByID(facteurID.String()); err == nil {
+			f = fetched
+		}
+	}
+	if f == nil && matType != "" {
+		if fetched, err := db.GetFacteurByName(matType); err == nil {
+			f = fetched
+		}
+	}
+	if f == nil {
 		return 0
 	}
 	score := poids * f.FacteurCO2
 	return math.Round(score*100) / 100
+}
+
+func CalculateScore(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	poidsStr := q.Get("poids")
+	matType := q.Get("matType")
+	factIDStr := q.Get("facteurId")
+	var score float64
+	if poidsStr != "" {
+		if p, err := strconv.ParseFloat(poidsStr, 64); err == nil {
+			var factID *uuid.UUID
+			if factIDStr != "" {
+				if uid, err2 := uuid.Parse(factIDStr); err2 == nil {
+					factID = &uid
+				}
+			}
+			score = CalculateUpcyclingScore(p, factID, matType)
+		}
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]float64{"score": score})
 }
 
 func GetAnnoncesByUserID(w http.ResponseWriter, r *http.Request) {

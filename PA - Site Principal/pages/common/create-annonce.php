@@ -41,6 +41,9 @@ if (isset($input['poids_materiaux'])) {
 if (isset($input['type_materiaux'])) {
     $payload['type_materiaux'] = $input['type_materiaux'];
 }
+if (isset($input['facteur_id'])) {
+    $payload['facteur_id'] = $input['facteur_id'];
+}
 if (isset($input['estimation_score'])) {
     $payload['estimation_score'] = floatval($input['estimation_score']);
 }

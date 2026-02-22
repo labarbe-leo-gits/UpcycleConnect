@@ -225,8 +225,9 @@
                 if (!Array.isArray(list)) return;
                 list.forEach(function(f){
                     var opt = document.createElement('option');
-                    opt.value = f.nom || '';
+                    opt.value = f.id || '';
                     opt.textContent = f.nom || '';
+                    opt.dataset.name = f.nom || '';
                     select.insertBefore(opt, select.querySelector('option[value="other"]'));
                 });
             });
@@ -237,18 +238,67 @@
         var materialSelect = document.getElementById('offer-material');
         var customInput = document.getElementById('offer-material-custom');
         var estimationGroup = document.getElementById('offer-estimation-group');
-        if (materialSelect) {
-            materialSelect.addEventListener('change', function() {
-                if (materialSelect.value === 'other') {
-                    if (customInput) customInput.style.display = 'block';
-                    if (estimationGroup) estimationGroup.style.display = 'block';
-                } else {
-                    if (customInput) customInput.style.display = 'none';
-                    if (estimationGroup) estimationGroup.style.display = 'none';
-                }
-            });
-        }
+            var materialFactors = [];
 
+            if (materialSelect) {
+                materialSelect.addEventListener('change', function() {
+                    if (materialSelect.value === 'other') {
+                        if (customInput) customInput.style.display = 'block';
+                    } else {
+                        if (customInput) customInput.style.display = 'none';
+                    }
+                    updateEstimation();
+                });
+            }
+
+            function updateEstimation() {
+                var weightInput = document.getElementById('offer-weight');
+                var weight = weightInput ? parseFloat(weightInput.value) : 0;
+                var mat = materialSelect ? materialSelect.value : '';
+                var nameForScore = '';
+                if (mat === 'other' && customInput) {
+                    nameForScore = customInput.value.trim();
+                } else if (materialSelect && materialSelect.value && materialSelect.value !== 'other') {
+                    nameForScore = materialSelect.options[materialSelect.selectedIndex].text;
+                }
+                var est = 0;
+                if (weight > 0 && (mat || nameForScore)) {
+                    var url = 'upcycling-score?poids=' + encodeURIComponent(weight);
+                    if (mat && mat !== 'other') {
+                        url += '&facteurId=' + encodeURIComponent(mat);
+                    }
+                    if (nameForScore) {
+                        url += '&matType=' + encodeURIComponent(nameForScore);
+                    }
+                    fetch(url, {headers:{'X-Requested-With':'XMLHttpRequest'}})
+                        .then(function(res){ return res.json(); })
+                        .then(function(obj){
+                            est = parseFloat(obj.score) || 0;
+                            displayEstimation(est);
+                        });
+                } else {
+                    displayEstimation(0);
+                }
+            }
+
+            function displayEstimation(value) {
+                if (!estimationGroup) return;
+                var input = document.getElementById('offer-estimation');
+                if (value > 0) {
+                    estimationGroup.style.display = 'block';
+                    if (input) input.value = value;
+                } else {
+                    estimationGroup.style.display = 'none';
+                    if (input) input.value = '';
+                }
+            }
+
+            var weightInputEl = document.getElementById('offer-weight');
+            if (weightInputEl) {
+                weightInputEl.addEventListener('input', updateEstimation);
+            }
+            if (customInput) {
+                customInput.addEventListener('input', updateEstimation);
         form.addEventListener('submit', function(event) {
             event.preventDefault();
 
@@ -321,7 +371,9 @@
                 payload.type_materiaux = customMat;
                 payload.estimation_score = parseFloat(estimate);
             } else if (material) {
-                payload.type_materiaux = material;
+                payload.facteur_id = material;
+                // also store human-readable name
+                payload.type_materiaux = materialSelect.options[materialSelect.selectedIndex].text;
             }
 
             fetch('create-annonce', {
@@ -428,4 +480,5 @@
             reader.readAsDataURL(file);
         });
     }
-})();
+    }}
+)();

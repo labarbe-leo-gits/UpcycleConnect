@@ -169,7 +169,13 @@ if ($paymentVerified) {
         }
 
         if ($orderSaved && $productType === 'offer') {
-            $markPayload = json_encode(['status' => 1]);
+
+            $markPayload = json_encode([
+                'status' => 1,
+                'poids_materiaux' => floatval($offer['poids_materiaux'] ?? 0),
+                'type_materiaux' => $offer['type_materiaux'] ?? '',
+                'facteur_id' => $offer['facteur_id'] ?? null
+            ]);
             askAPI('/annonces/' . $productUuid, 'PATCH', $markPayload);
 
             $ownerId = $offer['user_id'] ?? '';
