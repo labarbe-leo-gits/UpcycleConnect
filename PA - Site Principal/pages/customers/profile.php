@@ -316,6 +316,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <p class="upcycling-note">This figure represents the total environmental benefit of your offers. Add material details to your listings to improve your score!</p>
         </div>
+
+        <div class="tab-content" id="myupdoc-tab" style="display:none">
+            <h3>My UpDoc</h3>
+            <p>Comming soon ! You will be able to write some documentation to help other upcycle !</p>
+        </div>
+
         <div class="tab-content" id="security-tab" style="display:none">
             <h3>Change Password</h3>
             <div id="password-feedback">

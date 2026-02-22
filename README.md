@@ -216,7 +216,7 @@ Comprehensive documentation is available in the `docs/` directory:
 
 - [API Documentation](docs/API.md) - API endpoints and usage
 - [Authentication Guide](docs/AUTHENTICATION.md) - How to use authentication system
-- [OAuth Setup](docs/OAUTH_SETUP.md) - Configure Google/Microsoft OAuth
+- [OAuth Setup](docs/OAUTH_SETUP.md) - Configure Google/Facebook OAuth
 - [Database Schema](docs/DATABASE.md) - Database structure and relationships
 - [Deployment Guide](docs/DEPLOYMENT.md) - Production deployment instructions
 

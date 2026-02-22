@@ -172,6 +172,8 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
                 var m = text.match(/^(\d+(?:\.\d+)?)/);
                 if (m) updateGauge(parseFloat(m[1]));
             }
+        } else if (tab === 'myupdoc') {
+            document.getElementById('myupdoc-tab').style.display = '';
         }
     });
 });

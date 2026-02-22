@@ -9,6 +9,29 @@ $title = "Login";
 $error_message = '';
 $success_message = '';
 
+$forgot_error = '';
+$forgot_success = '';
+$show_forgot_modal = false;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['forgot_email'])) {
+    $show_forgot_modal = true;
+    $forgot_email = htmlspecialchars(filter_input(INPUT_POST, 'forgot_email', FILTER_SANITIZE_EMAIL));
+    if (empty($forgot_email)) {
+        $forgot_error = 'Please enter your email address.';
+    } else {
+        $data = json_encode(['email' => trim($forgot_email)]);
+        $response = askAPI('forgot-password', 'POST', $data);
+        $decoded = json_decode($response, true);
+        if (isset($decoded['success']) && $decoded['success']) {
+            $forgot_success = 'If that email is registered, a reset link has been sent.';
+        } elseif (isset($decoded['error'])) {
+            $forgot_error = $decoded['error'];
+        } else {
+            $forgot_error = 'Unable to process request. Please try again later.';
+        }
+    }
+}
+
 function verifyRecaptcha($token) {
     $secret = getenv('RECAPTCHA_SECRET_KEY');
     $response = file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret=$secret&response=$token");
@@ -124,9 +147,9 @@ if (isLoggedIn()) {
                 <i class="fa-brands fa-google"></i>
                 <span>Google</span>
             </button>
-            <button type="button" class="social-btn microsoft-btn" onclick="loginWithMicrosoft()">
-                <i class="fa-brands fa-microsoft"></i>
-                <span>Microsoft</span>
+            <button type="button" class="social-btn facebook-btn" onclick="loginWithFacebook()">
+                <i class="fa-brands fa-facebook-f"></i>
+                <span>Facebook</span>
             </button>
         </div>
         
@@ -134,6 +157,48 @@ if (isLoggedIn()) {
             Don't have an account? <a href="register.php">Register here</a>
         </div>
     </form>
+</div>
+
+<div class="modal-overlay" id="forgot-password-modal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="forgot-password-title">
+        <div class="modal-header">
+            <h2 id="forgot-password-title">Forgot Password</h2>
+            <button type="button" class="modal-close" id="close-forgot-modal" aria-label="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <?php if (
+                $forgot_error
+            ): ?>
+                <div class="error-message"><?= htmlspecialchars($forgot_error) ?></div>
+            <?php endif; ?>
+            <?php if (
+                $forgot_success
+            ): ?>
+                <div class="success-message"><?= htmlspecialchars($forgot_success) ?></div>
+            <?php endif; ?>
+            <?php if (! $forgot_success): ?>
+            <form method="POST" id="forgot-password-form">
+                <div class="field">
+                    <label for="forgot-email">Email address</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-envelope"></i>
+                        <input type="email" id="forgot-email" name="forgot_email" placeholder="Enter your email" required>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn-primary">Send Reset Link</button>
+                    <button type="button" class="btn-secondary" id="cancel-forgot-modal">Cancel</button>
+                </div>
+            </form>
+            <?php else: ?>
+            <div class="modal-actions">
+                <button type="button" class="btn-primary" id="forgot-ok">OK</button>
+            </div>
+            <?php endif; ?>
+        </div>
+    </div>
 </div>
 
 <script src="https://www.google.com/recaptcha/api.js?render=<?= getenv('RECAPTCHA_SITE_KEY') ?>"></script>
@@ -149,9 +214,11 @@ if (isLoggedIn()) {
         window.location.href = 'oauth-google.php';
     }
     
-    function loginWithMicrosoft() {
-        window.location.href = 'oauth-microsoft.php';
+    function loginWithFacebook() {
+        window.location.href = 'oauth-facebook.php';
     }
+
+    window.shouldOpenForgotModal = <?= $show_forgot_modal ? 'true' : 'false' ?>;
 </script>
 
 <?php

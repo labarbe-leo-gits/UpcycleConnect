@@ -7,7 +7,7 @@ This document provides step-by-step instructions for configuring OAuth 2.0 authe
 - [Overview](#overview)
 - [Database Setup](#database-setup)
 - [Google OAuth Setup](#google-oauth-setup)
-- [Microsoft OAuth Setup](#microsoft-oauth-setup)
+- [Facebook OAuth Setup](#facebook-oauth-setup)
 - [Backend Configuration](#backend-configuration)
 - [Frontend Integration](#frontend-integration)
 - [Testing](#testing)
@@ -147,71 +147,68 @@ GOOGLE_REDIRECT_URI=http://localhost/PA/PA%20-%20Site%20Principal/pages/public/o
 - Rotate secrets periodically
 - Restrict redirect URIs to trusted domains
 
-## Microsoft OAuth Setup
+## Facebook OAuth Setup
 
-### Step 1: Register Application
+Facebook OAuth remains free to use for basic sign‑in and profile access, so it’s a solid no‑cost alternative to Microsoft’s paid Azure requirement.
 
-1. Navigate to [Azure Portal](https://portal.azure.com/)
-2. Go to **Azure Active Directory** > **App registrations**
-3. Click **New registration**
+### Step 1: Create a Facebook App
+
+1. Go to the [Facebook for Developers](https://developers.facebook.com) site and log in with a Facebook account.
+2. In the top menu choose **My Apps** › **Create App** and pick **Consumer** or **Business** depending on whether you also plan to use other Facebook APIs. (Consumer is fine for simple sign‑in.)
+3. Give it a name like "UpcycleConnect" and enter a contact email.
+4. After the app is created, navigate to **Settings** › **Basic** and note the **App ID** and **App Secret** (you’ll use them as client ID/secret).
+5. Under **Products** on the left, click **Facebook Login** › **Settings** and add the Valid OAuth Redirect URI:
+
+   ```
+   http://localhost/PA/PA%20-%20Site%20Principal/pages/public/oauth-callback-facebook.php
+   ```
+
+   (Use your production domain when deploying.)
+
+6. You can leave other options at their defaults; the Facebook login product is free and does not require a paid tier.
 
 **Name**: UpcycleConnect
 
-**Supported account types**: Accounts in any organizational directory and personal Microsoft accounts
+**Authorization settings**:
 
-**Redirect URI**:
+- Platform: **Web**
+- Callback (redirect) URI as shown above.
+- Scopes: `email`, `public_profile` (these are set in code).
 
-- Platform: Web
-- URI: `http://localhost/PA/PA%20-%20Site%20Principal/pages/public/oauth-callback-microsoft.php`
+### Step 2: Obtain API Keys and Secrets
 
-### Step 2: Configure Authentication
+1. After creating the app, open the **Keys and tokens** tab.
+2. Generate the following credentials:
+   - **Client ID** (sometimes called API Key)
+   - **Client Secret** (sometimes called API Secret)
+   - **Bearer Token** (optional, used by some libraries)
 
-1. Navigate to your app registration
-2. Click **Authentication** in the left menu
-3. Under **Implicit grant and hybrid flows**, enable:
-   - Access tokens
-   - ID tokens
+> Note: Facebook provides an **App ID** (client ID) and **App Secret** which function equivalently.
 
-### Step 3: Create Client Secret
+### Step 3: Configure Environment Variables
 
-1. Navigate to **Certificates & secrets**
-2. Click **New client secret**
-3. Add description: "UpcycleConnect OAuth"
-4. Select expiration period (recommended: 24 months)
-5. Click **Add**
-6. Copy the **Value** immediately (it won't be shown again)
-
-### Step 4: Configure API Permissions
-
-1. Navigate to **API permissions**
-2. Click **Add a permission**
-3. Select **Microsoft Graph**
-4. Select **Delegated permissions**
-5. Add the following permissions:
-   - `User.Read`
-   - `email`
-   - `profile`
-   - `openid`
-6. Click **Add permissions**
-
-### Step 5: Copy Credentials
-
-From the app overview page, copy:
-
-- **Application (client) ID**: `xxx-xxx-xxx-xxx-xxx`
-- **Directory (tenant) ID**: `xxx-xxx-xxx-xxx-xxx`
-- **Client Secret**: (copied in Step 3)
-
-### Step 6: Configure Environment Variables
-
-Add to `.env` file:
+Add the following entries to your `.env` file (in `PA - Site Principal/`):
 
 ```env
-MICROSOFT_CLIENT_ID=your_application_client_id_here
-MICROSOFT_CLIENT_SECRET=your_client_secret_here
-MICROSOFT_TENANT_ID=your_tenant_id_here
-MICROSOFT_REDIRECT_URI=http://localhost/PA/PA%20-%20Site%20Principal/pages/public/oauth-callback-microsoft.php
+FACEBOOK_CLIENT_ID=your_facebook_app_id_here
+FACEBOOK_CLIENT_SECRET=your_facebook_app_secret_here
+FACEBOOK_REDIRECT_URI=http://localhost/PA/PA%20-%20Site%20Principal/pages/public/oauth-callback-facebook.php
 ```
+
+For production, replace `localhost` with your actual domain and ensure the redirect URI matches exactly.
+
+### Step 4: Update Application Code
+
+You will need to create the new OAuth endpoints (see examples later). The flow is virtually identical to the Google implementation:
+
+- `oauth-facebook.php` – build the authorization URL and redirect the user.
+- `oauth-callback-facebook.php` – exchange the authorization code for an access token, fetch the user's profile, and sign them in or register them via the existing API.
+
+The API backend already stores `oauth_provider`, `oauth_id`, and `profile_picture` generically, so no code changes are necessary on the Go side beyond handling the new provider string ("facebook").
+
+### Optional: Keep Microsoft Support
+
+If you still want to support Microsoft alongside Facebook you can keep the old configuration and simply add a second set of credentials and handlers. Otherwise, feel free to delete the Microsoft-specific files and environment variables.
 
 ## Backend Configuration
 

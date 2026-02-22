@@ -209,7 +209,7 @@ GOOGLE_CLIENT_ID=your_production_client_id.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=your_production_client_secret
 GOOGLE_REDIRECT_URI=https://yourdomain.com/pages/public/oauth-callback-google.php
 
-# Microsoft OAuth (get from Azure Portal)
+# Facebook OAuth (get from Developer Portal)
 MICROSOFT_CLIENT_ID=your_production_client_id
 MICROSOFT_CLIENT_SECRET=your_production_client_secret
 MICROSOFT_TENANT_ID=your_tenant_id

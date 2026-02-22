@@ -18,7 +18,7 @@ function getLoggedInUserType() {
 }
 
 function getUserHomePath($userType) {
-    return ((int) $userType === 2) ? '../pro/index' : '../customers/profile';
+    return ((int) $userType === 2) ? '../pro/profile' : '../customers/profile';
 }
 
 function requireLogin() {

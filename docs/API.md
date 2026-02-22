@@ -130,7 +130,7 @@ Retrieves a list of all registered users.
 **Notes**:
 
 - Password hashes are never returned
-- OAuth users have `oauth_provider` and `oauth_id` fields populated
+- OAuth users have `oauth_provider` and `oauth_id` fields populated (e.g. "google", "twitter")
 - `last_login` is null if user never logged in
 
 **Example**:

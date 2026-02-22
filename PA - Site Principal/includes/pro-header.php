@@ -61,7 +61,7 @@ $user = getLoggedInUser();
                 </a>
                 <div class="dropdown-menu">
                     <a href="../common/offers"><i class="fa-solid fa-box-open"></i>Offers</a>
-                    <a href="offers"><i class="fa-solid fa-warehouse"></i>Containers</a>
+                    <a href="../pro/containers"><i class="fa-solid fa-warehouse"></i>Containers</a>
                 </div>
             </div>
             <div class="btn-wrapper" onClick="window.location.href='../public/index'">
@@ -70,7 +70,7 @@ $user = getLoggedInUser();
             </div>
 
             <?php
-                $profileUrl = 'profile';
+                $profileUrl = '../pro/profile';
             ?>
             <div class="nav-dropdown profile-dropdown">
                 <a class="btn-wrapper profile-link" href="<?= $profileUrl ?>">
@@ -81,11 +81,10 @@ $user = getLoggedInUser();
                     <?php endif; ?>
                 </a>
                 <div class="dropdown-menu">
-                    <a href="tips"><i class="fa-solid fa-lightbulb"></i>Tips</a>
                     <a href="<?= $profileUrl ?>"><i class="fa-solid fa-user"></i>Profile</a>
-                    <a href="notifications"><i class="fa-solid fa-bell"></i></i>Notifications <span class="notif-badge" id="notifications-count" hidden>0</span></a>
-                    <a href="planning"><i class="fa-solid fa-calendar-days"></i>Planning</a>
-                    <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="fa-solid fa-right-from-bracket"></i>Logout</a>
+                    <a href="../pro/notifications"><i class="fa-solid fa-bell"></i></i>Notifications <span class="notif-badge" id="notifications-count" hidden>0</span></a>
+                    <a href="../pro/planning"><i class="fa-solid fa-calendar-days"></i>Planning</a>
+                    <a href="../pro/logout" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="fa-solid fa-right-from-bracket"></i>Logout</a>
                 </div>
             </div>
         </nav>
