@@ -19,13 +19,31 @@
 
         renderSkeletons(container, pageSize);
 
-        fetch(`deposits-api?page=${page}&limit=${pageSize}`, {
+        let apiUrl = `deposits-api?page=${page}&limit=${pageSize}`;
+        if (apiUrl.indexOf('http://') !== 0 && apiUrl.indexOf('https://') !== 0) {
+            apiUrl = new URL(apiUrl, window.location.href).href;
+        }
+
+        fetch(apiUrl, {
             method: 'GET',
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
         .then(resp => resp.text())
         .then(text => {
-            const data = text ? JSON.parse(text) : {};
+            if (text && text.trim().charAt(0) === '<') {
+                console.error('Deposits API returned non-JSON response:', text);
+            }
+            let data = {};
+            try {
+                data = text ? JSON.parse(text) : {};
+            } catch (parseErr) {
+                console.error('Failed to parse deposits API response:', text, parseErr);
+                throw parseErr; // trigger catch below
+            }
+            // API may return an error object
+            if (data && data.error) {
+                throw new Error(data.error || 'Server error');
+            }
             const items = Array.isArray(data.items) ? data.items : [];
             const total = Number.isFinite(data.total) ? data.total : items.length;
             totalPages = total > 0 ? Math.ceil(total / pageSize) : 1;
@@ -122,7 +140,6 @@
         const mapEl = document.getElementById('deposit-map');
 
         titleEl.textContent = 'Loading…';
-        // show polished skeletons while data loads
         depositInfoEl.innerHTML = `
             <div class="skeleton skeleton-title" style="width:40%"></div>
             <div class="skeleton skeleton-description" style="height:12px;margin-top:12px;width:60%"></div>
@@ -132,7 +149,6 @@
         conteneurInfoEl.innerHTML = `<div class="deposit-conteneur skeleton" style="height:72px;"></div>`;
         mapEl.innerHTML = `<div class="skeleton" style="height:320px;border-radius:10px"></div>`;
 
-        // temporarily replace image area with skeleton (will be restored after load)
         const depositImageEl = document.querySelector('.deposit-image');
         if (depositImageEl) {
             depositImageEl.dataset._original = depositImageEl.innerHTML;

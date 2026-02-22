@@ -47,7 +47,7 @@
                 totalPages = total > 0 ? Math.ceil(total / pageSize) : 1;
 
                 if (!services || services.length === 0) {
-                    container.innerHTML = '<p>No services available at the moment.</p>';
+                    container.innerHTML = '<p class="empty-services">No services available at the moment.</p>';
                     if (pagination) {
                         pagination.innerHTML = '';
                     }

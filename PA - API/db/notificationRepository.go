@@ -141,3 +141,15 @@ func MarkNotificationAsReadInDB(notificationID string) error {
 	return nil
 
 }
+
+func MarkAllNotificationsAsReadInDB(userID string) error {
+
+	_, err := Db.Exec("UPDATE notifications SET is_read = true WHERE user_id = ?", userID)
+
+	if err != nil {
+		return fmt.Errorf("markAllNotificationsAsRead package db : %s", err.Error())
+	}
+
+	return nil
+
+}

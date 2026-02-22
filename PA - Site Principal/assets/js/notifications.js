@@ -8,6 +8,48 @@
         if (content) content.style.display = 'block';
     }
 
+    function setupMarkAllAsRead() {
+        var root = document.getElementById('notifications-root');
+        var markAllBtn = document.getElementById('mark-all-read-btn');
+        var readAllUrl = root ? root.getAttribute('data-read-all-url') : '';
+    
+        if (!root || !readAllUrl || !markAllBtn) {
+            return;
+        }
+
+        markAllBtn.addEventListener('click', function() {
+            markAllBtn.disabled = true;
+
+            var resolvedUrl = readAllUrl;
+            if (readAllUrl.indexOf('http://') !== 0 && readAllUrl.indexOf('https://') !== 0) {
+                resolvedUrl = new URL(readAllUrl, window.location.href).href;
+            }
+
+            fetch(resolvedUrl, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+
+            })
+            .then(function(response) {
+                if (!response.ok) {
+                    markAllBtn.disabled = false;
+                    return;
+                }
+
+                window.location.reload();
+            })
+            .catch(function() {
+                markAllBtn.disabled = false;
+            });
+        });
+
+
+
+    }
+
     function setupMarkAsRead() {
         var root = document.getElementById('notifications-root');
         var list = document.getElementById('notifications-list');
@@ -140,5 +182,6 @@
     window.addEventListener('load', function() {
         setTimeout(showContent, 500);
         setupMarkAsRead();
+        setupMarkAllAsRead();
     });
 })();

@@ -323,6 +323,11 @@ func CountDepositsByUserID(userID uuid.UUID) (int, error) {
 
 func ChangeUserPasswordInDB(userID string, newPassword string) error {
 
+	_, err := GetUserByIDFromDB(uuid.MustParse(userID))
+	if err != nil {
+		return fmt.Errorf("user not found: %v", err)
+	}
+
 	hashed, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
 	if err != nil {
 		return fmt.Errorf("failed to hash password: %v", err)

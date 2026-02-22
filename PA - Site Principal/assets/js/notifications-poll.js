@@ -54,7 +54,7 @@
         toneB.stop(now + 0.28);
     }
 
-    function updateBadge(count) {
+    function  updateBadge(count) {
         if (lastUnreadCount !== null && count > lastUnreadCount) {
             playNotificationSound();
         }

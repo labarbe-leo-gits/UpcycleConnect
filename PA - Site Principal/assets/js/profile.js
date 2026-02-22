@@ -146,6 +146,11 @@ const paymentModal = document.getElementById('payment-modal');
 
     document.addEventListener('DOMContentLoaded', function() {
         hideLoader(true);
+        var initial = document.getElementById('upcycling-score-value');
+        if (initial) {
+            var m = initial.textContent.match(/^(\d+)/);
+            if (m) updateGauge(parseFloat(m[1]));
+        }
     });
 
 document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -161,22 +166,84 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
             document.getElementById('security-tab').style.display = '';
         } else if (tab === 'upcyclingScore') {
             document.getElementById('upcyclingScore-tab').style.display = '';
-            if (window.currentUserId) {
-                fetch(window.location.origin + '/api/users/' + encodeURIComponent(window.currentUserId), {
-                    headers: {'X-Requested-With': 'XMLHttpRequest'}
-                })
-                .then(r => r.json())
-                .then(d => {
-                    if (d && typeof d.upcycling_score !== 'undefined') {
-                        var el = document.getElementById('upcycling-score-value');
-                        if (el) el.textContent = d.upcycling_score + ' kg CO₂ avoided';
-                    }
-                })
-                .catch(() => {});
+            var initial = document.getElementById('upcycling-score-value');
+            if (initial) {
+                var text = initial.textContent || '';
+                var m = text.match(/^(\d+(?:\.\d+)?)/);
+                if (m) updateGauge(parseFloat(m[1]));
             }
         }
     });
 });
+
+var gaugeMax = 100;
+
+var lastPct = 0;
+
+function drawGaugeCanvas(score) {
+    var canvas = document.getElementById('upcycling-gauge-chart');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    var w = canvas.width;
+    var h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+    var radius = Math.min(w/2, h) - 10;
+    ctx.lineWidth = 10;
+    ctx.strokeStyle = '#ddd';
+    ctx.beginPath();
+    ctx.arc(w/2, h, radius, Math.PI, 0, false);
+    ctx.stroke();
+    var pct = Math.min(Math.max(score / gaugeMax, 0), 1);
+    var color;
+    if (score >= 100) {
+        pct = 1;
+        color = '#e11d48';
+    } else if (score < 10) {
+        color = '#10b981';
+    } else if (score < 50) {
+        color = '#facc15';
+    } else if (score < 70) {
+        color = '#f97316';
+    } else {
+        color = '#e11d48';
+    }
+    var endAngle = Math.PI + pct * Math.PI;
+    ctx.strokeStyle = color;
+    ctx.beginPath();
+    ctx.arc(w/2, h, radius, Math.PI, endAngle, false);
+    ctx.stroke();
+    ctx.strokeStyle = '#444';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(w/2, h);
+    var nx = w/2 + Math.cos(endAngle) * (radius - 5);
+    var ny = h + Math.sin(endAngle) * (radius - 5);
+    ctx.lineTo(nx, ny);
+    ctx.stroke();
+    ctx.fillStyle = '#444';
+    ctx.beginPath();
+    ctx.arc(w/2, h, 4, 0, 2*Math.PI);
+    ctx.fill();
+}
+
+function updateGauge(score) {
+    var targetPct = Math.min(Math.max(score / gaugeMax, 0), 1);
+    var startPct = lastPct;
+    var duration = 600;
+    var startTime = null;
+    function animate(ts) {
+        if (!startTime) startTime = ts;
+        var progress = Math.min((ts - startTime) / duration, 1);
+        var currentPct = startPct + (targetPct - startPct) * progress;
+        drawGaugeCanvas(currentPct * gaugeMax);
+        if (progress < 1) {
+            requestAnimationFrame(animate);
+        } else {
+            lastPct = targetPct;
+        }
+    }
+    requestAnimationFrame(animate);
+}
 
 document.querySelectorAll('.btn-edit-inline').forEach(btn => {
     btn.addEventListener('click', function() {
@@ -264,6 +331,17 @@ function hideLoader(immediate = false) {
 document.addEventListener('DOMContentLoaded', function() {
     hideLoader(false);
 
+    // if there is any feedback under password form, show security tab
+    var pwdFeedback = document.getElementById('password-feedback');
+    if (pwdFeedback && pwdFeedback.textContent.trim().length > 0) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        var secBtn = document.querySelector('.tab-btn[data-tab="security"]');
+        if (secBtn) secBtn.classList.add('active');
+        document.querySelectorAll('.tab-content').forEach(tc => tc.style.display = 'none');
+        var secTab = document.getElementById('security-tab');
+        if (secTab) secTab.style.display = '';
+    }
+
     (function() {
         var picSection = document.querySelector('.profile-picture-section');
         var profileImg = document.getElementById('profile-pic-preview');
@@ -346,4 +424,77 @@ if (newPasswordInput) {
         newPasswordInput.addEventListener('input', updateMeter);
         updateMeter();
     }
+}
+
+var passwordForm = document.querySelector('.change-password-form');
+var passwordFeedback = document.getElementById('password-feedback');
+var passwordSuccessModal = document.getElementById('password-success-modal');
+var closePasswordSuccessBtn = document.getElementById('close-password-success');
+var passwordSuccessOk = document.getElementById('password-success-ok');
+
+function openPasswordSuccessModal() {
+    if (!passwordSuccessModal) return;
+    passwordSuccessModal.classList.add('is-visible');
+    document.body.classList.add('modal-open');
+    passwordSuccessModal.setAttribute('aria-hidden', 'false');
+}
+
+function closePasswordSuccessModal() {
+    if (!passwordSuccessModal) return;
+    passwordSuccessModal.classList.remove('is-visible');
+    document.body.classList.remove('modal-open');
+    passwordSuccessModal.setAttribute('aria-hidden', 'true');
+}
+
+if (closePasswordSuccessBtn) {
+    closePasswordSuccessBtn.addEventListener('click', closePasswordSuccessModal);
+}
+if (passwordSuccessOk) {
+    passwordSuccessOk.addEventListener('click', closePasswordSuccessModal);
+}
+if (passwordSuccessModal) {
+    passwordSuccessModal.addEventListener('click', function(e) {
+        if (e.target === passwordSuccessModal) {
+            closePasswordSuccessModal();
+        }
+    });
+}
+
+if (passwordForm) {
+    passwordForm.addEventListener('submit', async function(event) {
+        event.preventDefault();
+        if (passwordFeedback) {
+            passwordFeedback.textContent = '';
+            passwordFeedback.className = '';
+        }
+        var submitBtn = passwordForm.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.disabled = true;
+        try {
+            var formData = new FormData(passwordForm);
+            formData.append('form_type', 'password_change');
+            var response = await fetch(window.location.href, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                body: formData
+            });
+            var data = await response.json().catch(function() { return null; });
+            if (!data) throw new Error('Invalid response');
+            if (!data.success) {
+                if (passwordFeedback) {
+                    passwordFeedback.textContent = data.message || 'Unable to change password.';
+                    passwordFeedback.className = 'error-message';
+                }
+                return;
+            }
+            openPasswordSuccessModal();
+            passwordForm.reset();
+        } catch (error) {
+            if (passwordFeedback) {
+                passwordFeedback.textContent = 'Unable to change password.';
+                passwordFeedback.className = 'error-message';
+            }
+        } finally {
+            if (submitBtn) submitBtn.disabled = false;
+        }
+    });
 }

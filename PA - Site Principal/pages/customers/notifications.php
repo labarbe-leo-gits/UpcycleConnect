@@ -36,9 +36,31 @@ if (empty($notificationsError) && !empty($notifications)) {
 }
 ?>
 
-<div class="container" id="notifications-root" data-read-url="notifications-read">
+<?php
+					$unreadNotifications = array_values(array_filter($notifications, function ($notification) {
+						return empty($notification['read']);
+					}));
+				?>
+
+<div class="container" id="notifications-root" data-read-url="notifications-read" data-read-all-url="notifications-read-all">
 	<div class="profile-card">
-		<h2>Your Notifications</h2>
+
+		<div class="notifications-header">	
+			<h2>Your Notifications</h2>
+			<div class="mark-all-read-container">
+				<button class="btn-secondary" id="mark-all-read-btn" type="button"
+				
+				<?php
+
+					if (count($unreadNotifications) === 0) {
+						echo 'style="cursor: not-allowed;" disabled';
+					}
+				
+				?>
+				
+				><i class="fa-solid fa-envelope-circle-check" ></i> Mark all as read</button>
+			</div>
+		</div>
 
 		<div class="notifications-skeleton" id="notifications-skeleton">
 			<div class="notification-item">
@@ -62,11 +84,6 @@ if (empty($notificationsError) && !empty($notifications)) {
 			<?php if ($notificationsError): ?>
 				<div class="error-message"><?php echo htmlspecialchars($notificationsError); ?></div>
 			<?php else: ?>
-				<?php
-					$unreadNotifications = array_values(array_filter($notifications, function ($notification) {
-						return empty($notification['read']);
-					}));
-				?>
 				<p class="balance-note" id="notifications-empty" style="display: <?php echo empty($unreadNotifications) ? 'block' : 'none'; ?>;">You have no notifications yet.</p>
 				<div class="notifications-list" id="notifications-list">
 					<?php foreach ($unreadNotifications as $notification): ?>

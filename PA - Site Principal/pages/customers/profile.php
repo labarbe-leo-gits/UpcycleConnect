@@ -38,6 +38,8 @@ if (!is_array($userDetails)) {
 $balance = $userDetails['balance'] ?? 0;
 $paymentErrors = [];
 $paymentSuccess = '';
+$passwordErrors = [];
+$passwordSuccess = '';
 
 $bankingDetailsResponse = askAPI("/users/{$user['id']}/banking-details", 'GET');
 $bankingDetailsData = json_decode($bankingDetailsResponse, true);
@@ -50,6 +52,67 @@ $defaultBankingDetailsId = $hasSavedBankingDetails ? ($savedBankingDetailsList[0
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $formType = $_POST['form_type'] ?? '';
+    if ($formType === 'password_change') {
+        $current = trim($_POST['current_password'] ?? '');
+        $new = trim($_POST['new_password'] ?? '');
+        $confirm = trim($_POST['confirm_password'] ?? '');
+        if ($current === '' || $new === '' || $confirm === '') {
+            $passwordErrors[] = 'All fields are required.';
+        } elseif ($new !== $confirm) {
+            $passwordErrors[] = 'New passwords do not match.';
+        }
+
+        $verification = askAPI('login', 'POST', json_encode([
+            'identifier' => $user['email'],
+            'password' => $current
+        ]));
+
+        $verificationData = json_decode($verification, true);
+
+        if (!is_array($verificationData) || isset($verificationData['error']) || !isset($verificationData['token'])) {
+            $passwordErrors[] = 'Current password is incorrect.';
+        }
+
+        if (empty($passwordErrors)) {
+            $payload = json_encode([
+                'old_password' => $current,
+                'new_password' => $new
+            ]);
+            $resp = askAPI("/users/{$user['id']}/password", 'PATCH', $payload);
+            $decoded = json_decode($resp, true);
+            if (is_array($decoded) && isset($decoded['error'])) {
+                $passwordErrors[] = $decoded['error'];
+            } elseif (is_array($decoded) && isset($decoded['errors']) && is_array($decoded['errors'])) {
+                $passwordErrors = array_merge($passwordErrors, $decoded['errors']);
+            } else {
+                $passwordSuccess = 'Password changed successfully.';
+                $loginPayload = json_encode([
+                    'identifier' => $user['email'],
+                    'password' => $new
+                ]);
+                $loginResp = askAPI('login', 'POST', $loginPayload);
+                $loginDecoded = json_decode($loginResp, true);
+                if (isset($loginDecoded['token'])) {
+                    $_SESSION['jwt_token'] = $loginDecoded['token'];
+                }
+            }
+        }
+        if ($isAjax) {
+            header('Content-Type: application/json');
+            if (!empty($passwordErrors)) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => implode(' ', $passwordErrors)
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => true,
+                    'message' => $passwordSuccess
+                ]);
+            }
+            exit;
+        }
+    }
     if ($formType === 'payment') {
         $amountRaw = trim($_POST['amount'] ?? '');
         $amountValue = str_replace(',', '.', $amountRaw);
@@ -215,10 +278,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <span class="profile-label">Total sales value:</span>
                         <span id="balance-total"><?= htmlspecialchars((string) $balance) ?></span> €
                     </div>
-                    <div class="profile-field-row">
-                        <span class="profile-label">Upcycling Score:</span>
-                        <span id="profile-upcycling-score"><?= isset($user['upcycling_score']) ? htmlspecialchars((string)$user['upcycling_score']) . ' kg CO₂' : 'N/A' ?></span>
-                    </div>
                 </div>
                 <div class="profile-actions">
                     <button type="button" class="btn-primary btn-inline" id="open-payment-modal">
@@ -243,19 +302,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
             ?>
-            <button class="tab-btn" data-tab="upcyclingScore-tab">Upcycling Score</button>
+            <button class="tab-btn" data-tab="upcyclingScore">Upcycling Score</button>
         </div>
         <div class="tab-content" id="general-tab">
             
         </div>
         <div class="tab-content" id="upcyclingScore-tab" style="display:none">
-            <h3>Your Upcycling Score</h3>
-            <p id="upcycling-score-value"><?= isset($user['upcycling_score']) ? htmlspecialchars((string)$user['upcycling_score']) . ' kg CO₂ avoided' : 'Loading...' ?></p>
+            <div class="upcycling-gauge-container">
+                <canvas id="upcycling-gauge-chart" width="200" height="100" aria-hidden="true"></canvas>
+                <div class="gauge-text">
+                    <span id="upcycling-score-value"><?= isset($user['upcycling_score']) ? htmlspecialchars((string)$user['upcycling_score']) . ' kg CO₂ avoided' : 'Loading...' ?></span>
+                </div>
+            </div>
             <p class="upcycling-note">This figure represents the total environmental benefit of your offers. Add material details to your listings to improve your score!</p>
         </div>
         <div class="tab-content" id="security-tab" style="display:none">
             <h3>Change Password</h3>
-            <form class="change-password-form" autocomplete="off">
+            <div id="password-feedback">
+                <?php if (!empty($passwordErrors)): ?>
+                    <div class="error-message"><?php echo htmlspecialchars(implode(' ', $passwordErrors)); ?></div>
+                <?php elseif ($passwordSuccess): ?>
+                    <div class="success-message"><?php echo htmlspecialchars($passwordSuccess); ?></div>
+                <?php endif; ?>
+            </div>
+            <form id="change-password-form" class="change-password-form" autocomplete="off">
+                <input type="hidden" name="form_type" value="password_change">
                 <div class="field">
                     <label for="current-password">Current Password</label>
                     <div class="input-wrapper password-wrapper">
@@ -286,6 +357,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 <button type="submit" class="btn-primary">Change Password</button>
             </form>
+        </div>
+        <div class="modal-overlay" id="password-success-modal" aria-hidden="true">
+            <div class="modal" role="dialog" aria-modal="true" aria-labelledby="password-success-title">
+                <div class="modal-header">
+                    <h2 id="password-success-title">Success</h2>
+                    <button type="button" class="modal-close" id="close-password-success" aria-label="Close">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="center">Your password has been changed successfully.</p>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-primary" id="password-success-ok">OK</button>
+                </div>
+            </div>
         </div>
     </div>
 </div>

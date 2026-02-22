@@ -487,3 +487,22 @@ func ChangePassword(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"message": "Password changed successfully"})
 
 }
+
+func MarkAllNotificationAsRead(w http.ResponseWriter, r *http.Request) {
+
+	userID := strings.TrimPrefix(r.URL.Path, "/users/")
+	userID = strings.TrimSuffix(userID, "/notifications/read")
+
+	err := db.MarkAllNotificationsAsReadInDB(userID)
+
+	if err != nil {
+		fmt.Println("[ERROR] MarkAllNotificationAsRead:", err)
+		sendError(w, "Unable to mark notifications as read", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]bool{"success": true})
+
+}

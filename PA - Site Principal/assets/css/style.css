@@ -755,3 +755,14 @@ form a:hover {
   color: #6b7280;
   text-align: center;
 }
+
+.notifications-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.notifications-header h2 {
+  margin: 0;
+}
