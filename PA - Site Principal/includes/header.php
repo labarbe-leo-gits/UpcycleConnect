@@ -61,11 +61,11 @@ trackLastPage();
             <h3>UpcycleConnect</h3>
         </div>
         <nav>
-            <div class="btn-wrapper" onClick="openFile('index.php')">
+            <div class="btn-wrapper" onClick="openFile('../public/index.php')">
                 <i class="fa-solid fa-house-chimney"></i>
                 <p>Home</p>
             </div>
-            <div class="btn-wrapper" onClick="openFile('about.php')">
+            <div class="btn-wrapper" onClick="openFile('../public/about.php')">
                 <i class="fa-solid fa-circle-info"></i>
                 <p>About</p>
             </div>
@@ -79,7 +79,7 @@ trackLastPage();
                     <a href="../common/forums"><i class="fa-solid fa-indent"></i>Forums</a>
                 </div>
             </div>
-            <div class="btn-wrapper" onClick="openFile('contact.php')">
+            <div class="btn-wrapper" onClick="openFile('../public/contact.php')">
                 <i class="fa-solid fa-envelope"></i>
                 <p>Contact</p>
             </div>
