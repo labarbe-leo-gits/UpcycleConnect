@@ -1199,6 +1199,32 @@ body.modal-open {
   margin-bottom: 6px;
 }
 
+.skeleton-tip-item {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skeleton-tip-item .skeleton-title {
+  height: 20px;
+  width: 50%;
+}
+
+.skeleton-tip-item .skeleton-description {
+  height: 14px;
+  margin-bottom: 6px;
+}
+
+.skeleton-tip-item .skeleton-date {
+  height: 12px;
+  width: 30%;
+}
+
 .skeleton-price {
   height: 18px;
   width: 80px;
@@ -2456,10 +2482,64 @@ body.modal-open {
   text-align: center;
   color: #6b7280;
   font-size: 15px;
-  font-weight: 600;
-  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.08);
 }
 
-.center{
+.empty-tips {
+  grid-column: 1 / -1;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 26px 24px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 15px;
+}
+
+.tip-item {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tip-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tip-item h3 {
+  margin: 0 0 8px 0;
+  font-size: 1.2rem;
+}
+
+.tip-meta {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin: 4px 0;
+}
+
+.tip-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  padding-bottom: 4px;
+}
+
+.tip-button {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  cursor: pointer;
+  width: fit-content;
+}
+
+.center {
   text-align: center;
 }
