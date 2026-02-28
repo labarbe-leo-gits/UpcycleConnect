@@ -86,6 +86,8 @@ The application follows a separation of concerns architecture:
 
 ## Getting Started
 
+Detailed instructions for installing and running the project are available in the [Setup Guide](docs/SETUP.md). The brief overview below covers the most common steps; developers should consult the guide for additional context and troubleshooting tips.
+
 ### Prerequisites
 
 - PHP 7.4 or higher
@@ -94,7 +96,7 @@ The application follows a separation of concerns architecture:
 - Apache server (XAMPP recommended for Windows)
 - Composer (PHP dependency manager)
 
-### Installation
+### Installation Summary
 
 1. **Clone the repository**
 
@@ -114,8 +116,9 @@ The application follows a separation of concerns architecture:
    ```bash
    cd "PA - Site Principal"
    composer install
-   cp .env.example .env
-   # Configure your .env file with API keys and database credentials
+   cp .env.example .env         # create local configuration
+   # Edit `.env` and fill in API keys, database credentials, and other
+   # environment-specific values. See docs/SETUP.md for details.
    ```
 
 4. **Backend API Setup**
@@ -123,25 +126,34 @@ The application follows a separation of concerns architecture:
    ```bash
    cd "PA - API"
    go mod download
-   # Ensure .env file exists in PA - Site Principal directory
+   cp .env.example .env         # database credentials, JWT secret, etc.
    ```
 
-5. **Start the API Server**
+5. **Start services**
+   - Ensure MySQL and Apache are running (start via XAMPP on Windows or
+     using your operating system service manager).
+   - In a shell, launch the API:
 
-   ```bash
-   cd "PA - API"
-   go run .
-   ```
+     ```bash
+     cd "PA - API"
+     go run .
+     ```
 
-   API will be available at `http://localhost:9999`
+     The API will listen on the port defined in the environment (default
+     `9999`).
 
-6. **Start Apache Server**
-   - Start Apache and MySQL via XAMPP Control Panel
-   - Access the application at `http://localhost/PA/PA - Site Principal/pages/public/index.php`
+   - Navigate to the frontend at
+     `http://localhost/PA/PA - Site Principal/pages/public/index.php`.
 
-### Configuration
+6. **Configuration**
 
-Create or update `.env` file in `PA - Site Principal` directory:
+   Create or update the `.env` file(s) as described above. Both the
+   frontend and the API use environment variables; the examples shipped
+   in their respective directories (`PA - Site Principal/.env.example` and
+   `PA - API/.env.example`) list the variables that must be populated.
+
+For complete step‑by‑step instructions, environment variable details, and
+common troubleshooting advice, see [docs/SETUP.md](docs/SETUP.md).
 
 ```env
 API_PORT=9999
@@ -162,6 +174,7 @@ PA/
 │   ├── AUTHENTICATION.md          # Authentication guide
 │   ├── DATABASE.md                # Database schema
 │   ├── DEPLOYMENT.md              # Deployment guide
+│   ├── SETUP.md                   # Local development setup
 │   └── OAUTH_SETUP.md             # OAuth configuration
 │
 ├── PA - API/                      # Go Backend API
@@ -214,6 +227,7 @@ PA/
 
 Comprehensive documentation is available in the `docs/` directory:
 
+- [Setup Guide](docs/SETUP.md) - Local development and environment configuration
 - [API Documentation](docs/API.md) - API endpoints and usage
 - [Authentication Guide](docs/AUTHENTICATION.md) - How to use authentication system
 - [OAuth Setup](docs/OAUTH_SETUP.md) - Configure Google/Facebook OAuth
@@ -222,12 +236,22 @@ Comprehensive documentation is available in the `docs/` directory:
 
 ## Development
 
-### Running the Application
+For a complete walkthrough of the development environment, including
+acceptable values for the environment variables and troubleshooting tips,
+refer to the [Setup Guide](docs/SETUP.md).
 
-1. Start MySQL server
-2. Start Go API: `cd "PA - API" && go run .`
-3. Start Apache server via XAMPP
-4. Access the application at configured URL
+### Running the Application Locally
+
+1. Ensure the `.env` files in both `PA - Site Principal` and `PA - API` have
+   been created from their corresponding `.env.example` templates and
+   populated with valid values.
+2. Start the MySQL server (e.g. via XAMPP control panel or system service).
+3. Start the Go API:
+   ```bash
+   cd "PA - API" && go run .
+   ```
+4. Start or restart Apache (XAMPP or system service).
+5. Open a browser and navigate to the configured frontend URL.
 
 ### API Endpoints
 

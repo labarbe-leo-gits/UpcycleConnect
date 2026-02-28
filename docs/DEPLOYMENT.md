@@ -187,9 +187,11 @@ cd "PA - Site Principal"
 composer install --no-dev --optimize-autoloader
 
 # Copy environment file
-cp .env.example .env
+cp .env.example .env              # frontend configuration
 
-# Edit .env file
+# Edit `.env` and fill in the required values as described in
+# docs/SETUP.md; typical keys include API_HOST, API_PORT, OAuth credentials,
+# reCAPTCHA keys, Stripe keys, etc.
 nano .env  # or use your preferred editor
 ```
 
@@ -229,8 +231,15 @@ $password = 'strong_password_here';
 
 ### 5. Backend API Setup
 
+The API component has its own environment file for database credentials and
+other runtime secrets. Create it before building.
+
 ```bash
 cd "PA - API"
+
+# Copy example environment and edit
+cp .env.example .env              # contains DB_USER, DB_PASSWORD, etc.
+nano .env
 
 # Download Go dependencies
 go mod download

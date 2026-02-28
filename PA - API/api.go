@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 )
 
@@ -77,6 +78,58 @@ func notFoundHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+func checkRoleIntValue(targetRole int, userID uuid.UUID) (bool, error) {
+
+	role, err := db.GetUserRoleByIDFromDB(userID.String())
+
+	if err != nil {
+		return false, err
+	}
+
+	return role == targetRole, nil
+
+}
+
+func RoleMiddleware(requiredRole int) func(http.HandlerFunc) http.HandlerFunc {
+	return func(next http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			uidStr, ok := r.Context().Value("user_id").(string)
+			if !ok || uidStr == "" {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusUnauthorized)
+				json.NewEncoder(w).Encode(map[string]string{"error": "missing user identity"})
+				return
+			}
+
+			userID, err := uuid.Parse(uidStr)
+			if err != nil {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusUnauthorized)
+				json.NewEncoder(w).Encode(map[string]string{"error": "invalid user id"})
+				return
+			}
+
+			hasRole, err := checkRoleIntValue(requiredRole, userID)
+			if err != nil {
+				fmt.Println("[ERROR] RoleMiddleware:", err)
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusInternalServerError)
+				json.NewEncoder(w).Encode(map[string]string{"error": "could not verify user role"})
+				return
+			}
+
+			if !hasRole {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusForbidden)
+				json.NewEncoder(w).Encode(map[string]string{"error": "insufficient privileges"})
+				return
+			}
+
+			next(w, r)
+		}
+	}
+}
+
 func main() {
 
 	err := godotenv.Load("../PA - Site Principal/.env")
@@ -126,7 +179,7 @@ func main() {
 	registerRoute("GET", "/users/{id}/annonces", "List all annonces for a specific user by their UUID", app.GetAnnoncesByUserID, app.JWTAuthMiddleware)
 	registerRoute("PATCH", "/notifications/{id}/read", "Mark a notification as read by its UUID", app.MarkNotificationAsRead, app.JWTAuthMiddleware)
 	registerRoute("PATCH", "/users/{id}/notifications/read", "Mark all users notification as read", app.MarkAllNotificationAsRead, app.JWTAuthMiddleware)
-	registerRoute("DELETE", "/users/{id}/planning", "Delete a planning entry for a user", app.DeletePlanning, app.JWTAuthMiddleware)
+	registerRoute("DELETE", "/users/{id}/planning/{pID}", "Delete a planning entry for a user", app.DeletePlanning, app.JWTAuthMiddleware)
 	registerRoute("GET", "/forums", "List all forums", app.GetForums)
 	registerRoute("GET", "/forums/{id}/posts", "List all posts in a specific forum by its UUID", app.GetForumPosts)
 	registerRoute("POST", "/forums", "Create a new forum", app.CreateForum, app.JWTAuthMiddleware)
@@ -140,7 +193,7 @@ func main() {
 	registerRoute("PATCH", "/forums/{id}/posts/{pID}", "Update a specific post in a forum by its UUID", app.UpdatePost, app.JWTAuthMiddleware)
 	registerRoute("DELETE", "/forums/{id}/posts/{pID}", "Delete a post from the forum", app.DeletePost, app.JWTAuthMiddleware)
 	registerRoute("GET", "/conteneurs", "List all conteneurs in the system", app.GetConteneurs, app.JWTAuthMiddleware)
-	registerRoute("POST", "/conteneurs", "Create a new conteneur", app.CreateConteneur, app.JWTAuthMiddleware)
+	registerRoute("POST", "/conteneurs", "Create a new conteneur", app.CreateConteneur, app.JWTAuthMiddleware, RoleMiddleware(4))
 	registerRoute("GET", "/deposits", "List all deposits in the system", app.GetDeposits, app.JWTAuthMiddleware)
 	registerRoute("POST", "/deposits", "Create a new deposit request", app.CreateDeposit, app.JWTAuthMiddleware)
 	registerRoute("PATCH", "/deposits/{id}/status", "Update the status of a deposit request", app.UpdateDepositStatus, app.JWTAuthMiddleware)
@@ -157,6 +210,8 @@ func main() {
 	registerRoute("POST", "/tips", "Create a tip in the Database", app.CreateTip, app.JWTAuthMiddleware)
 	registerRoute("PATCH", "/tips/{id}", "Update a tip in the database", app.UpdateTip, app.JWTAuthMiddleware)
 	registerRoute("DELETE", "/tips/{id}", "Delete a tip from the database", app.DeleteTip, app.JWTAuthMiddleware)
+	registerRoute("PATCH", "/users/{id}/planning/{pID}", "Update an existing planning entry for a user", app.UpdatePlanning, app.JWTAuthMiddleware)
+	registerRoute("GET", "/users/{id}/role", "Get the role of a specific user by their UUID", app.GetRoleByUserID)
 
 	http.HandleFunc("/", notFoundHandler)
 

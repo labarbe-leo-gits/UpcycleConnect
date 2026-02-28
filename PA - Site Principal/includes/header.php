@@ -95,7 +95,7 @@ trackLastPage();
                     <p>Logout</p>
                 </div>
             <?php else: ?>
-                <div class="btn-wrapper" onClick="openFile('login.php')">
+                <div class="btn-wrapper" onClick="openFile('../public/login.php')">
                     <i class="fa-solid fa-right-to-bracket"></i>
                     <p>Login</p>
                 </div>

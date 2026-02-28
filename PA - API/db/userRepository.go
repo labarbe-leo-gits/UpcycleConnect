@@ -341,3 +341,18 @@ func ChangeUserPasswordInDB(userID string, newPassword string) error {
 	return nil
 
 }
+
+func GetUserRoleByIDFromDB(userID string) (int, error) {
+	var role int
+	err := Db.QueryRow("SELECT user_type FROM users WHERE id = ?", userID).Scan(&role)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, fmt.Errorf("user not found")
+		}
+
+		return 0, fmt.Errorf("getUserRoleByID package db : %s", err.Error())
+	}
+
+	return role, nil
+}

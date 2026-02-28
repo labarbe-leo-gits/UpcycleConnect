@@ -197,18 +197,39 @@ func GetAllPlanning(w http.ResponseWriter, r *http.Request) {
 
 func DeletePlanning(w http.ResponseWriter, r *http.Request) {
 
-	idStr := strings.TrimPrefix(r.URL.Path, "/users/")
-	idStr = strings.TrimSuffix(idStr, "/planning")
+	// Format: /users/{id}/planning/{pID}
+	pathParts := strings.Split(r.URL.Path, "/")
+	if len(pathParts) != 5 {
+		sendError(w, "Invalid URL format", http.StatusBadRequest)
+		return
+	}
 
-	err := db.DeletePlanningFromDB(idStr)
+	userIDStr := pathParts[2]
+	planningIDStr := pathParts[4]
 
+	userUUID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		sendError(w, "Invalid user id", http.StatusBadRequest)
+		return
+	}
+
+	planningUUID, err := uuid.Parse(planningIDStr)
+
+	if err != nil {
+		sendError(w, "Invalid planning id", http.StatusBadRequest)
+		return
+	}
+
+	err = db.DeletePlanningFromDB(planningUUID.String(), userUUID)
 	if err != nil {
 		fmt.Println("[ERROR] DeletePlanning:", err)
 		sendError(w, "Unable to delete planning entry", http.StatusInternalServerError)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	jsonResponse, err := json.Marshal(map[string]string{"message": "Planning entry deleted successfully"})
+
 	if err != nil {
 		fmt.Println("[ERROR] DeletePlanning marshal:", err)
 		sendError(w, "Unable to process response", http.StatusInternalServerError)
@@ -218,3 +239,97 @@ func DeletePlanning(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "%s", jsonResponse)
 
 }
+
+func UpdatePlanning(w http.ResponseWriter, r *http.Request) {
+	
+	pathParts := strings.Split(r.URL.Path, "/")
+	if len(pathParts) != 5 {
+		sendError(w, "Invalid URL format", http.StatusBadRequest)
+		return
+	}
+
+	userIDStr := pathParts[2]
+	planningIDStr := pathParts[4]
+
+	var planning models.Planning
+
+	err := json.NewDecoder(r.Body).Decode(&planning)
+
+	if err != nil {
+		fmt.Println("[ERROR] UpdatePlanning decode:", err)
+		sendError(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	if planning.ID == uuid.Nil {
+		planning.ID = uuid.New()
+	}
+
+	userUUID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		sendError(w, "Invalid user id", http.StatusBadRequest)
+		return
+	}
+
+	planning.UserID = userUUID
+
+	planningUUID, err := uuid.Parse(planningIDStr)
+
+	if err != nil {
+		sendError(w, "Invalid planning id", http.StatusBadRequest)
+		return
+	}
+
+	planning.ID = planningUUID
+
+	oldPlanning, err := db.GetPlanningEntryByID(planningIDStr)
+	if err != nil {
+		fmt.Println("[ERROR] UpdatePlanning fetch existing:", err)
+		sendError(w, "Unable to fetch existing planning entry", http.StatusInternalServerError)
+		return
+	}
+
+	if strings.TrimSpace(planning.StartTime) == "" {
+		planning.StartTime = oldPlanning.StartTime
+	}
+
+	if strings.TrimSpace(planning.EndTime) == "" {
+		planning.EndTime = oldPlanning.EndTime
+	}
+
+	if strings.TrimSpace(planning.Date) == "" {
+		planning.Date = oldPlanning.Date
+	}
+
+	if strings.TrimSpace(planning.Title) == "" {
+		planning.Title = oldPlanning.Title
+	}
+
+	if validationErrors := ValidatePlanningDto(planning); len(validationErrors) > 0 {
+		fmt.Println("[ERROR] UpdatePlanning validation:", validationErrors)
+		sendError(w, fmt.Sprintf("Validation errors: %v", validationErrors), http.StatusBadRequest)
+		return
+	}
+
+	err = db.UpdatePlanningInDB(planning)
+
+	if err != nil {
+		fmt.Println("[ERROR] UpdatePlanning:", err)
+		sendError(w, "Unable to update planning entry", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	jsonResponse, err := json.Marshal(map[string]string{"message": "Planning entry updated successfully"})
+
+	if err != nil {
+		fmt.Println("[ERROR] UpdatePlanning marshal:", err)
+		sendError(w, "Unable to process response", http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Fprintf(w, "%s", jsonResponse)
+
+}
+

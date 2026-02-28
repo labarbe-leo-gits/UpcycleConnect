@@ -83,20 +83,32 @@ Before contributing, ensure you have:
    ```
 
 5. **Configure environment**:
-   - Copy `.env.example` to `.env`
-   - Set up local database
-   - Configure API connection
+   - Copy `.env.example` to `.env` in both `PA - Site Principal` and
+     `PA - API` directories.
+   - Populate the variables with appropriate values (database credentials,
+     API keys, redirect URIs, etc.).
+   - Do **not** commit the resulting `.env` files.
+   - See [docs/SETUP.md](../docs/SETUP.md) for a complete list of variables and
+     additional instructions.
 
-6. **Verify setup**:
+6. **Start services and verify**:
+   - Ensure MySQL and Apache are running (XAMPP control panel or system
+     services).
+   - In one terminal run the API:
 
-   ```bash
-   # Start API
-   cd "PA - API"
-   go run .
+     ```bash
+     cd "PA - API"
+     go run .
+     ```
 
-   # Access frontend
-   # http://localhost/PA/PA - Site Principal/pages/public/index.php
-   ```
+   - Open the frontend in a browser:
+
+     ```text
+     http://localhost/PA/PA - Site Principal/pages/public/index.php
+     ```
+
+   - If the application loads and you can register/log in, the setup is
+     complete.
 
 ## Development Workflow
 

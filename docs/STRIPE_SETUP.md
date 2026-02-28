@@ -44,7 +44,16 @@ This will:
 
 ### Option 1: Environment File (Recommended)
 
-Create a `.env` file in `PA - Site Principal/config/`:
+The application loads environment variables from a single `.env` file located
+in the root of the frontend directory (`PA - Site Principal/.env`). You may
+place the Stripe keys there rather than using a separate file under `config`.
+
+Create or update the existing `.env` file (copied from `.env.example`):
+
+```env
+STRIPE_PUBLISHABLE_KEY=pk_test_YOUR_PUBLISHABLE_KEY
+STRIPE_SECRET_KEY=sk_test_YOUR_SECRET_KEY
+```
 
 ```env
 STRIPE_PUBLISHABLE_KEY=pk_test_YOUR_PUBLISHABLE_KEY

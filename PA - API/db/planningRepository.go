@@ -251,10 +251,9 @@ func GetAllPlanningFromDB() ([]models.Planning, error) {
 	return planning, nil
 }
 
-func DeletePlanningFromDB(planningID string) error {
+func DeletePlanningFromDB(planningID string, userUUID uuid.UUID) error {
 
-	result, err := Db.Exec("DELETE FROM planning WHERE id = ?", planningID)
-
+	result, err := Db.Exec("DELETE FROM planning WHERE id = ? AND user_id = ?", planningID, userUUID.String())
 	if err != nil {
 		return fmt.Errorf("deletePlanningFromDB: %s", err.Error())
 	}
@@ -265,7 +264,90 @@ func DeletePlanningFromDB(planningID string) error {
 	}
 
 	if rowsAffected == 0 {
-		return fmt.Errorf("deletePlanningFromDB: no planning entry found with id %s", planningID)
+		return fmt.Errorf("deletePlanningFromDB: no planning entry found with id %s for user %s", planningID, userUUID.String())
+	}
+
+	return nil
+}
+
+func GetPlanningEntryByID(planningID string) (models.Planning, error) {
+	var entry models.Planning
+	var idStr, userIDStr string
+
+	row := Db.QueryRow("SELECT id, title, description, start_time, end_time, date, user_id, created_at, updated_at FROM planning WHERE id = ?", planningID)
+
+	var createdAt, updatedAt sql.NullString
+	var description sql.NullString
+	var startTime sql.NullString
+	var endTime sql.NullString
+	var dateVal sql.NullString
+
+	err := row.Scan(&idStr, &entry.Title, &description, &startTime, &endTime, &dateVal, &userIDStr, &createdAt, &updatedAt)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return entry, fmt.Errorf("getPlanningEntryByID: no planning entry found with id %s", planningID)
+		}
+
+		return entry, fmt.Errorf("getPlanningEntryByID scan: %s", err.Error())
+	}
+
+	entry.ID, err = uuid.Parse(idStr)
+	if err != nil {
+		return entry, fmt.Errorf("getPlanningEntryByID uuid parse id: %s", err.Error())
+	}
+
+	entry.UserID, err = uuid.Parse(userIDStr)
+	if err != nil {
+		return entry, fmt.Errorf("getPlanningEntryByID uuid parse user_id: %s", err.Error())
+	}
+
+	if createdAt.Valid {
+		entry.CreatedAt = createdAt.String
+	}
+
+	if updatedAt.Valid {
+		entry.UpdatedAt = updatedAt.String
+	}
+
+	if description.Valid {
+		entry.Description = description.String
+	}
+
+	if startTime.Valid {
+		entry.StartTime = startTime.String
+	}
+
+	if endTime.Valid {
+		entry.EndTime = endTime.String
+	}
+
+	if dateVal.Valid {
+		entry.Date = dateVal.String
+	}
+
+	return entry, nil
+}
+
+func UpdatePlanningInDB(entry models.Planning) error {
+
+	currentTime := getCurrentTime()
+	entry.UpdatedAt = currentTime
+
+	result, err := Db.Exec("UPDATE planning SET title = ?, description = ?, start_time = ?, end_time = ?, date = ?, updated_at = ? WHERE id = ?",
+		entry.Title, entry.Description, entry.StartTime, entry.EndTime, entry.Date, entry.UpdatedAt, entry.ID.String())
+
+	if err != nil {
+		return fmt.Errorf("updatePlanningInDB: %s", err.Error())
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("updatePlanningInDB rows affected: %s", err.Error())
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("updatePlanningInDB: no planning entry found with id %s", entry.ID.String())
 	}
 
 	return nil

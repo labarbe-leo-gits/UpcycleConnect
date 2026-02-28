@@ -506,3 +506,22 @@ func MarkAllNotificationAsRead(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]bool{"success": true})
 
 }
+
+func GetRoleByUserID(w http.ResponseWriter, r *http.Request) {
+
+	userID := strings.TrimPrefix(r.URL.Path, "/users/")
+	userID = strings.TrimSuffix(userID, "/role")
+
+	role, err := db.GetUserRoleByIDFromDB(userID)
+
+	if err != nil {
+		fmt.Println("[ERROR] GetRoleByUserID:", err)
+		sendError(w, "Unable to fetch user role", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]int{"role": role})
+
+}
