@@ -546,7 +546,9 @@
     function attemptBanUser(user) {
         const btn = openConfirmModal({
             title: 'Ban ' + escapeHtml(user.username || ''),
-            body: `Reason for ban:<br><textarea id="ban-reason" style="width:100%;min-height:80px;padding:8px;border:1px solid #ccc;border-radius:4px;" maxlength="2000"></textarea><div id="ban-counter" style="text-align:right;font-size:0.9em;color:#666;">0/2000</div>`,
+            body: `<label for="ban-duration">Duration (days):</label><br>
+                   <input type="number" id="ban-duration" value="0" min="0" step="1" style="margin-bottom:8px;margin-top:-15px;" /><br>
+                   Reason for ban:<br><textarea id="ban-reason" style="width:100%;min-height:80px;padding:8px;border:1px solid #ccc;border-radius:4px;" maxlength="2000"></textarea><div id="ban-counter" style="text-align:right;font-size:0.9em;color:#666;">0/2000</div>`,
             confirmText: 'Ban',
             confirmIcon: 'fa-solid fa-ban',
             onConfirm: () => {
@@ -556,7 +558,15 @@
                     showToast('Please provide a reason');
                     return;
                 }
-                banUser(user.id, reason);
+                const durationEl = document.getElementById('ban-duration');
+                let duration = 0;
+                if (durationEl) {
+                    const val = parseInt(durationEl.value, 10);
+                    if (!isNaN(val) && val >= 0) {
+                        duration = val;
+                    }
+                }
+                banUser(user.id, reason, duration);
             }
         });
         if (btn) {
@@ -579,8 +589,8 @@
 
     
 
-    function banUser(id, reason) {
-        const payload = { id: id, ban_reason: reason, duration_days: 0 };
+    function banUser(id, reason, duration = 0) {
+        const payload = { id: id, ban_reason: reason, duration_days: duration };
         console.debug('Banning user with payload', payload);
 
         console.debug('API_TOKEN length', window.API_TOKEN ? window.API_TOKEN.length : 'none');

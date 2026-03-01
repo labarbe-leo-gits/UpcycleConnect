@@ -253,15 +253,41 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = db.UpdateLastLoginInDB(user.ID)
-	if err != nil {
-		fmt.Println("[ERROR] LoginUser update last_login:", err)
+	twoFAEnabled, _, tfaErr := db.Get2FAInfoFromDB(user.ID.String())
+	if tfaErr != nil {
+		fmt.Println("[WARN] LoginUser get2FAInfo:", tfaErr)
 	}
 
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
 		jwtSecret = "changeme_secret"
 	}
+
+	if twoFAEnabled {
+		pendingToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+			"user_id": user.ID.String(),
+			"type":    "mfa_pending",
+			"exp":     time.Now().Add(5 * time.Minute).Unix(),
+		})
+		pendingTokenString, err := pendingToken.SignedString([]byte(jwtSecret))
+		if err != nil {
+			fmt.Println("[ERROR] LoginUser pending JWT sign:", err)
+			sendError(w, "Could not generate token", http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"twofa_required": true,
+			"temp_token":     pendingTokenString,
+		})
+		return
+	}
+
+	err = db.UpdateLastLoginInDB(user.ID)
+	if err != nil {
+		fmt.Println("[ERROR] LoginUser update last_login:", err)
+	}
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id": user.ID.String(),
 		"email":   user.Email,
@@ -285,7 +311,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 func JWTAuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
-		
+
 		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
 			sendError(w, "Missing or invalid Authorization header", http.StatusUnauthorized)
 			return

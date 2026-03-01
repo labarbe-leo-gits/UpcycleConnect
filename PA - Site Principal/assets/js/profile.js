@@ -174,6 +174,8 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
             }
         } else if (tab === 'myupdoc') {
             document.getElementById('myupdoc-tab').style.display = '';
+        } else if (tab === 'mfa') {
+            document.getElementById('mfa-tab').style.display = '';
         }
     });
 });

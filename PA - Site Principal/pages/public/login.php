@@ -54,6 +54,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['recaptcha_token']) &&
 
         $response = askAPI('login', 'POST', $data);
         $decoded = json_decode($response, true);
+
+        if (isset($decoded['twofa_required']) && $decoded['twofa_required'] === true) {
+            $_SESSION['mfa_temp_token'] = $decoded['temp_token'];
+            header('Location: mfa-verify.php');
+            exit();
+        }
+
         if (isset($decoded['token'])) {
             $_SESSION['jwt_token'] = $decoded['token'];
         }
@@ -88,8 +95,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['recaptcha_token']) &&
             $_SESSION['last_name'] = $user['last_name'] ?? '';
             $_SESSION['email'] = $user['email'];
             $_SESSION['user_type'] = isset($user['user_type']) ? (int) $user['user_type'] : 1;
-            $apiResp = askAPI("/users/{$user['id']}/2fa-info", 'GET');
-            $apiData = json_decode($apiResp, true);
             if (isset($_SESSION['page_after_login']) && (int) $_SESSION['user_type'] === 1) {
                 $page = $_SESSION['page_after_login'];
                 unset($_SESSION['page_after_login']);

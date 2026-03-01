@@ -50,6 +50,13 @@ if (is_array($bankingDetailsData) && !isset($bankingDetailsData['error'])) {
 $hasSavedBankingDetails = is_array($savedBankingDetailsList) && count($savedBankingDetailsList) > 0;
 $defaultBankingDetailsId = $hasSavedBankingDetails ? ($savedBankingDetailsList[0]['id'] ?? '') : '';
 
+$twoFAEnabled = false;
+if (empty($user['oauth_provider'])) {
+    $twoFAResp = askAPI("/users/{$user['id']}/2fa-info", 'GET');
+    $twoFAData  = json_decode($twoFAResp, true);
+    $twoFAEnabled = isset($twoFAData['enabled']) && $twoFAData['enabled'] === true;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $formType = $_POST['form_type'] ?? '';
     if ($formType === 'password_change') {
@@ -228,6 +235,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
     }
+
+    if ($formType === 'mfa_setup') {
+        $resp = askAPI("/users/{$user['id']}/2fa/setup", 'POST');
+        $data = json_decode($resp, true);
+        header('Content-Type: application/json');
+        if (isset($data['secret']) && isset($data['otp_url'])) {
+            echo json_encode(['success' => true, 'secret' => $data['secret'], 'otp_url' => $data['otp_url']]);
+        } else {
+            echo json_encode(['success' => false, 'message' => $data['error'] ?? 'Unable to start 2FA setup.']);
+        }
+        exit;
+    }
+
+    if ($formType === 'mfa_enable') {
+        $secret = trim($_POST['secret'] ?? '');
+        $code   = trim($_POST['code'] ?? '');
+        if ($secret === '' || $code === '') {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Secret and code are required.']);
+            exit;
+        }
+        $resp = askAPI("/users/{$user['id']}/2fa/enable", 'POST', json_encode(['secret' => $secret, 'code' => $code]));
+        $data = json_decode($resp, true);
+        header('Content-Type: application/json');
+        if (isset($data['success']) && $data['success']) {
+            echo json_encode(['success' => true]);
+        } else {
+            echo json_encode(['success' => false, 'message' => $data['error'] ?? 'Invalid OTP code. Please try again.']);
+        }
+        exit;
+    }
+
+    if ($formType === 'mfa_disable') {
+        $resp = askAPI("/users/{$user['id']}/2fa/disable", 'POST');
+        $data = json_decode($resp, true);
+        header('Content-Type: application/json');
+        if (isset($data['success']) && $data['success']) {
+            echo json_encode(['success' => true]);
+        } else {
+            echo json_encode(['success' => false, 'message' => $data['error'] ?? 'Unable to disable 2FA.']);
+        }
+        exit;
+    }
 }
 ?>
 
@@ -363,6 +413,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 <button type="submit" class="btn-primary">Change Password</button>
             </form>
+        </div>
+        <div class="tab-content" id="mfa-tab" style="display:none">
+            <h3><i class="fa-solid fa-shield-halved"></i> Two-Factor Authentication (TOTP)</h3>
+
+            <div id="mfa-status-badge" class="mfa-status-badge <?= $twoFAEnabled ? 'mfa-enabled' : 'mfa-disabled' ?>">
+                <?php if ($twoFAEnabled): ?>
+                    <i class="fa-solid fa-circle-check"></i> 2FA is <strong>enabled</strong> - your account is protected.
+                <?php else: ?>
+                    <i class="fa-solid fa-circle-xmark"></i> 2FA is <strong>disabled</strong>.
+                <?php endif; ?>
+            </div>
+
+            <?php if ($twoFAEnabled): ?>
+                <p>You can disable Two-Factor Authentication below. This will make your account less secure.</p>
+                <button type="button" class="btn-danger" id="mfa-disable-btn">
+                    <i class="fa-solid fa-lock-open"></i> Disable 2FA
+                </button>
+            <?php else: ?>
+                <p>Add an extra layer of security by linking an authenticator app (Google Authenticator, Authy, etc.).</p>
+                <button type="button" class="btn-primary" id="mfa-setup-btn">
+                    <i class="fa-solid fa-qrcode"></i> Setup 2FA
+                </button>
+
+                <div id="mfa-setup-panel" style="display:none;margin-top:1.5rem;">
+                    <p class="mfa-info-text">Scan this QR code with your authenticator app, or enter the key manually.</p>
+                    <div id="mfa-qr-code" style="margin:1rem 0;"></div>
+                    <p class="mfa-info-text">
+                        Manual key: <code id="mfa-secret-display" class="mfa-secret-key"></code>
+                    </p>
+                    <div class="field" style="max-width:280px;">
+                        <label for="mfa-verify-code">Enter the 6-digit code to confirm</label>
+                        <div class="input-wrapper">
+                            <i class="fa-solid fa-key"></i>
+                            <input
+                                type="text"
+                                id="mfa-verify-code"
+                                class="iconInput"
+                                maxlength="6"
+                                inputmode="numeric"
+                                pattern="[0-9]{6}"
+                                autocomplete="one-time-code"
+                                placeholder="000000"
+                            >
+                        </div>
+                    </div>
+                    <div id="mfa-setup-feedback"></div>
+                    <button type="button" class="btn-primary" id="mfa-enable-btn">
+                        <i class="fa-solid fa-check"></i> Activate 2FA
+                    </button>
+                </div>
+            <?php endif; ?>
+
+            <div id="mfa-feedback" style="margin-top:1rem;"></div>
         </div>
         <div class="modal-overlay" id="password-success-modal" aria-hidden="true">
             <div class="modal" role="dialog" aria-modal="true" aria-labelledby="password-success-title">
@@ -530,5 +633,162 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <script>
     window.currentUserId = <?= json_encode($user['id'] ?? '') ?>;
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
 <script src="../../assets/js/profile.js"></script>
+<script>
+
+(function () {
+    var currentSecret = '';
+
+    function mfaPost(formData) {
+        formData.append('form_type', formData.get('form_type_val'));
+        return fetch(window.location.href, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: formData
+        }).then(function (r) { return r.json(); });
+    }
+
+    function postMFA(formType, extra) {
+        var fd = new FormData();
+        fd.append('form_type', formType);
+        if (extra) {
+            Object.keys(extra).forEach(function (k) { fd.append(k, extra[k]); });
+        }
+        return fetch(window.location.href, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: fd
+        }).then(function (r) { return r.json(); });
+    }
+
+    function setFeedback(el, msg, isError) {
+        if (!el) return;
+        el.innerHTML = '<div class="' + (isError ? 'error-message' : 'success-message') + '">' + msg + '</div>';
+    }
+
+    var setupBtn = document.getElementById('mfa-setup-btn');
+    if (setupBtn) {
+        setupBtn.addEventListener('click', function () {
+            setupBtn.disabled = true;
+            setupBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Loading...';
+            postMFA('mfa_setup').then(function (data) {
+                setupBtn.disabled = false;
+                setupBtn.innerHTML = '<i class="fa-solid fa-qrcode"></i> Setup 2FA';
+                if (!data.success) {
+                    setFeedback(document.getElementById('mfa-feedback'), data.message || 'Error.', true);
+                    return;
+                }
+                currentSecret = data.secret;
+                document.getElementById('mfa-secret-display').textContent = data.secret;
+                var qrEl = document.getElementById('mfa-qr-code');
+                qrEl.innerHTML = '';
+                function renderQR() {
+                    if (typeof QRCode === 'undefined') { setTimeout(renderQR, 100); return; }
+                    new QRCode(qrEl, { text: data.otp_url, width: 200, height: 200 });
+                }
+                renderQR();
+                document.getElementById('mfa-setup-panel').style.display = 'block';
+                setupBtn.style.display = 'none';
+            }).catch(function () {
+                setupBtn.disabled = false;
+                setupBtn.innerHTML = '<i class="fa-solid fa-qrcode"></i> Setup 2FA';
+                setFeedback(document.getElementById('mfa-feedback'), 'Network error. Please try again.', true);
+            });
+        });
+    }
+
+    var enableBtn = document.getElementById('mfa-enable-btn');
+    if (enableBtn) {
+        enableBtn.addEventListener('click', function () {
+            var code = (document.getElementById('mfa-verify-code').value || '').trim();
+            if (!code || code.length !== 6 || !/^\d+$/.test(code)) {
+                setFeedback(document.getElementById('mfa-setup-feedback'), 'Please enter a valid 6-digit code.', true);
+                return;
+            }
+            enableBtn.disabled = true;
+            enableBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying...';
+            postMFA('mfa_enable', { secret: currentSecret, code: code }).then(function (data) {
+                enableBtn.disabled = false;
+                enableBtn.innerHTML = '<i class="fa-solid fa-check"></i> Activate 2FA';
+                if (data.success) {
+                    setFeedback(document.getElementById('mfa-setup-feedback'), '2FA enabled successfully! Reloading...', false);
+                    setTimeout(function () { window.location.reload(); }, 1500);
+                } else {
+                    setFeedback(document.getElementById('mfa-setup-feedback'), data.message || 'Invalid code.', true);
+                }
+            }).catch(function () {
+                enableBtn.disabled = false;
+                enableBtn.innerHTML = '<i class="fa-solid fa-check"></i> Activate 2FA';
+                setFeedback(document.getElementById('mfa-setup-feedback'), 'Network error. Please try again.', true);
+            });
+        });
+    }
+
+    var disableBtn = document.getElementById('mfa-disable-btn');
+    if (disableBtn) {
+        disableBtn.addEventListener('click', function () {
+            if (!confirm('Are you sure you want to disable 2FA? This will make your account less secure.')) return;
+            disableBtn.disabled = true;
+            disableBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Disabling...';
+            postMFA('mfa_disable').then(function (data) {
+                disableBtn.disabled = false;
+                disableBtn.innerHTML = '<i class="fa-solid fa-lock-open"></i> Disable 2FA';
+                if (data.success) {
+                    setFeedback(document.getElementById('mfa-feedback'), '2FA disabled. Reloading...', false);
+                    setTimeout(function () { window.location.reload(); }, 1500);
+                } else {
+                    setFeedback(document.getElementById('mfa-feedback'), data.message || 'Unable to disable 2FA.', true);
+                }
+            }).catch(function () {
+                disableBtn.disabled = false;
+                disableBtn.innerHTML = '<i class="fa-solid fa-lock-open"></i> Disable 2FA';
+                setFeedback(document.getElementById('mfa-feedback'), 'Network error. Please try again.', true);
+            });
+        });
+    }
+
+    var otpInput = document.getElementById('mfa-verify-code');
+    if (otpInput) {
+        otpInput.addEventListener('input', function () {
+            this.value = this.value.replace(/\D/g, '').slice(0, 6);
+        });
+    }
+})();
+</script>
+<style>
+.mfa-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .5rem 1rem;
+    border-radius: 6px;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+.mfa-enabled  { background: #d4edda; color: #155724; }
+.mfa-disabled { background: #f8d7da; color: #721c24; }
+.mfa-secret-key {
+    font-size: .9rem;
+    background: #f4f4f4;
+    padding: .2rem .4rem;
+    border-radius: 4px;
+    letter-spacing: .1em;
+    word-break: break-all;
+}
+.mfa-info-text { color: #555; font-size: .95rem; }
+.btn-danger {
+    background: #dc3545;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: .55rem 1.2rem;
+    cursor: pointer;
+    font-size: .95rem;
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+}
+.btn-danger:hover { background: #c82333; }
+</style>
 <?php if (!$isAjax) { include_once '../../includes/footer.php'; } ?>

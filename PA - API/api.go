@@ -204,6 +204,11 @@ func main() {
 	registerRoute("PATCH", "/conteneurs/{id}", "Update details of a specific conteneur by its UUID", app.UpdateConteneur, app.JWTAuthMiddleware)
 	registerRoute("GET", "/users/{id}/deposits/{depid}", "Get a specific user's deposit", app.GetDepositByID, app.JWTAuthMiddleware)
 	registerRoute("PATCH", "/users/{id}/password", "Change a user's password", app.ChangePassword, app.JWTAuthMiddleware)
+	registerRoute("GET", "/users/{id}/2fa-info", "Check if 2FA is enabled for a user", app.Get2FAInfo, app.JWTAuthMiddleware)
+	registerRoute("POST", "/users/{id}/2fa/setup", "Generate a TOTP secret and QR provisioning URL", app.Setup2FA, app.JWTAuthMiddleware)
+	registerRoute("POST", "/users/{id}/2fa/enable", "Verify OTP then enable 2FA for the user", app.Enable2FA, app.JWTAuthMiddleware)
+	registerRoute("POST", "/users/{id}/2fa/disable", "Disable 2FA for the user", app.Disable2FA, app.JWTAuthMiddleware)
+	registerRoute("POST", "/2fa/verify", "Complete MFA login: verify temp token + OTP code, return full JWT", app.Verify2FA)
 	/* registerRoute("GET", "/users/{id}/discussions", "List all discussions for a specific user by their UUID", app.GetUserDiscussions, app.JWTAuthMiddleware)
 	registerRoute("POST", "/users/{id}/discussions", "Create a new discussion for a specific user by their UUID", app.CreateDiscussion, app.JWTAuthMiddleware)
 	registerRoute("GET", "/discussions/{id}/messages", "List all messages in a specific discussion by its UUID", app.GetDiscussionMessages, app.JWTAuthMiddleware)
@@ -217,7 +222,7 @@ func main() {
 	registerRoute("POST", "/ban", "Create a ban record for a user", app.CreateBan, RoleMiddleware(3), app.JWTAuthMiddleware)
 	registerRoute("GET", "/users/{id}/bans", "List all bans for a specific user by their UUID", app.GetBansByUserID, app.JWTAuthMiddleware)
 	registerRoute("DELETE", "/ban/{id}", "Delete a specific ban by its UUID", app.DeleteBan, RoleMiddleware(3), app.JWTAuthMiddleware)
-	registerRoute("GET", "/bans/{id}", "Get details of a specific ban by its UUID", app.GetBanByID , app.JWTAuthMiddleware)
+	registerRoute("GET", "/bans/{id}", "Get details of a specific ban by its UUID", app.GetBanByID, app.JWTAuthMiddleware)
 
 	http.HandleFunc("/", notFoundHandler)
 

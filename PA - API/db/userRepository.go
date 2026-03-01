@@ -420,6 +420,39 @@ func GetUserRoleByIDFromDB(userID string) (int, error) {
 	return role, nil
 }
 
+func Get2FAInfoFromDB(userID string) (bool, string, error) {
+	var enabled bool
+	var secret sql.NullString
+	err := Db.QueryRow("SELECT twofa_enabled, twofa_secret FROM users WHERE id = ?", userID).Scan(&enabled, &secret)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, "", fmt.Errorf("user not found")
+		}
+		return false, "", fmt.Errorf("get2FAInfo: %s", err.Error())
+	}
+	secretVal := ""
+	if secret.Valid {
+		secretVal = secret.String
+	}
+	return enabled, secretVal, nil
+}
+
+func Enable2FAInDB(userID string, secret string) error {
+	_, err := Db.Exec("UPDATE users SET twofa_enabled = TRUE, twofa_secret = ? WHERE id = ?", secret, userID)
+	if err != nil {
+		return fmt.Errorf("enable2FA: %s", err.Error())
+	}
+	return nil
+}
+
+func Disable2FAInDB(userID string) error {
+	_, err := Db.Exec("UPDATE users SET twofa_enabled = FALSE, twofa_secret = NULL WHERE id = ?", userID)
+	if err != nil {
+		return fmt.Errorf("disable2FA: %s", err.Error())
+	}
+	return nil
+}
+
 func GetBansByUserIDFromDB(userID string) ([]models.Ban, error) {
 
 	query := "SELECT id, user_id, reason, banned_at, banned_by, duration_days FROM `ban` WHERE user_id = ?"
