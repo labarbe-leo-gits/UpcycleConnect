@@ -285,6 +285,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 func JWTAuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
+		fmt.Println("[JWT] Authorization header:", authHeader)
 		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
 			sendError(w, "Missing or invalid Authorization header", http.StatusUnauthorized)
 			return
@@ -305,6 +306,7 @@ func JWTAuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 		if claims, ok := token.Claims.(jwt.MapClaims); ok {
+			fmt.Println("[JWT] claims:", claims)
 			if uid, ok2 := claims["user_id"].(string); ok2 && uid != "" {
 				r = r.WithContext(context.WithValue(r.Context(), "user_id", uid))
 			}

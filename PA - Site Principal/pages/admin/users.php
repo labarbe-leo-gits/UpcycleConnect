@@ -32,6 +32,7 @@ include_once '../../includes/admin-header.php';
 
 <script>
     window.CURRENT_USER_ID = '<?php echo isset($user["id"]) ? $user["id"] : ""; ?>';
+    window.API_TOKEN = '<?php echo isset($_SESSION["jwt_token"]) ? $_SESSION["jwt_token"] : ""; ?>';
 </script>
 
 <div class="add-modal" id="user-modal" role="dialog" aria-hidden="true">
@@ -40,6 +41,15 @@ include_once '../../includes/admin-header.php';
         <h2 id="user-modal-title">User details</h2>
         <div id="user-modal-body" class="modal-body"></div>
         <div id="user-modal-actions" class="modal-actions"></div>
+    </div>
+</div>
+
+<div class="add-modal" id="confirm-modal" role="dialog" aria-hidden="true">
+    <div class="add-modal-content">
+        <span class="close-button" id="confirm-modal-close">&times;</span>
+        <h2 id="confirm-modal-title">Confirm</h2>
+        <div id="confirm-modal-body" class="modal-body"></div>
+        <div id="confirm-modal-actions" class="modal-actions"></div>
     </div>
 </div>
 

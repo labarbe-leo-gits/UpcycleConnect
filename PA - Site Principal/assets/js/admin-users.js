@@ -210,27 +210,25 @@
         const title = document.getElementById('user-modal-title');
 
         title.textContent = user.username || 'User details';
+        
+        if (String(user.id) === String(me)) {
+            title.textContent += ' (You)';
+        }
+
         body.innerHTML = generateUserDetailsHtml(user);
         actions.innerHTML = '';
 
-        const btnDeactivate = createModalButton('Deactivate', 'btn-secondary', () => {
-            alert('Deactivate user ' + (user.username || '')); 
-        }, 'fa-solid fa-user-check');
         const btnBan = createModalButton('Ban', 'btn-danger', () => {
-            alert('Ban user ' + (user.username || '')); 
+            attemptBanUser(user);
         }, 'fa-solid fa-gavel');
         const btnDelete = createModalButton('Delete', 'btn-danger', () => {
-            if (confirm('Are you sure you want to delete this user?')) {
-                deleteUser(user.id);
-            }
+            attemptDeleteUser(user);
         }, 'fa-solid fa-trash');
 
         if (String(user.id) === String(me)) {
-            btnDeactivate.style.display = 'none';
             btnBan.style.display = 'none';
             btnDelete.style.display = 'none';
         }
-        actions.appendChild(btnDeactivate);
         actions.appendChild(btnBan);
         actions.appendChild(btnDelete);
 
@@ -402,11 +400,26 @@
     }
 
     function deleteUser(id) {
-        alert('Delete user ' + id + ' (functionality not available)');
-        closeModal();
-        offset = 0;
-        limit = initialSize;
-        requestChunk(false);
+
+        fetch(`user-delete-api?id=${id}`, { method: 'DELETE' })
+            .then(r => r.json().then(data => ({ ok: r.ok, data })))
+            .then(({ok,data}) => {
+                if (ok && !data.error) {
+                    showToast('User deleted');
+                } else {
+                    alert(data.error || 'Delete failed');
+                }
+            })
+            .catch(err => {
+                console.error('deleteUser error', err);
+                alert('Delete error');
+            })
+            .finally(() => {
+                closeModal();
+                offset = 0;
+                limit = initialSize;
+                requestChunk(false);
+            });
     }
 
     function showModal(modal) {
@@ -426,6 +439,141 @@
             t.style.opacity = '0';
             setTimeout(() => { try { document.body.removeChild(t); } catch(e){} }, 350);
         }, timeout);
+    }
+
+    function escapeHtml(s) {
+        return String(s).replace(/[&"'<>]/g, function(c){
+            return {'&':'&amp;','"':'&quot;','\'':'&#39;','<':'&lt;','>':'&gt;'}[c];
+        });
+    }
+
+    function openConfirmModal(opts) {
+        closeModal();
+        const modal = document.getElementById('confirm-modal');
+        if (!modal) return;
+        document.getElementById('confirm-modal-title').textContent = opts.title || '';
+        document.getElementById('confirm-modal-body').innerHTML = opts.body || '';
+        const actions = document.getElementById('confirm-modal-actions');
+        actions.innerHTML = '';
+        const btnCancel = createModalButton(opts.cancelText || 'Cancel', 'btn-secondary', () => closeModal());
+        actions.appendChild(btnCancel);
+        const btnConfirm = createModalButton(opts.confirmText || 'OK', 'btn-primary', () => {
+            if (typeof opts.onConfirm === 'function') opts.onConfirm();
+        });
+        actions.appendChild(btnConfirm);
+        showModal(modal);
+        return btnConfirm;
+    }
+
+    function attemptDeleteUser(user) {
+        const uname = escapeHtml(user.username || '');
+        const btn = openConfirmModal({
+            title: 'Delete user',
+            body: `Type <strong>${uname}</strong> to confirm: <br><input id="confirm-delete-input" style="width:100%;padding:8px;margin-top:10px;border:1px solid #ccc;border-radius:4px;" placeholder="username" />`,
+            confirmText: 'Delete',
+            confirmIcon: 'fa-solid fa-trash',
+            onConfirm: () => {
+                const input = document.getElementById('confirm-delete-input');
+                if (!input || input.value !== user.username) {
+                    alert('Username does not match');
+                    return;
+                }
+                deleteUser(user.id);
+            }
+        });
+        if (btn) {
+            const input = document.getElementById('confirm-delete-input');
+            btn.disabled = true;
+            input && input.addEventListener('input', () => {
+                btn.disabled = input.value !== user.username;
+            });
+        }
+    }
+
+    function attemptBanUser(user) {
+        const btn = openConfirmModal({
+            title: 'Ban ' + escapeHtml(user.username || ''),
+            body: `Reason for ban:<br><textarea id="ban-reason" style="width:100%;min-height:80px;padding:8px;border:1px solid #ccc;border-radius:4px;" maxlength="2000"></textarea><div id="ban-counter" style="text-align:right;font-size:0.9em;color:#666;">0/2000</div>`,
+            confirmText: 'Ban',
+            confirmIcon: 'fa-solid fa-ban',
+            onConfirm: () => {
+                const reasonEl = document.getElementById('ban-reason');
+                const reason = reasonEl ? reasonEl.value.trim() : '';
+                if (!reason) {
+                    alert('Please provide a reason');
+                    return;
+                }
+                banUser(user.id, reason);
+            }
+        });
+        if (btn) {
+            const modalBody = document.getElementById('confirm-modal-body');
+            const update = () => {
+                const ta = document.getElementById('ban-reason');
+                const cnt = document.getElementById('ban-counter');
+                const len = ta ? ta.value.length : 0;
+                if (cnt) cnt.textContent = `${len}/2000`;
+                btn.disabled = len < 10 || len > 2000;
+            };
+            if (modalBody) {
+                modalBody.addEventListener('input', function(e) {
+                    if (e.target && e.target.id === 'ban-reason') update();
+                });
+            }
+            update();
+        }
+    }
+
+    function banUser(id, reason) {
+        const payload = { id: id, ban_reason: reason, duration_days: 0 };
+        console.debug('Banning user with payload', payload);
+
+        console.debug('API_TOKEN length', window.API_TOKEN ? window.API_TOKEN.length : 'none');
+        if (window.API_TOKEN) {
+            try {
+                const parts = window.API_TOKEN.split('.');
+                const claims = JSON.parse(atob(parts[1]));
+                console.debug('token claims', claims);
+            } catch(e) {
+                console.warn('failed to decode token', e);
+            }
+        }
+        const headers = {'Content-Type':'application/json'};
+        if (window.API_TOKEN) {
+            headers['Authorization'] = 'Bearer ' + window.API_TOKEN;
+        } else {
+            console.warn('banUser: no API_TOKEN available');
+        }
+        fetch(`user-ban-api`, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(payload)
+        })
+        .then(r => r.text().then(body => ({ status: r.status, ok: r.ok, body })))
+        .then(({status,ok,body}) => {
+            console.log('ban response', status, body);
+            let data;
+            try {
+                data = body ? JSON.parse(body) : {};
+            } catch(e) {
+                console.error('ban response parse failed', e, body);
+                data = { error: 'Invalid JSON from server' };
+            }
+            if (ok && !data.error) {
+                showToast('User banned');
+            } else {
+                alert(data.error || ('Ban failed, status '+status));
+            }
+        })
+        .catch(err => { console.error('banUser error',err); alert('Ban failed: '+err.message); })
+        .finally(() => { 
+            console.log('Ban user request completed');
+            console.debug('Ban details', { userId: id, reason });
+            closeModal();
+            offset = 0;
+            limit = initialSize;
+            requestChunk(false);
+        });
     }
 
     function closeModal() {
@@ -517,7 +665,6 @@
             errorBox.style.display = 'none';
             errorBox.textContent = '';
         }
-        // basic client-side validation
         if (form.password.value !== form.confirm_password.value) {
             if (errorBox) {
                 errorBox.textContent = 'Password and confirmation do not match.';
@@ -532,15 +679,20 @@
             params.append(k, v);
         }
 
-        let url = new URL('create-user-api.php', window.location.href).href;
-        url = encodeURI(url);
+        const base = window.location.origin + '/PA/PA%20-%20Site%20Principal/pages/admin';
+        const url = base + '/create-user-api';
         console.log('posting create user to', url);
 
         fetch(url, {
             method: 'POST',
             body: params.toString(),
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-        }).then(r => r.text())
+        }).then(r => {
+            if (!r.ok) {
+                console.warn('create-user POST returned', r.status, r.statusText, r.url);
+            }
+            return r.text();
+        })
           .then(t => {
               const trimmed = t ? t.trim() : '';
               console.log('create-user response raw', trimmed);
@@ -585,6 +737,11 @@
             url.searchParams.delete('search');
         }
         window.history.replaceState({}, '', url.toString());
+    }
+
+    function updateCharacterCount(textarea, counter, max) {
+        const len = textarea.value.length;
+        counter.textContent = `${len}/${max}`;
     }
 
 })();

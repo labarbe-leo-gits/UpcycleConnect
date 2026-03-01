@@ -15,3 +15,15 @@
 .add-modal input[type="text"]{
     padding-left:38px;
 }
+
+.form-error{
+    color: #dc2626;
+    font-size: 14px;
+    margin-top: 8px;
+    text-align: center;
+    background-color: rgba(220, 38, 38, 0.1);
+    border: 1px solid #dc2626;
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}

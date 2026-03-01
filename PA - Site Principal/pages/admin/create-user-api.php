@@ -35,6 +35,7 @@ if (isset($data['user_type'])) {
 
 error_log('create-user payload: ' . var_export($data, true));
 $resp = askAPI('/users', 'POST', json_encode($data));
+error_log('create-user API response: ' . $resp);
 $decoded = json_decode($resp, true);
 if ($decoded === null) {
     error_log("create-user-api non-json: $resp");

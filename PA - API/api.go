@@ -93,7 +93,9 @@ func checkRoleIntValue(targetRole int, userID uuid.UUID) (bool, error) {
 func RoleMiddleware(requiredRole int) func(http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
-			uidStr, ok := r.Context().Value("user_id").(string)
+			uidRaw := r.Context().Value("user_id")
+			uidStr, ok := uidRaw.(string)
+			fmt.Println("[RoleMiddleware] context user_id raw=", uidRaw, "ok=", ok)
 			if !ok || uidStr == "" {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusUnauthorized)
@@ -212,6 +214,7 @@ func main() {
 	registerRoute("DELETE", "/tips/{id}", "Delete a tip from the database", app.DeleteTip, app.JWTAuthMiddleware)
 	registerRoute("PATCH", "/users/{id}/planning/{pID}", "Update an existing planning entry for a user", app.UpdatePlanning, app.JWTAuthMiddleware)
 	registerRoute("GET", "/users/{id}/role", "Get the role of a specific user by their UUID", app.GetRoleByUserID)
+	registerRoute("POST", "/ban", "Create a ban record for a user", app.CreateBan, RoleMiddleware(3), app.JWTAuthMiddleware)
 
 	http.HandleFunc("/", notFoundHandler)
 

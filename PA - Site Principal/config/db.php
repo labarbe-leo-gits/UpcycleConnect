@@ -15,7 +15,14 @@ if (file_exists($ENV_FILE)) {
 
 $API_HOST = getenv('API_HOST');
 $API_PORT = getenv('API_PORT');
+if (!$API_HOST) {
+    $API_HOST = '127.0.0.1';
+}
+if (!$API_PORT) {
+    $API_PORT = '9999';
+}
 $API_URL = "http://$API_HOST:$API_PORT";
+error_log("askAPI configured with API_URL=$API_URL");
 
 function askAPI($endpoint, $method, $data = null){
     global $API_URL;
@@ -25,6 +32,7 @@ function askAPI($endpoint, $method, $data = null){
     $base = rtrim($API_URL, '/');
     $path = '/' . ltrim($endpoint, '/');
     $url = $base . $path;
+    error_log("askAPI request: method=$method url=$url data=" . ($data===null?'<null>':$data));
 
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -37,9 +45,11 @@ function askAPI($endpoint, $method, $data = null){
         $headers[] = 'Content-Type: application/json';
         $headers[] = 'Content-Length: ' . strlen($data);
     }
-    // Attach JWT if available and not calling login or registration
     if (!preg_match('/login|register/i', $endpoint) && isset($_SESSION['jwt_token'])) {
         $headers[] = 'Authorization: Bearer ' . $_SESSION['jwt_token'];
+        error_log('askAPI: attaching JWT token to request');
+    } else {
+        error_log('askAPI: no JWT token present or endpoint is login/register');
     }
     if (!empty($headers)) {
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
