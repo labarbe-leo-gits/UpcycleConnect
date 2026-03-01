@@ -225,6 +225,11 @@
             }
         }, 'fa-solid fa-trash');
 
+        if (String(user.id) === String(me)) {
+            btnDeactivate.style.display = 'none';
+            btnBan.style.display = 'none';
+            btnDelete.style.display = 'none';
+        }
         actions.appendChild(btnDeactivate);
         actions.appendChild(btnBan);
         actions.appendChild(btnDelete);
@@ -311,7 +316,7 @@
             const payload = {};
             payload[key] = newVal;
             try {
-                const resp = await fetch(`/users/${user.id}`, {
+                const resp = await fetch(`user-update-api?id=${user.id}`, {
                     method: 'PATCH',
                     headers: {'Content-Type':'application/json'},
                     body: JSON.stringify(payload)
@@ -347,13 +352,19 @@
         });
     }
 
+   
+    const me = window.CURRENT_USER_ID || (document.querySelector('header') && document.querySelector('header').dataset.userId) || '';
+    
     function generateUserDetailsHtml(u) {
+        const isSelf = String(u.id) === String(me);
+
         const roleLabels = {1:'Customer',2:'Pro',3:'Admin'};
         const fields = [
             { label: 'UUID', value: u.id || '-' , copy: true },
-            { label: 'First name', value: u.first_name || '-' , edit: true },
-            { label: 'Last name', value: u.last_name || '-' , edit: true },
-            { label: 'Email', value: u.email || '-' , edit: true },
+            { label: 'Username', value: u.username || '-' , edit: !isSelf },
+            { label: 'First name', value: u.first_name || '-' , edit: !isSelf },
+            { label: 'Last name', value: u.last_name || '-' , edit: !isSelf },
+            { label: 'Email', value: u.email || '-' , edit: !isSelf },
             { label: 'Type', value: roleLabels[u.user_type] || u.user_type || '-' },
             { label: 'Created', value: formatDate(u.created_at) }
         ];

@@ -207,6 +207,8 @@ CREATE TABLE IF NOT EXISTS reports (
     reporter_id CHAR(36) NOT NULL,
     reported_user_id CHAR(36),
     reported_annonce_id CHAR(36),
+    reported_forum_post_id CHAR(36),
+    reported_forum_id CHAR(36),
     reason TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (reporter_id) REFERENCES users(id) ON DELETE CASCADE,

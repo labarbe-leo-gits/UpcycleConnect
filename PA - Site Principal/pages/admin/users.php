@@ -30,6 +30,10 @@ include_once '../../includes/admin-header.php';
 
 <script src="../../assets/js/admin-users.js" defer></script>
 
+<script>
+    window.CURRENT_USER_ID = '<?php echo isset($user["id"]) ? $user["id"] : ""; ?>';
+</script>
+
 <div class="add-modal" id="user-modal" role="dialog" aria-hidden="true">
     <div class="add-modal-content">
         <span class="close-button" id="user-modal-close">&times;</span>
@@ -117,6 +121,12 @@ include_once '../../includes/admin-header.php';
         </form>
     </div>
 </div>
+
+<script>
+
+window.CURRENT_USER_ID = <?php echo json_encode($_SESSION['user_id'] ?? null); ?>;
+
+</script>
 
 <?php
 include_once '../../includes/footer.php';
