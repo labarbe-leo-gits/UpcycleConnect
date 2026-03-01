@@ -60,7 +60,15 @@ var observer = new MutationObserver(function(mutations) {
     });
 });
 
-observer.observe(document.body, {
-    childList: true,
-    subtree: true
-});
+function attachObserver() {
+    if (document.body) {
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+    } else {
+        document.addEventListener('DOMContentLoaded', attachObserver);
+    }
+}
+
+attachObserver();

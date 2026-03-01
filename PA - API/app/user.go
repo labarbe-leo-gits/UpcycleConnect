@@ -22,23 +22,51 @@ import (
 )
 
 func GetAllUsers(w http.ResponseWriter, r *http.Request) {
-	users, err := db.GetAllUsersFromDB()
 
+	q := r.URL.Query()
+
+	page := 1
+	if p, err := strconv.Atoi(q.Get("page")); err == nil && p > 0 {
+		page = p
+	}
+	offset, _ := strconv.Atoi(q.Get("offset"))
+	limit, _ := strconv.Atoi(q.Get("limit"))
+	if limit <= 0 {
+		limit = 20
+	}
+	if offset < 0 {
+		offset = (page - 1) * limit
+	}
+	search := strings.TrimSpace(q.Get("search"))
+	if search == "undefined" || search == "null" {
+		search = ""
+	}
+
+	users, total, err := db.GetUsersFromDB(offset, limit, search)
 	if err != nil {
 		fmt.Println("[ERROR] GetAllUsers:", err)
 		sendError(w, "Unable to fetch users", http.StatusInternalServerError)
 		return
 	}
+	if total == 0 {
+		fmt.Printf("[DEBUG] GetAllUsers no results (offset=%d limit=%d search='%s')\n", offset, limit, search)
+	}
+
+	resp := map[string]interface{}{
+		"items":  users,
+		"total":  total,
+		"offset": offset,
+		"limit":  limit,
+		"page":   page,
+	}
 
 	w.Header().Set("Content-Type", "application/json")
-	jsonResponse, err := json.Marshal(users)
-
+	jsonResponse, err := json.Marshal(resp)
 	if err != nil {
 		fmt.Println("[ERROR] GetAllUsers marshal:", err)
 		sendError(w, "Unable to process response", http.StatusInternalServerError)
 		return
 	}
-
 	fmt.Fprintf(w, "%s", jsonResponse)
 }
 
@@ -341,7 +369,37 @@ func GetNotificationsByUserID(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateUser(w http.ResponseWriter, r *http.Request) {
-	// Do something
+	idStr := strings.TrimPrefix(r.URL.Path, "/users/")
+	userID, err := uuid.Parse(idStr)
+	if err != nil {
+		fmt.Println("[ERROR] UpdateUser parse UUID:", err)
+		sendError(w, "Invalid user ID", http.StatusBadRequest)
+		return
+	}
+
+	var updates map[string]interface{}
+	err = json.NewDecoder(r.Body).Decode(&updates)
+	if err != nil {
+		fmt.Println("[ERROR] UpdateUser decode:", err)
+		sendError(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+	if len(updates) == 0 {
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]string{"status": "no changes"})
+		return
+	}
+
+	err = db.UpdateUserInDB(userID, updates)
+	if err != nil {
+		fmt.Println("[ERROR] UpdateUser DB:", err)
+		sendError(w, "Unable to update user", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 }
 
 func GetDepositsByUserID(w http.ResponseWriter, r *http.Request) {

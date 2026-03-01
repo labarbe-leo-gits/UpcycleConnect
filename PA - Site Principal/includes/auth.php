@@ -18,7 +18,14 @@ function getLoggedInUserType() {
 }
 
 function getUserHomePath($userType) {
-    return ((int) $userType === 2) ? '../pro/profile' : '../customers/profile';
+    //return ((int) $userType === 2) ? '../pro/profile' : '../customers/profile';
+    if ((int) $userType === 2) {
+        return '../pro/profile';
+    } elseif ((int) $userType === 3) {
+        return '../admin/dashboard';
+    } else {
+        return '../customers/profile';
+    }
 }
 
 function requireLogin() {

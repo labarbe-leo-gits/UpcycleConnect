@@ -12,30 +12,46 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func GetAllUsersFromDB() ([]models.User, error) {
-
-	users := []models.User{}
-	rows, err := Db.Query("SELECT id, first_name, last_name, company_name, user_type, username, email, balance, upcycling_score, created_at, last_login, oauth_provider, oauth_id, profile_picture FROM users")
-
-	if err != nil {
-		return nil, fmt.Errorf("getUsers package db : %s", err.Error())
+func GetUsersFromDB(offset, limit int, search string) ([]models.User, int, error) {
+	if offset < 0 {
+		offset = 0
+	}
+	if limit < 1 {
+		limit = 20
 	}
 
+	baseQuery := "SELECT id, first_name, last_name, company_name, user_type, username, email, balance, upcycling_score, created_at, last_login, oauth_provider, oauth_id, profile_picture FROM users"
+	countQuery := "SELECT COUNT(*) FROM users"
+	args := []interface{}{}
+	where := ""
+	if search != "" {
+		where = " WHERE username LIKE ? OR email LIKE ? OR first_name LIKE ? OR last_name LIKE ?"
+		term := "%" + search + "%"
+		args = append(args, term, term, term, term)
+	}
+
+	query := baseQuery + where + " ORDER BY created_at DESC LIMIT ? OFFSET ?"
+	args = append(args, limit, offset)
+
+	rows, err := Db.Query(query, args...)
+	if err != nil {
+		return nil, 0, fmt.Errorf("getUsers package db : %s", err.Error())
+	}
 	defer rows.Close()
 
+	users := []models.User{}
 	for rows.Next() {
 		var user models.User
 		var idStr string
 		var createdAt, lastLogin sql.NullString
-		var companyName sql.NullString
-		var oauthProvider, oauthID, profilePicture sql.NullString
+		var companyName, oauthProvider, oauthID, profilePicture sql.NullString
 		err := rows.Scan(&idStr, &user.FirstName, &user.LastName, &companyName, &user.UserType, &user.Username, &user.Email, &user.Balance, &user.UpcyclingScore, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture)
 		if err != nil {
-			return nil, fmt.Errorf("getUsers package db scan : %s", err.Error())
+			return nil, 0, fmt.Errorf("getUsers package db scan : %s", err.Error())
 		}
 		user.ID, err = uuid.Parse(idStr)
 		if err != nil {
-			return nil, fmt.Errorf("getUsers package db uuid parse : %s", err.Error())
+			return nil, 0, fmt.Errorf("getUsers package db uuid parse : %s", err.Error())
 		}
 		if createdAt.Valid {
 			user.CreatedAt = createdAt.String
@@ -60,11 +76,14 @@ func GetAllUsersFromDB() ([]models.User, error) {
 
 	err = rows.Err()
 	if err != nil {
-		return nil, fmt.Errorf("getUsers package db rows : %s", err.Error())
+		return nil, 0, fmt.Errorf("getUsers package db rows : %s", err.Error())
 	}
 
-	return users, nil
+	total := 0
+	countRow := Db.QueryRow(countQuery+where, args[:len(args)-2]...)
+	countRow.Scan(&total)
 
+	return users, total, nil
 }
 
 func GetUserByUsernameFromDB(username string) (bool, error) {
@@ -150,38 +169,38 @@ func GetUserByIDFromDB(id uuid.UUID) (models.User, error) {
 	return user, nil
 }
 
-func GetUserByIdentifierFromDB(identifier string) (models.User, error) {
-	var user models.User
-	var idStr string
-	var createdAt, lastLogin sql.NullString
-	var companyName, oauthProvider, oauthID, profilePicture sql.NullString
-
-	err := Db.QueryRow(
-		"SELECT id, first_name, last_name, company_name, user_type, username, email, password_hash, balance, upcycling_score, created_at, last_login, oauth_provider, oauth_id, profile_picture FROM users WHERE username = ? OR email = ?",
-		identifier, identifier,
-	).Scan(&idStr, &user.FirstName, &user.LastName, &companyName, &user.UserType, &user.Username, &user.Email, &user.Password, &user.Balance, &user.UpcyclingScore, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture)
-
+func UpdateUserInDB(id uuid.UUID, updates map[string]interface{}) error {
+	if len(updates) == 0 {
+		return nil
+	}
+	cols := []string{}
+	args := []interface{}{}
+	if v, ok := updates["first_name"].(string); ok {
+		cols = append(cols, "first_name = ?")
+		args = append(args, v)
+	}
+	if v, ok := updates["last_name"].(string); ok {
+		cols = append(cols, "last_name = ?")
+		args = append(args, v)
+	}
+	if v, ok := updates["email"].(string); ok {
+		cols = append(cols, "email = ?")
+		args = append(args, v)
+	}
+	if v, ok := updates["username"].(string); ok {
+		cols = append(cols, "username = ?")
+		args = append(args, v)
+	}
+	if len(cols) == 0 {
+		return nil
+	}
+	args = append(args, id.String())
+	query := "UPDATE users SET " + strings.Join(cols, ", ") + " WHERE id = ?"
+	_, err := Db.Exec(query, args...)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return user, fmt.Errorf("user not found")
-		}
-		return user, fmt.Errorf("getUserByIdentifier package db : %s", err.Error())
+		return fmt.Errorf("updateUser package db : %s", err.Error())
 	}
-
-	user.ID, err = uuid.Parse(idStr)
-	if err != nil {
-		return user, fmt.Errorf("getUserByIdentifier package db uuid parse : %s", err.Error())
-	}
-	if companyName.Valid {
-		user.CompanyName = companyName.String
-	}
-
-	err = validateUser(user)
-	if err != nil {
-		return user, fmt.Errorf("getUserByIdentifier package db validate : %s", err.Error())
-	}
-
-	return user, nil
+	return nil
 }
 
 func UpdateLastLoginInDB(userID uuid.UUID) error {
@@ -208,6 +227,50 @@ func UpdateUserUpcyclingScore(userID uuid.UUID) error {
 		return fmt.Errorf("updateUserUpcyclingScore update: %s", err.Error())
 	}
 	return nil
+}
+
+func GetUserByIdentifierFromDB(identifier string) (models.User, error) {
+	var user models.User
+	var idStr string
+	var createdAt, lastLogin sql.NullString
+	var companyName, oauthProvider, oauthID, profilePicture sql.NullString
+
+	err := Db.QueryRow(
+		"SELECT id, first_name, last_name, company_name, user_type, username, email, password_hash, balance, upcycling_score, created_at, last_login, oauth_provider, oauth_id, profile_picture FROM users WHERE username = ? OR email = ?",
+		identifier, identifier,
+	).Scan(&idStr, &user.FirstName, &user.LastName, &companyName, &user.UserType, &user.Username, &user.Email, &user.Password, &user.Balance, &user.UpcyclingScore, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return user, fmt.Errorf("user not found")
+		}
+		return user, fmt.Errorf("getUserByIdentifier package db : %s", err.Error())
+	}
+
+	user.ID, err = uuid.Parse(idStr)
+	if err != nil {
+		return user, fmt.Errorf("getUserByIdentifier package db uuid parse : %s", err.Error())
+	}
+	if createdAt.Valid {
+		user.CreatedAt = createdAt.String
+	}
+	if lastLogin.Valid {
+		user.LastLogin = lastLogin.String
+	}
+	if oauthProvider.Valid {
+		user.OAuthProvider = oauthProvider.String
+	}
+	if oauthID.Valid {
+		user.OAuthID = oauthID.String
+	}
+	if companyName.Valid {
+		user.CompanyName = companyName.String
+	}
+	if profilePicture.Valid {
+		user.ProfilePicture = profilePicture.String
+	}
+
+	return user, nil
 }
 
 func GetUserByEmailFromDB(email string) (models.User, error) {

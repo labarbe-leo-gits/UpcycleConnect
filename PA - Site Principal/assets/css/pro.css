@@ -10,3 +10,8 @@
     font-weight: 600;
     box-shadow: 0 8px 24px rgba(16, 185, 129, 0.08);
 }
+
+
+.add-modal input[type="text"]{
+    padding-left:38px;
+}

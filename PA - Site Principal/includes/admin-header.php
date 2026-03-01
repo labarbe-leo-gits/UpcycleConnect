@@ -19,7 +19,9 @@ $user = getLoggedInUser();
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="../../assets/css/style.css">
     <link rel="stylesheet" href="../../assets/css/customers.css">
+    <link rel="stylesheet" href="../../assets/css/pro.css">
     <link rel="icon" type="image/png" href="../../assets/img/brand/UpcycleDiminutif.png">
+    <script src="../../assets/js/blob-images.js"></script>
 </head>
 <body>
     <header data-api-base="<?php echo htmlspecialchars($API_URL ?? ''); ?>" data-user-id="<?php echo htmlspecialchars($user['id'] ?? ''); ?>">
@@ -34,6 +36,7 @@ $user = getLoggedInUser();
                 </a>
                 <div class="dropdown-menu">
                     <a href="forums"><i class="fa-solid fa-indent"></i>Forums</a>
+                    <a href="users"><i class="fa-solid fa-user"></i>Users</a>
                 </div>
             </div>
             <div class="nav-dropdown">
@@ -43,12 +46,19 @@ $user = getLoggedInUser();
                 </a>
                 <div class="dropdown-menu">
                     <a href="offers"><i class="fa-solid fa-box-open"></i>Offers</a>
+                    <a href="../customers/services"><i class="fa-solid fa-briefcase"></i>Services</a>
                     <a href="containers"><i class="fa-solid fa-warehouse"></i>Containers</a>
                 </div>
             </div>
-            <div class="btn-wrapper" onClick="window.location.href='requests'">
-                <i class="fa-solid fa-bell-concierge"></i>
-                <p>Requests</p>
+            <div class="nav-dropdown">
+                <a class="btn-wrapper" href="requests">
+                    <i class="fa-solid fa-bell-concierge"></i>
+                    <p>Requests</p>
+                </a>
+                <div class="dropdown-menu">
+                    <a href="offers"><i class="fa-solid fa-hand-holding-hand"></i>Deposits</a>
+                    <a href="../customers/services"><i class="fa-solid fa-money-bill-transfer"></i>Payouts</a>
+                </div>
             </div>
             <div class="btn-wrapper" onClick="window.location.href='../public/index'">
                 <i class="fa-solid fa-arrow-left"></i>
