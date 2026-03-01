@@ -91,3 +91,25 @@ func DeleteBan(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusNoContent)
 }
+
+func GetBanByID(w http.ResponseWriter, r *http.Request) {
+
+	banIDStr := strings.TrimPrefix(r.URL.Path, "/bans/")
+	banID, err := uuid.Parse(banIDStr)
+
+	if err != nil {
+		fmt.Println("[ERROR] GetBanByID parse UUID:", err)
+		sendError(w, "Invalid ban ID", http.StatusBadRequest)
+		return
+	}
+
+	ban, err := db.GetBanRecordByID(banID)
+	if err != nil {
+		fmt.Println("[ERROR] GetBanByID DB:", err)
+		sendError(w, "Unable to retrieve ban record", http.StatusInternalServerError)
+		return
+	}
+	
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(ban)
+}

@@ -57,6 +57,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['recaptcha_token']) &&
         if (isset($decoded['token'])) {
             $_SESSION['jwt_token'] = $decoded['token'];
         }
+
+        $user = $decoded['user'] ?? null;
+        $userID = null;
+        if (is_array($user) && isset($user['id'])) {
+            $userID = $user['id'];
+            $_SESSION['user_id'] = $userID;
+        }
+
+
+        if (!empty($userID)) {
+            $bannedResponse = askAPI("/users/{$userID}/bans", 'GET');
+            $bans = json_decode($bannedResponse, true);
+
+            if (is_array($bans) && count($bans) > 0) {
+                $_SESSION['banned'] = true;
+                $_SESSION['ban_details'] = $bans;
+
+                header('Location: ban');
+                exit();
+            }
+        }
+
         $user = $decoded['user'] ?? $decoded;
         if (isset($user['id'])) {
             session_start();
@@ -115,7 +137,7 @@ if (isLoggedIn()) {
             <label for="identifier">Username or Email</label>
             <div class="input-wrapper">
                 <i class="fa-solid fa-user"></i>
-                <input type="text" id="identifier" name="identifier" placeholder="Enter your username or email" required>
+                <input type="text" id="identifier" name="identifier" class="iconInput" placeholder="Enter your username or email" required>
             </div>
         </div>
         
@@ -123,7 +145,7 @@ if (isLoggedIn()) {
             <label for="password">Password</label>
             <div class="input-wrapper password-wrapper">
                 <i class="fa-solid fa-lock"></i>
-                <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                <input type="password" id="password" name="password" class="iconInput" placeholder="Enter your password" required>
                 <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false">
                     <i class="fa-solid fa-eye"></i>
                 </button>

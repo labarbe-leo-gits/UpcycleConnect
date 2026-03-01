@@ -1,6 +1,7 @@
 package db
 
 import (
+	"API/models"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -26,4 +27,18 @@ func DeleteBanRecord(banID uuid.UUID) error {
 	}
 
 	return nil
+}
+
+func GetBanRecordByID(banID uuid.UUID) (models.Ban, error) {
+
+	var ban models.Ban
+	err := Db.QueryRow("SELECT id, user_id, reason, banned_by, duration_days, created_at FROM ban WHERE id = ?", banID.String()).
+
+		Scan(&ban.ID, &ban.UserID, &ban.Reason, &ban.BannedBy, &ban.DurationDays, &ban.BannedAt)
+
+	if err != nil {
+		return models.Ban{}, fmt.Errorf("getBanByID package db: %s", err.Error())
+	}
+
+	return ban, nil
 }

@@ -771,3 +771,44 @@ form a:hover {
 .notifications-header h2 {
   margin: 0;
 }
+
+.container.ban {
+  max-width: 600px;
+  margin-top: 80px;
+}
+
+.ban-details {
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px 0;
+}
+
+.ban-details p {
+  margin: 8px 0;
+  color: #374151;
+}
+
+h1 {
+  text-align: center;
+}
+
+.lead {
+  font-size: 1.1rem;
+  color: #374151;
+  text-align: center;
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 15px;
+  transition: all 0.3s ease;
+  background: #f9fafb;
+  box-sizing: border-box;
+  padding-left: 38px;
+}
+
+.team-name{
+  margin-top:-15px;
+}

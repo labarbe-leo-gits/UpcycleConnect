@@ -2,6 +2,12 @@
 <?php
 require_once '../../includes/auth.php';
 trackLastPage();
+
+if (isset($_SESSION['banned']) && $_SESSION['banned']){
+    header('Location: ../public/ban');
+    exit();
+}
+
 ?>
 
 <!DOCTYPE html>

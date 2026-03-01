@@ -6,6 +6,12 @@ requireUserType(2);
 trackLastPage();
 
 $user = getLoggedInUser();
+
+if (isset($_SESSION['banned']) && $_SESSION['banned']){
+    header('Location: ../public/ban');
+    exit();
+}
+
 ?>
 
 <!DOCTYPE html>

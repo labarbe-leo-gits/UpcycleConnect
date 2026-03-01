@@ -75,7 +75,7 @@ if (ob_get_level()) { @ob_flush(); }
                 <label for="new-email">Email</label>
                 <div class="input-wrapper">
                     <i class="fa-solid fa-envelope"></i>
-                    <input type="email" id="new-email" name="email" placeholder="you@example.com" required />
+                    <input type="email" class="iconInput" id="new-email" name="email" placeholder="you@example.com" required />
                 </div>
             </div>
             <div class="field">
@@ -96,7 +96,7 @@ if (ob_get_level()) { @ob_flush(); }
                 <label for="new-password">Password</label>
                 <div class="input-wrapper password-wrapper">
                     <i class="fa-solid fa-lock"></i>
-                    <input type="password" id="new-password" name="password" placeholder="Create a password" required class="password-input" data-strength="true" />
+                    <input type="password" class="iconInput" id="new-password" name="password" placeholder="Create a password" required class="password-input" data-strength="true" />
                     <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false"><i class="fa-solid fa-eye"></i></button>
                 </div>
                 <div class="password-meter" aria-live="polite">
@@ -108,7 +108,7 @@ if (ob_get_level()) { @ob_flush(); }
                 <label for="new-confirm-password">Confirm password</label>
                 <div class="input-wrapper password-wrapper">
                     <i class="fa-solid fa-lock"></i>
-                    <input type="password" id="new-confirm-password" name="confirm_password" placeholder="Confirm your password" required />
+                    <input type="password" class="iconInput" id="new-confirm-password" name="confirm_password" placeholder="Confirm your password" required />
                     <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false"><i class="fa-solid fa-eye"></i></button>
                 </div>
             </div>
