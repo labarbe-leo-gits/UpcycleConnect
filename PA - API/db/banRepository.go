@@ -16,3 +16,14 @@ func CreateBanRecord(userID uuid.UUID, reason string, bannedBy uuid.UUID, durati
 	}
 	return nil
 }
+
+func DeleteBanRecord(banID uuid.UUID) error {
+
+	_, err := Db.Exec("DELETE FROM ban WHERE id = ?", banID.String())
+
+	if err != nil {
+		return fmt.Errorf("deleteBan package db: %s", err.Error())
+	}
+
+	return nil
+}

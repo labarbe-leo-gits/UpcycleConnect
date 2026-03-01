@@ -215,6 +215,8 @@ func main() {
 	registerRoute("PATCH", "/users/{id}/planning/{pID}", "Update an existing planning entry for a user", app.UpdatePlanning, app.JWTAuthMiddleware)
 	registerRoute("GET", "/users/{id}/role", "Get the role of a specific user by their UUID", app.GetRoleByUserID)
 	registerRoute("POST", "/ban", "Create a ban record for a user", app.CreateBan, RoleMiddleware(3), app.JWTAuthMiddleware)
+	registerRoute("GET", "/users/{id}/bans", "List all bans for a specific user by their UUID", app.GetBansByUserID)
+	registerRoute("DELETE", "/ban/{id}", "Delete a specific ban by its UUID", app.DeleteBan, RoleMiddleware(3), app.JWTAuthMiddleware)
 
 	http.HandleFunc("/", notFoundHandler)
 

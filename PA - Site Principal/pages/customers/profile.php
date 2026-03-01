@@ -267,12 +267,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="profile-field-row editable-row">
                         <span class="profile-label">Username:</span>
                         <span id="username-value"><?= htmlspecialchars($user['username']) ?></span>
-                        <button class="btn-edit-inline" data-edit="username" title="Edit Username"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn-copy btn-edit-inline" data-edit="username" title="Edit Username"><i class="fa-solid fa-pen"></i></button>
                     </div>
                     <div class="profile-field-row editable-row">
                         <span class="profile-label">Email:</span>
                         <span id="email-value"><?= htmlspecialchars($user['email']) ?></span>
-                        <button class="btn-edit-inline" data-edit="email" title="Edit Email"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn-copy btn-edit-inline" data-edit="email" title="Edit Email"><i class="fa-solid fa-pen"></i></button>
                     </div>
                     <div class="profile-field-row">
                         <span class="profile-label">Total sales value:</span>

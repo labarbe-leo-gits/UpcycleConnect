@@ -285,7 +285,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 func JWTAuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
-		fmt.Println("[JWT] Authorization header:", authHeader)
+		
 		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
 			sendError(w, "Missing or invalid Authorization header", http.StatusUnauthorized)
 			return
@@ -306,7 +306,6 @@ func JWTAuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 		if claims, ok := token.Claims.(jwt.MapClaims); ok {
-			fmt.Println("[JWT] claims:", claims)
 			if uid, ok2 := claims["user_id"].(string); ok2 && uid != "" {
 				r = r.WithContext(context.WithValue(r.Context(), "user_id", uid))
 			}
@@ -583,5 +582,31 @@ func GetRoleByUserID(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]int{"role": role})
+
+}
+
+func GetBansByUserID(w http.ResponseWriter, r *http.Request) {
+
+	userID := strings.TrimPrefix(r.URL.Path, "/users/")
+	userID = strings.TrimSuffix(userID, "/bans")
+
+	if _, err := uuid.Parse(userID); err != nil {
+		fmt.Println("[WARN] GetBansByUserID: invalid UUID", userID)
+		sendError(w, "Invalid user ID format", http.StatusBadRequest)
+		return
+	}
+
+	bans, err := db.GetBansByUserIDFromDB(userID)
+
+	if err != nil {
+
+		fmt.Println("[ERROR] GetBansByUserID:", err)
+		sendError(w, "Unable to fetch user bans", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(bans)
 
 }

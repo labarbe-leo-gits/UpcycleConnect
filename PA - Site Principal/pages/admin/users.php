@@ -1,9 +1,13 @@
 <?php
 $title = "Users";
 include_once '../../includes/admin-header.php';
+
+echo '<div id="initial-loader" aria-hidden="false"><span class="loader" role="status" aria-label="Loading"></span></div>';
+if (ob_get_level()) { @ob_flush(); }
+@flush();
 ?>
 
-<div class="container">
+<div class="container" id="main-content" style="visibility:hidden;">
     <h2>Users management</h2>
     <div class="admin-toolbar" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;align-items:center;">
         <button class="add-offer-button" id="create-user"><i class="fa-solid fa-user-plus"></i> Create user</button>
@@ -122,7 +126,7 @@ include_once '../../includes/admin-header.php';
                 <label for="new-company">Company name (optional)</label>
                 <div class="input-wrapper">
                     <i class="fa-solid fa-building"></i>
-                    <input type="text" id="new-company" name="company_name" />
+                    <input type="text" id="new-company" name="company_name" placeholder="Company Name" />
                 </div>
             </div>
             <div class="field">

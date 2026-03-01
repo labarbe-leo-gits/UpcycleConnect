@@ -14,6 +14,20 @@ if (!$user) {
     exit;
 }
 
+$method = $_SERVER['REQUEST_METHOD'];
+
+if ($method === 'DELETE') {
+    $banId = isset($_GET['id']) ? $_GET['id'] : null;
+    if (!$banId) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Missing ban ID']);
+        exit;
+    }
+    $resp = askAPI('/ban/' . urlencode($banId), 'DELETE');
+    echo $resp;
+    exit;
+}
+
 $id = isset($_GET['id']) ? $_GET['id'] : null;
 $body = file_get_contents('php://input');
 $data = json_decode($body, true);

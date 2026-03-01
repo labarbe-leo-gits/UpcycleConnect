@@ -70,3 +70,24 @@ func CreateBan(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(banDTO)
 
 }
+
+func DeleteBan(w http.ResponseWriter, r *http.Request) {
+
+	banIDStr := strings.TrimPrefix(r.URL.Path, "/ban/")
+	banID, err := uuid.Parse(banIDStr)
+
+	if err != nil {
+		fmt.Println("[ERROR] DeleteBan parse UUID:", err)
+		sendError(w, "Invalid ban ID", http.StatusBadRequest)
+		return
+	}
+
+	err = db.DeleteBanRecord(banID)
+	if err != nil {
+		fmt.Println("[ERROR] DeleteBan DB:", err)
+		sendError(w, "Unable to delete ban record", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}

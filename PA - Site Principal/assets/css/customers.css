@@ -1389,7 +1389,7 @@ body.modal-open {
 
   border: none;
   color: #374151;
-  cursor: pointer;
+  cursor: default;
   padding: 2px 4px;
   font-size: 14px;
 }
@@ -2621,4 +2621,20 @@ body.modal-open {
 
 .center {
   text-align: center;
+}
+
+.user-ban-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 6px;
+  font-size: 12px;
+  background: #fee2e2;
+  color: #b91c1c;
+  border-radius: 8px;
+  vertical-align: middle;
+
+  border: none;
+  color: #374151;
+  cursor: default;
+
 }

@@ -49,6 +49,7 @@
                 if (!users || users.length === 0) {
                     container.innerHTML = '<p class="empty-list">No users found.</p>';
                     if (moreBtn) moreBtn.style.display = 'none';
+                    hideInitialLoader();
                     return;
                 }
 
@@ -57,6 +58,10 @@
                 }
 
                 renderUsers(users, container);
+
+                if (!append) {
+                    hideInitialLoader();
+                }
 
                 offset += users.length;
                 if (isNaN(offset) || offset < 0) offset = 0;
@@ -77,6 +82,7 @@
                 console.error('Failed to load users', err);
                 if (!append) container.innerHTML = '<p class="error-message">Unable to load users. Please try again later.</p>';
                 if (moreBtn) moreBtn.style.display = 'none';
+                if (!append) hideInitialLoader();
             });
     }
 
@@ -113,6 +119,17 @@
             badge.textContent = role;
             title.appendChild(badge);
 
+            getUserBans(u.id).then(bans => {
+                if (bans.length > 0) {
+                    const banBadge = document.createElement('span');
+
+                    banBadge.className = 'user-ban-badge';
+                    banBadge.textContent = 'Banned';
+                    title.appendChild(banBadge);
+                }
+
+            });
+
             header.appendChild(title);
             card.appendChild(header);
 
@@ -145,6 +162,18 @@
             );
         }
         container.innerHTML = items.join('');
+    }
+
+    function hideInitialLoader() {
+        const loader = document.getElementById('initial-loader');
+        const main = document.getElementById('main-content');
+
+        if (loader) {
+            loader.style.display = 'none';
+        }
+        if (main) {
+            main.style.visibility = '';
+        }
     }
 
     function getPageFromUrl() {
@@ -218,18 +247,42 @@
         body.innerHTML = generateUserDetailsHtml(user);
         actions.innerHTML = '';
 
-        const btnBan = createModalButton('Ban', 'btn-danger', () => {
-            attemptBanUser(user);
-        }, 'fa-solid fa-gavel');
         const btnDelete = createModalButton('Delete', 'btn-danger', () => {
             attemptDeleteUser(user);
         }, 'fa-solid fa-trash');
 
-        if (String(user.id) === String(me)) {
-            btnBan.style.display = 'none';
-            btnDelete.style.display = 'none';
-        }
-        actions.appendChild(btnBan);
+        getUserBans(user.id).then(bans => {
+            const banned = bans.length > 0;
+            if (banned) {
+                const btnUnban = createModalButton('Unban', 'btn-danger', () => {
+                    attemptUnbanUser(user, bans);
+                }, 'fa-solid fa-check');
+                actions.appendChild(btnUnban);
+            } else {
+                const btnBan = createModalButton('Ban', 'btn-danger', () => {
+                    attemptBanUser(user);
+                }, 'fa-solid fa-gavel');
+                actions.appendChild(btnBan);
+            }
+
+            if (String(user.id) === String(me)) {
+                const lastBtn = actions.lastElementChild;
+                if (lastBtn && (lastBtn.textContent === 'Ban' || lastBtn.textContent === 'Unban')) {
+                    lastBtn.style.display = 'none';
+                }
+                btnDelete.style.display = 'none';
+            }
+        }).catch(err => {
+            const btnBan = createModalButton('Ban', 'btn-danger', () => {
+                attemptBanUser(user);
+            }, 'fa-solid fa-gavel');
+            actions.appendChild(btnBan);
+            if (String(user.id) === String(me)) {
+                btnBan.style.display = 'none';
+                btnDelete.style.display = 'none';
+            }
+        });
+
         actions.appendChild(btnDelete);
 
         const modalBody = body;
@@ -334,7 +387,7 @@
                     cell.textContent = orig;
                 }
             } catch (e) {
-                alert('Request error');
+                showToast('Request error');
                 cell.textContent = orig;
             }
         });
@@ -407,7 +460,7 @@
                 if (ok && !data.error) {
                     showToast('User deleted');
                 } else {
-                    alert(data.error || 'Delete failed');
+                    showToast(data.error || 'Delete failed');
                 }
             })
             .catch(err => {
@@ -475,7 +528,7 @@
             onConfirm: () => {
                 const input = document.getElementById('confirm-delete-input');
                 if (!input || input.value !== user.username) {
-                    alert('Username does not match');
+                    showToast('Username does not match');
                     return;
                 }
                 deleteUser(user.id);
@@ -500,7 +553,7 @@
                 const reasonEl = document.getElementById('ban-reason');
                 const reason = reasonEl ? reasonEl.value.trim() : '';
                 if (!reason) {
-                    alert('Please provide a reason');
+                    showToast('Please provide a reason');
                     return;
                 }
                 banUser(user.id, reason);
@@ -523,6 +576,8 @@
             update();
         }
     }
+
+    
 
     function banUser(id, reason) {
         const payload = { id: id, ban_reason: reason, duration_days: 0 };
@@ -562,13 +617,79 @@
             if (ok && !data.error) {
                 showToast('User banned');
             } else {
-                alert(data.error || ('Ban failed, status '+status));
+                showToast(data.error || ('Ban failed, status '+status));
             }
         })
-        .catch(err => { console.error('banUser error',err); alert('Ban failed: '+err.message); })
+        .catch(err => { console.error('banUser error',err); showToast('Ban failed: '+err.message); })
         .finally(() => { 
             console.log('Ban user request completed');
             console.debug('Ban details', { userId: id, reason });
+            closeModal();
+            offset = 0;
+            limit = initialSize;
+            requestChunk(false);
+        });
+    }
+
+    function attemptUnbanUser(user, bans) {
+        if (!Array.isArray(bans) || bans.length === 0) return;
+        let selectedId = '';
+        let bodyHtml = 'Choose ban to lift:<br>' +
+            '<select id="ban-id-select" style="width:100%;padding:6px;">';
+        bans.forEach(b => {
+            const when = formatDate(b.banned_at);
+            const reason = escapeHtml(b.reason || '');
+            bodyHtml += `<option value="${b.id}">${when}${reason? ' - ' + reason : ''}</option>`;
+        });
+        bodyHtml += '</select>';
+
+        const btn = openConfirmModal({
+            title: 'Unban ' + escapeHtml(user.username || ''),
+            body: bodyHtml,
+            confirmText: 'Unban',
+            confirmIcon: 'fa-solid fa-check',
+            onConfirm: () => {
+                const sel = document.getElementById('ban-id-select');
+                if (!sel || !sel.value) {
+                    showToast('Please select a ban to remove');
+                    return;
+                }
+                unbanUser(sel.value);
+            }
+        });
+        if (btn) {
+            const sel = document.getElementById('ban-id-select');
+            btn.disabled = true;
+            if (sel) {
+                btn.disabled = !sel.value;
+                sel.addEventListener('change', () => {
+                    btn.disabled = !sel.value;
+                });
+            }
+        }
+    }
+
+    function unbanUser(banId) {
+        const headers = {'Content-Type':'application/json'};
+        if (window.API_TOKEN) {
+            headers['Authorization'] = 'Bearer ' + window.API_TOKEN;
+        }
+        fetch(`user-ban-api?id=${encodeURIComponent(banId)}`, {
+            method: 'DELETE',
+            headers: headers
+        })
+        .then(r => r.text().then(body => ({ status: r.status, ok: r.ok, body })))
+        .then(({status,ok,body}) => {
+            let data;
+            try { data = body ? JSON.parse(body) : {}; } catch(e) { data = {error:'Invalid JSON'}; }
+            if (ok && !data.error) {
+                showToast('User unbanned');
+            } else {
+                showToast(data.error || ('Unban failed, status '+status));
+            }
+        })
+        .catch(err => { console.error('unbanUser error', err); showToast('Unban failed: '+err.message); })
+        .finally(() => {
             closeModal();
             offset = 0;
             limit = initialSize;
@@ -742,6 +863,20 @@
     function updateCharacterCount(textarea, counter, max) {
         const len = textarea.value.length;
         counter.textContent = `${len}/${max}`;
+    }
+
+    function getUserBans(userId){
+        return fetch(`user-bans-api?user_id=${userId}`)
+            .then(r => r.json())
+            .then(data => {
+                if (data && data.error) {
+                    const msg = data.preview || data.error || JSON.stringify(data);
+                    const err = new Error(msg);
+                    err._raw = data;
+                    throw err;
+                }
+                return Array.isArray(data.bans) ? data.bans : [];
+            });
     }
 
 })();

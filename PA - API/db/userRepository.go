@@ -419,3 +419,62 @@ func GetUserRoleByIDFromDB(userID string) (int, error) {
 
 	return role, nil
 }
+
+func GetBansByUserIDFromDB(userID string) ([]models.Ban, error) {
+
+	query := "SELECT id, user_id, reason, banned_at, banned_by, duration_days FROM `ban` WHERE user_id = ?"
+
+	rows, err := Db.Query(query, userID)
+
+	if err != nil {
+
+		errMsg := err.Error()
+		if strings.Contains(errMsg, "doesn't exist") || strings.Contains(errMsg, "no such table") {
+			fmt.Println("[WARN] GetBansByUserIDFromDB: ban table missing -> returning empty list")
+			return []models.Ban{}, nil
+		}
+		return nil, fmt.Errorf("getBansByUserID package db : %s", errMsg)
+	}
+
+	defer rows.Close()
+
+	var bans []models.Ban
+
+	for rows.Next() {
+
+		var rawID, rawUserID, rawReason, rawBannedBy string
+		var rawBannedAt sql.NullString
+		var rawDuration int
+
+		if err := rows.Scan(&rawID, &rawUserID, &rawReason, &rawBannedAt, &rawBannedBy, &rawDuration); err != nil {
+			return nil, fmt.Errorf("getBansByUserID package db scan : %s", err.Error())
+		}
+
+		ban := models.Ban{
+			Reason:       rawReason,
+			DurationDays: rawDuration,
+		}
+
+		if u, err := uuid.Parse(rawID); err == nil {
+			ban.ID = u
+		}
+		if u, err := uuid.Parse(rawUserID); err == nil {
+			ban.UserID = u
+		}
+		if u, err := uuid.Parse(rawBannedBy); err == nil {
+			ban.BannedBy = u
+		}
+		if rawBannedAt.Valid {
+			ban.BannedAt = rawBannedAt.String
+		}
+
+		bans = append(bans, ban)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("getBansByUserID package db rows : %s", err.Error())
+	}
+
+	return bans, nil
+
+}
