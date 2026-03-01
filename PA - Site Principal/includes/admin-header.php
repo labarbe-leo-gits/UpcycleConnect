@@ -46,6 +46,10 @@ $user = getLoggedInUser();
                     <a href="containers"><i class="fa-solid fa-warehouse"></i>Containers</a>
                 </div>
             </div>
+            <div class="btn-wrapper" onClick="window.location.href='requests'">
+                <i class="fa-solid fa-bell-concierge"></i>
+                <p>Requests</p>
+            </div>
             <div class="btn-wrapper" onClick="window.location.href='../public/index'">
                 <i class="fa-solid fa-arrow-left"></i>
                 <p>Main Site</p>
