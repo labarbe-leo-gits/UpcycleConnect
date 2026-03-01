@@ -6,21 +6,67 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
 func GetConteneurs(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+	pageParam := query.Get("page")
+	limitParam := query.Get("limit")
 
-	conteneurs, err := db.GetAllConteneursFromDB()
-	if err != nil {
-		http.Error(w, "Failed to retrieve conteneurs", http.StatusInternalServerError)
+	if pageParam == "" && limitParam == "" {
+		conteneurs, err := db.GetAllConteneursFromDB()
+		if err != nil {
+			sendError(w, fmt.Sprintf("Failed to retrieve conteneurs: %s", err.Error()), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(conteneurs)
 		return
+	}
+
+	page := 1
+	limit := 20
+	if pageParam != "" {
+		if p, err := strconv.Atoi(pageParam); err == nil && p > 0 {
+			page = p
+		}
+	}
+	if limitParam != "" {
+		if l, err := strconv.Atoi(limitParam); err == nil && l > 0 {
+			limit = l
+		}
+	}
+	if limit > 100 {
+		limit = 100
+	}
+	offset := (page - 1) * limit
+
+	total, err := db.CountConteneursFromDB()
+	if err != nil {
+		sendError(w, "Failed to count conteneurs", http.StatusInternalServerError)
+		return
+	}
+
+	conteneurs, err := db.GetConteneursPageFromDB(limit, offset)
+	if err != nil {
+		sendError(w, fmt.Sprintf("Failed to retrieve conteneurs: %s", err.Error()), http.StatusInternalServerError)
+		return
+	}
+
+	response := map[string]interface{}{
+		"items": conteneurs,
+		"total": total,
+		"page":  page,
+		"limit": limit,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(conteneurs)
-
+	json.NewEncoder(w).Encode(response)
 }
 
 func ValidateConteneurDto(conteneurDto models.Conteneur) []string {
@@ -39,18 +85,23 @@ func ValidateConteneurDto(conteneurDto models.Conteneur) []string {
 		validationErrors = append(validationErrors, "Road is required")
 	}
 
-	if conteneurDto.PostalCode <= 0 {
-		validationErrors = append(validationErrors, "PostalCode is required and must be a positive integer")
+	if conteneurDto.PostalCode == "" {
+		validationErrors = append(validationErrors, "PostalCode is required")
+	} else {
+		for _, ch := range conteneurDto.PostalCode {
+			if ch < '0' || ch > '9' {
+				validationErrors = append(validationErrors, "PostalCode must contain only digits")
+				break
+			}
+		}
+		if len(conteneurDto.PostalCode) > 5 {
+			validationErrors = append(validationErrors, "PostalCode must be at most 5 digits")
+		}
 	}
 
-	if conteneurDto.PostalCode > 99999 {
-		validationErrors = append(validationErrors, "PostalCode must be a valid postal code")
+	if conteneurDto.Number == "" {
+		validationErrors = append(validationErrors, "Number is required")
 	}
-
-	if conteneurDto.Number <= 0 {
-		validationErrors = append(validationErrors, "Number is required and must be a positive integer")
-	}
-
 	return validationErrors
 }
 

@@ -3,6 +3,7 @@ package db
 import (
 	"API/models"
 	"fmt"
+
 	"github.com/google/uuid"
 )
 
@@ -29,6 +30,39 @@ func GetAllConteneursFromDB() ([]models.Conteneur, error) {
 
 	if err = rows.Err(); err != nil {
 		return nil, fmt.Errorf("error iterating over conteneur rows: %v", err)
+	}
+
+	return conteneurs, nil
+}
+
+func CountConteneursFromDB() (int, error) {
+	var total int
+	err := Db.QueryRow("SELECT COUNT(*) FROM conteneurs").Scan(&total)
+	if err != nil {
+		return 0, fmt.Errorf("countConteneursFromDB: %s", err.Error())
+	}
+	return total, nil
+}
+
+func GetConteneursPageFromDB(limit int, offset int) ([]models.Conteneur, error) {
+	rows, err := Db.Query("SELECT id, conteneur_name, conteneur_city, conteneur_road, conteneur_zip_code, conteneur_number, created_at, updated_at FROM conteneurs ORDER BY created_at DESC LIMIT ? OFFSET ?", limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("getConteneursPageFromDB query error: %s", err.Error())
+	}
+	defer rows.Close()
+
+	var conteneurs []models.Conteneur
+	for rows.Next() {
+		var conteneur models.Conteneur
+		err := rows.Scan(&conteneur.ID, &conteneur.Name, &conteneur.City, &conteneur.Road, &conteneur.PostalCode, &conteneur.Number, &conteneur.CreatedAt, &conteneur.UpdatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("getConteneursPageFromDB scan error: %s", err.Error())
+		}
+		conteneurs = append(conteneurs, conteneur)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("getConteneursPageFromDB rows error: %s", err.Error())
 	}
 
 	return conteneurs, nil
@@ -94,11 +128,11 @@ func UpdateConteneurInDB(conteneurIDStr string, conteneur models.Conteneur) erro
 		conteneur.Road = old_Conteneur.Road
 	}
 
-	if conteneur.PostalCode == 0 {
+	if conteneur.PostalCode == "" {
 		conteneur.PostalCode = old_Conteneur.PostalCode
 	}
 
-	if conteneur.Number == 0 {
+	if conteneur.Number == "" {
 		conteneur.Number = old_Conteneur.Number
 	}
 
