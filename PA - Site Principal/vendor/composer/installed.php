@@ -3,7 +3,7 @@
         'name' => 'upcycleconnect/site-principal',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '3d18f033a6aae18f65e3d5c10e9593984f1fc369',
+        'reference' => 'c6bcc30338d6193f55a8cf556489826a976734ae',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -208,7 +208,7 @@
         'upcycleconnect/site-principal' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '3d18f033a6aae18f65e3d5c10e9593984f1fc369',
+            'reference' => 'c6bcc30338d6193f55a8cf556489826a976734ae',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
