@@ -303,3 +303,67 @@ func DeletePost(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusNoContent)
 }
+
+func DeleteForum(w http.ResponseWriter, r *http.Request) {
+
+	idStr := r.URL.Path[len("/forums/"):]
+	err := db.DeleteForumFromDB(idStr)
+
+	if err != nil {
+		fmt.Println("[ERROR] DeleteForum DB:", err)
+		sendError(w, "Unable to delete forum", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func UpdateForum(w http.ResponseWriter, r *http.Request) {
+
+	idStr := r.URL.Path[len("/forums/"):]
+	var forumDto models.Forum
+
+	err := json.NewDecoder(r.Body).Decode(&forumDto)
+
+	oldForum, err2 := db.GetForumByIDFromDB(idStr)
+	if err2 != nil {
+		fmt.Println("[ERROR] UpdateForum GetForumByID:", err2)
+		sendError(w, "Unable to fetch existing forum details", http.StatusInternalServerError)
+		return
+	}
+
+	if err != nil {
+		fmt.Println("[ERROR] UpdateForum decode:", err)
+		sendError(w, "Unable to process request body", http.StatusBadRequest)
+		return
+	}
+
+	if forumDto.Title == "" {
+		forumDto.Title = oldForum.Title
+	}
+
+	if forumDto.Description == "" {
+		forumDto.Description = oldForum.Description
+	}
+
+	validationErrors := ValidateForumDTO(forumDto)
+
+	if len(validationErrors) > 0 {
+		sendError(w, fmt.Sprintf("Validation errors: %s", validationErrors), http.StatusBadRequest)
+		return
+	}
+
+	err = db.UpdateForumInDB(idStr, forumDto)
+
+	if err != nil {
+		fmt.Println("[ERROR] UpdateForum DB:", err)
+		sendError(w, "Unable to update forum", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Forum updated successfully"})
+
+}

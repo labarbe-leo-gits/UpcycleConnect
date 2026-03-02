@@ -67,6 +67,9 @@ function askAPI($endpoint, $method, $data = null){
     }
 
     if ($response === false || $response === null || $response === '') {
+        if ($httpCode >= 200 && $httpCode < 300) {
+            return json_encode(['success' => true]);
+        }
         error_log("askAPI: empty response from API at $url");
         return json_encode(['error' => "Empty response from API at $url"]);
     }

@@ -511,3 +511,11 @@ func GetBansByUserIDFromDB(userID string) ([]models.Ban, error) {
 	return bans, nil
 
 }
+
+func DeleteUserFromDB(id uuid.UUID) error {
+	_, err := Db.Exec("DELETE FROM users WHERE id = ?", id)
+	if err != nil {
+		return fmt.Errorf("failed to delete user: %v", err)
+	}
+	return nil
+}

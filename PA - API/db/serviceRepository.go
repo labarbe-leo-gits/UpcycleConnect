@@ -165,6 +165,26 @@ func CreateServiceInDB(service models.Service) error {
 
 }
 
+func UpdateServiceInDB(serviceID uuid.UUID, service models.Service) error {
+	currentTime := getCurrentTime()
+	_, err := Db.Exec(
+		"UPDATE evenements SET title=?, description=?, price=?, event_type=?, event_date=?, event_road=?, event_city=?, event_zip_code=?, maximum_participants=?, updated_at=? WHERE id=?",
+		service.Name, service.Description, service.Price, service.Type, service.ServiceDate, service.ServiceRoad, service.ServiceCity, service.ServiceZip, service.MaximumParticipants, currentTime, serviceID,
+	)
+	if err != nil {
+		return fmt.Errorf("updateService package db : %s", err.Error())
+	}
+	return nil
+}
+
+func DeleteServiceFromDB(serviceID uuid.UUID) error {
+	_, err := Db.Exec("DELETE FROM evenements WHERE id = ?", serviceID)
+	if err != nil {
+		return fmt.Errorf("deleteService package db : %s", err.Error())
+	}
+	return nil
+}
+
 func GetServiceByIDFromDB(serviceID uuid.UUID) (models.Service, error) {
 	var service models.Service
 	var idStr string

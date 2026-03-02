@@ -305,3 +305,28 @@ func DeleteForumPostFromDB(postIDStr string) error {
 
 	return nil
 }
+
+func DeleteForumFromDB(forumIDStr string) error {
+
+	_, err := Db.Exec("DELETE FROM forums WHERE id = ?", forumIDStr)
+
+	if err != nil {
+		return fmt.Errorf("deleteForum package db : %s", err.Error())
+	}
+
+	return nil
+
+}
+
+func UpdateForumInDB(idForum string, forumDto models.Forum) error {
+
+	currentTime := getCurrentTime()
+
+	_, err := Db.Exec("UPDATE forum SET title = ?, description = ?, updated_at = ? WHERE id = ?", forumDto.Title, forumDto.Description, currentTime, idForum)
+	if err != nil {
+		return fmt.Errorf("updateForum package db : %s", err.Error())
+	}
+
+	return nil
+
+}

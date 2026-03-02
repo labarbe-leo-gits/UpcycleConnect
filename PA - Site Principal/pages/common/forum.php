@@ -39,8 +39,10 @@ if (!$user) {
     include_once '../../includes/header.php';
 } else if (isset($user['user_type']) && $user['user_type'] == 1) {
     include_once '../../includes/customers-header.php';
-} else {
+} else if (isset($user['user_type']) && $user['user_type'] == 2) {
     include_once '../../includes/pro-header.php';
+}else if (isset($user['user_type']) && $user['user_type'] == 3) {
+    include_once '../../includes/admin-header.php';
 }
 ?>
 

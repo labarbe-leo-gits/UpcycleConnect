@@ -440,3 +440,78 @@ func IncrementAnnonceViewCount(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusNoContent)
 }
+
+func DeleteAnnonce(w http.ResponseWriter, r *http.Request) {
+	idStr := strings.TrimPrefix(r.URL.Path, "/annonces/")
+	if idStr == "" {
+		sendError(w, "Annonce ID is required", http.StatusBadRequest)
+		return
+	}
+
+	ann, err := db.GetAnnonceByIDFromDB(idStr)
+	if err != nil || ann == nil {
+		sendError(w, "Annonce not found", http.StatusNotFound)
+		return
+	}
+
+	if deleteErr := db.DeleteAnnonceFromDB(idStr); deleteErr != nil {
+		fmt.Println("[ERROR] DeleteAnnonce DB:", deleteErr)
+		sendError(w, "Unable to delete annonce", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func AdminUpdateAnnonceStatus(w http.ResponseWriter, r *http.Request) {
+	idStr := strings.TrimPrefix(r.URL.Path, "/annonces/")
+	idStr = strings.TrimSuffix(idStr, "/status")
+
+	if idStr == "" {
+		sendError(w, "Annonce ID is required", http.StatusBadRequest)
+		return
+	}
+
+	var body struct {
+		Status int `json:"status"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sendError(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+	if body.Status < 0 || body.Status > 2 {
+		sendError(w, "Status must be 0 (pending), 1 (approved) or 2 (rejected)", http.StatusBadRequest)
+		return
+	}
+
+	ann, err := db.GetAnnonceByIDFromDB(idStr)
+	if err != nil || ann == nil {
+		sendError(w, "Annonce not found", http.StatusNotFound)
+		return
+	}
+
+	if updateErr := db.AdminUpdateAnnonceStatusInDB(idStr, body.Status); updateErr != nil {
+		fmt.Println("[ERROR] AdminUpdateAnnonceStatus DB:", updateErr)
+		sendError(w, "Unable to update annonce status", http.StatusInternalServerError)
+		return
+	}
+
+	if body.Status == 1 {
+		if ann.UpcyclingScore == 0 {
+			ann.UpcyclingScore = CalculateUpcyclingScore(ann.PoidsMateriaux, ann.FacteurID, ann.TypeMateriaux)
+			if ann.FacteurID == nil && ann.TypeMateriaux != "" {
+				if f, _ := db.GetFacteurByName(ann.TypeMateriaux); f != nil {
+					ann.FacteurID = &f.ID
+				}
+			}
+			_ = db.UpdateAnnonceInDB(idStr, *ann)
+		}
+		if uid, parseErr := uuid.Parse(ann.UserID.String()); parseErr == nil {
+			_ = db.UpdateUserUpcyclingScore(uid)
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusNoContent)
+}

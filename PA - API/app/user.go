@@ -636,3 +636,23 @@ func GetBansByUserID(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(bans)
 
 }
+
+func DeleteUser(w http.ResponseWriter, r *http.Request) {
+	idStr := strings.TrimPrefix(r.URL.Path, "/users/")
+	userID, err := uuid.Parse(idStr)
+	if err != nil {
+		fmt.Println("[ERROR] DeleteUser parse UUID:", err)
+		sendError(w, "Invalid user ID format", http.StatusBadRequest)
+		return
+	}
+
+	if err := db.DeleteUserFromDB(userID); err != nil {
+		fmt.Println("[ERROR] DeleteUser DB:", err)
+		sendError(w, "Unable to delete user", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "User deleted successfully"})
+}

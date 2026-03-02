@@ -28,6 +28,22 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
     <link rel="stylesheet" href="../../assets/css/pro.css">
     <link rel="icon" type="image/png" href="../../assets/img/brand/UpcycleDiminutif.png">
     <script src="../../assets/js/blob-images.js"></script>
+    <?php
+    if (!empty(
+        isset($extraCss) ? $extraCss : null
+    ) && is_array($extraCss)) {
+        foreach ($extraCss as $cssFile) {
+            echo "    <link rel=\"stylesheet\" href=\"{$cssFile}\">\n";
+        }
+    }
+    if (!empty(
+        isset($extraJs) ? $extraJs : null
+    ) && is_array($extraJs)) {
+        foreach ($extraJs as $jsFile) {
+            echo "    <script src=\"{$jsFile}\" defer></script>\n";
+        }
+    }
+    ?>
 </head>
 <body>
     <header data-api-base="<?php echo htmlspecialchars($API_URL ?? ''); ?>" data-user-id="<?php echo htmlspecialchars($user['id'] ?? ''); ?>">
@@ -36,13 +52,14 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
         </div>
         <nav>
             <div class="nav-dropdown community-dropdown">
-                <a class="btn-wrapper" href="forums">
+                <a class="btn-wrapper" href="../common/forums">
                     <i class="fa-solid fa-users"></i>
                     <p>Community</p>
                 </a>
                 <div class="dropdown-menu">
-                    <a href="forums"><i class="fa-solid fa-indent"></i>Forums</a>
-                    <a href="users"><i class="fa-solid fa-user"></i>Users</a>
+                    <a href="../common/forums"><i class="fa-solid fa-indent"></i>Forums</a>
+                    <a href="../admin/users"><i class="fa-solid fa-user"></i>Users</a>
+                    <a href="../admin/annonces"><i class="fa-solid fa-newspaper"></i>Annonces</a>
                 </div>
             </div>
             <div class="nav-dropdown">
@@ -52,8 +69,8 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
                 </a>
                 <div class="dropdown-menu">
                     <a href="offers"><i class="fa-solid fa-box-open"></i>Offers</a>
-                    <a href="../customers/services"><i class="fa-solid fa-briefcase"></i>Services</a>
-                    <a href="containers"><i class="fa-solid fa-warehouse"></i>Containers</a>
+                    <a href="../admin/services"><i class="fa-solid fa-calendar-days"></i>Services &amp; Events</a>
+                    <a href="../admin/containers"><i class="fa-solid fa-warehouse"></i>Containers</a>
                 </div>
             </div>
             <div class="nav-dropdown">
@@ -62,7 +79,7 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
                     <p>Requests</p>
                 </a>
                 <div class="dropdown-menu">
-                    <a href="offers"><i class="fa-solid fa-hand-holding-hand"></i>Deposits</a>
+                    <a href="../admin/offers"><i class="fa-solid fa-hand-holding-hand"></i>Deposits</a>
                     <a href="../customers/services"><i class="fa-solid fa-money-bill-transfer"></i>Payouts</a>
                 </div>
             </div>

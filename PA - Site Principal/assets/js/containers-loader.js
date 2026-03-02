@@ -42,7 +42,7 @@
                 totalPages = total > 0 ? Math.ceil(total / pageSize) : 1;
 
                 if (!items || items.length === 0) {
-                    container.innerHTML = '<p class="empty-containers">Aucun conteneur disponible pour le moment.</p>';
+                    container.innerHTML = '<p class="empty-containers">No containers available at the moment.</p>';
                     if (pagination) pagination.innerHTML = '';
                     updateUrlPage(1, true);
                     return;
@@ -153,16 +153,94 @@
 
         const button = document.createElement('button');
         button.className = 'btn-primary';
-        button.textContent = 'Ouvrir';
-        button.onclick = function() {
-            if (c.id) {
-                window.location.href = `container?uuid=${encodeURIComponent(c.id)}`;
-            }
-        };
+        button.textContent = 'Open';
+        button.onclick = function() { openContainerModal(c); };
         div.appendChild(button);
 
         return div;
     }
+
+    function openContainerModal(c) {
+        const modal = document.getElementById('container-detail-modal');
+        if (!modal) return;
+
+        modal.querySelector('#container-modal-name').textContent =
+            c.name || '—';
+        modal.querySelector('#container-modal-address').textContent =
+            [c.number, c.road, c.postal_code, c.city].filter(Boolean).join(', ');
+        modal.querySelector('#container-modal-city').textContent =
+            c.city || '—';
+        modal.querySelector('#container-modal-postal').textContent =
+            c.postal_code || '—';
+        modal.querySelector('#container-modal-created').textContent =
+            c.created_at ? new Date(c.created_at).toLocaleDateString('en-GB') : '—';
+
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
+
+        const mapEl = document.getElementById('container-modal-map');
+        if (!mapEl) return;
+
+        if (mapEl._leaflet_id) {
+            try { L.map(mapEl).remove(); } catch(e) {}
+        }
+        const freshMap = document.createElement('div');
+        freshMap.id = 'container-modal-map';
+        freshMap.style.cssText = 'height:260px;border-radius:10px;overflow:hidden;margin-top:18px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;';
+        freshMap.innerHTML = '<span style="color:#9ca3af;font-size:.9rem;"><i class="fa-solid fa-map-location-dot"></i> Loading map…</span>';
+        mapEl.replaceWith(freshMap);
+
+        const query = [c.number, c.road, c.postal_code, c.city, 'France']
+            .filter(Boolean).join(', ');
+
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`, {
+            headers: { 'Accept-Language': 'en' }
+        })
+        .then(r => r.json())
+        .then(results => {
+            const target = document.getElementById('container-modal-map');
+            if (!target) return;
+            if (!results || results.length === 0) {
+                target.innerHTML = '<span style="color:#9ca3af;font-size:.9rem;"><i class="fa-solid fa-map-location-dot"></i> Location not found</span>';
+                return;
+            }
+            const lat = parseFloat(results[0].lat);
+            const lng = parseFloat(results[0].lon);
+
+            target.innerHTML = '';
+            target.style.cssText = 'height:260px;border-radius:10px;overflow:hidden;margin-top:18px;';
+
+            const map = L.map(target, { zoomControl: true, scrollWheelZoom: false }).setView([lat, lng], 16);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 19
+            }).addTo(map);
+            const marker = L.marker([lat, lng]).addTo(map);
+            marker.bindPopup(`<strong>${escapeHtml(c.name || '')}</strong><br>${escapeHtml(query)}`).openPopup();
+
+            setTimeout(() => map.invalidateSize(), 250);
+        })
+        .catch(() => {
+            const target = document.getElementById('container-modal-map');
+            if (target) target.innerHTML = '<span style="color:#9ca3af;font-size:.9rem;"><i class="fa-solid fa-map-location-dot"></i> Map unavailable</span>';
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const modal = document.getElementById('container-detail-modal');
+        if (!modal) return;
+
+        modal.querySelector('#container-modal-close')?.addEventListener('click', function() {
+            modal.classList.remove('is-open');
+            modal.setAttribute('aria-hidden', 'true');
+        });
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                modal.classList.remove('is-open');
+                modal.setAttribute('aria-hidden', 'true');
+            }
+        });
+    });
 
     function escapeHtml(text) {
         const div = document.createElement('div');

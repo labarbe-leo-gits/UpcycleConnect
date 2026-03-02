@@ -413,6 +413,23 @@ func UpdateAnnonceStatusInDB(id string, status int) (bool, error) {
 	return rows > 0, nil
 }
 
+func AdminUpdateAnnonceStatusInDB(id string, status int) error {
+	currentTime := getCurrentTime()
+	_, err := Db.Exec("UPDATE annonces SET status = ?, updated_at = ? WHERE id = ?", status, currentTime, id)
+	if err != nil {
+		return fmt.Errorf("adminUpdateAnnonceStatus package db : %s", err.Error())
+	}
+	return nil
+}
+
+func DeleteAnnonceFromDB(id string) error {
+	_, err := Db.Exec("DELETE FROM annonces WHERE id = ?", id)
+	if err != nil {
+		return fmt.Errorf("deleteAnnonce package db : %s", err.Error())
+	}
+	return nil
+}
+
 func GetAnnonceByIDFromDB(id string) (*models.Annonce, error) {
 
 	var annonce models.Annonce

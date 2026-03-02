@@ -157,6 +157,8 @@ func main() {
 	registerRoute("GET", "/products/services", "Services listing - for the catalog", app.GetServices, app.JWTAuthMiddleware)
 	registerRoute("POST", "/products/services", "Create a new service", app.CreateService, app.JWTAuthMiddleware)
 	registerRoute("GET", "/products/services/{id}", "Get a specific service by its UUID", app.GetServiceByID, app.JWTAuthMiddleware)
+	registerRoute("PATCH", "/products/services/{id}", "Update a service/event by its UUID", app.UpdateService, app.JWTAuthMiddleware)
+	registerRoute("DELETE", "/products/services/{id}", "Delete a service/event by its UUID", app.DeleteService, app.JWTAuthMiddleware)
 	registerRoute("GET", "/orders", "List all orders", app.GetOrders, app.JWTAuthMiddleware)
 	registerRoute("POST", "/orders", "Create a new order", app.CreateOrder, app.JWTAuthMiddleware)
 	registerRoute("GET", "/annonces", "List all annonces", app.GetAnnonces, app.JWTAuthMiddleware)
@@ -167,6 +169,8 @@ func main() {
 	registerRoute("GET", "/annonces/{id}", "Get a specific annonce by its UUID", app.GetAnnonceByID, app.JWTAuthMiddleware)
 	registerRoute("POST", "/annonces/{id}/images", "Upload an image for a specific annonce", app.UploadAnnonceImage, app.JWTAuthMiddleware)
 	registerRoute("PATCH", "/annonces/{id}", "Update an existing annonce", app.UpdateAnnonce, app.JWTAuthMiddleware)
+	registerRoute("DELETE", "/annonces/{id}", "Delete an annonce by UUID (admin)", app.DeleteAnnonce, app.JWTAuthMiddleware)
+	registerRoute("PATCH", "/annonces/{id}/status", "Admin: set annonce status to pending/approved/rejected", app.AdminUpdateAnnonceStatus, app.JWTAuthMiddleware)
 	registerRoute("GET", "/notifications", "List all notifications in the system", app.GetNotifications, app.JWTAuthMiddleware)
 	registerRoute("POST", "/notifications", "Create a new notification", app.CreateNotification, app.JWTAuthMiddleware)
 	registerRoute("GET", "/users/{id}/notifications", "List all notifications for a specific user by their UUID", app.GetNotificationsByUserID, app.JWTAuthMiddleware)
@@ -190,6 +194,7 @@ func main() {
 	registerRoute("POST", "/users/{id}/planning", "Create a new planning entry for a user", app.CreatePlanning, app.JWTAuthMiddleware)
 	registerRoute("GET", "/planning", "Get all planning entries in the system (admin only)", app.GetAllPlanning)
 	registerRoute("PATCH", "/users/{id}", "Update a user's profile", app.UpdateUser, app.JWTAuthMiddleware)
+	registerRoute("DELETE", "/users/{id}", "Delete a user by UUID", app.DeleteUser, app.JWTAuthMiddleware)
 	registerRoute("PATCH", "/annonces/{id}/views", "Increment the view count for an annonce", app.IncrementAnnonceViewCount, app.JWTAuthMiddleware)
 	registerRoute("GET", "/forums/{id}", "Get details of a specific forum by its UUID", app.GetForumByID)
 	registerRoute("PATCH", "/forums/{id}/posts/{pID}", "Update a specific post in a forum by its UUID", app.UpdatePost, app.JWTAuthMiddleware)
@@ -223,6 +228,9 @@ func main() {
 	registerRoute("GET", "/users/{id}/bans", "List all bans for a specific user by their UUID", app.GetBansByUserID, app.JWTAuthMiddleware)
 	registerRoute("DELETE", "/ban/{id}", "Delete a specific ban by its UUID", app.DeleteBan, RoleMiddleware(3), app.JWTAuthMiddleware)
 	registerRoute("GET", "/bans/{id}", "Get details of a specific ban by its UUID", app.GetBanByID, app.JWTAuthMiddleware)
+
+	registerRoute("DELETE", "/forums/{id}", "Delete a forum by its UUID", app.DeleteForum, app.JWTAuthMiddleware)
+	registerRoute("PATCH", "/forums/{id}", "Update a forum's title or description by its UUID", app.UpdateForum, app.JWTAuthMiddleware)
 
 	http.HandleFunc("/", notFoundHandler)
 

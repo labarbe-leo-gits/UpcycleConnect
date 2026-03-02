@@ -190,3 +190,96 @@ func GetServiceByID(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprintf(w, "%s", jsonResponse)
 }
+
+func UpdateService(w http.ResponseWriter, r *http.Request) {
+	idStr := r.URL.Path[len("/products/services/"):]
+	serviceID, err := uuid.Parse(idStr)
+	if err != nil {
+		fmt.Println("[ERROR] UpdateService parse UUID:", err)
+		sendError(w, "Invalid service ID format", http.StatusBadRequest)
+		return
+	}
+
+	existing, err := db.GetServiceByIDFromDB(serviceID)
+	if err != nil || existing.ID == uuid.Nil {
+		sendError(w, "Service not found", http.StatusNotFound)
+		return
+	}
+
+	var serviceDto models.Service
+	if decodeErr := json.NewDecoder(r.Body).Decode(&serviceDto); decodeErr != nil {
+		fmt.Println("[ERROR] UpdateService decode:", decodeErr)
+		sendError(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	if serviceDto.Name == "" {
+		serviceDto.Name = existing.Name
+	}
+	if serviceDto.Description == "" {
+		serviceDto.Description = existing.Description
+	}
+	if serviceDto.Price == 0 {
+		serviceDto.Price = existing.Price
+	}
+	if serviceDto.Type == 0 {
+		serviceDto.Type = existing.Type
+	}
+	if serviceDto.ServiceDate == "" {
+		serviceDto.ServiceDate = existing.ServiceDate
+	}
+	if serviceDto.ServiceRoad == "" {
+		serviceDto.ServiceRoad = existing.ServiceRoad
+	}
+	if serviceDto.ServiceCity == "" {
+		serviceDto.ServiceCity = existing.ServiceCity
+	}
+	if serviceDto.ServiceZip == "" {
+		serviceDto.ServiceZip = existing.ServiceZip
+	}
+	if serviceDto.MaximumParticipants == nil {
+		serviceDto.MaximumParticipants = existing.MaximumParticipants
+	}
+	serviceDto.CreatedBy = existing.CreatedBy
+
+	validationErrors := ValidateServiceDto(serviceDto)
+	if len(validationErrors) > 0 {
+		fmt.Println("[ERROR] UpdateService validation:", validationErrors)
+		sendError(w, fmt.Sprintf("Validation errors: %s", validationErrors), http.StatusBadRequest)
+		return
+	}
+
+	if updateErr := db.UpdateServiceInDB(serviceID, serviceDto); updateErr != nil {
+		fmt.Println("[ERROR] UpdateService DB:", updateErr)
+		sendError(w, "Unable to update service", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func DeleteService(w http.ResponseWriter, r *http.Request) {
+	idStr := r.URL.Path[len("/products/services/"):]
+	serviceID, err := uuid.Parse(idStr)
+	if err != nil {
+		fmt.Println("[ERROR] DeleteService parse UUID:", err)
+		sendError(w, "Invalid service ID format", http.StatusBadRequest)
+		return
+	}
+
+	existing, err := db.GetServiceByIDFromDB(serviceID)
+	if err != nil || existing.ID == uuid.Nil {
+		sendError(w, "Service not found", http.StatusNotFound)
+		return
+	}
+
+	if deleteErr := db.DeleteServiceFromDB(serviceID); deleteErr != nil {
+		fmt.Println("[ERROR] DeleteService DB:", deleteErr)
+		sendError(w, "Unable to delete service", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusNoContent)
+}
