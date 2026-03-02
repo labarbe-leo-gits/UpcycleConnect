@@ -184,6 +184,20 @@
             serviceDiv.appendChild(spots);
         }
 
+        const road = service.service_road || '';
+        const city = service.service_city || '';
+        const zip  = service.service_zip  || '';
+        const location = document.createElement('p');
+        location.className = 'service-location';
+        if (road || city) {
+            const parts = [road, [zip, city].filter(Boolean).join(' ')].filter(Boolean);
+            location.innerHTML = `<i class="fa-solid fa-location-dot"></i>${escapeHtml(parts.join(', '))}`;
+        } else {
+            location.classList.add('online');
+            location.innerHTML = `<i class="fa-solid fa-wifi"></i>Online`;
+        }
+        serviceDiv.appendChild(location);
+
         const price = document.createElement('p');
         price.className = `service-price ${service.priceClass}`;
         if (service.priceValue === 0) {

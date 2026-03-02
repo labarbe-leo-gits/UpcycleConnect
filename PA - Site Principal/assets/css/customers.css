@@ -942,7 +942,7 @@ body.modal-open {
 
 .service-item h3 {
   color: #064e3b;
-  margin: 0 0 12px 0;
+  margin: 0;
   font-size: 20px;
   font-weight: 700;
   display: flex;
@@ -1032,10 +1032,9 @@ body.modal-open {
   font-weight: 700;
   color: #10b981;
   margin: 12px 0 0 0;
-  padding-top: 12px;
+  padding-top: 16px;
   border-top: 1px solid #e5e7eb;
   justify-content: center;
-  padding-top: 20px;
 }
 
 .service-item .service-price i {
@@ -1044,8 +1043,37 @@ body.modal-open {
 
 .service-item .service-price.free {
   color: #059669;
-  justify-content: center;
-  padding-top: 20px;
+}
+
+.service-item .service-location {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #9ca3af;
+  margin: 0;
+}
+
+.service-item .service-location i {
+  color: #10b981;
+  font-size: 12px;
+}
+
+.service-item .service-location.online {
+  color: #7c3aed;
+  font-weight: 500;
+}
+
+.service-item .service-location.online i {
+  color: #7c3aed;
+}
+
+.service-item .service-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: auto;
+  padding-top: 4px;
 }
 
 .service-item .service-date {
@@ -1544,6 +1572,7 @@ body.modal-open {
 
 .add-modal input[type="text"],
 .add-modal input[type="number"],
+.add-modal input[type="date"],
 .add-modal textarea,
 .add-modal input[type="file"] {
   width: 100%;
@@ -1555,6 +1584,11 @@ body.modal-open {
   background: #f9fafb;
   transition: all 0.3s ease;
   box-sizing: border-box;
+}
+
+.add-modal .input-wrapper input,
+.add-modal .input-wrapper select {
+  padding-left: 48px;
 }
 
 .add-modal select {
@@ -2636,5 +2670,4 @@ body.modal-open {
   border: none;
   color: #374151;
   cursor: default;
-
 }

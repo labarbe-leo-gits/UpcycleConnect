@@ -229,3 +229,80 @@ func GetServiceByIDFromDB(serviceID uuid.UUID) (models.Service, error) {
 	return service, nil
 
 }
+
+func CancelAndRefundServiceOrdersFromDB(serviceID uuid.UUID, serviceName string) error {
+
+	rows, err := Db.Query("SELECT id, user_id, amount FROM orders WHERE event_id = ?", serviceID.String())
+	if err != nil {
+		return fmt.Errorf("cancelServiceOrders query: %s", err.Error())
+	}
+
+	type orderRow struct {
+		id     string
+		userID string
+		amount float64
+	}
+
+	var orders []orderRow
+
+	for rows.Next() {
+		var o orderRow
+		if scanErr := rows.Scan(&o.id, &o.userID, &o.amount); scanErr != nil {
+			rows.Close()
+			return fmt.Errorf("cancelServiceOrders scan: %s", scanErr.Error())
+		}
+
+		orders = append(orders, o)
+	}
+
+	rows.Close()
+
+	if err = rows.Err(); err != nil {
+		return fmt.Errorf("cancelServiceOrders rows err: %s", err.Error())
+	}
+
+	for _, o := range orders {
+		if o.amount > 0 {
+			_, err = Db.Exec("UPDATE users SET balance = balance + ? WHERE id = ?", o.amount, o.userID)
+
+			if err != nil {
+				return fmt.Errorf("cancelServiceOrders refund: %s", err.Error())
+			}
+
+			var msg string
+
+			msg = fmt.Sprintf("The service \"%s\" has been cancelled. €%.2f has been refunded to your balance.", serviceName, o.amount)
+
+			notifID := uuid.New()
+
+			_, err = Db.Exec("INSERT INTO notifications (id, user_id, annonce_id, message, created_at) VALUES (?, ?, NULL, ?, NOW())", notifID.String(), o.userID, msg)
+
+			if err != nil {
+				return fmt.Errorf("cancelServiceOrders notify: %s", err.Error())
+			}
+
+		} else {
+			var msg string
+
+			msg = fmt.Sprintf("The service \"%s\" has been cancelled.", serviceName)
+
+			notifID := uuid.New()
+
+			_, err = Db.Exec("INSERT INTO notifications (id, user_id, annonce_id, message, created_at) VALUES (?, ?, NULL, ?, NOW())", notifID.String(), o.userID, msg)
+
+			if err != nil {
+				return fmt.Errorf("cancelServiceOrders notify: %s", err.Error())
+			}
+
+		}
+	}
+
+	_, err = Db.Exec("DELETE FROM orders WHERE event_id = ?", serviceID.String())
+
+	if err != nil {
+		return fmt.Errorf("cancelServiceOrders delete orders: %s", err.Error())
+	}
+
+	return nil
+
+}

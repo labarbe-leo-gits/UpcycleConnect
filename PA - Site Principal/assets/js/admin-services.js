@@ -9,8 +9,8 @@
     let searchTerm    = '';
     let typeFilter    = '';
 
-    const typeLabels = { 0: 'Formation', 1: 'Atelier', 2: 'Événement' };
-    const typeIcons  = { 0: 'fa-graduation-cap', 1: 'fa-hammer', 2: 'fa-calendar-star' };
+    const typeLabels = { 1: 'Formation', 2: 'Event', 3: 'Consulting' };
+    const typeIcons  = { 1: 'fa-graduation-cap', 2: 'fa-calendar-days', 3: 'fa-user-tie' };
 
     document.addEventListener('DOMContentLoaded', function () {
         bindToolbar();
@@ -28,6 +28,12 @@
         document.getElementById('service-type-filter')?.addEventListener('change', function () {
             typeFilter = this.value;
             resetList();
+        });
+
+        document.getElementById('svc-loc-switcher')?.addEventListener('click', function (e) {
+            const btn = e.target.closest('.svc-loc-opt');
+            if (!btn) return;
+            setLocationMode(btn.dataset.mode);
         });
     }
 
@@ -98,7 +104,10 @@
             const icon      = typeIcons[svc.type]  ?? 'fa-calendar';
             const price     = svc.price > 0 ? `€${parseFloat(svc.price).toFixed(2)}` : '<span style="color:#16a34a;">Free</span>';
             const dateStr   = svc.service_date ? new Date(svc.service_date).toLocaleDateString('fr-FR') : '—';
-            const city      = [svc.service_city, svc.service_zip].filter(Boolean).join(' ') || '—';
+            const city      = [svc.service_city, svc.service_zip].filter(Boolean).join(' ');
+            const locationHtml = city
+                ? `<span><i class="fa-solid fa-location-dot"></i> ${escHtml(city)}</span>`
+                : `<span style="color:#7c3aed;font-weight:500;"><i class="fa-solid fa-wifi"></i> Online</span>`;
             const maxP      = svc.maximum_participants != null ? svc.maximum_participants : '∞';
             const curP      = svc.current_participants ?? 0;
 
@@ -111,11 +120,11 @@
                 <p class="service-description" style="margin:6px 0;">${escHtml(svc.description ?? '')}</p>
                 <div class="service-meta" style="display:flex;gap:18px;flex-wrap:wrap;font-size:.85rem;color:#6b7280;margin-bottom:10px;">
                     <span><i class="fa-solid fa-calendar"></i> ${dateStr}</span>
-                    <span><i class="fa-solid fa-location-dot"></i> ${escHtml(city)}</span>
+                    ${locationHtml}
                     <span><i class="fa-solid fa-users"></i> ${curP} / ${maxP}</span>
                     <span><i class="fa-solid fa-euro-sign"></i> ${price}</span>
                 </div>
-                <div class="service-actions" style="display:flex;gap:8px;">
+                <div class="service-actions" style="display:flex;gap:8px;justify-content:center;">
                     <button class="btn-secondary svc-edit-btn" data-id="${svc.id}"><i class="fa-solid fa-pen"></i> Edit</button>
                     <button class="btn-danger svc-delete-btn" data-id="${svc.id}" style="background:#ef4444;color:#fff;border:none;padding:6px 14px;border-radius:8px;cursor:pointer;">
                         <i class="fa-solid fa-trash"></i> Delete
@@ -148,11 +157,29 @@
         if (mainContent) mainContent.style.visibility = 'visible';
     }
 
+    function setLocationMode(mode) {
+        const fields   = document.getElementById('svc-address-fields');
+        const switcher = document.getElementById('svc-loc-switcher');
+        if (!fields || !switcher) return;
+        switcher.querySelectorAll('.svc-loc-opt').forEach(btn => {
+            btn.classList.toggle('is-active', btn.dataset.mode === mode);
+        });
+        const showAddress = mode === 'office';
+        fields.style.display = showAddress ? 'flex' : 'none';
+        if (!showAddress) {
+            ['svc-road', 'svc-city', 'svc-zip'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+        }
+    }
+
     function openCreateForm() {
         document.getElementById('service-form-title').textContent = 'Add service / event';
         const form = document.getElementById('service-form');
         form.reset();
         form.dataset.editId = '';
+        setLocationMode('online');
         showModal('service-form-modal');
     }
 
@@ -165,12 +192,17 @@
         form.querySelector('#svc-name').value        = svc.name        ?? '';
         form.querySelector('#svc-description').value = svc.description ?? '';
         form.querySelector('#svc-price').value       = svc.price       ?? 0;
-        form.querySelector('#svc-type').value        = svc.type        ?? 0;
+        form.querySelector('#svc-type').value        = svc.type        ?? 1;
         form.querySelector('#svc-date').value        = (svc.service_date ?? '').substring(0, 10);
-        form.querySelector('#svc-road').value        = svc.service_road ?? '';
-        form.querySelector('#svc-city').value        = svc.service_city ?? '';
-        form.querySelector('#svc-zip').value         = svc.service_zip  ?? '';
         form.querySelector('#svc-max-participants').value = svc.maximum_participants ?? '';
+
+        const hasAddress = svc.service_road || svc.service_city;
+        setLocationMode(hasAddress ? 'office' : 'online');
+        if (hasAddress) {
+            form.querySelector('#svc-road').value = svc.service_road ?? '';
+            form.querySelector('#svc-city').value = svc.service_city ?? '';
+            form.querySelector('#svc-zip').value  = svc.service_zip  ?? '';
+        }
 
         showModal('service-form-modal');
     }

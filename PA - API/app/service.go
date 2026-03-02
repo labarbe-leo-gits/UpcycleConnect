@@ -274,6 +274,12 @@ func DeleteService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if cancelErr := db.CancelAndRefundServiceOrdersFromDB(serviceID, existing.Name); cancelErr != nil {
+		fmt.Println("[ERROR] DeleteService cancel orders:", cancelErr)
+		sendError(w, "Unable to cancel service orders", http.StatusInternalServerError)
+		return
+	}
+
 	if deleteErr := db.DeleteServiceFromDB(serviceID); deleteErr != nil {
 		fmt.Println("[ERROR] DeleteService DB:", deleteErr)
 		sendError(w, "Unable to delete service", http.StatusInternalServerError)

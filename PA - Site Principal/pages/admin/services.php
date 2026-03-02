@@ -14,11 +14,11 @@ include_once '../../includes/admin-header.php';
             <input type="text" id="service-search" placeholder="Search…"
                 style="width:100%;padding:8px 12px 8px 32px;border:1px solid #d1d5db;border-radius:8px;" />
         </div>
-        <select id="service-type-filter" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;">
+        <select id="service-type-filter" style="height:38px;padding:0 12px;border:1px solid #d1d5db;border-radius:8px;font-size:.9rem;background:#fff;">
             <option value="">All types</option>
-            <option value="0">Formation / Training</option>
-            <option value="1">Atelier / Workshop</option>
-            <option value="2">Événement / Event</option>
+            <option value="1">Formation</option>
+            <option value="2">Event</option>
+            <option value="3">Consulting</option>
         </select>
     </div>
 
@@ -63,8 +63,7 @@ include_once '../../includes/admin-header.php';
             </div>
             <div class="field">
                 <label for="svc-description">Description *</label>
-                <textarea id="svc-description" name="description" rows="3" placeholder="Description..." required
-                    style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;resize:vertical;"></textarea>
+                <textarea id="svc-description" name="description" rows="3" placeholder="Description..." required></textarea>
             </div>
             <div class="field">
                 <label for="svc-price">Price (€) *</label>
@@ -74,11 +73,10 @@ include_once '../../includes/admin-header.php';
             </div>
             <div class="field">
                 <label for="svc-type">Type *</label>
-                <select id="svc-type" name="type" required
-                    style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;">
-                    <option value="0">Formation / Training</option>
-                    <option value="1">Atelier / Workshop</option>
-                    <option value="2">Événement / Event</option>
+                <select id="svc-type" name="type" required>
+                    <option value="1">Formation</option>
+                    <option value="2">Event</option>
+                    <option value="3">Consulting</option>
                 </select>
             </div>
             <div class="field">
@@ -87,22 +85,26 @@ include_once '../../includes/admin-header.php';
                     <input type="date" id="svc-date" name="service_date" required />
                 </div>
             </div>
-            <div class="field">
-                <label for="svc-road">Address</label>
-                <div class="input-wrapper"><i class="fa-solid fa-location-dot"></i>
-                    <input type="text" id="svc-road" name="service_road" placeholder="Street address" />
+            <div class="field" id="svc-location-section">
+                <label>Location</label>
+                <div class="svc-loc-switcher" id="svc-loc-switcher">
+                    <button type="button" class="svc-loc-opt is-active" data-mode="online">
+                        <i class="fa-solid fa-wifi"></i> Online
+                    </button>
+                    <button type="button" class="svc-loc-opt" data-mode="office">
+                        <i class="fa-solid fa-location-dot"></i> In office
+                    </button>
                 </div>
-            </div>
-            <div class="field" style="display:flex;gap:12px;">
-                <div style="flex:1;">
-                    <label for="svc-city">City</label>
-                    <input type="text" id="svc-city" name="service_city" placeholder="City"
-                        style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;" />
-                </div>
-                <div style="width:110px;">
-                    <label for="svc-zip">ZIP</label>
-                    <input type="text" id="svc-zip" name="service_zip" placeholder="75000" maxlength="5"
-                        style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;" />
+                <div id="svc-address-fields" style="display:none;">
+                    <div class="input-wrapper"><i class="fa-solid fa-location-dot"></i>
+                        <input type="text" id="svc-road" name="service_road" placeholder="Street address" />
+                    </div>
+                    <div class="svc-city-zip-row">
+                        <div class="input-wrapper"><i class="fa-solid fa-city"></i>
+                            <input type="text" id="svc-city" name="service_city" placeholder="City" />
+                        </div>
+                        <input type="text" id="svc-zip" name="service_zip" placeholder="ZIP" maxlength="5" class="svc-zip" />
+                    </div>
                 </div>
             </div>
             <div class="field">
