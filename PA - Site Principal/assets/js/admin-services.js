@@ -113,7 +113,6 @@
 
             card.innerHTML = `
                 <div class="service-header">
-                    <i class="fa-solid ${icon}" style="color:#7c3aed;font-size:1.2rem;"></i>
                     <h3 style="margin:0 0 0 8px;flex:1;">${escHtml(svc.name)}</h3>
                     <span class="badge" style="background:#ede9fe;color:#6d28d9;padding:2px 10px;border-radius:20px;font-size:.8rem;">${typeLabel}</span>
                 </div>
@@ -126,7 +125,7 @@
                 </div>
                 <div class="service-actions" style="display:flex;gap:8px;justify-content:center;">
                     <button class="btn-secondary svc-edit-btn" data-id="${svc.id}"><i class="fa-solid fa-pen"></i> Edit</button>
-                    <button class="btn-danger svc-delete-btn" data-id="${svc.id}" style="background:#ef4444;color:#fff;border:none;padding:6px 14px;border-radius:8px;cursor:pointer;">
+                    <button class="btn-danger svc-delete-btn" data-id="${svc.id}">
                         <i class="fa-solid fa-trash"></i> Delete
                     </button>
                 </div>`;
@@ -139,15 +138,26 @@
     }
 
     function renderSkeletons(container, n) {
-        container.innerHTML = '';
-        for (let i = 0; i < n; i++) {
-            const sk = document.createElement('div');
-            sk.className = 'skeleton-service-item';
-            sk.innerHTML = `<div class="skeleton-service-header"><div class="skeleton skeleton-title" style="width:50%;"></div></div>
-                            <div class="skeleton skeleton-description"></div>
-                            <div class="skeleton skeleton-button" style="width:80px;height:32px;"></div>`;
-            container.appendChild(sk);
-        }
+        const card =
+            '<div class="skeleton-service-item">' +
+                '<div class="skeleton-service-header">' +
+                    '<div class="skeleton skeleton-title" style="flex:1;"></div>' +
+                    '<div class="skeleton skeleton-badge"></div>' +
+                '</div>' +
+                '<div class="skeleton skeleton-description"></div>' +
+                '<div class="skeleton skeleton-description" style="width:75%;"></div>' +
+                '<div class="skeleton-meta">' +
+                    '<div class="skeleton"></div>' +
+                    '<div class="skeleton"></div>' +
+                    '<div class="skeleton"></div>' +
+                    '<div class="skeleton"></div>' +
+                '</div>' +
+                '<div class="skeleton-buttons">' +
+                    '<div class="skeleton skeleton-button"></div>' +
+                    '<div class="skeleton skeleton-button"></div>' +
+                '</div>' +
+            '</div>';
+        container.innerHTML = Array(n).fill(card).join('');
     }
 
     function hideInitialLoader() {

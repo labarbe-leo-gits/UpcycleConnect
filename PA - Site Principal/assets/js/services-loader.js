@@ -21,6 +21,7 @@
         }
 
         renderSkeletons(container, pageSize);
+        renderPaginationSkeletons(pagination);
 
         fetch(`services-api?page=${page}&limit=${pageSize}`, {
             method: 'GET',
@@ -264,28 +265,35 @@
     }
 
     function renderSkeletons(container, count) {
-        const skeletons = [];
+        const card =
+            '<div class="skeleton-service-item">' +
+                '<div class="skeleton-service-header">' +
+                    '<div class="skeleton skeleton-title"></div>' +
+                    '<div class="skeleton skeleton-badge"></div>' +
+                '</div>' +
+                '<div class="skeleton skeleton-description"></div>' +
+                '<div class="skeleton skeleton-description"></div>' +
+                '<div class="skeleton skeleton-date"></div>' +
+                '<div class="skeleton skeleton-creator"></div>' +
+                '<div class="skeleton skeleton-location"></div>' +
+                '<div class="skeleton skeleton-price"></div>' +
+                '<div class="skeleton-buttons">' +
+                    '<div class="skeleton skeleton-button"></div>' +
+                    '<div class="skeleton skeleton-button"></div>' +
+                '</div>' +
+            '</div>';
+        container.innerHTML = Array(count).fill(card).join('');
+    }
 
-        for (let i = 0; i < count; i += 1) {
-            skeletons.push(
-                '<div class="skeleton-service-item">' +
-                    '<div class="skeleton-service-header">' +
-                        '<div class="skeleton skeleton-title"></div>' +
-                        '<div class="skeleton skeleton-badge"></div>' +
-                    '</div>' +
-                    '<div class="skeleton skeleton-description"></div>' +
-                    '<div class="skeleton skeleton-description"></div>' +
-                    '<div class="skeleton skeleton-date"></div>' +
-                    '<div class="skeleton skeleton-creator"></div>' +
-                    '<div class="skeleton skeleton-price"></div>' +
-                    '<div class="skeleton-buttons">' +
-                        '<div class="skeleton skeleton-button"></div>' +
-                        '<div class="skeleton skeleton-button"></div>' +
-                    '</div>' +
-                '</div>'
-            );
-        }
-
-        container.innerHTML = skeletons.join('');
+    function renderPaginationSkeletons(pagination) {
+        if (!pagination) return;
+        pagination.innerHTML =
+            '<div class="skeleton-pagination">' +
+                '<div class="skeleton"></div>' +
+                '<div class="skeleton"></div>' +
+                '<div class="skeleton"></div>' +
+                '<div class="skeleton"></div>' +
+                '<div class="skeleton"></div>' +
+            '</div>';
     }
 })();

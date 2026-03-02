@@ -24,6 +24,7 @@ $user = getLoggedInUser();
             <div class="skeleton skeleton-description"></div>
             <div class="skeleton skeleton-date"></div>
             <div class="skeleton skeleton-creator"></div>
+            <div class="skeleton skeleton-location"></div>
             <div class="skeleton skeleton-price"></div>
             <div class="skeleton-buttons">
                 <div class="skeleton skeleton-button"></div>
@@ -32,7 +33,15 @@ $user = getLoggedInUser();
         </div>
         <?php endfor; ?>
     </div>
-    <div class="offers-pagination" id="services-pagination"></div>
+    <div class="offers-pagination" id="services-pagination">
+        <div class="skeleton-pagination">
+            <div class="skeleton"></div>
+            <div class="skeleton"></div>
+            <div class="skeleton"></div>
+            <div class="skeleton"></div>
+            <div class="skeleton"></div>
+        </div>
+    </div>
 </div>
 
 <script src="../../assets/js/services-loader.js"></script>

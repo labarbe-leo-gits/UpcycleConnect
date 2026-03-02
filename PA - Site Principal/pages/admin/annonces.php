@@ -6,7 +6,7 @@ include_once '../../includes/admin-header.php';
 <div id="initial-loader" aria-hidden="false"><span class="loader" role="status" aria-label="Loading"></span></div>
 
 <div class="container" id="main-content" style="visibility:hidden;">
-    <h2>Annonces management</h2>
+    <h2 class="center">Annonces management</h2>
     <div class="admin-toolbar" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;align-items:center;">
         <div style="position:relative;min-width:220px;flex:1;max-width:320px;">
             <i class="fa-solid fa-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#6b7280;pointer-events:none;"></i>

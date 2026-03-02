@@ -3,18 +3,17 @@ $title = "Services & Events";
 include_once '../../includes/admin-header.php';
 ?>
 
-<div class="container" id="main-content" style="visibility:hidden;">
-    <h2>Services &amp; Events management</h2>
-    <div class="admin-toolbar" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;align-items:center;">
+<div class="container" id="main-content">
+    <h2 class="admin-page-title">Services &amp; Events management</h2>
+    <div class="admin-toolbar">
         <button class="add-offer-button" id="create-service-btn">
             <i class="fa-solid fa-plus"></i> Add service / event
         </button>
-        <div style="position:relative;flex:1;max-width:300px;">
-            <i class="fa-solid fa-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#6b7280;"></i>
-            <input type="text" id="service-search" placeholder="Search…"
-                style="width:100%;padding:8px 12px 8px 32px;border:1px solid #d1d5db;border-radius:8px;" />
+        <div class="toolbar-search-wrap">
+            <i class="fa-solid fa-search toolbar-search-icon"></i>
+            <input type="text" id="service-search" placeholder="Search…" />
         </div>
-        <select id="service-type-filter" style="height:38px;padding:0 12px;border:1px solid #d1d5db;border-radius:8px;font-size:.9rem;background:#fff;">
+        <select id="service-type-filter">
             <option value="">All types</option>
             <option value="1">Formation</option>
             <option value="2">Event</option>
@@ -26,10 +25,21 @@ include_once '../../includes/admin-header.php';
         <?php for ($i = 0; $i < 4; $i++): ?>
         <div class="skeleton-service-item">
             <div class="skeleton-service-header">
-                <div class="skeleton skeleton-title" style="width:55%;"></div>
+                <div class="skeleton skeleton-title" style="flex:1;"></div>
+                <div class="skeleton skeleton-badge"></div>
             </div>
             <div class="skeleton skeleton-description"></div>
-            <div class="skeleton skeleton-button" style="width:80px;height:32px;"></div>
+            <div class="skeleton skeleton-description" style="width:75%;"></div>
+            <div class="skeleton-meta">
+                <div class="skeleton"></div>
+                <div class="skeleton"></div>
+                <div class="skeleton"></div>
+                <div class="skeleton"></div>
+            </div>
+            <div class="skeleton-buttons">
+                <div class="skeleton skeleton-button"></div>
+                <div class="skeleton skeleton-button"></div>
+            </div>
         </div>
         <?php endfor; ?>
     </div>

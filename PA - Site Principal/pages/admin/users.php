@@ -8,7 +8,7 @@ if (ob_get_level()) { @ob_flush(); }
 ?>
 
 <div class="container" id="main-content" style="visibility:hidden;">
-    <h2>Users management</h2>
+    <h2 class="center">Users management</h2>
     <div class="admin-toolbar" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;align-items:center;">
         <button class="add-offer-button" id="create-user"><i class="fa-solid fa-user-plus"></i> Create user</button>
         <div style="position:relative;flex:1;max-width:300px;">
