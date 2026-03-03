@@ -46,13 +46,35 @@ if($user['user_type'] == 1){
             </div>
             <div class="form-group">
                 <label for="offer-price">
-                    Price:
-                    <span class="help-icon" title="Put 0 to mark the offer as free. You'll receive 85% of the price (15% platform fee).">
+                    Your net price (HT — what you will receive):
+                    <span class="help-icon" title="Enter the amount you want to receive (excluding UpcycleConnect commission and Stripe fees). The buyer will pay a higher TTC amount calculated automatically.">
                         <i class="fa-solid fa-circle-question"></i>
-                        <span class="help-tooltip">Put 0 to mark the offer as free. You'll receive 85% of the price (15% platform fee).</span>
+                        <span class="help-tooltip">Enter the amount you want to receive. Put 0 for a free offer. UpcycleConnect adds an 8% commission and Stripe processing fees (~2.9% + €0.30) on top to get the final buyer price (TTC).</span>
                     </span>
                 </label>
-                <input type="number" id="offer-price" name="offer-price" required>
+                <input type="number" id="offer-price" name="offer-price" min="0" step="0.01" required>
+            </div>
+            <div class="form-group" id="offer-ttc-preview" style="display:none;">
+                <div class="ttc-breakdown">
+                    <h4><i class="fa-solid fa-calculator"></i> Price breakdown (informative)</h4>
+                    <div class="ttc-row">
+                        <span>Your net price (HT)</span>
+                        <span id="ttc-ht">€ 0.00</span>
+                    </div>
+                    <div class="ttc-row">
+                        <span>UpcycleConnect commission (8%)</span>
+                        <span id="ttc-commission">€ 0.00</span>
+                    </div>
+                    <div class="ttc-row">
+                        <span>Stripe fees (~2.9% + €0.30)</span>
+                        <span id="ttc-stripe">€ 0.00</span>
+                    </div>
+                    <div class="ttc-row ttc-total">
+                        <span><strong>Buyer pays (TTC)</strong></span>
+                        <span id="ttc-total"><strong>€ 0.00</strong></span>
+                    </div>
+                    <p class="ttc-note"><i class="fa-solid fa-circle-info"></i> Stripe fees are non-refundable. In case of refund, the buyer gets back HT + commission (€ <span id="ttc-refund">0.00</span>).</p>
+                </div>
             </div>
             <div class="form-group">
                 <label for="offer-weight">Material weight (kg):</label>

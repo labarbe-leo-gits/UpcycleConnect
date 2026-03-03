@@ -51,8 +51,18 @@ if (!$offer) {
 	exit;
 }
 
-$price = floatval($offer['price'] ?? 0);
-$priceDisplay = ($price == 0) ? "Free" : "€ " . number_format($price, 2);
+$priceHT = floatval($offer['price'] ?? 0);
+
+$UPCYCLE_COMMISSION_RATE = 0.08;
+$STRIPE_FEE_RATE   = 0.029;
+$STRIPE_FIXED_FEE  = 0.30;
+if ($priceHT > 0) {
+	$priceTTC = round(($priceHT * (1 + $UPCYCLE_COMMISSION_RATE) + $STRIPE_FIXED_FEE) / (1 - $STRIPE_FEE_RATE), 2);
+} else {
+	$priceTTC = 0;
+}
+$price = $priceTTC;
+$priceDisplay = ($priceTTC == 0) ? "Free" : "€ " . number_format($priceTTC, 2);
 $isOwnOffer = !empty($offer['user_id']) && !empty($user['id']) && $offer['user_id'] === $user['id'];
 
 $creatorName = null;
@@ -191,12 +201,19 @@ if (!empty($offer['created_at'])) {
 				<?php endif; ?>
 
 				<div class="info-item price-item">
-					<?php if ($price === 0): ?>
+					<?php if ($priceTTC === 0): ?>
 						<i class="fa-solid fa-tag"></i>
 					<?php endif; ?>
 					<div class="info-content">
-						<span class="label">Price</span>
+						<span class="label">Price (TTC)</span>
 						<span class="value price"><?php echo $priceDisplay; ?></span>
+						<?php if ($priceTTC > 0): ?>
+						<span style="font-size:11px;color:#6b7280;margin-top:2px;">
+							Seller receives: € <?php echo number_format($priceHT, 2); ?> (HT) &nbsp;·&nbsp;
+							Commission: € <?php echo number_format($priceHT * $UPCYCLE_COMMISSION_RATE, 2); ?> &nbsp;·&nbsp;
+							Stripe: € <?php echo number_format($priceTTC - $priceHT * (1 + $UPCYCLE_COMMISSION_RATE), 2); ?>
+						</span>
+						<?php endif; ?>
 					</div>
 				</div>
 

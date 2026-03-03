@@ -112,7 +112,18 @@ if ($price <= 0) {
     exit;
 }
 
-$amountCents = (int) round($price * 100);
+
+$UPCYCLE_COMMISSION_RATE = 0.08;
+$STRIPE_FEE_RATE = 0.029;
+$STRIPE_FIXED_FEE = 0.30;
+
+if ($productType === 'offer') {
+    $priceTTC = round(($price * (1 + $UPCYCLE_COMMISSION_RATE) + $STRIPE_FIXED_FEE) / (1 - $STRIPE_FEE_RATE), 2);
+} else {
+    $priceTTC = $price;
+}
+
+$amountCents = (int) round($priceTTC * 100);
 if ($amountCents <= 0) {
     http_response_code(400);
     echo json_encode(['error' => 'Invalid amount']);

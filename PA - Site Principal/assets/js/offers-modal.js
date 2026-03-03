@@ -235,6 +235,45 @@
 
     var form = document.getElementById('add-offer-form');
     if (form) {
+
+        var UPCYCLE_RATE  = 0.08;
+        var STRIPE_RATE   = 0.029;
+        var STRIPE_FIXED  = 0.30;
+
+        function calcTTC(ht) {
+            if (ht <= 0) return 0;
+            return Math.round(((ht * (1 + UPCYCLE_RATE)) + STRIPE_FIXED) / (1 - STRIPE_RATE) * 100) / 100;
+        }
+
+        function updateTTCPreview() {
+            var priceInput = document.getElementById('offer-price');
+            var previewBox = document.getElementById('offer-ttc-preview');
+            if (!priceInput || !previewBox) return;
+
+            var ht = parseFloat(priceInput.value) || 0;
+            if (ht > 0) {
+                var commission = Math.round(ht * UPCYCLE_RATE * 100) / 100;
+                var ttc        = calcTTC(ht);
+                var stripeFee  = Math.round((ttc - ht * (1 + UPCYCLE_RATE)) * 100) / 100;
+                var refund     = Math.round(ht * (1 + UPCYCLE_RATE) * 100) / 100;
+
+                document.getElementById('ttc-ht').textContent         = '€ ' + ht.toFixed(2);
+                document.getElementById('ttc-commission').textContent  = '€ ' + commission.toFixed(2);
+                document.getElementById('ttc-stripe').textContent      = '€ ' + stripeFee.toFixed(2);
+                document.getElementById('ttc-total').innerHTML         = '<strong>€ ' + ttc.toFixed(2) + '</strong>';
+                document.getElementById('ttc-refund').textContent      = refund.toFixed(2);
+                previewBox.style.display = 'block';
+            } else {
+                previewBox.style.display = 'none';
+            }
+        }
+
+        var priceInputEl = document.getElementById('offer-price');
+        if (priceInputEl) {
+            priceInputEl.addEventListener('input', updateTTCPreview);
+            priceInputEl.addEventListener('change', updateTTCPreview);
+        }
+        // ─────────────────────────────────────────────────────────
         var materialSelect = document.getElementById('offer-material');
         var customInput = document.getElementById('offer-material-custom');
         var estimationGroup = document.getElementById('offer-estimation-group');

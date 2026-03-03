@@ -9,6 +9,16 @@ import (
 	"github.com/google/uuid"
 )
 
+const (
+	UpcycleCommissionRate = 0.08
+	StripeFeeRate         = 0.029
+	StripeFixedFee        = 0.30
+)
+
+func CalcTTC(ht float64) float64 {
+	return math.Round(((ht*(1+UpcycleCommissionRate))+StripeFixedFee)/(1-StripeFeeRate)*100) / 100
+}
+
 func GetOrdersFromDB() ([]models.Order, error) {
 
 	orders := []models.Order{}
@@ -110,7 +120,10 @@ func CreateOrderInDB(order models.Order) error {
 		}
 
 		if ownerID != order.UserID {
-			credit := math.Round((order.Amount*0.85)*100) / 100
+
+			var annoncePriceHT float64
+			_ = tx.QueryRow("SELECT price FROM annonces WHERE id = ?", order.ProductID.String()).Scan(&annoncePriceHT)
+			credit := math.Round(annoncePriceHT*100) / 100
 			_, err = tx.Exec("UPDATE users SET balance = balance + ? WHERE id = ?", credit, ownerID.String())
 			if err != nil {
 				return fmt.Errorf("createOrder package db credit owner: %s", err.Error())

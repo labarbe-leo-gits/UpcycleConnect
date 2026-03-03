@@ -81,8 +81,19 @@ if ($productType === 'offer') {
 
 $productName = $service ? ($service['name'] ?? 'Unnamed Service') : ($offer['title'] ?? 'Untitled offer');
 $productDescription = $service ? ($service['description'] ?? '') : ($offer['description'] ?? '');
-$price = floatval($service ? ($service['price'] ?? 0) : ($offer['price'] ?? 0));
-$priceDisplay = ($price == 0) ? "Free" : "€ " . number_format($price, 2);
+$priceHT = floatval($service ? ($service['price'] ?? 0) : ($offer['price'] ?? 0));
+
+$UPCYCLE_COMMISSION_RATE = 0.08;
+$STRIPE_FEE_RATE   = 0.029;
+$STRIPE_FIXED_FEE  = 0.30;
+
+if ($productType === 'offer' && $priceHT > 0) {
+    $priceTTC = round(($priceHT * (1 + $UPCYCLE_COMMISSION_RATE) + $STRIPE_FIXED_FEE) / (1 - $STRIPE_FEE_RATE), 2);
+} else {
+    $priceTTC = $priceHT;
+}
+$price = $priceTTC;
+$priceDisplay = ($priceTTC == 0) ? "Free" : "€ " . number_format($priceTTC, 2);
 
 $orderToken = bin2hex(random_bytes(16));
 if (!isset($_SESSION['order_token'])) {
@@ -239,10 +250,27 @@ $freeNotice = $productType === 'offer'
                 </div>
 
                 <div class="price-breakdown">
+                    <?php if ($productType === 'offer' && $priceTTC > 0): ?>
+                    <div class="price-row">
+                        <span>Net price (HT)</span>
+                        <span>€ <?php echo number_format($priceHT, 2); ?></span>
+                    </div>
+                    <div class="price-row">
+                        <span>UpcycleConnect commission (8%)</span>
+                        <span>€ <?php echo number_format($priceHT * $UPCYCLE_COMMISSION_RATE, 2); ?></span>
+                    </div>
+                    <div class="price-row">
+                        <span>Stripe fees (~2.9% + €0.30)</span>
+                        <span>€ <?php echo number_format($priceTTC - $priceHT * (1 + $UPCYCLE_COMMISSION_RATE), 2); ?></span>
+                    </div>
+                    <?php endif; ?>
                     <div class="price-row total">
-                        <span>Total</span>
+                        <span>Total<?php echo ($productType === 'offer' && $priceTTC > 0) ? ' (TTC)' : ''; ?></span>
                         <span class="total-price"><?php echo $priceDisplay; ?></span>
                     </div>
+                    <?php if ($productType === 'offer' && $priceTTC > 0): ?>
+                    <p class="price-info-note"><i class="fa-solid fa-circle-info"></i> You will be charged <strong><?php echo $priceDisplay; ?></strong>. The seller receives <strong>€ <?php echo number_format($priceHT, 2); ?></strong>. Stripe fees are non-refundable.</p>
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -296,7 +324,7 @@ $freeNotice = $productType === 'offer'
                         
                         <button type="submit" class="btn-primary btn-complete" id="submit-payment">
                             <span id="button-text">
-                                <i class="fa-solid fa-lock"></i> Pay <?php echo $priceDisplay; ?>
+                                <i class="fa-solid fa-lock"></i> Pay <?php echo $priceDisplay; ?><?php if ($productType === 'offer' && $priceTTC > 0): ?> (TTC)<?php endif; ?>
                             </span>
                             <span id="spinner" class="spinner" style="display: none;"></span>
                         </button>

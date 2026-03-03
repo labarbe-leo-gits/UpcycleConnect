@@ -4,6 +4,7 @@ import (
 	"API/models"
 	"database/sql"
 	"fmt"
+	"math"
 
 	"github.com/google/uuid"
 )
@@ -423,9 +424,42 @@ func AdminUpdateAnnonceStatusInDB(id string, status int) error {
 }
 
 func DeleteAnnonceFromDB(id string) error {
-	_, err := Db.Exec("DELETE FROM annonces WHERE id = ?", id)
+	tx, err := Db.Begin()
+	if err != nil {
+		return fmt.Errorf("deleteAnnonce package db begin tx: %s", err.Error())
+	}
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		}
+	}()
+
+	var status int
+	var priceHT float64
+	err = tx.QueryRow("SELECT status, price FROM annonces WHERE id = ?", id).Scan(&status, &priceHT)
+	if err != nil && err != sql.ErrNoRows {
+		return fmt.Errorf("deleteAnnonce package db read annonce: %s", err.Error())
+	}
+
+	if status == 1 && priceHT > 0 {
+		var buyerIDStr string
+		qErr := tx.QueryRow("SELECT user_id FROM orders WHERE product_id = ? LIMIT 1", id).Scan(&buyerIDStr)
+		if qErr == nil && buyerIDStr != "" {
+			refund := math.Round(priceHT*(1+0.08)*100) / 100
+			_, err = tx.Exec("UPDATE users SET balance = balance + ? WHERE id = ?", refund, buyerIDStr)
+			if err != nil {
+				return fmt.Errorf("deleteAnnonce package db refund buyer: %s", err.Error())
+			}
+		}
+	}
+
+	_, err = tx.Exec("DELETE FROM annonces WHERE id = ?", id)
 	if err != nil {
 		return fmt.Errorf("deleteAnnonce package db : %s", err.Error())
+	}
+
+	if commitErr := tx.Commit(); commitErr != nil {
+		return fmt.Errorf("deleteAnnonce package db commit: %s", commitErr.Error())
 	}
 	return nil
 }

@@ -70,9 +70,15 @@ foreach ($annoncesList as $annonce) {
         continue;
     }
 
-    $price = floatval($annonce['price'] ?? 0);
-    $priceDisplay = ($price == 0) ? 'Free' : '€ ' . number_format($price, 2);
-    $priceClass = ($price == 0) ? 'free' : '';
+    $priceHT  = floatval($annonce['price'] ?? 0);
+
+    if ($priceHT > 0) {
+        $priceTTC = round(($priceHT * 1.08 + 0.30) / 0.971, 2);
+    } else {
+        $priceTTC = 0;
+    }
+    $priceDisplay = ($priceTTC == 0) ? 'Free' : '€ ' . number_format($priceTTC, 2);
+    $priceClass = ($priceTTC == 0) ? 'free' : '';
 
     $processedAnnonces[] = [
         'id' => $annonceId,
@@ -80,7 +86,7 @@ foreach ($annoncesList as $annonce) {
         'title' => $annonce['title'] ?? 'Untitled offer',
         'description' => $annonce['description'] ?? '',
         'price' => $priceDisplay,
-        'priceValue' => $price,
+        'priceValue' => $priceTTC,
         'priceClass' => $priceClass,
         'image' => $imagePath,
         'status' => $status
