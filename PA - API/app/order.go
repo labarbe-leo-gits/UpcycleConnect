@@ -126,3 +126,67 @@ func GetOrdersByUserID(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprintf(w, "%s", jsonResponse)
 }
+
+func GetOrderByID(w http.ResponseWriter, r *http.Request) {
+
+	orderIDStr := r.URL.Path[len("/orders/"):]
+	orderID, err := uuid.Parse(orderIDStr)
+
+	if err != nil {
+		fmt.Println("[ERROR] GetOrderByID parse UUID:", err)
+		sendError(w, "Invalid order ID format", http.StatusBadRequest)
+		return
+	}
+
+	order, err := db.GetOrderByIDFromDB(orderID)
+
+	if err != nil {
+		fmt.Println("[ERROR] GetOrderByID DB query:", err)
+		sendError(w, "Unable to fetch order", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	jsonResponse, err := json.Marshal(order)
+
+	if err != nil {
+		fmt.Println("[ERROR] GetOrderByID marshal:", err)
+		sendError(w, "Unable to process response", http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Fprintf(w, "%s", jsonResponse)
+}
+
+func GetRefundRequestsByOrderID(w http.ResponseWriter, r *http.Request) {
+
+	orderIDStr := r.URL.Path[len("/orders/") : len(r.URL.Path)-len("/refund-requests")]
+	orderID, err := uuid.Parse(orderIDStr)
+
+	if err != nil {
+		fmt.Println("[ERROR] GetRefundRequestsByOrderID parse UUID:", err)
+		sendError(w, "Invalid order ID format", http.StatusBadRequest)
+		return
+	}
+
+	refundRequests, err := db.GetRefundRequestsByOrderIDFromDB(orderID)
+
+	if err != nil {
+		fmt.Println("[ERROR] GetRefundRequestsByOrderID DB query:", err)
+		sendError(w, "Unable to fetch refund requests for order", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	jsonResponse, err := json.Marshal(refundRequests)
+
+	if err != nil {
+		fmt.Println("[ERROR] GetRefundRequestsByOrderID marshal:", err)
+		sendError(w, "Unable to process response", http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Fprintf(w, "%s", jsonResponse)
+
+}

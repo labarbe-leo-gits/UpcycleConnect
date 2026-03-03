@@ -214,7 +214,17 @@ func UpdateLastLoginInDB(userID uuid.UUID) error {
 
 func UpdateUserUpcyclingScore(userID uuid.UUID) error {
 	var total sql.NullFloat64
-	err := Db.QueryRow("SELECT COALESCE(SUM(upcycling_score),0) FROM annonces WHERE user_id = ? AND status > 0", userID.String()).Scan(&total)
+	err := Db.QueryRow(`
+		SELECT
+			COALESCE((SELECT SUM(upcycling_score) FROM annonces WHERE user_id = ? AND status > 0), 0)
+			+ COALESCE((
+				SELECT SUM(a.upcycling_score)
+				FROM annonces a
+				JOIN orders o ON a.id = o.product_id
+				WHERE o.user_id = ? AND a.status > 0 AND a.user_id != ?
+			), 0)`,
+		userID.String(), userID.String(), userID.String(),
+	).Scan(&total)
 	if err != nil {
 		return fmt.Errorf("updateUserUpcyclingScore sum: %s", err.Error())
 	}
@@ -227,6 +237,25 @@ func UpdateUserUpcyclingScore(userID uuid.UUID) error {
 		return fmt.Errorf("updateUserUpcyclingScore update: %s", err.Error())
 	}
 	return nil
+}
+
+func GetAnnonceBuyerIDsFromDB(annonceID string) ([]uuid.UUID, error) {
+	rows, err := Db.Query("SELECT DISTINCT user_id FROM orders WHERE product_id = ?", annonceID)
+	if err != nil {
+		return nil, fmt.Errorf("getAnnonceBuyerIDs: %s", err.Error())
+	}
+	defer rows.Close()
+	var ids []uuid.UUID
+	for rows.Next() {
+		var idStr string
+		if scanErr := rows.Scan(&idStr); scanErr != nil {
+			continue
+		}
+		if uid, parseErr := uuid.Parse(idStr); parseErr == nil {
+			ids = append(ids, uid)
+		}
+	}
+	return ids, rows.Err()
 }
 
 func GetUserByIdentifierFromDB(identifier string) (models.User, error) {
@@ -518,4 +547,33 @@ func DeleteUserFromDB(id uuid.UUID) error {
 		return fmt.Errorf("failed to delete user: %v", err)
 	}
 	return nil
+}
+
+func GetRefundRequestsByUserIDFromDB(userID string) ([]models.RefundRequest, error) {
+
+	rows, err := Db.Query("SELECT id, order_id, user_id, reason, status, created_at, updated_at FROM refundsRequests WHERE user_id = ?", userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query refund requests: %v", err)
+	}
+
+	defer rows.Close()
+
+	var refundRequests []models.RefundRequest
+
+	for rows.Next() {
+		var refundRequest models.RefundRequest
+		err := rows.Scan(&refundRequest.ID, &refundRequest.OrderID, &refundRequest.UserID, &refundRequest.Reason, &refundRequest.Status, &refundRequest.CreatedAt, &refundRequest.UpdatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan refund request: %v", err)
+		}
+
+		refundRequests = append(refundRequests, refundRequest)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating over refund request rows: %v", err)
+	}
+
+	return refundRequests, nil
+
 }

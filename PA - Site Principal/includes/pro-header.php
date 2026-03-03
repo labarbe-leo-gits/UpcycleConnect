@@ -46,7 +46,7 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
     ?>
 </head>
 <body>
-    <header data-api-base="<?php echo htmlspecialchars($API_URL ?? ''); ?>" data-user-id="<?php echo htmlspecialchars($user['id'] ?? ''); ?>">
+    <header data-api-base="<?php echo htmlspecialchars($API_URL ?? ''); ?>" data-user-id="<?php echo htmlspecialchars($user['id'] ?? ''); ?>" data-notif-poll="../pro/notifications-poll">
         <div class="left">
             <h1>Professional Portal</h1>
         </div>
@@ -91,13 +91,13 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
                     <a href="<?= $profileUrl ?>"><i class="fa-solid fa-user"></i>Profile</a>
                     <a href="../pro/notifications"><i class="fa-solid fa-bell"></i></i>Notifications <span class="notif-badge" id="notifications-count" hidden>0</span></a>
                     <a href="../pro/planning"><i class="fa-solid fa-calendar-days"></i>Planning</a>
-                    <a href="../pro/logout" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="fa-solid fa-right-from-bracket"></i>Logout</a>
+                    <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="fa-solid fa-right-from-bracket"></i>Logout</a>
                 </div>
             </div>
         </nav>
     </header>
     
-    <form id="logout-form" action="logout" method="POST" class="hidden-form">
+    <form id="logout-form" action="../pro/logout" method="POST" class="hidden-form">
         <input type="hidden" name="logout" value="1">
     </form>
 

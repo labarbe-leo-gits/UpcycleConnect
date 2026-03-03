@@ -151,7 +151,7 @@
                 </div>
                 <div class="service-actions" style="display:flex;gap:8px;flex-wrap:wrap;">
                     <a href="../common/offer?uuid=${encodeURIComponent(ann.id)}"
-                       class="btn-secondary" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;">
+                       class="btn-secondary" style="display:inline-flex;justify-content:center;align-items:center;gap:6px;text-decoration:none;">
                         <i class="fa-solid fa-eye"></i> View
                     </a>
                     <button class="ann-delete-btn"

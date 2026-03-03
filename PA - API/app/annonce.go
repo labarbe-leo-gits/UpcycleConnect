@@ -260,13 +260,17 @@ func UpdateAnnonce(w http.ResponseWriter, r *http.Request) {
 				if uid, parseErr := uuid.Parse(ann.UserID.String()); parseErr == nil {
 					_ = db.UpdateUserUpcyclingScore(uid)
 				}
+				if buyerIDs, buyErr := db.GetAnnonceBuyerIDsFromDB(idStr); buyErr == nil {
+					for _, buyerID := range buyerIDs {
+						_ = db.UpdateUserUpcyclingScore(buyerID)
+					}
+				}
 			}
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
-
 	validationErrors := ValidateAnnonceDto(annonceDto)
 
 	if len(validationErrors) > 0 {
@@ -460,6 +464,10 @@ func DeleteAnnonce(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if uid, parseErr := uuid.Parse(ann.UserID.String()); parseErr == nil {
+		_ = db.UpdateUserUpcyclingScore(uid)
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -497,18 +505,21 @@ func AdminUpdateAnnonceStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if body.Status == 1 {
-		if ann.UpcyclingScore == 0 {
-			ann.UpcyclingScore = CalculateUpcyclingScore(ann.PoidsMateriaux, ann.FacteurID, ann.TypeMateriaux)
-			if ann.FacteurID == nil && ann.TypeMateriaux != "" {
-				if f, _ := db.GetFacteurByName(ann.TypeMateriaux); f != nil {
-					ann.FacteurID = &f.ID
-				}
+	if ann.UpcyclingScore == 0 && body.Status > 0 {
+		ann.UpcyclingScore = CalculateUpcyclingScore(ann.PoidsMateriaux, ann.FacteurID, ann.TypeMateriaux)
+		if ann.FacteurID == nil && ann.TypeMateriaux != "" {
+			if f, _ := db.GetFacteurByName(ann.TypeMateriaux); f != nil {
+				ann.FacteurID = &f.ID
 			}
-			_ = db.UpdateAnnonceInDB(idStr, *ann)
 		}
-		if uid, parseErr := uuid.Parse(ann.UserID.String()); parseErr == nil {
-			_ = db.UpdateUserUpcyclingScore(uid)
+		_ = db.UpdateAnnonceInDB(idStr, *ann)
+	}
+	if uid, parseErr := uuid.Parse(ann.UserID.String()); parseErr == nil {
+		_ = db.UpdateUserUpcyclingScore(uid)
+	}
+	if buyerIDs, buyErr := db.GetAnnonceBuyerIDsFromDB(idStr); buyErr == nil {
+		for _, buyerID := range buyerIDs {
+			_ = db.UpdateUserUpcyclingScore(buyerID)
 		}
 	}
 

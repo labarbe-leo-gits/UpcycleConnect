@@ -232,6 +232,11 @@ func main() {
 	registerRoute("DELETE", "/forums/{id}", "Delete a forum by its UUID", app.DeleteForum, app.JWTAuthMiddleware)
 	registerRoute("PATCH", "/forums/{id}", "Update a forum's title or description by its UUID", app.UpdateForum, app.JWTAuthMiddleware)
 
+	registerRoute("GET", "/orders/{id}", "Get details of a specific order by its UUID", app.GetOrderByID, app.JWTAuthMiddleware)
+	registerRoute("POST", "/refund-requests", "Create a refund request for an order", app.CreateRefundRequest, app.JWTAuthMiddleware)
+	registerRoute("GET", "/users/{id}/refund-requests", "List all refund requests for a specific user by their UUID", app.GetRefundRequestsByUserID, app.JWTAuthMiddleware)
+	registerRoute("GET", "/orders/{id}/refund-requests", "List all refund requests for a specific order by its UUID", app.GetRefundRequestsByOrderID, app.JWTAuthMiddleware)
+
 	http.HandleFunc("/", notFoundHandler)
 
 	fmt.Println("Listening at : " + host + ":" + port)

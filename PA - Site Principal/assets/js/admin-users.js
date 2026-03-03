@@ -87,7 +87,7 @@
     }
 
     function renderUsers(users, container) {
-        const roleLabels = {1:'Customer',2:'Pro',3:'Admin'};
+        const roleLabels = {1:'Customer',2:'Pro',3:'Admin',4:'Part-time employee'};
         users.forEach(u => {
             const card = document.createElement('div');
             card.className = 'service-item user-card';

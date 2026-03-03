@@ -71,6 +71,7 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
                     <a href="../admin/annonces"><i class="fa-solid fa-box-open"></i>Offers</a>
                     <a href="../admin/services"><i class="fa-solid fa-calendar-days"></i>Services &amp; Events</a>
                     <a href="../admin/containers"><i class="fa-solid fa-warehouse"></i>Containers</a>
+                    <a href="../admin/materials"><i class="fa-solid fa-recycle"></i>Materials</a>
                 </div>
             </div>
             <div class="nav-dropdown">
@@ -81,6 +82,7 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
                 <div class="dropdown-menu">
                     <a href="../admin/offers"><i class="fa-solid fa-hand-holding-hand"></i>Deposits</a>
                     <a href="../customers/services"><i class="fa-solid fa-money-bill-transfer"></i>Payouts</a>
+                    <a href="../admin/refunds"><i class="fa-solid fa-rotate-left"></i>Refunds</a>
                 </div>
             </div>
             <div class="btn-wrapper" onClick="window.location.href='../public/index'">

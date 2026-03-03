@@ -7,7 +7,9 @@
         return;
     }
 
-    var endpoint = '../customers/notifications-poll';
+
+    var headerEl = document.querySelector('header[data-notif-poll]');
+    var endpoint = headerEl ? headerEl.getAttribute('data-notif-poll') : '../customers/notifications-poll';
 
     var lastUnreadCount = null;
     var audioContext = null;

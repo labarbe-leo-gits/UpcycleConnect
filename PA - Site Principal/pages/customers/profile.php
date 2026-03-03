@@ -355,7 +355,103 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <button class="tab-btn" data-tab="upcyclingScore">Upcycling Score</button>
         </div>
         <div class="tab-content" id="general-tab">
-            
+
+            <div class="profile-accordion" id="acc-orders" data-section="orders">
+                <button class="accordion-toggle" type="button" aria-expanded="false">
+                    <span><i class="fa-solid fa-box-open"></i> My Orders</span>
+                    <i class="fa-solid fa-chevron-down accordion-chevron"></i>
+                </button>
+                <div class="accordion-body" style="display:none">
+                    <div class="acc-skeleton-row" aria-hidden="true" style="display:none">
+                        <div class="acc-skel-card"></div>
+                        <div class="acc-skel-card"></div>
+                        <div class="acc-skel-card"></div>
+                        <div class="acc-skel-card"></div>
+                    </div>
+                    <div class="acc-carousel" style="display:none">
+                        <div class="acc-track" role="list"></div>
+                        <div class="acc-nav">
+                            <button class="btn-secondary acc-prev" type="button" disabled><i class="fa-solid fa-chevron-left"></i> Previous</button>
+                            <span class="acc-page-info"></span>
+                            <button class="btn-secondary acc-next" type="button"><i class="fa-solid fa-chevron-right"></i> See more</button>
+                        </div>
+                    </div>
+                    <p class="acc-empty" style="display:none">You have no orders yet.</p>
+                </div>
+            </div>
+
+            <div class="profile-accordion" id="acc-annonces" data-section="annonces">
+                <button class="accordion-toggle" type="button" aria-expanded="false">
+                    <span><i class="fa-solid fa-tag"></i> My Posted Offers</span>
+                    <i class="fa-solid fa-chevron-down accordion-chevron"></i>
+                </button>
+                <div class="accordion-body" style="display:none">
+                    <div class="acc-skeleton-row" aria-hidden="true" style="display:none">
+                        <div class="acc-skel-card"></div>
+                        <div class="acc-skel-card"></div>
+                        <div class="acc-skel-card"></div>
+                        <div class="acc-skel-card"></div>
+                    </div>
+                    <div class="acc-carousel" style="display:none">
+                        <div class="acc-track" role="list"></div>
+                        <div class="acc-nav">
+                            <button class="btn-secondary acc-prev" type="button" disabled><i class="fa-solid fa-chevron-left"></i> Previous</button>
+                            <span class="acc-page-info"></span>
+                            <button class="btn-secondary acc-next" type="button"><i class="fa-solid fa-chevron-right"></i> See more</button>
+                        </div>
+                    </div>
+                    <p class="acc-empty" style="display:none">You have no posted offers yet.</p>
+                </div>
+            </div>
+
+            <div class="profile-accordion" id="acc-payouts" data-section="payouts">
+                <button class="accordion-toggle" type="button" aria-expanded="false">
+                    <span><i class="fa-solid fa-money-bill-transfer"></i> Payout Requests</span>
+                    <i class="fa-solid fa-chevron-down accordion-chevron"></i>
+                </button>
+                <div class="accordion-body" style="display:none">
+                    <div class="acc-skeleton-row" aria-hidden="true" style="display:none">
+                        <div class="acc-skel-card"></div>
+                        <div class="acc-skel-card"></div>
+                        <div class="acc-skel-card"></div>
+                        <div class="acc-skel-card"></div>
+                    </div>
+                    <div class="acc-carousel" style="display:none">
+                        <div class="acc-track" role="list"></div>
+                        <div class="acc-nav">
+                            <button class="btn-secondary acc-prev" type="button" disabled><i class="fa-solid fa-chevron-left"></i> Previous</button>
+                            <span class="acc-page-info"></span>
+                            <button class="btn-secondary acc-next" type="button"><i class="fa-solid fa-chevron-right"></i> See more</button>
+                        </div>
+                    </div>
+                    <p class="acc-empty" style="display:none">You have no payout requests yet.</p>
+                </div>
+            </div>
+
+            <div class="profile-accordion" id="acc-refunds" data-section="refunds">
+                <button class="accordion-toggle" type="button" aria-expanded="false">
+                    <span><i class="fa-solid fa-rotate-left"></i> My Refund Requests</span>
+                    <i class="fa-solid fa-chevron-down accordion-chevron"></i>
+                </button>
+                <div class="accordion-body" style="display:none">
+                    <div class="acc-skeleton-row" aria-hidden="true" style="display:none">
+                        <div class="acc-skel-card"></div>
+                        <div class="acc-skel-card"></div>
+                        <div class="acc-skel-card"></div>
+                        <div class="acc-skel-card"></div>
+                    </div>
+                    <div class="acc-carousel" style="display:none">
+                        <div class="acc-track" role="list"></div>
+                        <div class="acc-nav">
+                            <button class="btn-secondary acc-prev" type="button" disabled><i class="fa-solid fa-chevron-left"></i> Previous</button>
+                            <span class="acc-page-info"></span>
+                            <button class="btn-secondary acc-next" type="button"><i class="fa-solid fa-chevron-right"></i> See more</button>
+                        </div>
+                    </div>
+                    <p class="acc-empty" style="display:none">You have no refund requests yet.</p>
+                </div>
+            </div>
+
         </div>
         <div class="tab-content" id="upcyclingScore-tab" style="display:none">
             <div class="upcycling-gauge-container">
@@ -623,6 +719,163 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 </div>
 
+<div class="modal-overlay" id="order-details-modal" aria-hidden="true">
+    <div class="modal modal--order-details" role="dialog" aria-modal="true" aria-labelledby="order-details-title">
+        <div class="modal-header">
+            <h2 id="order-details-title"><i class="fa-solid fa-box-open"></i> Order Details</h2>
+            <button type="button" class="modal-close" id="close-order-details-modal" aria-label="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="modal-body" id="order-details-body">
+
+            <div class="order-details-skeleton" id="order-details-skeleton">
+                <div class="od-skel-section-title skeleton"></div>
+                <div class="od-skel-row">
+                    <div class="od-skel-label skeleton"></div>
+                    <div class="od-skel-value skeleton"></div>
+                </div>
+                <div class="od-skel-row">
+                    <div class="od-skel-label skeleton"></div>
+                    <div class="od-skel-value skeleton"></div>
+                </div>
+                <div class="od-skel-row">
+                    <div class="od-skel-label skeleton"></div>
+                    <div class="od-skel-value od-skel-value--badge skeleton"></div>
+                </div>
+                <div class="od-skel-row">
+                    <div class="od-skel-label skeleton"></div>
+                    <div class="od-skel-value skeleton"></div>
+                </div>
+                <div class="od-skel-row">
+                    <div class="od-skel-label skeleton"></div>
+                    <div class="od-skel-value skeleton"></div>
+                </div>
+                <div class="od-skel-divider skeleton"></div>
+                <div class="od-skel-section-title skeleton"></div>
+                <div class="od-skel-row">
+                    <div class="od-skel-label skeleton"></div>
+                    <div class="od-skel-value skeleton"></div>
+                </div>
+                <div class="od-skel-row">
+                    <div class="od-skel-label skeleton"></div>
+                    <div class="od-skel-value od-skel-value--long skeleton"></div>
+                </div>
+                <div class="od-skel-row">
+                    <div class="od-skel-label skeleton"></div>
+                    <div class="od-skel-value skeleton"></div>
+                </div>
+                <div class="od-skel-row">
+                    <div class="od-skel-label skeleton"></div>
+                    <div class="od-skel-value od-skel-value--badge skeleton"></div>
+                </div>
+            </div>
+            <div class="order-details-content" id="order-details-content" style="display:none">
+                <div class="od-section-title"><i class="fa-solid fa-receipt"></i> Transaction</div>
+                <div class="od-grid">
+                    <div class="od-row">
+                        <span class="od-label">Transaction ID</span>
+                        <span class="od-value od-mono" id="od-transaction-id"></span>
+                        <button class="btn-copy od-copy-btn" id="od-copy-txid" title="Copy transaction ID"><i class="fa-solid fa-copy"></i></button>
+                    </div>
+                    <div class="od-row">
+                        <span class="od-label">Order ID</span>
+                        <span class="od-value od-mono" id="od-order-id"></span>
+                        <button class="btn-copy od-copy-btn" id="od-copy-oid" title="Copy order ID"><i class="fa-solid fa-copy"></i></button>
+                    </div>
+                    <div class="od-row">
+                        <span class="od-label">Amount</span>
+                        <span class="od-value od-amount" id="od-amount"></span>
+                    </div>
+                    <div class="od-row">
+                        <span class="od-label">Status</span>
+                        <span class="od-value" id="od-status"></span>
+                    </div>
+                </div>
+
+                <div class="od-divider"></div>
+
+                <div id="od-annonce-section">
+                    <div class="od-section-title"><i class="fa-solid fa-tag"></i> Offer</div>
+                    <div class="od-grid">
+                        <div class="od-row">
+                            <span class="od-label">Title</span>
+                            <span class="od-value" id="od-annonce-title"></span>
+                        </div>
+                        <div class="od-row od-row--full">
+                            <span class="od-label">Description</span>
+                            <span class="od-value od-description" id="od-annonce-description"></span>
+                        </div>
+                        <div class="od-row">
+                            <span class="od-label">Price (HT)</span>
+                            <span class="od-value" id="od-annonce-price"></span>
+                        </div>
+                        <div class="od-row">
+                            <span class="od-label">Material type</span>
+                            <span class="od-value" id="od-annonce-material"></span>
+                        </div>
+                        <div class="od-row">
+                            <span class="od-label">Offer status</span>
+                            <span class="od-value" id="od-annonce-status"></span>
+                        </div>
+                    </div>
+                </div>
+                <div id="od-no-annonce" style="display:none">
+                    <p class="od-meta-note"><i class="fa-solid fa-circle-info"></i> This order is not linked to an offer.</p>
+                </div>
+                <div id="od-error-msg" class="error-message" style="display:none"></div>
+            </div>
+        </div>
+        <div class="modal-actions" id="order-details-actions" style="display:none">
+            <button type="button" class="btn-secondary" id="close-order-details-btn">Close</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="refund-modal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="refund-modal-title">
+        <div class="modal-header">
+            <h2 id="refund-modal-title"><i class="fa-solid fa-rotate-left"></i> Request Refund</h2>
+            <button type="button" class="modal-close" id="close-refund-modal" aria-label="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div id="refund-loading" style="display:none;text-align:center;padding:2rem 0;">
+                <span class="loader" role="status" aria-label="Loading"></span>
+                <p style="margin-top:1.5rem;color:#555;">Submitting your request…</p>
+            </div>
+            <!-- Form state -->
+            <div id="refund-form-wrap">
+                <p class="od-meta-note" id="refund-order-hint"></p>
+                <form id="refund-request-form" novalidate>
+                    <input type="hidden" id="refund-order-id" name="order_id" value="">
+                    <div class="field">
+                        <label for="refund-reason">Reason for refund <span style="color:#e53e3e">*</span></label>
+                        <div class="input-wrapper">
+                            <textarea
+                                id="refund-reason"
+                                name="reason"
+                                rows="4"
+                                placeholder="Please describe why you are requesting a refund…"
+                                required
+                                style="resize:vertical;min-height:90px;"
+                            ></textarea>
+                        </div>
+                    </div>
+                    <div id="refund-feedback" style="margin-top:.5rem;"></div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn-secondary" id="cancel-refund-modal">Cancel</button>
+                        <button type="submit" class="btn-primary" id="refund-submit-btn">
+                            <i class="fa-solid fa-paper-plane"></i> Submit Request
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div id="planning-preloader" class="planning-preloader" style="display:none;z-index:10000;">
     <div class="recycle-spinner">
         <div class="rec-arc a"></div>
@@ -635,6 +888,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
 <script src="../../assets/js/profile.js"></script>
+<script src="../../assets/js/profile-sections.js"></script>
 <script>
 
 (function () {
@@ -756,39 +1010,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 })();
 </script>
-<style>
-.mfa-status-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: .5rem;
-    padding: .5rem 1rem;
-    border-radius: 6px;
-    font-weight: 600;
-    margin-bottom: 1rem;
-}
-.mfa-enabled  { background: #d4edda; color: #155724; }
-.mfa-disabled { background: #f8d7da; color: #721c24; }
-.mfa-secret-key {
-    font-size: .9rem;
-    background: #f4f4f4;
-    padding: .2rem .4rem;
-    border-radius: 4px;
-    letter-spacing: .1em;
-    word-break: break-all;
-}
-.mfa-info-text { color: #555; font-size: .95rem; }
-.btn-danger {
-    background: #dc3545;
-    color: #fff;
-    border: none;
-    border-radius: 6px;
-    padding: .55rem 1.2rem;
-    cursor: pointer;
-    font-size: .95rem;
-    display: inline-flex;
-    align-items: center;
-    gap: .4rem;
-}
-.btn-danger:hover { background: #c82333; }
-</style>
+
 <?php if (!$isAjax) { include_once '../../includes/footer.php'; } ?>

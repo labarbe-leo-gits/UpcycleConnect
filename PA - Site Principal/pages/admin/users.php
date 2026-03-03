@@ -119,6 +119,7 @@ if (ob_get_level()) { @ob_flush(); }
                         <option value="1">Particular</option>
                         <option value="2">Professional</option>
                         <option value="3">Admin</option>
+                        <option value="4">Part-time employee</option>
                     </select>
                 </div>
             </div>

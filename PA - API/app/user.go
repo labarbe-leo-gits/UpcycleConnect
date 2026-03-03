@@ -128,8 +128,8 @@ func ValidateUserDto(user models.User) []string {
 		errs = append(errs, "Last name is required and must be at most 60 characters long.")
 	}
 
-	if user.UserType != 1 && user.UserType != 2 {
-		errs = append(errs, "User type must be 1 (customer) or 2 (artisan/professional).")
+	if user.UserType != 1 && user.UserType != 2 && user.UserType != 3 && user.UserType != 4 {
+		errs = append(errs, "User type must be 1 (customer), 2 (artisan/professional), 3 (admin) or 4 (part-time employee).")
 	}
 
 	if user.Email == "" || !strings.Contains(user.Email, "@") || !strings.Contains(user.Email, ".") {
@@ -655,4 +655,29 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"message": "User deleted successfully"})
+}
+
+func GetRefundRequestsByUserID(w http.ResponseWriter, r *http.Request) {
+
+	userID := strings.TrimPrefix(r.URL.Path, "/users/")
+	userID = strings.TrimSuffix(userID, "/refund-requests")
+
+	if _, err := uuid.Parse(userID); err != nil {
+		fmt.Println("[WARN] GetRefundRequestsByUserID: invalid UUID", userID)
+		sendError(w, "Invalid user ID format", http.StatusBadRequest)
+		return
+	}
+
+	refundRequests, err := db.GetRefundRequestsByUserIDFromDB(userID)
+
+	if err != nil {
+		fmt.Println("[ERROR] GetRefundRequestsByUserID:", err)
+		sendError(w, "Unable to fetch refund requests for user", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(refundRequests)
+
 }
