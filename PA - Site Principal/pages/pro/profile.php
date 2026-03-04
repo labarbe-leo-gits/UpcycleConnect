@@ -306,9 +306,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <button type="button" class="btn-primary btn-inline" id="open-payment-modal">
                         <i class="fa-solid fa-money-check-dollar"></i> Request Payment of Balance
                     </button>
-                    <a href="subscription" id="sub-quick-access" class="sub-quick-btn" title="Subscription">
-                        <i class="fas fa-crown"></i>
-                        <span id="sub-quick-label">Subscription</span>
+                    <a href="dashboard" id="sub-quick-access" class="sub-quick-btn" title="Subscription">
+                        <i class="fa-solid fa-gauge-high"></i>
+                        <span id="sub-quick-label">Dashboard</span>
                     </a>
                     <button onclick="document.getElementById('logout-form').submit()" class="btn-logout">
                         <i class="fa-solid fa-right-from-bracket"></i> Logout
@@ -672,40 +672,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             + '<a href="subscription" class="sub-quick-btn primary"><i class="fas fa-crown"></i> Go Premium</a>'
             + '<a href="subscription" class="sub-quick-btn"><i class="fas fa-info-circle"></i> Learn more</a>'
             + '</div>'
-            + '<div class="sub-accordion-comparison">'
-            + '<div class="plan-comparison">'
-            + '<div class="plan free">'
-            + '<h3>Free</h3>'
-            + '<p class="price">€0 / month</p>'
-            + '<ul>'
-            + '<li><i class="fas fa-check"></i> Post listings</li>'
-            + '<li><i class="fas fa-check"></i> Access to containers</li>'
-            + '<li><i class="fas fa-check"></i> Community forum</li>'
-            + '<li><i class="fas fa-check"></i> Messaging</li>'
-            + '<li class="locked"><i class="fas fa-lock"></i> Advanced dashboards</li>'
-            + '<li class="locked"><i class="fas fa-lock"></i> Ecological analysis</li>'
-            + '<li class="locked"><i class="fas fa-lock"></i> Material statistics</li>'
-            + '<li class="locked"><i class="fas fa-lock"></i> Priority alerts</li>'
-            + '</ul>'
-            + '<span class="current-plan">Your current plan</span>'
-            + '</div>'
-            + '<div class="plan premium">'
-            + '<div class="popular-badge">Recommended</div>'
-            + '<h3><i class="fas fa-crown"></i> Premium</h3>'
-            + '<p class="price">' + display + '</p>'
-            + '<ul>'
-            + '<li><i class="fas fa-check"></i> Everything in Free</li>'
-            + '<li><i class="fas fa-check"></i> Advanced dashboards</li>'
-            + '<li><i class="fas fa-check"></i> Ecological impact analysis</li>'
-            + '<li><i class="fas fa-check"></i> Material statistics</li>'
-            + '<li><i class="fas fa-check"></i> Priority collection alerts</li>'
-            + '<li><i class="fas fa-check"></i> Priority support</li>'
-            + '</ul>'
-            + '<button id="acc-btn-subscribe" class="btn btn-primary btn-lg"><i class="fas fa-crown"></i> Go Premium</button>'
-            + '<p class="billing-note">Cancel anytime</p>'
-            + '</div>'
-            + '</div>'
-            + '</div>';
+            
 
         var btnSub = document.getElementById('acc-btn-subscribe');
         if (btnSub) {
