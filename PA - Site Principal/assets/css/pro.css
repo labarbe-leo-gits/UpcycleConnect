@@ -27,3 +27,37 @@
     border-radius: 8px;
     margin-bottom: 20px;
 }
+
+.mfa-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .5rem 1rem;
+    border-radius: 6px;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+.mfa-enabled  { background: #d4edda; color: #155724; }
+.mfa-disabled { background: #f8d7da; color: #721c24; }
+.mfa-secret-key {
+    font-size: .9rem;
+    background: #f4f4f4;
+    padding: .2rem .4rem;
+    border-radius: 4px;
+    letter-spacing: .1em;
+    word-break: break-all;
+}
+.mfa-info-text { color: #555; font-size: .95rem; }
+.btn-danger {
+    background: #dc3545;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: .55rem 1.2rem;
+    cursor: pointer;
+    font-size: .95rem;
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+}
+.btn-danger:hover { background: #c82333; }

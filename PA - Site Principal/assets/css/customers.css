@@ -108,6 +108,77 @@
   background: #ecfdf5;
   transform: translateY(-1px);
 }
+
+.profile-edit-input {
+  border: 1.5px solid #10b981;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 15px;
+  font-family: inherit;
+  color: #1f2937;
+  outline: none;
+  min-width: 140px;
+  max-width: 260px;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
+}
+
+.profile-edit-input.input-error {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
+}
+
+.btn-edit-save,
+.btn-edit-cancel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  transition:
+    background 0.15s,
+    transform 0.12s;
+  flex-shrink: 0;
+}
+
+.btn-edit-save {
+  background: #10b981;
+  color: white;
+}
+
+.btn-edit-save:hover {
+  background: #059669;
+  transform: translateY(-1px);
+}
+
+.btn-edit-save:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-edit-cancel {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.btn-edit-cancel:hover {
+  background: #e5e7eb;
+  color: #374151;
+  transform: translateY(-1px);
+}
+
+.edit-error-msg {
+  font-size: 12px;
+  color: #ef4444;
+  font-weight: 500;
+}
 .btn-copy:active {
   transform: translateY(0);
 }

@@ -162,6 +162,8 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 
         if (tab === 'general') {
             document.getElementById('general-tab').style.display = '';
+        } else if (tab === 'business') {
+            document.getElementById('business-tab').style.display = '';
         } else if (tab === 'security') {
             document.getElementById('security-tab').style.display = '';
         } else if (tab === 'upcyclingScore') {
@@ -250,23 +252,102 @@ function updateGauge(score) {
 }
 
 document.querySelectorAll('.btn-edit-inline').forEach(btn => {
-    btn.addEventListener('click', function() {
+    btn.addEventListener('click', function () {
         const field = this.getAttribute('data-edit');
+        const row = this.closest('.profile-field-row');
         const valueSpan = document.getElementById(field + '-value');
-        if (!valueSpan) return;
-        const currentValue = valueSpan.textContent;
+        if (!valueSpan || row.querySelector('.profile-edit-input')) return;
+
+        const originalValue = valueSpan.textContent.trim();
+        const editBtn = this;
+
         const input = document.createElement('input');
         input.type = field === 'email' ? 'email' : 'text';
-        input.value = currentValue;
+        input.value = originalValue;
         input.className = 'profile-edit-input';
+
+        const saveBtn = document.createElement('button');
+        saveBtn.type = 'button';
+        saveBtn.className = 'btn-edit-save';
+        saveBtn.title = 'Save';
+        saveBtn.innerHTML = '<i class="fa-solid fa-check"></i>';
+
+        const cancelBtn = document.createElement('button');
+        cancelBtn.type = 'button';
+        cancelBtn.className = 'btn-edit-cancel';
+        cancelBtn.title = 'Cancel';
+        cancelBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+
         valueSpan.replaceWith(input);
+        editBtn.style.display = 'none';
+        editBtn.insertAdjacentElement('afterend', cancelBtn);
+        editBtn.insertAdjacentElement('afterend', saveBtn);
         input.focus();
-        input.addEventListener('blur', function() {
-            const newValue = input.value;
-            const newSpan = document.createElement('span');
-            newSpan.id = field + '-value';
-            newSpan.textContent = newValue;
-            input.replaceWith(newSpan);
+        input.select();
+
+        function cancelEdit() {
+            const span = document.createElement('span');
+            span.id = field + '-value';
+            span.textContent = originalValue;
+            input.replaceWith(span);
+            saveBtn.remove();
+            cancelBtn.remove();
+            const errMsg = row.querySelector('.edit-error-msg');
+            if (errMsg) errMsg.remove();
+            editBtn.style.display = '';
+        }
+
+        async function saveEdit() {
+            const newValue = input.value.trim();
+            if (newValue === originalValue) { cancelEdit(); return; }
+            if (!newValue) return;
+
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+            try {
+                const res = await fetch('update-profile-api', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    body: JSON.stringify({ field, value: newValue })
+                });
+                const data = await res.json();
+                if (!res.ok || data.error) throw new Error(data.error || 'Update failed');
+
+                const span = document.createElement('span');
+                span.id = field + '-value';
+                span.textContent = newValue;
+                input.replaceWith(span);
+                saveBtn.remove();
+                cancelBtn.remove();
+                editBtn.style.display = '';
+
+                span.style.transition = 'color .4s';
+                span.style.color = '#10b981';
+                setTimeout(() => { span.style.color = ''; }, 1800);
+            } catch (err) {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fa-solid fa-check"></i>';
+                input.classList.add('input-error');
+                let errMsg = row.querySelector('.edit-error-msg');
+                if (!errMsg) {
+                    errMsg = document.createElement('span');
+                    errMsg.className = 'edit-error-msg';
+                    cancelBtn.insertAdjacentElement('afterend', errMsg);
+                }
+                errMsg.textContent = err.message;
+                setTimeout(() => {
+                    input.classList.remove('input-error');
+                    if (errMsg) errMsg.remove();
+                }, 3500);
+            }
+        }
+
+        saveBtn.addEventListener('click', saveEdit);
+        cancelBtn.addEventListener('click', cancelEdit);
+        input.addEventListener('keydown', e => {
+            if (e.key === 'Enter') { e.preventDefault(); saveEdit(); }
+            if (e.key === 'Escape') { cancelEdit(); }
         });
     });
 });

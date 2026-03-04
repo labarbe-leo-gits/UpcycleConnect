@@ -195,6 +195,10 @@ func UpdateUserInDB(id uuid.UUID, updates map[string]interface{}) error {
 		cols = append(cols, "username = ?")
 		args = append(args, v)
 	}
+	if v, ok := updates["company_name"].(string); ok {
+		cols = append(cols, "company_name = ?")
+		args = append(args, v)
+	}
 	if len(cols) == 0 {
 		return nil
 	}
