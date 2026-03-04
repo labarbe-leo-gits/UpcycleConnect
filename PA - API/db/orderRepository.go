@@ -290,7 +290,7 @@ func GetOrderByIDFromDB(orderID uuid.UUID) (*models.Order, error) {
 func GetRefundRequestsByOrderIDFromDB(orderID uuid.UUID) ([]models.RefundRequest, error) {
 
 	refundRequests := []models.RefundRequest{}
-	rows, err := Db.Query("SELECT id, order_id, user_id, reason, status, created_at, updated_at, approver_id FROM refundsRequests WHERE order_id = ?", orderID)
+	rows, err := Db.Query("SELECT id, order_id, user_id, reason, status, created_at, updated_at, approved_by FROM refundsRequests WHERE order_id = ?", orderID)
 
 	if err != nil {
 		return nil, fmt.Errorf("getRefundRequestsByOrderID package db : %s", err.Error())

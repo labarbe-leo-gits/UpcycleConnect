@@ -1,5 +1,6 @@
 <?php
-$title = 'Dashboard';
+$title    = 'Dashboard';
+$extraCss = ['../../assets/css/subscription.css'];
 require_once '../../../vendor/autoload.php';
 $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
 
@@ -305,6 +306,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <button type="button" class="btn-primary btn-inline" id="open-payment-modal">
                         <i class="fa-solid fa-money-check-dollar"></i> Request Payment of Balance
                     </button>
+                    <a href="subscription" id="sub-quick-access" class="sub-quick-btn" title="Subscription">
+                        <i class="fas fa-crown"></i>
+                        <span id="sub-quick-label">Subscription</span>
+                    </a>
                     <button onclick="document.getElementById('logout-form').submit()" class="btn-logout">
                         <i class="fa-solid fa-right-from-bracket"></i> Logout
                     </button>
@@ -326,6 +331,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <i class="fa-solid fa-circle-info"></i>
                 Your account is active. Use the tabs above to manage your business information and security settings.
             </p>
+
+            <div class="profile-accordion" id="acc-subscription">
+                <button class="accordion-toggle" type="button" aria-expanded="false">
+                    <span><i class="fas fa-crown"></i> Subscription</span>
+                    <i class="fa-solid fa-chevron-down accordion-chevron"></i>
+                </button>
+                <div class="accordion-body" style="display:none">
+                    <div id="acc-sub-skeleton" class="acc-sub-skeleton">
+                        <div class="acc-sub-skel-row wide skeleton"></div>
+                        <div class="acc-sub-skel-row mid skeleton"></div>
+                        <div class="acc-sub-skel-row slim skeleton"></div>
+                    </div>
+                    <div id="acc-sub-content" style="display:none"></div>
+                </div>
+            </div>
+
         </div>
 
         <div class="tab-content" id="business-tab" style="display:none;">
@@ -596,6 +617,164 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
 <script src="../../assets/js/profile.js"></script>
+<script>
+(function () {
+    var loaded = false;
+
+    function fmt(n, d) {
+        return Number(n).toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d });
+    }
+
+    function renderPremium(priceDisplay) {
+        var el = document.getElementById('acc-sub-content');
+        el.innerHTML =
+            '<div class="acc-sub-actions">'
+            + '<div class="acc-sub-premium-status"><i class="fas fa-crown"></i> Premium active</div>'
+            + '</div>'
+            + '<p style="font-size:14px;color:#065f46;margin:0 0 16px;">You have access to all advanced UpcycleConnect features.</p>'
+            + '<div class="acc-sub-actions">'
+            + '<a href="dashboard" class="sub-quick-btn primary"><i class="fas fa-chart-bar"></i> Go to Dashboard</a>'
+            + '<button id="acc-btn-manage" class="sub-quick-btn" data-url="create-billing-portal"><i class="fas fa-cog"></i> Manage subscription</button>'
+            + '</div>';
+
+        var btnManage = document.getElementById('acc-btn-manage');
+        if (btnManage) {
+            btnManage.addEventListener('click', function () {
+                btnManage.disabled = true;
+                btnManage.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Redirecting…';
+                fetch(btnManage.dataset.url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    body: JSON.stringify({})
+                }).then(function (r) { return r.json(); }).then(function (data) {
+                    if (data.portal_url) {
+                        window.location.href = data.portal_url;
+                    } else {
+                        alert(data.error || 'An error occurred.');
+                        btnManage.disabled = false;
+                        btnManage.innerHTML = '<i class="fas fa-cog"></i> Manage subscription';
+                    }
+                }).catch(function () {
+                    alert('Network error.');
+                    btnManage.disabled = false;
+                    btnManage.innerHTML = '<i class="fas fa-cog"></i> Manage subscription';
+                });
+            });
+        }
+    }
+
+    function renderFree(priceDisplay) {
+        var display = priceDisplay || '€29.99 / month';
+        var el = document.getElementById('acc-sub-content');
+        el.innerHTML =
+            '<p class="acc-sub-free-cta">You are on the <strong>Free</strong> plan. Upgrade to unlock advanced analytics and tools.</p>'
+            + '<div class="acc-sub-actions">'
+            + '<a href="subscription" class="sub-quick-btn primary"><i class="fas fa-crown"></i> Go Premium</a>'
+            + '<a href="subscription" class="sub-quick-btn"><i class="fas fa-info-circle"></i> Learn more</a>'
+            + '</div>'
+            + '<div class="sub-accordion-comparison">'
+            + '<div class="plan-comparison">'
+            + '<div class="plan free">'
+            + '<h3>Free</h3>'
+            + '<p class="price">€0 / month</p>'
+            + '<ul>'
+            + '<li><i class="fas fa-check"></i> Post listings</li>'
+            + '<li><i class="fas fa-check"></i> Access to containers</li>'
+            + '<li><i class="fas fa-check"></i> Community forum</li>'
+            + '<li><i class="fas fa-check"></i> Messaging</li>'
+            + '<li class="locked"><i class="fas fa-lock"></i> Advanced dashboards</li>'
+            + '<li class="locked"><i class="fas fa-lock"></i> Ecological analysis</li>'
+            + '<li class="locked"><i class="fas fa-lock"></i> Material statistics</li>'
+            + '<li class="locked"><i class="fas fa-lock"></i> Priority alerts</li>'
+            + '</ul>'
+            + '<span class="current-plan">Your current plan</span>'
+            + '</div>'
+            + '<div class="plan premium">'
+            + '<div class="popular-badge">Recommended</div>'
+            + '<h3><i class="fas fa-crown"></i> Premium</h3>'
+            + '<p class="price">' + display + '</p>'
+            + '<ul>'
+            + '<li><i class="fas fa-check"></i> Everything in Free</li>'
+            + '<li><i class="fas fa-check"></i> Advanced dashboards</li>'
+            + '<li><i class="fas fa-check"></i> Ecological impact analysis</li>'
+            + '<li><i class="fas fa-check"></i> Material statistics</li>'
+            + '<li><i class="fas fa-check"></i> Priority collection alerts</li>'
+            + '<li><i class="fas fa-check"></i> Priority support</li>'
+            + '</ul>'
+            + '<button id="acc-btn-subscribe" class="btn btn-primary btn-lg"><i class="fas fa-crown"></i> Go Premium</button>'
+            + '<p class="billing-note">Cancel anytime</p>'
+            + '</div>'
+            + '</div>'
+            + '</div>';
+
+        var btnSub = document.getElementById('acc-btn-subscribe');
+        if (btnSub) {
+            btnSub.addEventListener('click', function () {
+                btnSub.disabled = true;
+                btnSub.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Redirecting…';
+                fetch('create-subscription-checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    body: JSON.stringify({})
+                }).then(function (r) { return r.json(); }).then(function (data) {
+                    if (data.checkout_url) {
+                        window.location.href = data.checkout_url;
+                    } else {
+                        alert(data.error || 'An error occurred.');
+                        btnSub.disabled = false;
+                        btnSub.innerHTML = '<i class="fas fa-crown"></i> Go Premium';
+                    }
+                }).catch(function () {
+                    alert('Network error.');
+                    btnSub.disabled = false;
+                    btnSub.innerHTML = '<i class="fas fa-crown"></i> Go Premium';
+                });
+            });
+        }
+    }
+
+    function loadSubscription() {
+        if (loaded) return;
+        loaded = true;
+        fetch('subscription-api', {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        }).then(function (r) { return r.json(); }).then(function (data) {
+            document.getElementById('acc-sub-skeleton').style.display = 'none';
+            document.getElementById('acc-sub-content').style.display  = '';
+
+            var quickLabel = document.getElementById('sub-quick-label');
+            var quickBtn   = document.getElementById('sub-quick-access');
+
+            if (data.is_premium) {
+                if (quickLabel) quickLabel.textContent = 'My subscription';
+                if (quickBtn)   quickBtn.classList.add('primary');
+                renderPremium(data.price_display);
+            } else {
+                if (quickLabel) quickLabel.textContent = 'Go Premium';
+                renderFree(data.price_display);
+            }
+        }).catch(function () {
+            document.getElementById('acc-sub-skeleton').style.display = 'none';
+            document.getElementById('acc-sub-content').style.display  = '';
+            document.getElementById('acc-sub-content').innerHTML =
+                '<p style="color:#9ca3af;font-size:14px;">Unable to load subscription status.</p>';
+        });
+    }
+
+    var toggle = document.querySelector('#acc-subscription .accordion-toggle');
+    if (toggle) {
+        toggle.addEventListener('click', function () {
+            var body    = this.closest('.profile-accordion').querySelector('.accordion-body');
+            var chevron = this.querySelector('.accordion-chevron');
+            var open    = this.getAttribute('aria-expanded') === 'true';
+            this.setAttribute('aria-expanded', open ? 'false' : 'true');
+            body.style.display = open ? 'none' : '';
+            if (chevron) chevron.style.transform = open ? '' : 'rotate(180deg)';
+            if (!open) loadSubscription();
+        });
+    }
+})();
+</script>
 <script>
 (function () {
     document.querySelectorAll('.tab-btn').forEach(function (btn) {

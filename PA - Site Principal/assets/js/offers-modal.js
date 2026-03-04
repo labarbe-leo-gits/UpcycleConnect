@@ -273,7 +273,6 @@
             priceInputEl.addEventListener('input', updateTTCPreview);
             priceInputEl.addEventListener('change', updateTTCPreview);
         }
-        // ─────────────────────────────────────────────────────────
         var materialSelect = document.getElementById('offer-material');
         var customInput = document.getElementById('offer-material-custom');
         var estimationGroup = document.getElementById('offer-estimation-group');
@@ -411,7 +410,6 @@
                 payload.estimation_score = parseFloat(estimate);
             } else if (material) {
                 payload.facteur_id = material;
-                // also store human-readable name
                 payload.type_materiaux = materialSelect.options[materialSelect.selectedIndex].text;
             }
 

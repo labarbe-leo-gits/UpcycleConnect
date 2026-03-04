@@ -300,9 +300,9 @@ $refund = \Stripe\Refund::create([
 ]);
 ```
 
-### 4. Subscription Support
+### 4. Subscriptions — Modèle Freemium Premium
 
-For recurring services, consider using Stripe Subscriptions.
+See the dedicated section **[Abonnement Premium (Freemium)](#abonnement-premium-freemium)** below for the full implementation already in place.
 
 ## Troubleshooting
 
@@ -332,6 +332,179 @@ For recurring services, consider using Stripe Subscriptions.
 - [Stripe Payment Intents](https://stripe.com/docs/payments/payment-intents)
 - [Stripe Webhooks](https://stripe.com/docs/webhooks)
 - [Stripe Security](https://stripe.com/docs/security/guide)
+
+---
+
+## Abonnement Premium (Freemium)
+
+### Vue d'ensemble
+
+Le modèle freemium permet aux professionnels/artisans/entreprises de souscrire  
+un abonnement mensuel déblocant des fonctionnalités avancées :
+
+| Fonctionnalité                                 | Gratuit | Premium |
+| ---------------------------------------------- | :-----: | :-----: |
+| Publier des annonces                           |    ✓    |    ✓    |
+| Accès aux conteneurs                           |    ✓    |    ✓    |
+| Forum communautaire                            |    ✓    |    ✓    |
+| Messagerie                                     |    ✓    |    ✓    |
+| **Tableaux de bord avancés**                   |    ✗    |    ✓    |
+| **Analyse d'impact écologique détaillée**      |    ✗    |    ✓    |
+| **Statistiques sur les matériaux disponibles** |    ✗    |    ✓    |
+| **Alertes priorisées pour la collecte**        |    ✗    |    ✓    |
+
+---
+
+### Architecture du flux
+
+```
+Pro user  →  /pages/pro/subscription.php
+          →  clic "Passer Premium"
+          →  POST /pages/pro/create-subscription-checkout.php
+                   └─ Stripe\Checkout\Session::create(mode='subscription')
+                       → redirect stripe.com
+
+          ←  success_url: /subscription-success.php?session_id={CHECKOUT_SESSION_ID}
+                   └─ vérifie la session Stripe
+                   └─ appelle POST /internal/subscription/activate (Go API)
+                       → UPDATE users SET is_premium=1, stripe_customer_id=..., stripe_subscription_id=...
+
+(async) Stripe Webhook → /pages/public/stripe-subscription-webhook.php
+          checkout.session.completed        → activate
+          customer.subscription.deleted     → revoke
+          invoice.payment_failed            → (revoke optionnel)
+```
+
+---
+
+### Étape 1 — Migration base de données
+
+Pour une installation existante, exécutez :
+
+```sql
+ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_customer_id    VARCHAR(255) NULL;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_subscription_id VARCHAR(255) NULL;
+```
+
+Ces colonnes sont déjà présentes dans `db_schema.sql` (nouvelles installations).
+
+---
+
+### Étape 2 — Créer le produit et le prix dans Stripe Dashboard
+
+1. Stripe Dashboard → **Products** → **Add product**
+2. Nom : `UpcycleConnect Premium`
+3. **Add price** → Recurring → Monthly → `29.99 EUR` (ou votre tarif)
+4. Copier le **Price ID** (format `price_XXXXX`)
+5. Coller dans `PA - Site Principal/config/stripe.php` :
+
+```php
+'premium_price_id'      => 'price_XXXXX',
+'premium_price_display' => '29,99€ / mois',
+```
+
+---
+
+### Étape 3 — Configurer le webhook dans Stripe Dashboard
+
+1. Dashboard → **Developers** → **Webhooks** → **Add endpoint**
+2. URL :  
+   `https://votre-domaine.com/PA/PA%20-%20Site%20Principal/pages/public/stripe-subscription-webhook.php`
+3. Événements à sélectionner :
+   - `checkout.session.completed`
+   - `customer.subscription.deleted`
+   - `invoice.payment_failed` _(optionnel)_
+4. Copier le **Signing secret** (`whsec_...`)
+5. L'ajouter dans `.env` :
+
+```env
+STRIPE_WEBHOOK_SECRET=whsec_YOUR_SECRET_HERE
+```
+
+---
+
+### Étape 4 — Configurer le Customer Portal (portail de gestion)
+
+Les utilisateurs premium peuvent gérer/annuler leur abonnement via  
+le portail Stripe, accessible depuis `subscription.php` → bouton "Gérer mon abonnement".
+
+Pour activer le portail :
+
+1. Dashboard → **Settings** → **Billing** → **Customer portal**
+2. Activer et configurer (autoriser annulation, afficher historique, etc.)
+3. Sauvegarder
+
+---
+
+### Variables d'environnement requises
+
+| Variable                 |   Obligatoire   | Description                        |
+| ------------------------ | :-------------: | ---------------------------------- |
+| `STRIPE_PUBLISHABLE_KEY` |       Oui       | Clé publique Stripe                |
+| `STRIPE_SECRET_KEY`      |       Oui       | Clé secrète Stripe                 |
+| `STRIPE_WEBHOOK_SECRET`  | **Oui en prod** | Secret de signature webhook        |
+| `APP_API_KEY`            |       Oui       | Clé interne API → webhook → Go API |
+
+---
+
+### Fichiers créés / modifiés
+
+| Fichier                                                            | Rôle                                                    |
+| ------------------------------------------------------------------ | ------------------------------------------------------- |
+| `PA - Site Principal/pages/pro/subscription.php`                   | Page de gestion de l'abonnement (upsell + statut)       |
+| `PA - Site Principal/pages/pro/create-subscription-checkout.php`   | Crée la session Stripe Checkout                         |
+| `PA - Site Principal/pages/pro/subscription-success.php`           | Page de succès post-paiement                            |
+| `PA - Site Principal/pages/pro/create-billing-portal.php`          | Redirige vers le portail Stripe                         |
+| `PA - Site Principal/pages/pro/dashboard-premium.php`              | Tableau de bord avancé (accès premium requis)           |
+| `PA - Site Principal/pages/public/stripe-subscription-webhook.php` | Webhook Stripe                                          |
+| `PA - Site Principal/includes/premium.php`                         | Helper `isPremium()` / `requirePremium()`               |
+| `PA - Site Principal/config/stripe.php`                            | Ajout `webhook_secret` et `premium_price_id`            |
+| `PA - API/app/subscription.go`                                     | Handlers Go : activate / revoke                         |
+| `PA - API/db/userRepository.go`                                    | Fonctions DB : UpdateSubscriptionInDB, etc.             |
+| `PA - API/models/user.go`                                          | Champ `IsPremium`                                       |
+| `PA - API/api.go`                                                  | Routes internes + `InternalKeyMiddleware`               |
+| `db_schema.sql`                                                    | Colonnes `stripe_customer_id`, `stripe_subscription_id` |
+
+---
+
+### Protéger une page avec `requirePremium()`
+
+```php
+<?php
+require_once '../../includes/premium.php';
+requirePremium(); // redirige vers subscription.php si l'utilisateur n'est pas premium
+```
+
+### Vérifier le statut premium manuellement
+
+```php
+require_once '../../includes/premium.php';
+if (isPremium()) {
+    // afficher fonctionnalité premium
+}
+```
+
+---
+
+### Endpoints Go internes
+
+Ces routes sont protégées par l'en-tête `X-Internal-Key: <APP_API_KEY>`  
+et ne sont **jamais appelées depuis le client**.
+
+| Méthode | Route                             | Description                                 |
+| ------- | --------------------------------- | ------------------------------------------- |
+| `POST`  | `/internal/subscription/activate` | Active `is_premium=1` pour un user          |
+| `POST`  | `/internal/subscription/revoke`   | Passe `is_premium=0` par customer ou sub ID |
+
+---
+
+### Cartes de test Stripe (abonnements)
+
+| Scénario         | Numéro                |
+| ---------------- | --------------------- |
+| Paiement réussi  | `4242 4242 4242 4242` |
+| 3D Secure requis | `4000 0025 0000 3155` |
+| Paiement refusé  | `4000 0000 0000 0002` |
 
 ## Support
 

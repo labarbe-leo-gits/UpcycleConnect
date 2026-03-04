@@ -16,7 +16,7 @@ if (empty($_SERVER['HTTP_X_REQUESTED_WITH']) || $_SERVER['HTTP_X_REQUESTED_WITH'
 }
 
 $user = getLoggedInUser();
-if (empty($user) || $user['user_type'] != 1) {
+if (empty($user) || ($user['user_type'] != 1 && $user['user_type'] != 2)) {
     http_response_code(403);
     echo json_encode(['error' => 'Unauthorized']);
     exit;

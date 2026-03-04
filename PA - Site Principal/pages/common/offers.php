@@ -19,7 +19,7 @@ if (!$user) {
 <div class="container">
 
 <?php
-if($user['user_type'] == 1){
+if(($user['user_type'] == 1) || ($user['user_type'] == 2)){
 	echo "
 	<div class=\"offers-header\">
 		<button class=\"add-offer-button\" id=\"add-offer\">
@@ -30,7 +30,7 @@ if($user['user_type'] == 1){
 }
 ?>
 
-<?php if($user['user_type'] == 1): ?>
+<?php if(($user['user_type'] == 1) || ($user['user_type'] == 2)): ?>
 <div class="add-modal">
     <div class="add-modal-content">
         <span class="close-button" id="close-add-modal">&times;</span>

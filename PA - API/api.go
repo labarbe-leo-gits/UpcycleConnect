@@ -90,6 +90,20 @@ func checkRoleIntValue(targetRole int, userID uuid.UUID) (bool, error) {
 
 }
 
+func InternalKeyMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		key := r.Header.Get("X-Internal-Key")
+		expected := os.Getenv("APP_API_KEY")
+		if expected == "" || key != expected {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(map[string]string{"error": "unauthorized"})
+			return
+		}
+		next(w, r)
+	}
+}
+
 func RoleMiddleware(requiredRole int) func(http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
@@ -236,6 +250,10 @@ func main() {
 	registerRoute("POST", "/refund-requests", "Create a refund request for an order", app.CreateRefundRequest, app.JWTAuthMiddleware)
 	registerRoute("GET", "/users/{id}/refund-requests", "List all refund requests for a specific user by their UUID", app.GetRefundRequestsByUserID, app.JWTAuthMiddleware)
 	registerRoute("GET", "/orders/{id}/refund-requests", "List all refund requests for a specific order by its UUID", app.GetRefundRequestsByOrderID, app.JWTAuthMiddleware)
+
+	registerRoute("POST", "/internal/subscription/activate", "Activate premium for a user after successful Stripe subscription", app.ActivateSubscription, InternalKeyMiddleware)
+	registerRoute("POST", "/internal/subscription/revoke", "Revoke premium for a user on subscription cancellation or payment failure", app.RevokeSubscription, InternalKeyMiddleware)
+	registerRoute("GET", "/users/{id}/subscription", "Get subscription details for a user", app.GetSubscriptionByUserID, app.JWTAuthMiddleware)
 
 	http.HandleFunc("/", notFoundHandler)
 

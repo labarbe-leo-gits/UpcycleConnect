@@ -681,3 +681,28 @@ func GetRefundRequestsByUserID(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(refundRequests)
 
 }
+
+func GetSubscriptionByUserID(w http.ResponseWriter, r *http.Request) {
+
+	userID := strings.TrimPrefix(r.URL.Path, "/users/")
+	userID = strings.TrimSuffix(userID, "/subscription")
+
+	if _, err := uuid.Parse(userID); err != nil {
+		fmt.Println("[WARN] GetSubscriptionByUserID: invalid UUID", userID)
+		sendError(w, "Invalid user ID format", http.StatusBadRequest)
+		return
+	}
+
+	subscription, err := db.GetSubscriptionByUserIDFromDB(userID)
+
+	if err != nil {
+		fmt.Println("[ERROR] GetSubscriptionByUserID:", err)
+		sendError(w, "Unable to fetch subscription for user", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(subscription)
+
+}

@@ -12,6 +12,7 @@ type User struct {
 	UpcyclingScore   float64   `json:"upcycling_score"`
 	CompanyName      string    `json:"company_name,omitempty"`
 	UserType         int       `json:"user_type"`
+	IsPremium        int       `json:"is_premium"`
 	Username         string    `json:"username" gorm:"unique;not null"`
 	Email            string    `json:"email" gorm:"unique;not null"`
 	Password         string    `json:"password,omitempty" gorm:"not null"`
@@ -20,6 +21,7 @@ type User struct {
 	OAuthProvider    string    `json:"oauth_provider,omitempty"`
 	OAuthID          string    `json:"oauth_id,omitempty"`
 	ProfilePicture   string    `json:"profile_picture,omitempty"`
+	StripeCustomerID string    `json:"stripe_customer_id,omitempty"`
 	UserSecret       string    `json:"user_secret,omitempty"`
 	TwoFASecret      string    `json:"-"`
 	TwoFAEnabled     bool      `json:"twofa_enabled,omitempty"`

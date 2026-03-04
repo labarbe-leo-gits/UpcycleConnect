@@ -11,6 +11,8 @@ CREATE TABLE IF NOT EXISTS users (
     balance DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
     upcycling_score DOUBLE NOT NULL DEFAULT 0.0,
     is_premium INT DEFAULT 0,
+    stripe_customer_id VARCHAR(255) NULL,
+    stripe_subscription_id VARCHAR(255) NULL,
     user_type INT NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
@@ -322,4 +324,3 @@ CREATE TABLE IF NOT EXISTS refunds (
     FOREIGN KEY (refund_request_id) REFERENCES refundsRequests(id) ON DELETE CASCADE,
     FOREIGN KEY (processed_by) REFERENCES users(id) ON DELETE CASCADE
 );
-
