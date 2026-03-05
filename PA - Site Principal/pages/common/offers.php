@@ -91,6 +91,9 @@ if(($user['user_type'] == 1) || ($user['user_type'] == 2)){
             </div>
             <div class="form-group" id="offer-estimation-group" style="display:none;">
                 <label for="offer-estimation">Estimated upcycling score:</label>
+                <div id="gemini-ai-badge" style="display:none;margin-bottom:8px;padding:8px 12px;background:#f0f4ff;border-radius:8px;font-size:.82rem;color:#374151;border:1px solid #c7d2fe;line-height:1.5;">
+                    <i class="fa-solid fa-spinner fa-spin" id="gemini-spinner"></i><span id="gemini-badge-text"></span>
+                </div>
                 <input type="number" step="0.01" id="offer-estimation" name="offer-estimation" min="0">
             </div>
             <div class="form-group">

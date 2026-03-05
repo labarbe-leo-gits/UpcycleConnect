@@ -276,7 +276,19 @@
         var materialSelect = document.getElementById('offer-material');
         var customInput = document.getElementById('offer-material-custom');
         var estimationGroup = document.getElementById('offer-estimation-group');
-            var materialFactors = [];
+            var materialFactors    = [];
+            var geminiCO2Factor    = null;
+            var _geminiTimer       = null;
+            var _geminiPending     = false;
+
+            function setSubmitBlocked(blocked) {
+                _geminiPending = blocked;
+                var btn = form.querySelector('button[type="submit"]');
+                if (!btn) return;
+                btn.disabled = blocked;
+                btn.style.opacity = blocked ? '0.5' : '';
+                btn.title = blocked ? 'Waiting for AI to estimate CO\u2082 factor\u2026' : '';
+            }
 
             if (materialSelect) {
                 materialSelect.addEventListener('change', function() {
@@ -284,6 +296,7 @@
                         if (customInput) customInput.style.display = 'block';
                     } else {
                         if (customInput) customInput.style.display = 'none';
+                        clearGeminiSuggestion();
                     }
                     updateEstimation();
                 });
@@ -322,21 +335,101 @@
             function displayEstimation(value) {
                 if (!estimationGroup) return;
                 var input = document.getElementById('offer-estimation');
+                var mat = materialSelect ? materialSelect.value : '';
                 if (value > 0) {
                     estimationGroup.style.display = 'block';
                     if (input) input.value = value;
+                } else if (mat === 'other') {
+
+                    estimationGroup.style.display = 'block';
                 } else {
                     estimationGroup.style.display = 'none';
                     if (input) input.value = '';
                 }
             }
 
+            function fetchGeminiEstimation(materialName) {
+                fetch('gemini-material-api?material=' + encodeURIComponent(materialName), {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    setSubmitBlocked(false);
+                    if (data.error || !(data.facteur_co2 > 0)) {
+                        clearGeminiSuggestion();
+                        return;
+                    }
+                    geminiCO2Factor = data.facteur_co2;
+                    showGeminiSuggestion(data.facteur_co2);
+                    var wEl = document.getElementById('offer-weight');
+                    var w   = wEl ? (parseFloat(wEl.value) || 0) : 0;
+                    if (w > 0) {
+                        displayEstimation(Math.round(w * geminiCO2Factor * 100) / 100);
+                    }
+                })
+                .catch(function() { setSubmitBlocked(false); clearGeminiSuggestion(); });
+            }
+
+            function showGeminiLoading() {
+                var badge   = document.getElementById('gemini-ai-badge');
+                var spinner = document.getElementById('gemini-spinner');
+                var text    = document.getElementById('gemini-badge-text');
+                if (!badge) return;
+                badge.style.display = 'block';
+                if (spinner) { spinner.className = 'fa-solid fa-spinner fa-spin'; spinner.style.display = ''; }
+                if (text)    text.textContent = '\u00a0Estimating CO\u2082 factor with AI\u2026';
+                var inp = document.getElementById('offer-estimation');
+                if (inp) inp.value = '';
+                setSubmitBlocked(true);
+            }
+
+            function showGeminiSuggestion(factor) {
+                setSubmitBlocked(false);
+                var badge   = document.getElementById('gemini-ai-badge');
+                var spinner = document.getElementById('gemini-spinner');
+                var text    = document.getElementById('gemini-badge-text');
+                if (!badge) return;
+                badge.style.display = 'block';
+                if (spinner) spinner.style.display = 'none';
+                if (text) text.innerHTML =
+                    '\u00a0<span style="color:#4285f4;font-weight:600;"><i class="fa-brands fa-google"></i> Gemini</span>'
+                    + ' estimated <strong>' + parseFloat(factor).toFixed(4) + ' kg CO\u2082 eq/kg</strong>'
+                    + ' \u2014 score\u00a0=\u00a0weight\u00a0\u00d7\u00a0factor';
+            }
+
+            function clearGeminiSuggestion() {
+                geminiCO2Factor = null;
+                clearTimeout(_geminiTimer);
+                setSubmitBlocked(false);
+                var badge = document.getElementById('gemini-ai-badge');
+                if (badge) badge.style.display = 'none';
+            }
+
             var weightInputEl = document.getElementById('offer-weight');
             if (weightInputEl) {
-                weightInputEl.addEventListener('input', updateEstimation);
+                weightInputEl.addEventListener('input', function() {
+                    updateEstimation();
+                    if (geminiCO2Factor && materialSelect && materialSelect.value === 'other') {
+                        var w = parseFloat(this.value) || 0;
+                        if (w > 0) {
+                            var inp = document.getElementById('offer-estimation');
+                            if (inp) inp.value = Math.round(w * geminiCO2Factor * 100) / 100;
+                        }
+                    }
+                });
             }
             if (customInput) {
-                customInput.addEventListener('input', updateEstimation);
+                customInput.addEventListener('input', function() {
+                    updateEstimation();
+                    var name = customInput.value.trim();
+                    clearTimeout(_geminiTimer);
+                    if (name.length >= 3) {
+                        showGeminiLoading();
+                        _geminiTimer = setTimeout(function() { fetchGeminiEstimation(name); }, 2000);
+                    } else {
+                        clearGeminiSuggestion();
+                    }
+                });
         form.addEventListener('submit', function(event) {
             event.preventDefault();
 

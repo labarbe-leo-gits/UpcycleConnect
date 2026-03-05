@@ -10,7 +10,6 @@ import (
 
 func GetFacteurByName(name string) (*models.FacteurMateriaux, error) {
 	var f models.FacteurMateriaux
-	// first try exact case-insensitive match
 	row := Db.QueryRow("SELECT id, nom, facteur_co2, facteur_energie FROM facteurs_materiaux WHERE LOWER(nom) = LOWER(?)", name)
 	var idStr string
 	var factorCO2, factorEnergie sql.NullFloat64
@@ -96,10 +95,39 @@ func GetAllFacteurs() ([]models.FacteurMateriaux, error) {
 }
 
 func CreateOrUpdateFacteur(f models.FacteurMateriaux) error {
-	// simple upsert
 	_, err := Db.Exec("INSERT INTO facteurs_materiaux (id, nom, facteur_co2, facteur_energie) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE facteur_co2 = VALUES(facteur_co2), facteur_energie = VALUES(facteur_energie)", f.ID.String(), f.Nom, f.FacteurCO2, f.FacteurEnergie)
 	if err != nil {
 		return fmt.Errorf("createOrUpdateFacteur: %s", err.Error())
+	}
+	return nil
+}
+
+func CreateFacteurInDB(f models.FacteurMateriaux) error {
+
+	f.ID = uuid.New()
+
+	_, err := Db.Exec("INSERT INTO facteurs_materiaux (id, nom, facteur_co2, facteur_energie) VALUES (?, ?, ?, ?)", f.ID.String(), f.Nom, f.FacteurCO2, f.FacteurEnergie)
+	if err != nil {
+		return fmt.Errorf("createFacteurInDB: %s", err.Error())
+	}
+
+	return nil
+}
+
+func UpdateFacteurInDB(id uuid.UUID, f models.FacteurMateriaux) error {
+	_, err := Db.Exec("UPDATE facteurs_materiaux SET nom = ?, facteur_co2 = ?, facteur_energie = ? WHERE id = ?", f.Nom, f.FacteurCO2, f.FacteurEnergie, id.String())
+
+	if err != nil {
+		return fmt.Errorf("updateFacteurInDB: %s", err.Error())
+	}
+
+	return nil
+}
+
+func DeleteFacteurFromDB(id uuid.UUID) error {
+	_, err := Db.Exec("DELETE FROM facteurs_materiaux WHERE id = ?", id.String())
+	if err != nil {
+		return fmt.Errorf("deleteFacteurFromDB: %s", err.Error())
 	}
 	return nil
 }
