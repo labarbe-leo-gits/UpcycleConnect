@@ -86,9 +86,11 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
                     <?php else: ?>
                         <i class="fa-solid fa-user fa-lg"></i>
                     <?php endif; ?>
+                    <p><?= htmlspecialchars(!empty($user['first_name']) ? $user['first_name'] : ($user['username'] ?? '')) ?></p>
                 </a>
                 <div class="dropdown-menu">
                     <a href="<?= $profileUrl ?>"><i class="fa-solid fa-user"></i>Profile</a>
+                    <a href="../common/support"><i class="fa-solid fa-headset"></i>Support</a>
                     <a href="../pro/notifications"><i class="fa-solid fa-bell"></i></i>Notifications <span class="notif-badge" id="notifications-count" hidden>0</span></a>
                     <a href="../pro/planning"><i class="fa-solid fa-calendar-days"></i>Planning</a>
                     <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="fa-solid fa-right-from-bracket"></i>Logout</a>

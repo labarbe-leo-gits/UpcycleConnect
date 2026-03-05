@@ -217,7 +217,7 @@ func main() {
 	registerRoute("PATCH", "/forums/{id}/posts/{pID}", "Update a specific post in a forum by its UUID", app.UpdatePost, app.JWTAuthMiddleware)
 	registerRoute("DELETE", "/forums/{id}/posts/{pID}", "Delete a post from the forum", app.DeletePost, app.JWTAuthMiddleware)
 	registerRoute("GET", "/conteneurs", "List all conteneurs in the system", app.GetConteneurs, app.JWTAuthMiddleware)
-	registerRoute("POST", "/conteneurs", "Create a new conteneur", app.CreateConteneur, app.JWTAuthMiddleware, RoleMiddleware(4))
+	registerRoute("POST", "/conteneurs", "Create a new conteneur", app.CreateConteneur, RoleMiddleware(3), app.JWTAuthMiddleware)
 	registerRoute("GET", "/deposits", "List all deposits in the system", app.GetDeposits, app.JWTAuthMiddleware)
 	registerRoute("POST", "/deposits", "Create a new deposit request", app.CreateDeposit, app.JWTAuthMiddleware)
 	registerRoute("PATCH", "/deposits/{id}/status", "Update the status of a deposit request", app.UpdateDepositStatus, app.JWTAuthMiddleware)
@@ -245,15 +245,13 @@ func main() {
 	registerRoute("GET", "/users/{id}/bans", "List all bans for a specific user by their UUID", app.GetBansByUserID, app.JWTAuthMiddleware)
 	registerRoute("DELETE", "/ban/{id}", "Delete a specific ban by its UUID", app.DeleteBan, RoleMiddleware(3), app.JWTAuthMiddleware)
 	registerRoute("GET", "/bans/{id}", "Get details of a specific ban by its UUID", app.GetBanByID, app.JWTAuthMiddleware)
-
 	registerRoute("DELETE", "/forums/{id}", "Delete a forum by its UUID", app.DeleteForum, app.JWTAuthMiddleware)
 	registerRoute("PATCH", "/forums/{id}", "Update a forum's title or description by its UUID", app.UpdateForum, app.JWTAuthMiddleware)
-
+	registerRoute("DELETE", "/conteneurs/{id}", "Delete a conteneur by its UUID", app.DeleteConteneur, app.JWTAuthMiddleware)
 	registerRoute("GET", "/orders/{id}", "Get details of a specific order by its UUID", app.GetOrderByID, app.JWTAuthMiddleware)
 	registerRoute("POST", "/refund-requests", "Create a refund request for an order", app.CreateRefundRequest, app.JWTAuthMiddleware)
 	registerRoute("GET", "/users/{id}/refund-requests", "List all refund requests for a specific user by their UUID", app.GetRefundRequestsByUserID, app.JWTAuthMiddleware)
 	registerRoute("GET", "/orders/{id}/refund-requests", "List all refund requests for a specific order by its UUID", app.GetRefundRequestsByOrderID, app.JWTAuthMiddleware)
-
 	registerRoute("POST", "/internal/subscription/activate", "Activate premium for a user after successful Stripe subscription", app.ActivateSubscription, InternalKeyMiddleware)
 	registerRoute("POST", "/internal/subscription/revoke", "Revoke premium for a user on subscription cancellation or payment failure", app.RevokeSubscription, InternalKeyMiddleware)
 	registerRoute("GET", "/users/{id}/subscription", "Get subscription details for a user", app.GetSubscriptionByUserID, app.JWTAuthMiddleware)

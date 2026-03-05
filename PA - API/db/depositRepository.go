@@ -94,3 +94,27 @@ func GetDepositByIDFromDB(depositIDStr string) (models.Deposit, error) {
 
 	return deposit, nil
 }
+
+func GetDepositsByConteneurIDFromDB(conteneurIDStr string) ([]models.Deposit, error) {
+	rows, err := Db.Query(
+		"SELECT id, user_id, conteneur_id, object_name, object_description, status, created_at, updated_at FROM demandes_depot WHERE conteneur_id = ?",
+		conteneurIDStr,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("getDepositsByConteneurIDFromDB query error: %v", err)
+	}
+	defer rows.Close()
+
+	var deposits []models.Deposit
+	for rows.Next() {
+		var d models.Deposit
+		if err := rows.Scan(&d.ID, &d.UserID, &d.ConteneurID, &d.ObjectName, &d.ObjectDescription, &d.Status, &d.CreatedAt, &d.UpdatedAt); err != nil {
+			return nil, fmt.Errorf("getDepositsByConteneurIDFromDB scan error: %v", err)
+		}
+		deposits = append(deposits, d)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("getDepositsByConteneurIDFromDB rows error: %v", err)
+	}
+	return deposits, nil
+}

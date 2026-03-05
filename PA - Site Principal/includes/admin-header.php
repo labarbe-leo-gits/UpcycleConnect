@@ -100,6 +100,7 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
                     <?php else: ?>
                         <i class="fa-solid fa-user fa-lg"></i>
                     <?php endif; ?>
+                    <p><?= htmlspecialchars(!empty($user['first_name']) ? $user['first_name'] : ($user['username'] ?? '')) ?></p>
                 </a>
                 <div class="dropdown-menu">
                     <a href="<?= $profileUrl ?>"><i class="fa-solid fa-user"></i>Profile</a>

@@ -170,21 +170,58 @@ func GetConteneurByID(w http.ResponseWriter, r *http.Request) {
 
 func UpdateConteneur(w http.ResponseWriter, r *http.Request) {
 
-	id := r.URL.Query().Get("id")
+	id := strings.TrimPrefix(r.URL.Path, "/conteneurs/")
+	if id == "" {
+		http.Error(w, "Conteneur ID is required", http.StatusBadRequest)
+		return
+	}
 
-	err := json.NewDecoder(r.Body).Decode(&models.Conteneur{})
-
+	var conteneurDto models.Conteneur
+	err := json.NewDecoder(r.Body).Decode(&conteneurDto)
 	if err != nil {
 		fmt.Println("[ERROR] UpdateConteneur - JSON decode error:", err)
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
 
-	err2 := db.UpdateConteneurInDB(id, models.Conteneur{})
-
-	if err2 != nil {
+	if err := db.UpdateConteneurInDB(id, conteneurDto); err != nil {
 		fmt.Println("[ERROR] UpdateConteneur - DB error:", err)
 		http.Error(w, "Failed to update conteneur", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+
+}
+
+func DeleteConteneur(w http.ResponseWriter, r *http.Request) {
+
+	id := strings.TrimPrefix(r.URL.Path, "/conteneurs/")
+	if id == "" {
+		http.Error(w, "Conteneur ID is required", http.StatusBadRequest)
+		return
+	}
+
+	deposits, err := db.GetDepositsByConteneurIDFromDB(id)
+	if err != nil {
+		fmt.Println("[ERROR] DeleteConteneur - DB error while fetching deposits:", err)
+		http.Error(w, "Failed to check conteneur contents", http.StatusInternalServerError)
+		return
+	}
+
+	for _, deposit := range deposits {
+		if deposit.Status == 0 {
+			if err := db.UpdateDepositStatusInDB(deposit.ID.String(), 9); err != nil {
+				fmt.Println("[ERROR] DeleteConteneur - DB error while refusing deposit:", err)
+				http.Error(w, "Failed to update deposit statuses", http.StatusInternalServerError)
+				return
+			}
+		}
+	}
+
+	if err = db.DeleteConteneurFromDB(id); err != nil {
+		fmt.Println("[ERROR] DeleteConteneur - DB error:", err)
+		http.Error(w, "Failed to delete conteneur", http.StatusInternalServerError)
 		return
 	}
 

@@ -32,6 +32,10 @@ func GetAllConteneursFromDB() ([]models.Conteneur, error) {
 		return nil, fmt.Errorf("error iterating over conteneur rows: %v", err)
 	}
 
+	if conteneurs == nil {
+		conteneurs = []models.Conteneur{}
+	}
+
 	return conteneurs, nil
 }
 
@@ -137,7 +141,7 @@ func UpdateConteneurInDB(conteneurIDStr string, conteneur models.Conteneur) erro
 	}
 
 	_, err = Db.Exec(
-		"UPDATE conteneurs SET name = ?, city = ?, road = ?, postal_code = ?, number = ?, updated_at = ? WHERE id = ?",
+		"UPDATE conteneurs SET conteneur_name = ?, conteneur_city = ?, conteneur_road = ?, conteneur_zip_code = ?, conteneur_number = ?, updated_at = ? WHERE id = ?",
 		conteneur.Name, conteneur.City, conteneur.Road, conteneur.PostalCode, conteneur.Number, getCurrentTime(), conteneurID,
 	)
 
@@ -147,4 +151,17 @@ func UpdateConteneurInDB(conteneurIDStr string, conteneur models.Conteneur) erro
 
 	return nil
 
+}
+
+func DeleteConteneurFromDB(conteneurIDStr string) error {
+
+	conteneurID, err := uuid.Parse(conteneurIDStr)
+
+	_, err = Db.Exec("DELETE FROM conteneurs WHERE id = ?", conteneurID)
+
+	if err != nil {
+		return fmt.Errorf("failed to delete conteneur: %v", err)
+	}
+
+	return nil
 }
