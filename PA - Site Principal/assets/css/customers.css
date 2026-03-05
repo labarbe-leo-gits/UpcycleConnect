@@ -1131,12 +1131,12 @@ body.modal-open {
 }
 
 .service-item .service-location.online {
-  color: #7c3aed;
+  color: #10b981;
   font-weight: 500;
 }
 
 .service-item .service-location.online i {
-  color: #7c3aed;
+  color: #10b981;
 }
 
 .service-item .service-buttons {
