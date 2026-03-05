@@ -165,15 +165,15 @@
         if (!modal) return;
 
         modal.querySelector('#container-modal-name').textContent =
-            c.name || '—';
+            c.name || '-';
         modal.querySelector('#container-modal-address').textContent =
             [c.number, c.road, c.postal_code, c.city].filter(Boolean).join(', ');
         modal.querySelector('#container-modal-city').textContent =
-            c.city || '—';
+            c.city || '-';
         modal.querySelector('#container-modal-postal').textContent =
-            c.postal_code || '—';
+            c.postal_code || '-';
         modal.querySelector('#container-modal-created').textContent =
-            c.created_at ? new Date(c.created_at).toLocaleDateString('en-GB') : '—';
+            c.created_at ? new Date(c.created_at).toLocaleDateString('fr-FR') : '-';
 
         modal.classList.add('is-open');
         modal.setAttribute('aria-hidden', 'false');

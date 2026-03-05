@@ -71,6 +71,12 @@ include_once '../../includes/admin-header.php';
                     <i class="fa-solid fa-smog"></i>
                     <input type="number" id="mat-co2" name="facteur_co2" min="0.0001" step="0.0001" placeholder="e.g. 2.5" required />
                 </div>
+                <button type="button" id="gemini-co2-btn" class="btn-secondary" style="margin-top:8px;width: 100%;
+  text-align: center;
+  justify-content: center;">
+        <i class="fa-solid fa-wand-magic-sparkles"></i> Determine with Gemini
+    </button>
+    <div id="gemini-co2-status" style="font-size:.8rem;margin-top:6px;display:none;"></div>
             </div>
 
             <div class="modal-actions">

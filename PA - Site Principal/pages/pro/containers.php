@@ -24,28 +24,28 @@ include_once '../../includes/pro-header.php';
         <h2 id="container-modal-title"><i class="fa-solid fa-warehouse" style="margin-right:10px;"></i><span id="container-modal-name"></span></h2>
         <div style="display:flex;flex-direction:column;gap:14px;margin-top:8px;">
             <div style="display:flex;align-items:flex-start;gap:12px;">
-                <i class="fa-solid fa-location-dot" style="color:#7c3aed;margin-top:3px;width:16px;flex-shrink:0;"></i>
+                <i class="fa-solid fa-location-dot" style="color:#10b981;margin-top:3px;width:16px;flex-shrink:0;"></i>
                 <div>
                     <div style="font-weight:600;color:#111827;">Full address</div>
                     <div style="color:#6b7280;font-size:.9rem;" id="container-modal-address"></div>
                 </div>
             </div>
             <div style="display:flex;align-items:flex-start;gap:12px;">
-                <i class="fa-solid fa-city" style="color:#7c3aed;margin-top:3px;width:16px;flex-shrink:0;"></i>
+                <i class="fa-solid fa-city" style="color:#10b981;margin-top:3px;width:16px;flex-shrink:0;"></i>
                 <div>
                     <div style="font-weight:600;color:#111827;">City</div>
                     <div style="color:#6b7280;font-size:.9rem;" id="container-modal-city"></div>
                 </div>
             </div>
             <div style="display:flex;align-items:flex-start;gap:12px;">
-                <i class="fa-solid fa-envelope" style="color:#7c3aed;margin-top:3px;width:16px;flex-shrink:0;"></i>
+                <i class="fa-solid fa-envelope" style="color:#10b981;margin-top:3px;width:16px;flex-shrink:0;"></i>
                 <div>
                     <div style="font-weight:600;color:#111827;">Postal code</div>
                     <div style="color:#6b7280;font-size:.9rem;" id="container-modal-postal"></div>
                 </div>
             </div>
             <div style="display:flex;align-items:flex-start;gap:12px;">
-                <i class="fa-solid fa-calendar" style="color:#7c3aed;margin-top:3px;width:16px;flex-shrink:0;"></i>
+                <i class="fa-solid fa-calendar" style="color:#10b981;margin-top:3px;width:16px;flex-shrink:0;"></i>
                 <div>
                     <div style="font-weight:600;color:#111827;">Added on</div>
                     <div style="color:#6b7280;font-size:.9rem;" id="container-modal-created"></div>

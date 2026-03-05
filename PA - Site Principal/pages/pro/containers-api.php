@@ -57,6 +57,7 @@ foreach ($items as $c) {
         'road' => $c['road'] ?? ($c['conteneur_road'] ?? ''),
         'postal_code' => $c['postal_code'] ?? ($c['conteneur_zip_code'] ?? ''),
         'number' => $c['number'] ?? ($c['conteneur_number'] ?? ''),
+        'created_at' => $c['created_at'] ?? null,
     ];
 }
 

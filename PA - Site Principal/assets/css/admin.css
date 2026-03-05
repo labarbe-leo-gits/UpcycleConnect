@@ -224,3 +224,98 @@
     font-size: .75rem;
     color: #9ca3af;
 }
+
+#gemini-co2-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 10px;
+    padding: 7px 14px;
+    font-size: .85rem;
+    border: 1.5px dashed #10b981;
+    color: #10b981;
+    background: #f0fdf4;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background .15s, border-color .15s, color .15s;
+    font-weight: 600;
+}
+#gemini-co2-btn:hover:not(:disabled) {
+    background: #10b981;
+    color: #fff;
+    border-color: #10b981;
+}
+#gemini-co2-btn:disabled {
+    opacity: .65;
+    cursor: not-allowed;
+}
+#gemini-co2-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: .8rem;
+    margin-top: 7px;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-weight: 500;
+}
+#gemini-co2-status.gemini-ok {
+    background: #f0fdf4;
+    color: #059669;
+    border: 1px solid #a7f3d0;
+}
+#gemini-co2-status.gemini-error {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+}
+
+#gemini-co2-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    margin-top: 10px;
+    padding: 7px 14px;
+    font-size: .85rem;
+    border: 1.5px dashed #10b981;
+    color: #10b981;
+    background: #f0fdf4;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background .15s, border-color .15s, color .15s;
+    font-weight: 600;
+    width: 100%;
+    box-sizing: border-box;
+}
+#gemini-co2-btn:hover:not(:disabled) {
+    background: #10b981;
+    color: #fff;
+    border-color: #10b981;
+}
+#gemini-co2-btn:disabled {
+    opacity: .65;
+    cursor: not-allowed;
+}
+#gemini-co2-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: .8rem;
+    margin-top: 7px;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-weight: 500;
+    width: 100%;
+    box-sizing: border-box;
+}
+#gemini-co2-status.gemini-ok {
+    background: #f0fdf4;
+    color: #059669;
+    border: 1px solid #a7f3d0;
+}
+#gemini-co2-status.gemini-error {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+}

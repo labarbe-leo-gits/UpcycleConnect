@@ -23,6 +23,47 @@
                 applyFilter(this.value.trim());
             });
 
+
+        document.getElementById('gemini-co2-btn')
+            ?.addEventListener('click', function () {
+                const name   = document.getElementById('mat-nom').value.trim();
+                const status = document.getElementById('gemini-co2-status');
+                if (!name) {
+                    status.className     = 'gemini-error';
+                    status.innerHTML     = '<i class="fa-solid fa-circle-exclamation"></i> Enter a material name first.';
+                    status.style.display = 'inline-flex';
+                    return;
+                }
+
+                const btn = this;
+                btn.disabled  = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Asking Gemini…';
+                status.style.display = 'none';
+                status.className = '';
+
+                fetch('gemini-material-api?material=' + encodeURIComponent(name), {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.error) throw new Error(data.error);
+                    document.getElementById('mat-co2').value = data.facteur_co2;
+                    status.className     = 'gemini-ok';
+                    status.innerHTML     = '<i class="fa-solid fa-check-circle"></i> Gemini suggested: <strong>' + data.facteur_co2 + '</strong> kg CO₂ eq/kg — you can adjust it.';
+                    status.style.display = 'inline-flex';
+                    status.style.justifyContent = 'center';
+                })
+                .catch(err => {
+                    status.className     = 'gemini-error';
+                    status.innerHTML     = '<i class="fa-solid fa-circle-exclamation"></i> Gemini error: ' + (err.message || 'Unable to determine CO₂ factor.');
+                    status.style.display = 'inline-flex';
+                })
+                .finally(() => {
+                    btn.disabled  = false;
+                    btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Determine with Gemini';
+                });
+            });
+
         document.getElementById('material-form-modal-close')
             ?.addEventListener('click', () => hideModal('material-form-modal'));
 
@@ -174,7 +215,7 @@
                 scrollToTop();
             });
             if (p === currentPage) {
-                btn.style.cssText += ';background:#7c3aed;color:#fff;border-color:#7c3aed;font-weight:700;';
+                btn.style.cssText += ';background:#10b981;color:#fff;border-color:#10b981;font-weight:700;';
             }
             wrap.appendChild(btn);
         }
@@ -209,6 +250,8 @@
         form.reset();
         form.dataset.editId = '';
         document.getElementById('material-form-error').style.display = 'none';
+        const gs = document.getElementById('gemini-co2-status');
+        if (gs) { gs.style.display = 'none'; gs.className = ''; }
         showModal('material-form-modal');
     }
 
@@ -222,6 +265,8 @@
         form.querySelector('#mat-co2').value  = m.facteur_co2 ?? '';
 
         document.getElementById('material-form-error').style.display = 'none';
+        const gs = document.getElementById('gemini-co2-status');
+        if (gs) { gs.style.display = 'none'; gs.className = ''; }
         showModal('material-form-modal');
     }
 

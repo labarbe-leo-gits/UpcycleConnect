@@ -194,7 +194,7 @@
             const btn = document.createElement('button');
             btn.innerHTML = label;
             btn.style.cssText = `padding:6px 12px;border-radius:8px;border:1px solid #d1d5db;cursor:${disabled ? 'default' : 'pointer'};
-                background:${active ? '#7c3aed' : '#fff'};color:${active ? '#fff' : (disabled ? '#9ca3af' : '#374151')};font-weight:${active ? '600' : '400'};`;
+                background:${active ? '#10b981' : '#fff'};color:${active ? '#fff' : (disabled ? '#9ca3af' : '#374151')};font-weight:${active ? '600' : '400'};`;
             if (!disabled && !active) {
                 btn.addEventListener('click', () => {
                     currentPage = page;

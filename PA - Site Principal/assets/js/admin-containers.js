@@ -178,7 +178,7 @@
                 return function() { currentPage = pg; renderPage(); };
             }(p)));
             if (p === currentPage) {
-                btn.style.cssText += ';background:#7c3aed;color:#fff;border-color:#7c3aed;font-weight:700;';
+                btn.style.cssText += ';background:#10b981;color:#fff;border-color:#10b981;font-weight:700;';
             }
             wrap.appendChild(btn);
         }
