@@ -49,7 +49,7 @@
                     if (data.error) throw new Error(data.error);
                     document.getElementById('mat-co2').value = data.facteur_co2;
                     status.className     = 'gemini-ok';
-                    status.innerHTML     = '<i class="fa-solid fa-check-circle"></i> Gemini suggested: <strong>' + data.facteur_co2 + '</strong> kg CO₂ eq/kg — you can adjust it.';
+                    status.innerHTML     = '<i class="fa-solid fa-check-circle"></i> Gemini suggested: <strong>' + data.facteur_co2 + '</strong> kg CO₂ eq/kg - you can adjust it.';
                     status.style.display = 'inline-flex';
                     status.style.justifyContent = 'center';
                 })
