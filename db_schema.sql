@@ -114,15 +114,6 @@ CREATE TABLE IF NOT EXISTS conseils (
     FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
-CREATE TABLE IF NOT EXISTS images (
-    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
-    annonce_id CHAR(36),
-    event_id CHAR(36),
-    file_name VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (annonce_id) REFERENCES annonces(id) ON DELETE CASCADE
-);
-
 CREATE TABLE IF NOT EXISTS orders (
     id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
     user_id CHAR(36) NOT NULL,
@@ -323,4 +314,71 @@ CREATE TABLE IF NOT EXISTS refunds (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (refund_request_id) REFERENCES refundsRequests(id) ON DELETE CASCADE,
     FOREIGN KEY (processed_by) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS projects (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    user_id CHAR(36) NOT NULL,
+    annonce_id CHAR(36) NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    status INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (annonce_id) REFERENCES annonces(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS project_steps (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    project_id CHAR(36) NOT NULL,
+    step_order INT NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    duration_minutes INT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS project_step_materials (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    step_id CHAR(36) NOT NULL,
+    facteur_id CHAR(36) NOT NULL,
+    quantity DOUBLE NULL,
+    FOREIGN KEY (step_id) REFERENCES project_steps(id) ON DELETE CASCADE,
+    FOREIGN KEY (facteur_id) REFERENCES facteurs_materiaux(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS images (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    annonce_id CHAR(36),
+    event_id CHAR(36),
+    step_id CHAR(36),
+    file_name VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (annonce_id) REFERENCES annonces(id) ON DELETE CASCADE,
+    FOREIGN KEY (step_id) REFERENCES project_steps(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS project_likes (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    project_id CHAR(36) NOT NULL,
+    user_id CHAR(36) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE INDEX idx_project_like (project_id, user_id),
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS project_comments (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    project_id CHAR(36) NOT NULL,
+    user_id CHAR(36) NOT NULL,
+    parent_id CHAR(36) NULL,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (parent_id) REFERENCES project_comments(id) ON DELETE CASCADE
 );
