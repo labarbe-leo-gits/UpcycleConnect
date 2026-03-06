@@ -3,3 +3,4 @@
 "PA - Site Principal"/.env
 vendor/
 files/uploads
+node_modules/

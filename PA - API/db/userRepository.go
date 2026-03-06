@@ -355,6 +355,51 @@ func GetUserByEmailFromDB(email string) (models.User, error) {
 	return user, nil
 }
 
+func GetUserByOAuthFromDB(provider, oauthID string) (models.User, error) {
+	var user models.User
+	var idStr string
+	var createdAt, lastLogin sql.NullString
+	var companyName, oauthProviderVal, oauthIDVal, profilePicture sql.NullString
+
+	err := Db.QueryRow(
+		"SELECT id, first_name, last_name, company_name, user_type, username, email, password_hash, created_at, last_login, oauth_provider, oauth_id, profile_picture FROM users WHERE oauth_provider = ? AND oauth_id = ?",
+		provider, oauthID,
+	).Scan(&idStr, &user.FirstName, &user.LastName, &companyName, &user.UserType, &user.Username, &user.Email, &user.Password, &createdAt, &lastLogin, &oauthProviderVal, &oauthIDVal, &profilePicture)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return user, fmt.Errorf("user not found")
+		}
+		return user, fmt.Errorf("getUserByOAuth package db : %s", err.Error())
+	}
+
+	user.ID, err = uuid.Parse(idStr)
+	if err != nil {
+		return user, fmt.Errorf("getUserByOAuth package db uuid parse : %s", err.Error())
+	}
+
+	if createdAt.Valid {
+		user.CreatedAt = createdAt.String
+	}
+	if lastLogin.Valid {
+		user.LastLogin = lastLogin.String
+	}
+	if oauthProviderVal.Valid {
+		user.OAuthProvider = oauthProviderVal.String
+	}
+	if oauthIDVal.Valid {
+		user.OAuthID = oauthIDVal.String
+	}
+	if companyName.Valid {
+		user.CompanyName = companyName.String
+	}
+	if profilePicture.Valid {
+		user.ProfilePicture = profilePicture.String
+	}
+
+	return user, nil
+}
+
 func GetDepositsByUserIDFromDB(userID uuid.UUID) ([]models.Deposit, error) {
 
 	rows, err := Db.Query("SELECT id, user_id, conteneur_id, object_name, object_description, status, created_at, updated_at FROM demandes_depot WHERE user_id = ?", userID.String())

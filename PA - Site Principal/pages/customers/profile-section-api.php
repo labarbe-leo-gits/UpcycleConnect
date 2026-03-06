@@ -28,7 +28,7 @@ if ($userId === '') {
 
 $section = $_GET['section'] ?? '';
 $page    = max(1, (int) ($_GET['page'] ?? 1));
-$limit   = 4;
+$limit   = max(1, (int) ($_GET['limit'] ?? 4));
 
 switch ($section) {
 
@@ -149,6 +149,17 @@ switch ($section) {
             }
         }
         unset($item);
+        break;
+
+    case 'projects':
+        $resp = askAPI("/users/{$userId}/projects", 'GET');
+        $all  = json_decode($resp, true);
+        if (!is_array($all) || isset($all['error'])) { $all = []; }
+        usort($all, function ($a, $b) {
+            return strcmp($b['created_at'] ?? '', $a['created_at'] ?? '');
+        });
+        $total = count($all);
+        $items = array_slice($all, ($page - 1) * $limit, $limit);
         break;
 
     default:

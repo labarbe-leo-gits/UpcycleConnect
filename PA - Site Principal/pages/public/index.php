@@ -33,6 +33,17 @@ include_once '../../includes/header.php';
 	</div>
 </section>
 
+<div id="easterEggModal" role="dialog" aria-modal="true" aria-labelledby="easterEggTitle" aria-describedby="easterEggDesc">
+	<div class="egg-card">
+		<button class="egg-close" aria-label="Close Easter Egg Modal">&times;</button>
+		<h2 id="easterEggTitle">Oops !</h2>
+		<p id="easterEggDesc">A wild Louis Lucien Ivan Detraux !</p>
+		<img data-blob-src="../../assets/img/team/LouisLucienIvanDetraux.jpg" alt="">
+	</div>
+</div>
+
+<script src="../../assets/js/easter-egg.js"></script>
+
 <?php
 include_once '../../includes/footer.php';
 ?>

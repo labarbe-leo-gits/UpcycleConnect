@@ -61,3 +61,46 @@ func CreateAnnonceImageInDB(image models.Image) error {
 
 	return nil
 }
+
+func GetStepImagesFromDB(stepID string) ([]models.Image, error) {
+	rows, err := Db.Query("SELECT id, step_id, file_name, created_at FROM images WHERE step_id = ?", stepID)
+	if err != nil {
+		return nil, fmt.Errorf("GetStepImagesFromDB: %w", err)
+	}
+	defer rows.Close()
+
+	images := []models.Image{}
+	for rows.Next() {
+		var img models.Image
+		var idStr string
+		var stepIDStr sql.NullString
+		var createdAt sql.NullString
+		if err := rows.Scan(&idStr, &stepIDStr, &img.FileName, &createdAt); err != nil {
+			return nil, err
+		}
+		img.ID, _ = uuid.Parse(idStr)
+		if stepIDStr.Valid {
+			img.StepID = stepIDStr.String
+		}
+		if createdAt.Valid {
+			img.CreatedAt = createdAt.String
+		}
+		images = append(images, img)
+	}
+	return images, rows.Err()
+}
+
+func CreateStepImageInDB(image models.Image) (*models.Image, error) {
+	newID := uuid.New()
+	currentTime := getCurrentTime()
+
+	_, err := Db.Exec("INSERT INTO images (id, step_id, file_name, created_at) VALUES (?, ?, ?, ?)",
+		newID.String(), image.StepID, image.FileName, currentTime)
+	if err != nil {
+		return nil, fmt.Errorf("CreateStepImageInDB: %w", err)
+	}
+
+	image.ID = newID
+	image.CreatedAt = currentTime
+	return &image, nil
+}

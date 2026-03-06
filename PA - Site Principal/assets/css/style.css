@@ -206,6 +206,10 @@ form h2 {
   padding-left: 38px;
 }
 
+.qty-input{
+  padding-left: 0px;
+}
+
 .field textarea {
   padding-left: 20px;
 }
@@ -812,3 +816,58 @@ h1 {
 .team-name{
   margin-top:-15px;
 }
+
+#easterEggModal {
+		display: none;
+		position: fixed;
+		inset: 0;
+		z-index: 9999;
+		background: rgba(0, 0, 0, 0.55);
+		backdrop-filter: blur(2px);
+		align-items: center;
+		justify-content: center;
+	}
+
+	#easterEggModal.is-open {
+		display: flex !important;
+	}
+
+	#easterEggModal .egg-card {
+		position: relative;
+		padding: 20px;
+		text-align: center;
+		background: #fff;
+		border-radius: 12px;
+		box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+		max-width: 360px;
+		width: 90%;
+		animation: eggPop .25s ease;
+	}
+
+	@keyframes eggPop {
+		from { transform: scale(0.85); opacity: 0; }
+		to   { transform: scale(1);    opacity: 1; }
+	}
+
+	#easterEggModal .egg-card img {
+		max-width: 100%;
+		height: auto;
+		border-radius: 8px;
+		margin-top: 15px;
+	}
+
+	#easterEggModal .egg-close {
+		position: absolute;
+		top: 8px;
+		right: 12px;
+		background: none;
+		border: none;
+		font-size: 1.4rem;
+		cursor: pointer;
+		line-height: 1;
+		color: #555;
+	}
+
+	#easterEggModal .egg-close:hover {
+		color: #000;
+	}

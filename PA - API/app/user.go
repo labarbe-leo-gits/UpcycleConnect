@@ -370,6 +370,57 @@ func GetUserByEmail(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(user)
 }
 
+func OAuthLogin(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		OAuthProvider string `json:"oauth_provider"`
+		OAuthID       string `json:"oauth_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		fmt.Println("[ERROR] OAuthLogin decode:", err)
+		sendError(w, "Invalid JSON format", http.StatusBadRequest)
+		return
+	}
+	if req.OAuthProvider == "" || req.OAuthID == "" {
+		sendError(w, "oauth_provider and oauth_id are required", http.StatusBadRequest)
+		return
+	}
+
+	user, err := db.GetUserByOAuthFromDB(req.OAuthProvider, req.OAuthID)
+	if err != nil {
+		fmt.Println("[ERROR] OAuthLogin get user:", err)
+		sendError(w, "User not found", http.StatusUnauthorized)
+		return
+	}
+
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		jwtSecret = "changeme_secret"
+	}
+
+	if err := db.UpdateLastLoginInDB(user.ID); err != nil {
+		fmt.Println("[WARN] OAuthLogin update last_login:", err)
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"user_id": user.ID.String(),
+		"email":   user.Email,
+		"exp":     time.Now().Add(time.Hour * 24).Unix(),
+	})
+	tokenString, err := token.SignedString([]byte(jwtSecret))
+	if err != nil {
+		fmt.Println("[ERROR] OAuthLogin JWT signing:", err)
+		sendError(w, "Could not generate token", http.StatusInternalServerError)
+		return
+	}
+
+	user.Password = ""
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"user":  user,
+		"token": tokenString,
+	})
+}
+
 func GetNotificationsByUserID(w http.ResponseWriter, r *http.Request) {
 
 	idStr := strings.TrimPrefix(r.URL.Path, "/users/")

@@ -75,6 +75,14 @@ if (isset($_GET['code'])) {
             $_SESSION['oauth_provider'] = $user['oauth_provider'] ?? 'google';
             $_SESSION['first_name'] = $user['first_name'] ?? '';
             $_SESSION['last_name'] = $user['last_name'] ?? '';
+
+            $tokenData = json_encode(['oauth_provider' => 'google', 'oauth_id' => $googleId]);
+            $tokenResponse = askAPI('oauth/login', 'POST', $tokenData);
+            $tokenDecoded = json_decode($tokenResponse, true);
+            if (isset($tokenDecoded['token'])) {
+                $_SESSION['jwt_token'] = $tokenDecoded['token'];
+            }
+
             header('Location: ' . getUserHomePath($_SESSION['user_type']));
             exit();
         }

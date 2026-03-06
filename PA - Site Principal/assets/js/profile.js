@@ -36,8 +36,6 @@ const paymentModal = document.getElementById('payment-modal');
 
     function closeModal() {
         paymentModal.classList.remove('is-visible');
-   
-                    // Lprint the error in console
                          document.body.classList.remove('modal-open');
         paymentModal.setAttribute('aria-hidden', 'true');
     }

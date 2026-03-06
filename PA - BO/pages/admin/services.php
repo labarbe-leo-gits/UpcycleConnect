@@ -106,6 +106,20 @@ include_once '../../includes/admin-header.php';
                     </button>
                 </div>
                 <div id="svc-address-fields" style="display:none;">
+
+                    <div class="field" style="margin-bottom:0px;">
+                        <label for="svc-addr-search">Search address</label>
+                        <div class="addr-search-wrap">
+                            <div class="input-wrapper">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <input type="text" id="svc-addr-search" placeholder="Start typing an address…" autocomplete="off" />
+                            </div>
+                            <div id="svc-addr-results"></div>
+                        </div>
+                    </div>
+
+                    <hr class="addr-divider">
+
                     <div class="input-wrapper"><i class="fa-solid fa-location-dot"></i>
                         <input type="text" id="svc-road" name="service_road" placeholder="Street address" />
                     </div>

@@ -15,7 +15,98 @@
     document.addEventListener('DOMContentLoaded', function () {
         bindToolbar();
         requestChunk(false);
+        bindAddressSearch();
     });
+
+    let _addrTimer = null;
+
+    function bindAddressSearch() {
+
+        const input = document.getElementById('svc-addr-search');
+        const results = document.getElementById('svc-addr-results');
+        if (!input || !results) return;
+
+        input.addEventListener('input', function() {
+            clearTimeout(_addrTimer);
+            const q = this.value.trim();
+            if (q.length < 3){
+                results.style.display = 'none';
+                return;
+            }
+
+            _addrTimer = setTimeout(() => {
+                fetch('https://api-adresse.data.gouv.fr/search/?q=' + encodeURIComponent(q) + '&limit=6')
+                    .then(r => r.json())
+                    .then(data => renderAddrResults(data.features || []))
+                    .catch(() => {results.style.display = 'none';});
+            }, 300);
+        
+        });
+
+        input.addEventListener('keydown', function(e){
+            const items = results.querySelectorAll('.addr-result-item');
+            const active = results.querySelector('.addr-result-item.addr-active');
+            if (!items.length) return;
+            if(e.key === 'ArrowDown'){
+                e.preventDefault();
+                const next = active ? active.nextElementSibling : items[0];
+                if (active) active.classList.remove('addr-active');
+                next.classList.add('addr-active');
+                next.scrollIntoView({block:'nearest'});
+            }else if(e.key === 'ArrowUp'){
+                e.preventDefault();
+                const prev = active ? active.previousElementSibling : items[items.length - 1];
+                if (active) active.classList.remove('addr-active');
+                prev.classList.add('addr-active');
+                prev.scrollIntoView({block:'nearest'});
+            }else if(e.key === 'Enter'){
+                e.preventDefault();
+                if (active) applyAddress(active);
+            }else if(e.key === 'Escape'){
+                results.style.display = 'none';
+            }
+        });
+
+        document.addEventListener('click', function(e){
+            if (!input.contains(e.target) && !results.contains(e.target)) {
+                results.style.display = 'none';
+            }
+        });
+    }
+
+    function renderAddrResults(features) {
+        const results = document.getElementById('svc-addr-results');
+        results.innerHTML = '';
+
+        if (!features.length) { results.style.display = 'none'; return; }
+
+        features.forEach(f => {
+            const p = f.properties;
+            const item = document.createElement('div');
+            item.className = 'addr-result-item';
+            item.innerHTML = '<i class="fa-solid fa-location-dot"></i><span>' + escHtml(p.label) + '</span>';
+            item.addEventListener('click', () => applyAddress(p));
+            results.appendChild(item);
+        });
+
+        results.style.display = 'block';
+    }
+
+    function applyAddress(p) {
+        const form = document.getElementById('service-form');
+        if (!form) return;
+
+        const road = [p.housenumber, p.street || p.name].filter(Boolean).join(' ');
+        form.querySelector('#svc-road').value = road;
+        form.querySelector('#svc-city').value = p.city     || '';
+        form.querySelector('#svc-zip').value  = p.postcode || '';
+
+        const input   = document.getElementById('svc-addr-search');
+        const results = document.getElementById('svc-addr-results');
+        if (input)   input.value           = p.label;
+        if (results) results.style.display = 'none';
+    }
+
 
     function bindToolbar() {
         document.getElementById('create-service-btn')?.addEventListener('click', openCreateForm);
