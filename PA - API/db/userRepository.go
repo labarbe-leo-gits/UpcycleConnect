@@ -673,3 +673,23 @@ func GetSubscriptionByUserIDFromDB(userID string) (int, error) {
 
 	return isPremium, nil
 }
+
+func GetProfilePictureURLFromDB(userID string) (string, error) {
+	var url sql.NullString
+	err := Db.QueryRow("SELECT profile_picture FROM users WHERE id = ?", userID).Scan(&url)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", nil
+		}
+
+		fmt.Printf("[ERROR] GetProfilePictureURLFromDB: %s\n", err.Error())
+		return "", nil
+	}
+
+	if url.Valid {
+		return url.String, nil
+	}
+
+	return "", nil
+}

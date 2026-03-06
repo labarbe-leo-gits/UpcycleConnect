@@ -757,3 +757,27 @@ func GetSubscriptionByUserID(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(subscription)
 
 }
+
+func GetProfilePicture(w http.ResponseWriter, r *http.Request) {
+
+	userID := strings.TrimPrefix(r.URL.Path, "/users/")
+	userID = strings.TrimSuffix(userID, "/profile-picture")
+
+	if _, err := uuid.Parse(userID); err != nil {
+		fmt.Println("[WARN] GetProfilePicture: invalid UUID", userID)
+		sendError(w, "Invalid user ID format", http.StatusBadRequest)
+		return
+	}
+
+	profilePictureURL, err := db.GetProfilePictureURLFromDB(userID)
+	if err != nil {
+		fmt.Println("[ERROR] GetProfilePicture:", err)
+		sendError(w, "Unable to fetch profile picture URL for user", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"profile_picture_url": profilePictureURL})
+
+}

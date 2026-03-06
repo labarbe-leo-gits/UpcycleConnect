@@ -256,7 +256,7 @@ func main() {
 	registerRoute("POST", "/internal/subscription/activate", "Activate premium for a user after successful Stripe subscription", app.ActivateSubscription, InternalKeyMiddleware)
 	registerRoute("POST", "/internal/subscription/revoke", "Revoke premium for a user on subscription cancellation or payment failure", app.RevokeSubscription, InternalKeyMiddleware)
 	registerRoute("GET", "/users/{id}/subscription", "Get subscription details for a user", app.GetSubscriptionByUserID, app.JWTAuthMiddleware)
-
+	registerRoute("GET", "/users/{id}/profile-picture", "Get the profile picture URL for a user", app.GetProfilePicture, app.JWTAuthMiddleware)
 	registerRoute("GET", "/projects", "List all published projects", app.GetProjects, app.JWTAuthMiddleware)
 	registerRoute("GET", "/projects/{id}", "Get a specific project with steps, images and materials", app.GetProjectByID, app.JWTAuthMiddleware)
 	registerRoute("POST", "/projects", "Create a new project", app.CreateProject, app.JWTAuthMiddleware)

@@ -305,7 +305,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="profile-header-flex">
             <div class="profile-picture-section">
                 <div class="img-spinner" aria-hidden="true"></div>
-                <img data-blob-src="../../../files/uploads/user/<?= htmlspecialchars($user['profile_picture'] ?? 'defaultUser.png') ?>" src="data:image/gif;base64,R0lGODlhAQABAPAAAP///wAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==" alt="Profile Picture" class="profile-pic-large" id="profile-pic-preview">
+
+                <?php
+
+                if (!empty($user['oauth_provider'])) {
+
+                    $userDetais = askAPI("/users/{$user['id']}/profile-picture", 'GET');
+                    $response = json_decode($userDetais, true);
+
+                    $avatarUrl = $response['profile_picture_url'] ?? '';
+
+                    if ($avatarUrl !== '') {
+                        echo '<img src="' . htmlspecialchars($avatarUrl) . '" alt="Profile Picture" class="profile-pic-large" id="profile-pic-preview">';
+                    } else {
+                        echo '<div class="no-avatar"><i class="fa-solid fa-user fa-3x"></i></div>';
+                    }
+                } else {
+                    echo '<img data-blob-src="../../../files/uploads/user/' . htmlspecialchars($user['profile_picture'] ?? 'defaultUser.png') . '" src="data:image/gif;base64,R0lGODlhAQABAPAAAP///wAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==" alt="Profile Picture" class="profile-pic-large" id="profile-pic-preview">';
+                }
+
+                ?>
+
             </div>
             <div class="profile-info-section">
                 <h2>Your Profile</h2>

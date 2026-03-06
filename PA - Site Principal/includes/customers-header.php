@@ -92,6 +92,7 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
                 </a>
                 <div class="dropdown-menu">
                     <a href="../customers/tips"><i class="fa-solid fa-lightbulb"></i>Tips</a>
+                    
                     <a href="<?= $profileUrl ?>"><i class="fa-solid fa-user"></i>Profile</a>
                     <a href="../customers/notifications"><i class="fa-solid fa-bell"></i>Notifications <span class="notif-badge" id="notifications-count" hidden>0</span></a>
                     <a href="../customers/planning"><i class="fa-solid fa-calendar-days"></i>Planning</a>
