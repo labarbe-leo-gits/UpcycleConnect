@@ -42,7 +42,8 @@ if (!$user) {
 } else if (isset($user['user_type']) && $user['user_type'] == 2) {
     include_once '../../includes/pro-header.php';
 }else if (isset($user['user_type']) && $user['user_type'] == 3) {
-    include_once '../../includes/admin-header.php';
+    header('Location: ' . getUserHomePath(3));
+    exit();
 }
 ?>
 

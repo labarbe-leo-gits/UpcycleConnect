@@ -1,8 +1,8 @@
+
 <?php
 require_once '../../config/db.php';
 require_once '../../includes/auth.php';
-
-requireUserType(3);
+requireUserType(1);
 trackLastPage();
 
 $user = getLoggedInUser();
@@ -19,16 +19,16 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UpcycleAdmin - <?=$title ?></title>
+    <title>UpcycleConnect - <?= $title ?></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=SN+Pro:ital,wght@0,200..900;1,200..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js" defer></script>
     <link rel="stylesheet" href="../../assets/css/style.css">
     <link rel="stylesheet" href="../../assets/css/customers.css">
-    <link rel="stylesheet" href="../../assets/css/pro.css">
-    <link rel="stylesheet" href="../../assets/css/admin.css">
     <link rel="icon" type="image/png" href="../../assets/img/brand/UpcycleDiminutif.png">
-    <script src="../../assets/js/blob-images.js"></script>
     <?php
     if (!empty(
         isset($extraCss) ? $extraCss : null
@@ -47,9 +47,9 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
     ?>
 </head>
 <body>
-    <header data-api-base="<?php echo htmlspecialchars($API_URL ?? ''); ?>" data-user-id="<?php echo htmlspecialchars($user['id'] ?? ''); ?>">
+    <header data-api-base="<?php echo htmlspecialchars($API_URL ?? ''); ?>" data-user-id="<?php echo htmlspecialchars($user['id'] ?? ''); ?>" data-notif-poll="../customers/notifications-poll">
         <div class="left">
-            <h1>Admin Portal</h1>
+            <h1>Customer Portal</h1>
         </div>
         <nav>
             <div class="nav-dropdown community-dropdown">
@@ -59,30 +59,18 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
                 </a>
                 <div class="dropdown-menu">
                     <a href="../common/forums"><i class="fa-solid fa-indent"></i>Forums</a>
-                    <a href="../admin/users"><i class="fa-solid fa-user"></i>Users</a>
+                    <a href="../common/chat"><i class="fa-solid fa-comment"></i>Chat</a>
                 </div>
             </div>
             <div class="nav-dropdown">
-                <a class="btn-wrapper" href="../admin/annonces">
+                <a class="btn-wrapper" href="../common/offers">
                     <i class="fa-solid fa-box-open"></i>
                     <p>Products</p>
                 </a>
                 <div class="dropdown-menu">
-                    <a href="../admin/annonces"><i class="fa-solid fa-box-open"></i>Offers</a>
-                    <a href="../admin/services"><i class="fa-solid fa-calendar-days"></i>Services &amp; Events</a>
-                    <a href="../admin/containers"><i class="fa-solid fa-warehouse"></i>Containers</a>
-                    <a href="../admin/materials"><i class="fa-solid fa-recycle"></i>Materials</a>
-                </div>
-            </div>
-            <div class="nav-dropdown">
-                <a class="btn-wrapper" href="requests">
-                    <i class="fa-solid fa-bell-concierge"></i>
-                    <p>Requests</p>
-                </a>
-                <div class="dropdown-menu">
-                    <a href="../admin/offers"><i class="fa-solid fa-hand-holding-hand"></i>Deposits</a>
-                    <a href="../customers/services"><i class="fa-solid fa-money-bill-transfer"></i>Payouts</a>
-                    <a href="../admin/refunds"><i class="fa-solid fa-rotate-left"></i>Refunds</a>
+                    <a href="../common/offers"><i class="fa-solid fa-box-open"></i>Offers</a>
+                    <a href="../customers/services"><i class="fa-solid fa-briefcase"></i>Services</a>
+                    <a href="../customers/deposits"><i class="fa-solid fa-warehouse"></i>Deposit</a>
                 </div>
             </div>
             <div class="btn-wrapper" onClick="window.location.href='../public/index'">
@@ -91,7 +79,7 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
             </div>
 
             <?php
-                $profileUrl = 'profile';
+                $profileUrl = '../customers/profile';
             ?>
             <div class="nav-dropdown profile-dropdown">
                 <a class="btn-wrapper profile-link" href="<?= $profileUrl ?>">
@@ -100,18 +88,22 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
                     <?php else: ?>
                         <i class="fa-solid fa-user fa-lg"></i>
                     <?php endif; ?>
-                    <p><?= htmlspecialchars(!empty($user['first_name']) ? $user['first_name'] : ($user['username'] ?? '')) ?></p>
                 </a>
                 <div class="dropdown-menu">
+                    <a href="../customers/tips"><i class="fa-solid fa-lightbulb"></i>Tips</a>
                     <a href="<?= $profileUrl ?>"><i class="fa-solid fa-user"></i>Profile</a>
-                    <a href="../pro/logout" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="fa-solid fa-right-from-bracket"></i>Logout</a>
+                    <a href="../customers/notifications"><i class="fa-solid fa-bell"></i>Notifications <span class="notif-badge" id="notifications-count" hidden>0</span></a>
+                    <a href="../customers/planning"><i class="fa-solid fa-calendar-days"></i>Planning</a>
+                    <a href="../customers/support"><i class="fa-solid fa-headset"></i>Support</a> 
+                    <a href="../customers/logout" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="fa-solid fa-right-from-bracket"></i>Logout</a>
                 </div>
             </div>
         </nav>
     </header>
     
-    <form id="logout-form" action="logout" method="POST" class="hidden-form">
+    <form id="logout-form" action="../customers/logout" method="POST" class="hidden-form">
         <input type="hidden" name="logout" value="1">
     </form>
-</body>
-</html>
+
+    <script src="../../assets/js/notifications-poll.js"></script>
+    <script src="../../assets/js/blob-images.js"></script>

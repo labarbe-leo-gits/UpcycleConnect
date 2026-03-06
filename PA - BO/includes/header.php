@@ -1,0 +1,116 @@
+
+<?php
+require_once '../../includes/auth.php';
+trackLastPage();
+
+if (isset($_SESSION['banned']) && $_SESSION['banned']){
+    header('Location: ../public/ban');
+    exit();
+}
+
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UpcycleConnect - <?= $title ?></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=SN+Pro:ital,wght@0,200..900;1,200..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="../../assets/css/style.css">
+    <link rel="stylesheet" href="../../assets/css/customers.css">
+    <link rel="stylesheet" href="../../assets/css/about.css">
+    <link rel="stylesheet" href="../../assets/css/header.css">
+    <link rel="icon" type="image/png" href="../../assets/img/brand/UpcycleDiminutif.png">
+    <?php if (isset($title) && $title === 'About'): ?>
+        <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+        <script src="https://unpkg.com/leaflet/dist/leaflet.js" defer></script>
+        <script src="../../assets/js/about-map.js" defer></script>
+        <script src="../../assets/js/carroussel.js" defer></script>
+    <?php endif; ?>
+    <?php if (isset($title) && $title === 'Contact'): ?>
+        <link rel="stylesheet" href="../../assets/css/contact.css">
+    <?php endif; ?>
+    <?php if (isset($title) && $title === 'Terms and Conditions'): ?>
+        <link rel="stylesheet" href="../../assets/css/cgu.css">
+    <?php endif; ?>
+    <?php if (isset($title) && $title === 'Home'): ?>
+        <link rel="stylesheet" href="../../assets/css/home.css">
+    <?php endif; ?>
+    <script src="https://www.google.com/recaptcha/api.js?render=<?php echo getenv('RECAPTCHA_SITE_KEY'); ?>"></script>
+    <script src="../../assets/js/button.js"></script>
+    <script src="../../assets/js/blob-images.js"></script>
+    <?php
+
+    if (!empty(
+        isset($extraCss) ? $extraCss : null
+    ) && is_array($extraCss)) {
+        foreach ($extraCss as $cssFile) {
+            echo "    <link rel=\"stylesheet\" href=\"{$cssFile}\">\n";
+        }
+    }
+    if (!empty(
+        isset($extraJs) ? $extraJs : null
+    ) && is_array($extraJs)) {
+        foreach ($extraJs as $jsFile) {
+            echo "    <script src=\"{$jsFile}\" defer></script>\n";
+        }
+    }
+    ?>
+</head>
+<body>
+    <header>
+        <div class="left">
+            <h3>UpcycleConnect</h3>
+        </div>
+        <nav>
+            <div class="btn-wrapper" onClick="openFile('../public/index.php')">
+                <i class="fa-solid fa-house-chimney"></i>
+                <p>Home</p>
+            </div>
+            <div class="btn-wrapper" onClick="openFile('../public/about.php')">
+                <i class="fa-solid fa-circle-info"></i>
+                <p>About</p>
+            </div>
+
+            <div class="nav-dropdown community-dropdown">
+                <a class="btn-wrapper" href="../common/forums">
+                    <i class="fa-solid fa-users"></i>
+                    <p>Community</p>
+                </a>
+                <div class="dropdown-menu">
+                    <a href="../common/forums"><i class="fa-solid fa-indent"></i>Forums</a>
+                </div>
+            </div>
+            <div class="btn-wrapper" onClick="openFile('../public/contact.php')">
+                <i class="fa-solid fa-envelope"></i>
+                <p>Contact</p>
+            </div>
+            
+            <?php if (isLoggedIn()): ?>
+                <?php $portalPath = getUserHomePath(getLoggedInUserType() ?? 1); ?>
+                <div class="btn-wrapper" onClick="window.location.href='<?= $portalPath ?>'">
+                    <i class="fa-solid fa-store"></i>
+                    <p>Portal</p>
+                </div>
+                <div class="btn-wrapper logout-btn" onClick="document.getElementById('logout-form').submit()">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <p>Logout</p>
+                </div>
+            <?php else: ?>
+                <div class="btn-wrapper" onClick="openFile('../public/login.php')">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    <p>Login</p>
+                </div>
+            <?php endif; ?>
+        </nav>
+    </header>
+    <?php if (isLoggedIn()): ?>
+        <form id="logout-form" action="../customers/logout" method="POST" class="hidden-form">
+            <input type="hidden" name="logout" value="1">
+        </form>
+    <?php endif; ?>
+    

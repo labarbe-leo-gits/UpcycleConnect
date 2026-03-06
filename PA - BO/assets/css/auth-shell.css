@@ -1,0 +1,59 @@
+body.auth-shell-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.auth-shell-page .container {
+  flex: 1 0 auto;
+}
+
+.auth-shell-header {
+  display: grid;
+  grid-template-columns: 1fr 5fr;
+  background: linear-gradient(135deg, #10b981, #34d399);
+  margin: 0;
+  color: #fff;
+  padding-left: 20px;
+  position: static;
+}
+
+.auth-shell-brand {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 15px 0;
+}
+
+.auth-shell-brand h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.auth-shell-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 20px;
+  text-align: right;
+  font-size: 0.9rem;
+}
+
+.auth-shell-meta span {
+  opacity: 0.9;
+}
+
+.auth-shell-footer {
+  background: linear-gradient(135deg, #10b981, #34d399);
+  color: #fff;
+  text-align: center;
+  padding: 20px;
+  margin-top: auto;
+}
+
+.auth-shell-footer p {
+  margin: 0;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}

@@ -1,11 +1,19 @@
 
 <?php
-require_once '../../includes/auth.php';
+require_once __DIR__ . '/auth.php';
 trackLastPage();
 
 if (isset($_SESSION['banned']) && $_SESSION['banned']){
     header('Location: ../public/ban');
     exit();
+}
+
+if (isLoggedIn() && getLoggedInUserType() === 3) {
+    $boUrl = rtrim((string) getenv('BO_PUBLIC_URL'), '/');
+    if ($boUrl !== '') {
+        header('Location: ' . $boUrl . '/pages/admin/dashboard');
+        exit();
+    }
 }
 
 ?>
@@ -20,29 +28,29 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=SN+Pro:ital,wght@0,200..900;1,200..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="../../assets/css/style.css">
-    <link rel="stylesheet" href="../../assets/css/customers.css">
-    <link rel="stylesheet" href="../../assets/css/about.css">
-    <link rel="stylesheet" href="../../assets/css/header.css">
-    <link rel="icon" type="image/png" href="../../assets/img/brand/UpcycleDiminutif.png">
+    <link rel="stylesheet" href="/PA/PA%20-%20Site%20Principal/assets/css/style.css">
+    <link rel="stylesheet" href="/PA/PA%20-%20Site%20Principal/assets/css/customers.css">
+    <link rel="stylesheet" href="/PA/PA%20-%20Site%20Principal/assets/css/about.css">
+    <link rel="stylesheet" href="/PA/PA%20-%20Site%20Principal/assets/css/header.css">
+    <link rel="icon" type="image/png" href="/PA/PA%20-%20Site%20Principal/assets/img/brand/UpcycleDiminutif.png">
     <?php if (isset($title) && $title === 'About'): ?>
         <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
         <script src="https://unpkg.com/leaflet/dist/leaflet.js" defer></script>
-        <script src="../../assets/js/about-map.js" defer></script>
-        <script src="../../assets/js/carroussel.js" defer></script>
+        <script src="/PA/PA%20-%20Site%20Principal/assets/js/about-map.js" defer></script>
+        <script src="/PA/PA%20-%20Site%20Principal/assets/js/carroussel.js" defer></script>
     <?php endif; ?>
     <?php if (isset($title) && $title === 'Contact'): ?>
-        <link rel="stylesheet" href="../../assets/css/contact.css">
+        <link rel="stylesheet" href="/PA/PA%20-%20Site%20Principal/assets/css/contact.css">
     <?php endif; ?>
     <?php if (isset($title) && $title === 'Terms and Conditions'): ?>
-        <link rel="stylesheet" href="../../assets/css/cgu.css">
+        <link rel="stylesheet" href="/PA/PA%20-%20Site%20Principal/assets/css/cgu.css">
     <?php endif; ?>
     <?php if (isset($title) && $title === 'Home'): ?>
-        <link rel="stylesheet" href="../../assets/css/home.css">
+        <link rel="stylesheet" href="/PA/PA%20-%20Site%20Principal/assets/css/home.css">
     <?php endif; ?>
     <script src="https://www.google.com/recaptcha/api.js?render=<?php echo getenv('RECAPTCHA_SITE_KEY'); ?>"></script>
-    <script src="../../assets/js/button.js"></script>
-    <script src="../../assets/js/blob-images.js"></script>
+    <script src="/PA/PA%20-%20Site%20Principal/assets/js/button.js"></script>
+    <script src="/PA/PA%20-%20Site%20Principal/assets/js/blob-images.js"></script>
     <?php
 
     if (!empty(
@@ -67,25 +75,25 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
             <h3>UpcycleConnect</h3>
         </div>
         <nav>
-            <div class="btn-wrapper" onClick="openFile('../public/index.php')">
+            <div class="btn-wrapper" onClick="openFile('/PA/PA%20-%20Site%20Principal/pages/public/index.php')">
                 <i class="fa-solid fa-house-chimney"></i>
                 <p>Home</p>
             </div>
-            <div class="btn-wrapper" onClick="openFile('../public/about.php')">
+            <div class="btn-wrapper" onClick="openFile('/PA/PA%20-%20Site%20Principal/pages/public/about.php')">
                 <i class="fa-solid fa-circle-info"></i>
                 <p>About</p>
             </div>
 
             <div class="nav-dropdown community-dropdown">
-                <a class="btn-wrapper" href="../common/forums">
+                <a class="btn-wrapper" href="/PA/PA%20-%20Site%20Principal/pages/common/forums">
                     <i class="fa-solid fa-users"></i>
                     <p>Community</p>
                 </a>
                 <div class="dropdown-menu">
-                    <a href="../common/forums"><i class="fa-solid fa-indent"></i>Forums</a>
+                    <a href="/PA/PA%20-%20Site%20Principal/pages/common/forums"><i class="fa-solid fa-indent"></i>Forums</a>
                 </div>
             </div>
-            <div class="btn-wrapper" onClick="openFile('../public/contact.php')">
+            <div class="btn-wrapper" onClick="openFile('/PA/PA%20-%20Site%20Principal/pages/public/contact.php')">
                 <i class="fa-solid fa-envelope"></i>
                 <p>Contact</p>
             </div>
@@ -101,7 +109,7 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
                     <p>Logout</p>
                 </div>
             <?php else: ?>
-                <div class="btn-wrapper" onClick="openFile('../public/login.php')">
+                <div class="btn-wrapper" onClick="openFile('/PA/PA%20-%20Site%20Principal/pages/public/login.php')">
                     <i class="fa-solid fa-right-to-bracket"></i>
                     <p>Login</p>
                 </div>
@@ -109,7 +117,7 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
         </nav>
     </header>
     <?php if (isLoggedIn()): ?>
-        <form id="logout-form" action="../customers/logout" method="POST" class="hidden-form">
+        <form id="logout-form" action="/PA/PA%20-%20Site%20Principal/pages/customers/logout" method="POST" class="hidden-form">
             <input type="hidden" name="logout" value="1">
         </form>
     <?php endif; ?>

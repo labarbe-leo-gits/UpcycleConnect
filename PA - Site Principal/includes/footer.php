@@ -9,11 +9,11 @@
 			<div class="footer-col links">
 				<h4>Quick Links</h4>
 				<ul>
-					<li><a href="../public/index">Home</a></li>
-					<li><a href="../public/about">About</a></li>
-					<li><a href="../public/contact">Contact</a></li>
-					<li><a href="../customers/index">Portal</a></li>
-					<li><a href="../public/cgu">Terms & Conditions</a></li>
+					<li><a href="/PA/PA%20-%20Site%20Principal/pages/public/index">Home</a></li>
+					<li><a href="/PA/PA%20-%20Site%20Principal/pages/public/about">About</a></li>
+					<li><a href="/PA/PA%20-%20Site%20Principal/pages/public/contact">Contact</a></li>
+					<li><a href="/PA/PA%20-%20Site%20Principal/pages/customers/index">Portal</a></li>
+					<li><a href="/PA/PA%20-%20Site%20Principal/pages/public/cgu">Terms & Conditions</a></li>
 				</ul>
 			</div>
 

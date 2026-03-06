@@ -75,7 +75,7 @@ if (isset($_GET['code'])) {
             $_SESSION['oauth_provider'] = $user['oauth_provider'] ?? 'google';
             $_SESSION['first_name'] = $user['first_name'] ?? '';
             $_SESSION['last_name'] = $user['last_name'] ?? '';
-            header('Location: ../customers/profile');
+            header('Location: ' . getUserHomePath($_SESSION['user_type']));
             exit();
         }
 

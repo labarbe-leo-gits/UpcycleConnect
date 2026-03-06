@@ -18,11 +18,12 @@ function getLoggedInUserType() {
 }
 
 function getUserHomePath($userType) {
-    //return ((int) $userType === 2) ? '../pro/profile' : '../customers/profile';
+    $boUrl = rtrim((string) getenv('BO_PUBLIC_URL'), '/');
+
     if ((int) $userType === 2) {
         return '../pro/profile';
     } elseif ((int) $userType === 3) {
-        return '../admin/dashboard';
+        return $boUrl !== '' ? ($boUrl . '/pages/admin/dashboard') : '../public/login.php';
     } else {
         return '../customers/profile';
     }

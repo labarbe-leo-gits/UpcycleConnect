@@ -1,0 +1,3 @@
+Options -Indexes
+ErrorDocument 403 /PA/PA%20-%20BO/403.php
+ErrorDocument 404 /PA/PA%20-%20BO/404.php
