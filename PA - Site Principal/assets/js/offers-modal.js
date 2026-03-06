@@ -16,14 +16,13 @@
     }
 
     modal.setAttribute('aria-hidden', 'true');
+    loadMaterials();
 
     function openModal() {
         lastFocused = document.activeElement;
         modal.classList.add('is-open');
         document.body.classList.add('modal-open');
         modal.setAttribute('aria-hidden', 'false');
-
-        loadMaterials();
 
         var focusTarget = modal.querySelector('#offer-title') || modal.querySelector(focusableSelector);
         if (focusTarget) {
@@ -272,6 +271,8 @@
         if (priceInputEl) {
             priceInputEl.addEventListener('input', updateTTCPreview);
             priceInputEl.addEventListener('change', updateTTCPreview);
+            priceInputEl.addEventListener('input', validateMaximumPrice);
+            priceInputEl.addEventListener('change', validateMaximumPrice);
         }
         var materialSelect = document.getElementById('offer-material');
         var customInput = document.getElementById('offer-material-custom');
@@ -562,6 +563,10 @@
                 submitButton.innerHTML = originalText;
             });
         });
+    }
+
+    function validateMaximumPrice(){
+        if (this.max) this.value = Math.min(parseInt(this.max), parseInt(this.value) || 0);
     }
 
     function uploadImage(file, annonceId) {

@@ -130,6 +130,10 @@ func ValidateAnnonceDto(annonceDto models.Annonce) []string {
 		validationErrors = append(validationErrors, "Price cannot be negative")
 	}
 
+	if annonceDto.Price > 1000 {
+		validationErrors = append(validationErrors, "Price cannot exceed 1000. Please contact support if you want to list an item above this price.")
+	}
+
 	if annonceDto.UserID == uuid.Nil {
 		validationErrors = append(validationErrors, "UserID is required")
 	}

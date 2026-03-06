@@ -49,10 +49,10 @@ if(($user['user_type'] == 1) || ($user['user_type'] == 2)){
                     Your net price (HT - what you will receive):
                     <span class="help-icon" title="Enter the amount you want to receive (excluding UpcycleConnect commission and Stripe fees). The buyer will pay a higher TTC amount calculated automatically.">
                         <i class="fa-solid fa-circle-question"></i>
-                        <span class="help-tooltip">Enter the amount you want to receive. Put 0 for a free offer. UpcycleConnect adds an 8% commission and Stripe processing fees (~2.9% + €0.30) on top to get the final buyer price (TTC).</span>
+                        <span class="help-tooltip">Enter the amount you want to receive. Put 0 for a free offer. UpcycleConnect adds an 8% commission and Stripe processing fees (~2.9% + €0.30) on top to get the final buyer price (TTC).<br><br>The price is limited to a maximum of 1000€. If you wish to sell the item for more, please contact support.</span>
                     </span>
                 </label>
-                <input type="number" id="offer-price" name="offer-price" min="0" step="0.01" required>
+                <input type="number" id="offer-price" name="offer-price" min="0" step="0.01" max="1000" required>
             </div>
             <div class="form-group" id="offer-ttc-preview" style="display:none;">
                 <div class="ttc-breakdown">
