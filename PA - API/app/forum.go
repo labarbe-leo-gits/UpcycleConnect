@@ -262,9 +262,12 @@ func UpdatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	validationErrors := ValidatePostDTO(postDto)
-	if len(validationErrors) > 0 {
-		sendError(w, fmt.Sprintf("Validation errors: %s", validationErrors), http.StatusBadRequest)
+	if postDto.Content == "" {
+		sendError(w, "Content is required", http.StatusBadRequest)
+		return
+	}
+	if len(postDto.Content) < 5 || len(postDto.Content) > 300 {
+		sendError(w, "The content must be between 5 and 300 characters", http.StatusBadRequest)
 		return
 	}
 

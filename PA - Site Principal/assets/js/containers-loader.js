@@ -157,6 +157,14 @@
         button.onclick = function() { openContainerModal(c); };
         div.appendChild(button);
 
+        const itemsButton = document.createElement('button');
+        itemsButton.className = 'btn-secondary';
+        itemsButton.textContent = 'View Items';
+
+        // TODO : modal listingg the items with pagination
+
+        div.appendChild(itemsButton);
+
         return div;
     }
 

@@ -216,7 +216,7 @@ form h2 {
 
 .input-wrapper input,
 .input-wrapper select {
-  padding-left: 60px;
+  /* padding-left: 60px; */
   width: 100%;
 }
 
@@ -871,3 +871,7 @@ h1 {
 	#easterEggModal .egg-close:hover {
 		color: #000;
 	}
+
+  .icon-input{
+    padding-left:40px;
+  }

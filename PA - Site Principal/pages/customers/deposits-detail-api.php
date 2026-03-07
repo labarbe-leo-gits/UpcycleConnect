@@ -54,5 +54,14 @@ if (!empty($deposit['conteneur_id'])) {
     }
 }
 
+$depositFiles = [];
+if (!empty($deposit['id'])) {
+    $fResp = askAPI('/deposits/' . $deposit['id'] . '/files', 'GET');
+    $fDecoded = json_decode($fResp, true);
+    if (is_array($fDecoded)) {
+        $depositFiles = $fDecoded;
+    }
+}
+
 if (ob_get_length()) ob_clean();
-echo json_encode(['deposit' => $deposit, 'conteneur' => $conteneur]);
+echo json_encode(['deposit' => $deposit, 'conteneur' => $conteneur, 'files' => $depositFiles]);

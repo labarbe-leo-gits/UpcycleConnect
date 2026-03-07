@@ -228,3 +228,21 @@ func DeleteConteneur(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 
 }
+
+func GetConteneurItems(w http.ResponseWriter, r *http.Request) {
+
+	id := strings.TrimPrefix(r.URL.Path, "/conteneurs/")
+	id = strings.TrimSuffix(id, "/items")
+
+	items, err := db.GetItemsByConteneurIDFromDB(id)
+	if err != nil {
+		fmt.Println("[ERROR] GetConteneurItems - DB error:", err)
+		http.Error(w, "Failed to retrieve items for conteneur", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(items)
+
+}

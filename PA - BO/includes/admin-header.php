@@ -18,6 +18,7 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>if(localStorage.getItem('theme')==='dark'){document.documentElement.style.backgroundColor='#121212';document.documentElement.style.colorScheme='dark';}</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UpcycleAdmin - <?=$title ?></title>
@@ -29,6 +30,8 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
     <link rel="stylesheet" href="/PA/PA%20-%20BO/assets/css/pro.css">
     <link rel="stylesheet" href="/PA/PA%20-%20BO/assets/css/admin.css">
     <link rel="icon" type="image/png" href="/PA/PA%20-%20BO/assets/img/brand/UpcycleDiminutif.png">
+    <link rel="stylesheet" href="/PA/PA%20-%20BO/assets/css/dark.css">
+    <script src="/PA/PA%20-%20BO/assets/js/dark.js" defer></script>
     <script src="/PA/PA%20-%20BO/assets/js/blob-images.js"></script>
     <?php
     if (!empty(
@@ -47,7 +50,7 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
     }
     ?>
 </head>
-<body>
+<body><script>if(localStorage.getItem('theme')==='dark')document.body.classList.add('dark-mode');</script>
     <header data-api-base="<?php echo htmlspecialchars($API_URL ?? ''); ?>" data-user-id="<?php echo htmlspecialchars($user['id'] ?? ''); ?>">
         <div class="left">
             <h1>Admin Portal</h1>
@@ -89,6 +92,10 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
             <div class="btn-wrapper" onClick="window.location.href='<?= htmlspecialchars($principalBaseUrl !== '' ? $principalBaseUrl : '../public/index') ?>'">
                 <i class="fa-solid fa-arrow-left"></i>
                 <p>Main Site</p>
+            </div>
+            <div class="btn-wrapper" id="dark-toggle" title="Toggle dark mode">
+                <i class="fa-solid fa-moon"></i>
+                <p>Theme</p>
             </div>
 
             <?php

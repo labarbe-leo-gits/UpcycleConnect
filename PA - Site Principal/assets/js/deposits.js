@@ -192,6 +192,46 @@
             depositInfoEl.classList.add('fade-in');
             setTimeout(() => depositInfoEl.classList.remove('fade-in'), 360);
 
+            const filesSection = document.getElementById('deposit-files-section');
+            const gallery = document.getElementById('deposit-modal-gallery');
+            const downloads = document.getElementById('deposit-modal-downloads');
+            const files = Array.isArray(data.files) ? data.files : [];
+            if (filesSection && gallery && downloads) {
+                if (files.length > 0) {
+                    gallery.innerHTML = '';
+                    downloads.innerHTML = '';
+                    files.forEach(function(f) {
+                        const imgUrl = '/PA/files/uploads/deposit/' + encodeURIComponent(f.filename);
+                        const thumb = document.createElement('img');
+                        thumb.src = imgUrl;
+                        thumb.alt = escapeHtml(f.original_name || f.filename);
+                        thumb.title = escapeHtml(f.original_name || f.filename);
+                        thumb.addEventListener('click', function() {
+                            window.open(imgUrl, '_blank');
+                        });
+                        thumb.onerror = function() { this.style.display = 'none'; };
+                        gallery.appendChild(thumb);
+
+                        const link = document.createElement('a');
+                        link.href = imgUrl;
+                        link.download = f.original_name || f.filename;
+
+                        const ico = document.createElement('i');
+                        ico.className = 'fa-solid fa-download';
+                        link.appendChild(ico);
+                        const txt = document.createElement('span');
+                        txt.textContent = f.original_name || f.filename;
+                        link.appendChild(txt);
+                        downloads.appendChild(link);
+                    });
+                    filesSection.style.display = '';
+                } else {
+                    filesSection.style.display = 'none';
+                    gallery.innerHTML = '';
+                    downloads.innerHTML = '';
+                }
+            }
+
             conteneurInfoEl.innerHTML = `
                 <div class="deposit-conteneur">
                     <p><strong>${escapeHtml(conteneur.name || conteneur_nameOrEmpty(conteneur))}</strong></p>
@@ -441,6 +481,8 @@
         const form = document.getElementById('add-deposit-form');
         const conteneurSelect = document.getElementById('deposit-conteneur');
         const errorDiv = document.getElementById('add-deposit-error');
+        const fileInput = document.getElementById('deposit-files');
+        const filePreview = document.getElementById('deposit-files-preview');
         if (!openBtn || !modal || !form || !conteneurSelect) return;
 
         populateConteneurSelect();
@@ -464,12 +506,126 @@
             if (e.key === 'Tab') trapFocus(e);
         });
 
+        const dropzone = document.getElementById('deposit-dropzone');
+        let selectedFiles = [];
+        const MAX_FILES = 5;
+        const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        const TYPE_ICONS = {
+            'image': 'fa-solid fa-image',
+            'application/pdf': 'fa-solid fa-file-pdf',
+            'application/zip': 'fa-solid fa-file-zipper',
+            'application/x-zip-compressed': 'fa-solid fa-file-zipper',
+            'text': 'fa-solid fa-file-lines',
+            'video': 'fa-solid fa-file-video',
+            'audio': 'fa-solid fa-file-audio',
+        };
+
+        function getIconClass(type) {
+            if (!type) return 'fa-solid fa-file';
+            if (TYPE_ICONS[type]) return TYPE_ICONS[type];
+            const base = type.split('/')[0];
+            return TYPE_ICONS[base] || 'fa-solid fa-file';
+        }
+
+        function renderChips() {
+            if (!filePreview) return;
+            filePreview.innerHTML = '';
+            selectedFiles.forEach(function(file, idx) {
+                const chip = document.createElement('div');
+                chip.className = 'file-chip';
+
+                const isImage = file.type.startsWith('image/');
+                if (isImage) {
+                    const img = document.createElement('img');
+                    img.className = 'file-chip-thumb';
+                    img.alt = file.name;
+                    const reader = new FileReader();
+                    reader.onload = function(e) { img.src = e.target.result; };
+                    reader.readAsDataURL(file);
+                    chip.appendChild(img);
+                } else {
+                    const iconWrap = document.createElement('div');
+                    iconWrap.className = 'file-chip-icon';
+                    const ico = document.createElement('i');
+                    ico.className = getIconClass(file.type);
+                    iconWrap.appendChild(ico);
+                    chip.appendChild(iconWrap);
+                }
+
+                const name = document.createElement('span');
+                name.className = 'file-chip-name';
+                name.textContent = file.name;
+                name.title = file.name;
+                chip.appendChild(name);
+
+                const remove = document.createElement('button');
+                remove.type = 'button';
+                remove.className = 'file-chip-remove';
+                remove.setAttribute('aria-label', 'Remove ' + file.name);
+                remove.innerHTML = '&times;';
+                remove.addEventListener('click', function() {
+                    selectedFiles.splice(idx, 1);
+                    renderChips();
+                    updateDropzoneState();
+                });
+                chip.appendChild(remove);
+
+                filePreview.appendChild(chip);
+            });
+        }
+
+        function updateDropzoneState() {
+            if (!dropzone) return;
+            if (selectedFiles.length >= MAX_FILES) {
+                dropzone.style.opacity = '0.5';
+                dropzone.style.pointerEvents = 'none';
+            } else {
+                dropzone.style.opacity = '';
+                dropzone.style.pointerEvents = '';
+            }
+        }
+
+        function addFiles(newFiles) {
+            Array.from(newFiles).forEach(function(file) {
+                if (selectedFiles.length >= MAX_FILES) return;
+                if (ALLOWED_TYPES.indexOf(file.type) === -1) return;
+                // deduplicate by name+size
+                const already = selectedFiles.some(function(f) { return f.name === file.name && f.size === file.size; });
+                if (!already) selectedFiles.push(file);
+            });
+            renderChips();
+            updateDropzoneState();
+        }
+
+        if (dropzone) {
+            dropzone.addEventListener('click', function() { if (fileInput) fileInput.click(); });
+            dropzone.addEventListener('keydown', function(e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (fileInput) fileInput.click(); } });
+            dropzone.addEventListener('dragover', function(e) { e.preventDefault(); dropzone.classList.add('drag-over'); });
+            dropzone.addEventListener('dragleave', function() { dropzone.classList.remove('drag-over'); });
+            dropzone.addEventListener('drop', function(e) {
+                e.preventDefault();
+                dropzone.classList.remove('drag-over');
+                addFiles(e.dataTransfer.files);
+            });
+        }
+
+        if (fileInput) {
+            fileInput.addEventListener('change', function() {
+                addFiles(fileInput.files);
+                fileInput.value = '';
+            });
+        }
+
         function closeModal() {
             modal.classList.remove('is-open');
             document.body.classList.remove('modal-open');
             modal.setAttribute('aria-hidden', 'true');
             if (lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
             if (errorDiv) { errorDiv.style.display = 'none'; errorDiv.textContent = ''; }
+            if (filePreview) filePreview.innerHTML = '';
+            if (fileInput) fileInput.value = '';
+            selectedFiles = [];
+            updateDropzoneState();
         }
 
         function trapFocus(event) {
@@ -514,14 +670,30 @@
                 return;
             }
 
+            const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            const filesPayload_files = selectedFiles.filter(function(f) { return allowed.indexOf(f.type) !== -1; }).slice(0, 5);
+
             submitBtn.disabled = true;
             const originalHtml = submitBtn.innerHTML;
             submitBtn.innerHTML = '<i class="fa-solid fa-spinner"></i> Sending...';
 
-            fetch('create-deposit', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-                body: JSON.stringify({ conteneur_id: conteneurId, object_name: name, object_description: desc })
+            function readFilesAsBase64(files) {
+                return Promise.all(files.map(function(file) {
+                    return new Promise(function(resolve) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) { resolve({ file_name: file.name, file_data: e.target.result }); };
+                        reader.onerror = function() { resolve(null); };
+                        reader.readAsDataURL(file);
+                    });
+                })).then(function(results) { return results.filter(Boolean); });
+            }
+
+            readFilesAsBase64(filesPayload_files).then(function(filesPayload) {
+                return fetch('create-deposit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    body: JSON.stringify({ conteneur_id: conteneurId, object_name: name, object_description: desc, files: filesPayload })
+                });
             })
             .then(function(r) { return r.text().then(function(t) { try { return JSON.parse(t); } catch (e) { throw new Error('Invalid response from server'); } }); })
             .then(function(result) {

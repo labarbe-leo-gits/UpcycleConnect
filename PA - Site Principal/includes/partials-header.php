@@ -16,6 +16,7 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>if(localStorage.getItem('theme')==='dark'){document.documentElement.style.backgroundColor='#121212';document.documentElement.style.colorScheme='dark';}</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UpcycleConnect - <?= $title ?></title>
@@ -46,7 +47,7 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
     }
     ?>
 </head>
-<body>
+<body><script>if(localStorage.getItem('theme')==='dark')document.body.classList.add('dark-mode');</script>
     <header data-api-base="<?php echo htmlspecialchars($API_URL ?? ''); ?>" data-user-id="<?php echo htmlspecialchars($user['id'] ?? ''); ?>">
         <div class="left">
             <h1>Employee Portal</h1>
@@ -82,7 +83,6 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
                 </a>
                 <div class="dropdown-menu">
                     <a href="<?= $profileUrl ?>"><i class="fa-solid fa-user"></i>Profile</a>
-                    <a href="../common/support"><i class="fa-solid fa-headset"></i>Support</a>
                     <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="fa-solid fa-right-from-bracket"></i>Logout</a>
                 </div>
             </div>

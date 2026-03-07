@@ -17,6 +17,7 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>if(localStorage.getItem('theme')==='dark'){document.documentElement.style.backgroundColor='#121212';document.documentElement.style.colorScheme='dark';}</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UpcycleConnect - <?= $title ?></title>
@@ -45,7 +46,7 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
     }
     ?>
 </head>
-<body>
+<body><script>if(localStorage.getItem('theme')==='dark')document.body.classList.add('dark-mode');</script>
     <header data-api-base="<?php echo htmlspecialchars($API_URL ?? ''); ?>" data-user-id="<?php echo htmlspecialchars($user['id'] ?? ''); ?>" data-notif-poll="../pro/notifications-poll">
         <div class="left">
             <h1>Professional Portal</h1>
@@ -74,6 +75,10 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
             <div class="btn-wrapper" onClick="window.location.href='../public/index'">
                 <i class="fa-solid fa-arrow-left"></i>
                 <p>Main Site</p>
+            </div>
+            <div class="btn-wrapper" id="dark-toggle" title="Toggle dark mode">
+                <i class="fa-solid fa-moon"></i>
+                <p>Theme</p>
             </div>
 
             <?php

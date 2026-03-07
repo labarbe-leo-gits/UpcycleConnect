@@ -165,3 +165,44 @@ func DeleteConteneurFromDB(conteneurIDStr string) error {
 
 	return nil
 }
+
+func GetItemsByConteneurIDFromDB(conteneurIDStr string) ([]models.ConteneurItem, error) {
+	rows, err := Db.Query(
+		`SELECT id, user_id, conteneur_id, object_name, object_description, status, created_at, updated_at
+		 FROM demandes_depot
+		 WHERE conteneur_id = ? AND status = 1
+		 ORDER BY created_at ASC`,
+		conteneurIDStr,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("GetItemsByConteneurIDFromDB query error: %v", err)
+	}
+	defer rows.Close()
+
+	var items []models.ConteneurItem
+	for rows.Next() {
+		var item models.ConteneurItem
+		if err := rows.Scan(
+			&item.ID, &item.UserID, &item.ConteneurID,
+			&item.ObjectName, &item.ObjectDescription,
+			&item.Status, &item.CreatedAt, &item.UpdatedAt,
+		); err != nil {
+			return nil, fmt.Errorf("GetItemsByConteneurIDFromDB scan error: %v", err)
+		}
+		files, err := GetDepositFilesByDepositIDFromDB(item.ID.String())
+		if err != nil {
+			return nil, fmt.Errorf("GetItemsByConteneurIDFromDB files error: %v", err)
+		}
+		item.Files = files
+		items = append(items, item)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("GetItemsByConteneurIDFromDB rows error: %v", err)
+	}
+	if items == nil {
+		items = []models.ConteneurItem{}
+	}
+	return items, nil
+}
+
+

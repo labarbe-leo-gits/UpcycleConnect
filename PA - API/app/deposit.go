@@ -79,9 +79,7 @@ func CreateDeposit(w http.ResponseWriter, r *http.Request) {
 
 func UpdateDepositStatus(w http.ResponseWriter, r *http.Request) {
 
-	var requestData struct {
-		Status int `json:"status"`
-	}
+	var requestData models.UpdateDepositStatusDto
 
 	err := json.NewDecoder(r.Body).Decode(&requestData)
 	if err != nil {
@@ -134,5 +132,64 @@ func GetDepositByID(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(deposit)
+}
 
+func CreateDepositFiles(w http.ResponseWriter, r *http.Request) {
+	depositIDStr := r.PathValue("id")
+	if depositIDStr == "" {
+		http.Error(w, "Missing deposit ID", http.StatusBadRequest)
+		return
+	}
+
+	depositID, err := uuid.Parse(depositIDStr)
+	if err != nil {
+		http.Error(w, "Invalid deposit ID", http.StatusBadRequest)
+		return
+	}
+
+	var inputs []models.DepositFileInput
+	if err := json.NewDecoder(r.Body).Decode(&inputs); err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	count := 0
+	for _, inp := range inputs {
+		if inp.Filename == "" || inp.OriginalName == "" {
+			continue
+		}
+		f := models.DepositFile{
+			DepositID:    depositID,
+			Filename:     inp.Filename,
+			OriginalName: inp.OriginalName,
+		}
+		if _, err := db.CreateDepositFileInDB(f); err != nil {
+			fmt.Println("[ERROR] CreateDepositFiles:", err)
+			http.Error(w, "Failed to save file record", http.StatusInternalServerError)
+			return
+		}
+		count++
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(map[string]interface{}{"created": count})
+}
+
+func GetDepositFiles(w http.ResponseWriter, r *http.Request) {
+	depositIDStr := r.PathValue("id")
+	if depositIDStr == "" {
+		http.Error(w, "Missing deposit ID", http.StatusBadRequest)
+		return
+	}
+
+	files, err := db.GetDepositFilesByDepositIDFromDB(depositIDStr)
+	if err != nil {
+		fmt.Println("[ERROR] GetDepositFiles:", err)
+		http.Error(w, "Failed to retrieve deposit files", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(files)
 }

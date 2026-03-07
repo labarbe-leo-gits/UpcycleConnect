@@ -118,3 +118,43 @@ func GetDepositsByConteneurIDFromDB(conteneurIDStr string) ([]models.Deposit, er
 	}
 	return deposits, nil
 }
+
+func CreateDepositFileInDB(file models.DepositFile) (uuid.UUID, error) {
+	newID := uuid.New()
+	currentTime := getCurrentTime()
+	_, err := Db.Exec(
+		"INSERT INTO demandes_depot_files (id, deposit_id, filename, original_name, created_at) VALUES (?, ?, ?, ?, ?)",
+		newID, file.DepositID, file.Filename, file.OriginalName, currentTime,
+	)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("failed to insert deposit file: %v", err)
+	}
+	return newID, nil
+}
+
+func GetDepositFilesByDepositIDFromDB(depositIDStr string) ([]models.DepositFile, error) {
+	rows, err := Db.Query(
+		"SELECT id, deposit_id, filename, original_name, created_at FROM demandes_depot_files WHERE deposit_id = ? ORDER BY created_at ASC",
+		depositIDStr,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("getDepositFilesByDepositIDFromDB query error: %v", err)
+	}
+	defer rows.Close()
+
+	var files []models.DepositFile
+	for rows.Next() {
+		var f models.DepositFile
+		if err := rows.Scan(&f.ID, &f.DepositID, &f.Filename, &f.OriginalName, &f.CreatedAt); err != nil {
+			return nil, fmt.Errorf("getDepositFilesByDepositIDFromDB scan error: %v", err)
+		}
+		files = append(files, f)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("getDepositFilesByDepositIDFromDB rows error: %v", err)
+	}
+	if files == nil {
+		files = []models.DepositFile{}
+	}
+	return files, nil
+}

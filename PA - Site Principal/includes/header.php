@@ -21,6 +21,7 @@ if (isLoggedIn() && getLoggedInUserType() === 3) {
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>if(localStorage.getItem('theme')==='dark'){document.documentElement.style.backgroundColor='#121212';document.documentElement.style.colorScheme='dark';}</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UpcycleConnect - <?= $title ?></title>
@@ -33,6 +34,8 @@ if (isLoggedIn() && getLoggedInUserType() === 3) {
     <link rel="stylesheet" href="/PA/PA%20-%20Site%20Principal/assets/css/about.css">
     <link rel="stylesheet" href="/PA/PA%20-%20Site%20Principal/assets/css/header.css">
     <link rel="icon" type="image/png" href="/PA/PA%20-%20Site%20Principal/assets/img/brand/UpcycleDiminutif.png">
+    <link rel="stylesheet" href="/PA/PA%20-%20Site%20Principal/assets/css/dark.css">
+    <script src="/PA/PA%20-%20Site%20Principal/assets/js/dark.js" defer></script>
     <?php if (isset($title) && $title === 'About'): ?>
         <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
         <script src="https://unpkg.com/leaflet/dist/leaflet.js" defer></script>
@@ -69,7 +72,7 @@ if (isLoggedIn() && getLoggedInUserType() === 3) {
     }
     ?>
 </head>
-<body>
+<body><script>if(localStorage.getItem('theme')==='dark')document.body.classList.add('dark-mode');</script>
     <header>
         <div class="left">
             <h3>UpcycleConnect</h3>
@@ -109,11 +112,15 @@ if (isLoggedIn() && getLoggedInUserType() === 3) {
                     <p>Logout</p>
                 </div>
             <?php else: ?>
-                <div class="btn-wrapper" onClick="openFile('/PA/PA%20-%20Site%20Principal/pages/public/login.php')">
+                    <div class="btn-wrapper" onClick="openFile('/PA/PA%20-%20Site%20Principal/pages/public/login.php')">
                     <i class="fa-solid fa-right-to-bracket"></i>
                     <p>Login</p>
                 </div>
             <?php endif; ?>
+            <div class="btn-wrapper" id="dark-toggle" title="Toggle dark mode">
+                <i class="fa-solid fa-moon"></i>
+                <p>Theme</p>
+            </div>
         </nav>
     </header>
     <?php if (isLoggedIn()): ?>

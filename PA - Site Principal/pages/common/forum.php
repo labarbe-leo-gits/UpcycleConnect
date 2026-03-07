@@ -130,7 +130,7 @@ if (!$user) {
         <span class="close-button close-delete-modal">&times;</span>
         <h2>Delete Post</h2>
         <p>Are you sure you want to delete this post?</p>
-        <form id="edit-post-form">
+        <form id="delete-post-form">
             <button type="submit" class="btn-danger">
                 <i class="fa-solid fa-trash"></i> Delete
             </button>

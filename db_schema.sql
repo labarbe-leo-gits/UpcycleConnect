@@ -75,6 +75,15 @@ CREATE TABLE IF NOT EXISTS demandes_depot (
     FOREIGN KEY (conteneur_id) REFERENCES conteneurs(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS demandes_depot_files (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    deposit_id CHAR(36) NOT NULL,
+    filename VARCHAR(255) NOT NULL,
+    original_name VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (deposit_id) REFERENCES demandes_depot(id) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS planning (
     id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
     title VARCHAR(255) NOT NULL,

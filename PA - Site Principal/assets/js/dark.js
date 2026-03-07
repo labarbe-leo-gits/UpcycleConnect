@@ -5,7 +5,6 @@ if (localStorage.getItem('theme') === 'dark') {
 const darkToggle = document.getElementById('dark-toggle');
 if (darkToggle) {
     darkToggle.addEventListener('click', function(e) {
-        const isDark = document.body.classList.contains('dark-mode');
         const x = e.clientX;
         const y = e.clientY;
         const endRadius = Math.hypot(
@@ -19,7 +18,12 @@ if (darkToggle) {
 
         const applyToggle = () => {
             document.body.classList.toggle('dark-mode');
-            localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            if (!isDark) {
+                document.documentElement.style.backgroundColor = '';
+                document.documentElement.style.colorScheme = '';
+            }
         };
 
         if (!document.startViewTransition) {
@@ -27,7 +31,15 @@ if (darkToggle) {
             return;
         }
 
-        const transition = document.startViewTransition(applyToggle);
+        const noTransitions = document.createElement('style');
+        noTransitions.textContent = '*, *::before, *::after { transition-duration: 0s !important; }';
+        document.head.appendChild(noTransitions);
+
+        const transition = document.startViewTransition(() => {
+            applyToggle();
+            getComputedStyle(document.body).backgroundColor;
+        });
+
         transition.ready.then(() => {
             document.documentElement.animate(
                 { clipPath },
@@ -37,6 +49,14 @@ if (darkToggle) {
                     pseudoElement: '::view-transition-new(root)'
                 }
             );
+        });
+
+        transition.finished.then(() => {
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    noTransitions.remove();
+                });
+            });
         });
     });
 }

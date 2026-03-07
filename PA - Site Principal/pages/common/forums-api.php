@@ -10,7 +10,13 @@ require_once '../../config/db.php';
 require_once '../../includes/auth.php';
 header('Content-Type: application/json');
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['forum_id']) && $_GET['forum_id'] !== '') {
+
+$method = $_SERVER['REQUEST_METHOD'];
+if ($method === 'POST' && isset($_GET['_method'])) {
+    $method = strtoupper($_GET['_method']);
+}
+
+if ($method === 'POST' && isset($_GET['forum_id']) && $_GET['forum_id'] !== '') {
     $forumId = rawurldecode($_GET['forum_id']);
     $rawBody = file_get_contents('php://input');
     $resp = askAPI('/forums/' . $forumId . '/posts', 'POST', $rawBody);
@@ -23,6 +29,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['forum_id']) && $_GET['
     } else {
         echo $resp;
     }
+    exit;
+}
+
+if ($method === 'PATCH' && isset($_GET['forum_id'], $_GET['post_id']) && $_GET['forum_id'] !== '' && $_GET['post_id'] !== '') {
+    $forumId = rawurldecode($_GET['forum_id']);
+    $postId = rawurldecode($_GET['post_id']);
+    $rawBody = file_get_contents('php://input');
+    error_log("forums-api PATCH forum_id=$forumId post_id=$postId body=" . substr($rawBody,0,200));
+    $resp = askAPI('/forums/' . $forumId . '/posts/' . $postId, 'PATCH', $rawBody);
+    if (ob_get_length()) ob_clean();
+    echo $resp;
+    exit;
+}
+
+if ($method === 'DELETE' && isset($_GET['forum_id'], $_GET['post_id']) && $_GET['forum_id'] !== '' && $_GET['post_id'] !== '') {
+    $forumId = rawurldecode($_GET['forum_id']);
+    $postId = rawurldecode($_GET['post_id']);
+    error_log("forums-api DELETE forum_id=$forumId post_id=$postId");
+    $resp = askAPI('/forums/' . $forumId . '/posts/' . $postId, 'DELETE');
+    if (ob_get_length()) ob_clean();
+    echo $resp;
     exit;
 }
 

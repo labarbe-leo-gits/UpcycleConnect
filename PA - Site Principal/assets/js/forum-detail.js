@@ -1,6 +1,10 @@
 (function() {
     'use strict';
 
+    
+    let currentPostId = null;
+    let currentPostAuthorId = null;
+
     document.addEventListener('DOMContentLoaded', function() {
         const params = new URLSearchParams(window.location.search);
         const forumId = params.get('uuid');
@@ -16,6 +20,7 @@
         const editForm = document.getElementById('edit-post-form');
         const editTextarea = document.getElementById('edit-post-content');
         const editCharCount = document.getElementById('edit-post-char-count');
+        const deleteForm = document.getElementById('delete-post-form');
         const newPostTitle = document.querySelector('#new-post-modal h2');
         const focusableSelector = 'button, [href], input, textarea, select, [tabindex]:not([tabindex="-1"])';
         let lastFocused = null;
@@ -50,6 +55,9 @@
                     editTextarea.value = '';
                     updateCharCount(editTextarea, editCharCount);
                 }
+            }
+            if (m === deleteModal) {
+                currentPostId = null;
             }
         }
         function trapFocus(e) {
@@ -87,8 +95,8 @@
         const deleteModal = document.getElementById('delete-post-modal');
         const closeEditBtns = editModal ? editModal.querySelectorAll('.close-edit-modal') : [];
         const closeDeleteBtns = deleteModal ? deleteModal.querySelectorAll('.close-delete-modal') : [];
-        closeEditBtns.forEach(b=>b.addEventListener('click',()=>closeModal(editModal)));
-        closeDeleteBtns.forEach(b=>b.addEventListener('click',()=>closeModal(deleteModal)));
+        closeEditBtns.forEach(b=>b.addEventListener('click',()=>{ closeModal(editModal); currentPostId = null; currentPostAuthorId = null; }));
+        closeDeleteBtns.forEach(b=>b.addEventListener('click',()=>{ closeModal(deleteModal); currentPostId = null; currentPostAuthorId = null; }));
 
         let replyTo = null;
         document.addEventListener('click', function(e) {
@@ -114,8 +122,12 @@
 
             const editBtn = e.target.closest('.edit-post');
             if (editBtn) {
+                console.log('edit button clicked');
                 const postDiv = editBtn.closest('.forum-post');
                 if (postDiv) {
+                    currentPostId = postDiv.getAttribute('data-post-id');
+                    currentPostAuthorId = postDiv.getAttribute('data-author-id');
+                    console.log('setting currentPostId/AuthorId', currentPostId, currentPostAuthorId);
                     const content = postDiv.querySelector('.content')?.textContent || '';
                     document.getElementById('edit-post-content').value = content;
                     updateCharCount(editTextarea, editCharCount);
@@ -126,6 +138,13 @@
 
             const delBtn = e.target.closest('.delete-post');
             if (delBtn) {
+                console.log('delete button clicked');
+                const postDiv = delBtn.closest('.forum-post');
+                if (postDiv) {
+                    currentPostId = postDiv.getAttribute('data-post-id');
+                    currentPostAuthorId = postDiv.getAttribute('data-author-id');
+                    console.log('preparing to delete', currentPostId, currentPostAuthorId);
+                }
                 openModal(deleteModal);
                 return;
             }
@@ -224,17 +243,131 @@
         if (editForm) {
             editForm.addEventListener('submit', function(e) {
                 e.preventDefault();
+                console.log('edit form submit triggered');
                 const c = editTextarea.value.trim();
                 if (c.length < 5 || c.length > 300) {
                     alert('Content must be between 5 and 300 characters');
                     return;
                 }
-                console.log('edit post submit (not implemented):', c);
+                if (!forumId || !currentPostId) {
+                    alert('Unable to determine which post to update');
+                    return;
+                }
+                const submitBtn = editForm.querySelector('button[type="submit"]');
+                const originalText = submitBtn ? submitBtn.innerHTML : '';
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving';
+                }
+
+                const payload = { content: c, forum_id: forumId };
+                if (currentPostAuthorId) payload.author_id = currentPostAuthorId;
+                fetch(`forums-api?forum_id=${encodeURIComponent(forumId)}&post_id=${encodeURIComponent(currentPostId)}&_method=PATCH`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify(payload)
+                })
+                .then(r => {
+                    if (!r.ok) throw new Error('Server returned ' + r.status);
+                    return r.text();
+                })
+                .then(text => {
+                    if (text) {
+                        try {
+                            const obj = JSON.parse(text);
+                            if (obj.error) {
+                                alert(obj.error);
+                            }
+                        } catch (err) {
+                            console.error('Unexpected response updating post:', text, err);
+                        }
+                    }
+                })
+                .then(() => {
+                    closeModal(editModal);
+                    loadPosts(forumId);
+                    currentPostId = null;
+                })
+                .catch(err => {
+                    console.error('Failed to update post', err);
+                    alert(err.message || 'Unable to update post');
+                })
+                .finally(() => {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalText;
+                    }
+                });
             });
         }
+
+        if (deleteForm) {
+            deleteForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                console.log('delete form submit triggered');
+                if (!forumId || !currentPostId) {
+                    alert('Unable to determine which post to delete');
+                    return;
+                }
+                const submitBtn = deleteForm.querySelector('button[type="submit"]');
+                const originalText = submitBtn ? submitBtn.innerHTML : '';
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Deleting';
+                }
+
+                let url = `forums-api?forum_id=${encodeURIComponent(forumId)}&post_id=${encodeURIComponent(currentPostId)}`;
+                if (currentPostAuthorId) {
+                    url += `&author_id=${encodeURIComponent(currentPostAuthorId)}`;
+                }
+                console.log('delete request', url);
+                fetch(url, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(r => {
+                    if (!r.ok) throw new Error('Server returned ' + r.status);
+                    return r.text();
+                })
+                .then(text => {
+                    if (text) {
+                        try {
+                            const obj = JSON.parse(text);
+                            if (obj.error) {
+                                alert(obj.error);
+                            }
+                        } catch (err) {
+                            console.error('Unexpected response deleting post:', text, err);
+                        }
+                    }
+                })
+                .then(() => {
+                    closeModal(deleteModal);
+                    loadPosts(forumId);
+                    currentPostId = null;
+                })
+                .catch(err => {
+                    console.error('Failed to delete post', err);
+                    alert(err.message || 'Unable to delete post');
+                })
+                .finally(() => {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalText;
+                    }
+                });
+            });
+        }
+
     });
 
     function loadPosts(forumId) {
+        currentPostId = null;
         const container = document.getElementById('forum-posts');
         if (!container) return;
 
@@ -287,11 +420,15 @@
     const userCache = {};
 
     function renderPost(container, post, postsById) {
+        console.log('renderPost', post, 'currentUserId', window.currentUserId);
         const postEl = document.createElement('div');
         postEl.className = 'forum-post';
         if (post.id) {
             postEl.setAttribute('data-post-id', post.id);
             postEl.id = 'post-' + post.id;
+        }
+        if (post.author_id) {
+            postEl.setAttribute('data-author-id', post.author_id);
         }
         const nilUuid = '00000000-0000-0000-0000-000000000000';
         const isReply = post.parent_id && post.parent_id !== nilUuid;
@@ -380,6 +517,17 @@
         actions.appendChild(btnEdit);
         actions.appendChild(btnDelete);
         postEl.appendChild(actions);
+
+        if (!window.currentUserId) {
+            console.log('hiding actions because no user');
+            actions.style.display = 'none';
+        } else if (post.author_id && window.currentUserId !== post.author_id) {
+            console.log('hiding edit/delete because currentUserId', window.currentUserId, '!= post.author_id', post.author_id);
+            btnEdit.style.display = 'none';
+            btnDelete.style.display = 'none';
+        } else {
+            console.log('showing actions for user', window.currentUserId, 'post author', post.author_id);
+        }
         container.appendChild(postEl);
 
         contentEl.textContent = post.content || '';
