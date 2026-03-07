@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS users (
     balance DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
     upcycling_score DOUBLE NOT NULL DEFAULT 0.0,
     is_premium INT DEFAULT 0,
+    is_active INT DEFAULT 1,
     stripe_customer_id VARCHAR(255) NULL,
     stripe_subscription_id VARCHAR(255) NULL,
     user_type INT NOT NULL,
@@ -27,6 +28,8 @@ CREATE TABLE IF NOT EXISTS users (
     profile_picture VARCHAR(500) NULL,
     LLM_quota INT NOT NULL, /* User : 10/J, Pro : 15/J FREE, 25/J Premium, Employees: 20/J,Admin: 50/J */
     LLM_usage_today INT NOT NULL DEFAULT 0,
+    manager_id CHAR(36) NULL,
+    FOREIGN KEY (manager_id) REFERENCES users(id) ON DELETE SET NULL,
     UNIQUE INDEX idx_oauth (oauth_provider, oauth_id)
 );
 

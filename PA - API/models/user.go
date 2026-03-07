@@ -23,6 +23,7 @@ type User struct {
 	OAuthProvider    string    `json:"oauth_provider,omitempty"`
 	OAuthID          string    `json:"oauth_id,omitempty"`
 	ProfilePicture   string    `json:"profile_picture,omitempty"`
+	ManagerID        *string   `json:"manager_id,omitempty"`
 	StripeCustomerID string    `json:"stripe_customer_id,omitempty"`
 	UserSecret       string    `json:"user_secret,omitempty"`
 	TwoFASecret      string    `json:"-"`

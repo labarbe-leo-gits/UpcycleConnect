@@ -22,6 +22,9 @@ $url = "/users?offset=$offset&limit=$limit";
 if ($search !== '') {
     $url .= "&search=$search";
 }
+if (!empty($_GET['user_type'])) {
+    $url .= '&user_type=' . urlencode($_GET['user_type']);
+}
 $resp = askAPI($url, 'GET');
 $decoded = json_decode($resp, true);
 if ($decoded === null) {

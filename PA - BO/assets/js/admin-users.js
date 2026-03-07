@@ -1,4 +1,4 @@
-(function() {
+﻿(function() {
     'use strict';
 
     const initialSize = 8;
@@ -222,15 +222,14 @@
         }
         const userTypeSelect = document.getElementById('new-usertype');
         const companyGroup = document.getElementById('company-group');
-        if (userTypeSelect && companyGroup) {
+        const managerGroup = document.getElementById('manager-group');
+        if (userTypeSelect) {
             userTypeSelect.addEventListener('change', function() {
-                if (this.value === '2') {
-                    companyGroup.style.display = 'block';
-                } else {
-                    companyGroup.style.display = 'none';
-                }
+                if (companyGroup) companyGroup.style.display = this.value === '2' ? 'block' : 'none';
+                if (managerGroup) managerGroup.style.display = this.value === '4' ? 'block' : 'none';
             });
         }
+        bindManagerLookup();
     }
     function openUserModal(user) {
         const modal = document.getElementById('user-modal');
@@ -327,6 +326,27 @@
                 enableInlineEditing(btn, user);
             });
         });
+        modalBody.querySelectorAll('.btn-edit-manager').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                enableManagerEditing(user);
+            });
+        });
+
+        if (user.user_type === 4 && user.manager_id) {
+            var displayEl = document.getElementById('manager-detail-display');
+            if (displayEl) {
+                fetch('user-get-api?id=' + encodeURIComponent(user.manager_id))
+                    .then(function(r) { return r.json(); })
+                    .then(function(found) {
+                        if (found && found.id && displayEl) {
+                            var name = ((found.first_name || '') + ' ' + (found.last_name || '')).trim();
+                            displayEl.textContent = name ? name + ' (' + found.username + ')' : found.username;
+                        }
+                    })
+                    .catch(function() {});
+            }
+        }
 
         showModal(modal);
     }
@@ -339,6 +359,155 @@
         const mon = String(d.getMonth()+1).padStart(2,'0');
         const yr = d.getFullYear();
         return `${day}/${mon}/${yr}`;
+    }
+
+    function enableManagerEditing(user) {
+        var cell = document.getElementById('manager-detail-cell');
+        if (!cell) return;
+        cell.innerHTML = '';
+
+        var currentId = user.manager_id || '';
+        var selectedId = currentId;
+        var selectedName = '';
+
+        var chip = document.createElement('div');
+        chip.style.cssText = 'display:none;align-items:center;gap:6px;padding:4px 10px;background:#f0fdf4;border:1px solid #a7f3d0;border-radius:20px;width:fit-content;margin-bottom:6px;';
+        var chipIcon = document.createElement('i');
+        chipIcon.className = 'fa-solid fa-user-tie';
+        chipIcon.style.cssText = 'color:#10b981;font-size:.85em;';
+        var chipNameSpan = document.createElement('span');
+        chipNameSpan.style.cssText = 'font-size:.9em;color:#065f46;font-weight:500;';
+        var chipRemove = document.createElement('button');
+        chipRemove.type = 'button';
+        chipRemove.style.cssText = 'background:none;border:none;cursor:pointer;padding:0 0 0 4px;color:#9ca3af;line-height:1;display:flex;align-items:center;';
+        chipRemove.innerHTML = '<i class="fa-solid fa-xmark" style="font-size:.85em;"></i>';
+        chip.appendChild(chipIcon);
+        chip.appendChild(chipNameSpan);
+        chip.appendChild(chipRemove);
+        cell.appendChild(chip);
+
+        var searchWrap = document.createElement('div');
+        searchWrap.style.position = 'relative';
+        var searchInput = document.createElement('input');
+        searchInput.type = 'text';
+        searchInput.placeholder = 'Type name or usernameâ€¦';
+        searchInput.autocomplete = 'off';
+        searchInput.style.cssText = 'width:100%;padding:5px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:.9em;';
+        var dropdown = document.createElement('div');
+        dropdown.style.cssText = 'position:absolute;top:calc(100% + 2px);left:0;right:0;background:#fff;border:1px solid #e5e7eb;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:9999;max-height:200px;overflow-y:auto;display:none;';
+        searchWrap.appendChild(searchInput);
+        searchWrap.appendChild(dropdown);
+        cell.appendChild(searchWrap);
+
+        var btnRow = document.createElement('div');
+        btnRow.style.cssText = 'display:flex;gap:6px;margin-top:6px;';
+        var saveBtn = document.createElement('button');
+        saveBtn.type = 'button'; saveBtn.className = 'btn-copy';
+        saveBtn.innerHTML = '<i class="fa-solid fa-check"></i>';
+        var cancelBtn = document.createElement('button');
+        cancelBtn.type = 'button'; cancelBtn.className = 'btn-copy';
+        cancelBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+        btnRow.appendChild(saveBtn); btnRow.appendChild(cancelBtn);
+        cell.appendChild(btnRow);
+
+        function showChip(id, label) {
+            selectedId = id; selectedName = label;
+            chipNameSpan.textContent = label;
+            chip.style.display = 'flex';
+            searchWrap.style.display = 'none';
+            dropdown.innerHTML = ''; dropdown.style.display = 'none';
+        }
+        chipRemove.addEventListener('click', function() {
+            selectedId = ''; selectedName = '';
+            chip.style.display = 'none';
+            searchWrap.style.display = '';
+            searchInput.value = '';
+        });
+
+        var _t2 = null;
+        searchInput.addEventListener('input', function() {
+            clearTimeout(_t2);
+            var q = this.value.trim();
+            if (q.length < 2) { dropdown.style.display = 'none'; return; }
+            _t2 = setTimeout(function() {
+                fetch('users-list-api?search=' + encodeURIComponent(q) + '&limit=6&user_type=3,4')
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        var items = Array.isArray(data.items) ? data.items : [];
+                        dropdown.innerHTML = '';
+                        if (!items.length) { dropdown.style.display = 'none'; return; }
+                        items.forEach(function(u) {
+                            var item = document.createElement('div');
+                            item.className = 'addr-result-item';
+                            var name = ((u.first_name || '') + ' ' + (u.last_name || '')).trim();
+                            var label = name ? name + ' (' + u.username + ')' : u.username;
+                            item.innerHTML = '<i class="fa-solid fa-user"></i><span>' + escapeHtml(label) + '</span>';
+                            item.addEventListener('click', function() { showChip(u.id, label); });
+                            dropdown.appendChild(item);
+                        });
+                        dropdown.style.display = 'block';
+                    })
+                    .catch(function() { dropdown.style.display = 'none'; });
+            }, 300);
+        });
+
+        function restoreDisplay() {
+            var row = document.getElementById('manager-detail-row');
+            if (!row) return;
+            var td2 = row.children[1];
+            var td3 = row.children[2];
+            if (td2) td2.innerHTML = '<span id="manager-detail-display">' + escapeHtml(user.manager_id || '-') + '</span>';
+            if (td3) {
+                td3.innerHTML = '<button class="btn-copy btn-edit-manager" title="Edit Manager"><i class="fa-solid fa-pen"></i></button>';
+                td3.querySelector('.btn-edit-manager').addEventListener('click', function(e) { e.preventDefault(); enableManagerEditing(user); });
+            }
+            if (user.manager_id) {
+                var displayEl = document.getElementById('manager-detail-display');
+                fetch('user-get-api?id=' + encodeURIComponent(user.manager_id))
+                    .then(function(r) { return r.json(); })
+                    .then(function(found) {
+                        if (found && found.id && displayEl) {
+                            var n = ((found.first_name || '') + ' ' + (found.last_name || '')).trim();
+                            displayEl.textContent = n ? n + ' (' + found.username + ')' : found.username;
+                        }
+                    }).catch(function() {});
+            }
+        }
+
+        document.addEventListener('click', function onOut(e) {
+            if (!cell.contains(e.target)) { dropdown.style.display = 'none'; document.removeEventListener('click', onOut); }
+        });
+
+        if (currentId) {
+            fetch('user-get-api?id=' + encodeURIComponent(currentId))
+                .then(function(r) { return r.json(); })
+                .then(function(found) {
+                    if (found && found.id) {
+                        var n = ((found.first_name || '') + ' ' + (found.last_name || '')).trim();
+                        showChip(currentId, n ? n + ' (' + found.username + ')' : found.username);
+                    }
+                }).catch(function() {});
+        }
+
+        saveBtn.addEventListener('click', async function() {
+            var payload = { manager_id: selectedId || null };
+            try {
+                var resp = await fetch('user-update-api?id=' + user.id, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                var data = await resp.json();
+                if (resp.ok) {
+                    user.manager_id = selectedId || null;
+                    restoreDisplay();
+                } else {
+                    showToast(data.error || 'Update failed');
+                }
+            } catch(e) { showToast('Request error'); }
+        });
+
+        cancelBtn.addEventListener('click', restoreDisplay);
     }
 
     function enableInlineEditing(btn, user) {
@@ -409,7 +578,7 @@
     function generateUserDetailsHtml(u) {
         const isSelf = String(u.id) === String(me);
 
-        const roleLabels = {1:'Customer',2:'Pro',3:'Admin'};
+        const roleLabels = {1:'Customer', 2:'Pro', 3:'Admin', 4:'Part-time employee'};
         const fields = [
             { label: 'UUID', value: u.id || '-' , copy: true },
             { label: 'Username', value: u.username || '-' , edit: !isSelf },
@@ -435,6 +604,14 @@
             }
             html += '</tr>';
         });
+        if (u.user_type === 4) {
+            var managerDisplay = u.manager_id ? escapeHtml(u.manager_id) : '-';
+            html += `<tr id="manager-detail-row">` +
+                `<td style="padding:6px 0;font-weight:600;vertical-align:top;">Manager</td>` +
+                `<td id="manager-detail-cell" style="padding:6px 0;vertical-align:top;"><span id="manager-detail-display">${managerDisplay}</span></td>` +
+                `<td style="padding:6px 0;vertical-align:top;"><button class="btn-copy btn-edit-manager" title="Edit Manager"><i class="fa-solid fa-pen"></i></button></td>` +
+                `</tr>`;
+        }
         html += '</table>';
         return html;
     }
@@ -737,9 +914,22 @@
         }
         const userTypeSelect = document.getElementById('new-usertype');
         const companyGroup = document.getElementById('company-group');
-        if (userTypeSelect && companyGroup) {
-            companyGroup.style.display = userTypeSelect.value === '2' ? 'block' : 'none';
+        const managerGroup = document.getElementById('manager-group');
+        if (userTypeSelect) {
+            if (companyGroup) companyGroup.style.display = userTypeSelect.value === '2' ? 'block' : 'none';
+            if (managerGroup) managerGroup.style.display = userTypeSelect.value === '4' ? 'block' : 'none';
         }
+        // Reset manager lookup state
+        const managerChip = document.getElementById('manager-chip');
+        const managerSearchWrapper = document.getElementById('manager-search-wrapper');
+        const newManagerId = document.getElementById('new-manager-id');
+        const managerSearchInput = document.getElementById('manager-search');
+        const managerResults = document.getElementById('manager-results');
+        if (managerChip) managerChip.style.display = 'none';
+        if (managerSearchWrapper) managerSearchWrapper.style.display = '';
+        if (newManagerId) newManagerId.value = '';
+        if (managerSearchInput) managerSearchInput.value = '';
+        if (managerResults) { managerResults.innerHTML = ''; managerResults.style.display = 'none'; }
 
         modal.querySelectorAll('.password-toggle').forEach(function(toggle) {
             toggle.addEventListener('click', function() {
@@ -886,6 +1076,94 @@
                 }
                 return Array.isArray(data.bans) ? data.bans : [];
             });
+    }
+
+    let _managerTimer = null;
+    let _managerLookupBound = false;
+
+    function bindManagerLookup() {
+        if (_managerLookupBound) return;
+        _managerLookupBound = true;
+
+        const input = document.getElementById('manager-search');
+        const results = document.getElementById('manager-results');
+        const hiddenInput = document.getElementById('new-manager-id');
+        const chip = document.getElementById('manager-chip');
+        const chipName = document.getElementById('manager-chip-name');
+        const chipRemove = document.getElementById('manager-chip-remove');
+        const searchWrapper = document.getElementById('manager-search-wrapper');
+        if (!input || !results || !hiddenInput) return;
+
+        function selectManager(u) {
+            hiddenInput.value = u.id;
+            var fullName = ((u.first_name || '') + ' ' + (u.last_name || '')).trim();
+            chipName.textContent = fullName ? fullName + ' (' + u.username + ')' : u.username;
+            chip.style.display = 'flex';
+            searchWrapper.style.display = 'none';
+            results.style.display = 'none';
+            input.value = '';
+        }
+
+        chipRemove.addEventListener('click', function() {
+            hiddenInput.value = '';
+            chip.style.display = 'none';
+            searchWrapper.style.display = '';
+            input.value = '';
+        });
+
+        input.addEventListener('input', function() {
+            clearTimeout(_managerTimer);
+            var q = this.value.trim();
+            if (q.length < 2) { results.style.display = 'none'; return; }
+            _managerTimer = setTimeout(function() {
+                fetch('users-list-api?search=' + encodeURIComponent(q) + '&limit=6&user_type=3,4')
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        var users = Array.isArray(data.items) ? data.items : [];
+                        results.innerHTML = '';
+                        if (!users.length) { results.style.display = 'none'; return; }
+                        users.forEach(function(u) {
+                            var item = document.createElement('div');
+                            item.className = 'addr-result-item';
+                            var name = ((u.first_name || '') + ' ' + (u.last_name || '')).trim();
+                            item.innerHTML = '<i class="fa-solid fa-user"></i><span>' + escapeHtml(name ? name + ' \u2014 ' + u.username : u.username) + '</span>';
+                            item.addEventListener('click', function() { selectManager(u); });
+                            results.appendChild(item);
+                        });
+                        results.style.display = 'block';
+                    })
+                    .catch(function() { results.style.display = 'none'; });
+            }, 300);
+        });
+
+        input.addEventListener('keydown', function(e) {
+            var items = results.querySelectorAll('.addr-result-item');
+            var active = results.querySelector('.addr-result-item.addr-active');
+            if (!items.length) return;
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                var next = active ? (active.nextElementSibling || items[0]) : items[0];
+                if (active) active.classList.remove('addr-active');
+                next.classList.add('addr-active');
+                next.scrollIntoView({ block: 'nearest' });
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                var prev = active ? (active.previousElementSibling || items[items.length - 1]) : items[items.length - 1];
+                if (active) active.classList.remove('addr-active');
+                prev.classList.add('addr-active');
+                prev.scrollIntoView({ block: 'nearest' });
+            } else if (e.key === 'Enter') {
+                if (active) { e.preventDefault(); active.click(); }
+            } else if (e.key === 'Escape') {
+                results.style.display = 'none';
+            }
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!input.contains(e.target) && !results.contains(e.target)) {
+                results.style.display = 'none';
+            }
+        });
     }
 
 })();

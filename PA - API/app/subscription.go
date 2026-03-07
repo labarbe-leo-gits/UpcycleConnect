@@ -38,6 +38,11 @@ func ActivateSubscription(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	premiumQuota := 25
+	if err := db.UpdateLLMUsageInDB(userID.String(), &premiumQuota, nil); err != nil {
+		fmt.Println("[WARN] ActivateSubscription: failed to set LLM quota:", err)
+	}
+
 	fmt.Printf("[INFO] Subscription activated for user %s (customer=%s sub=%s)\n",
 		userID, payload.StripeCustomerID, payload.StripeSubscriptionID)
 

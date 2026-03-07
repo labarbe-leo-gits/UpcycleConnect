@@ -12,7 +12,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func GetUsersFromDB(offset, limit int, search string) ([]models.User, int, error) {
+func GetUsersFromDB(offset, limit int, search string, userTypes ...int) ([]models.User, int, error) {
 	if offset < 0 {
 		offset = 0
 	}
@@ -20,14 +20,29 @@ func GetUsersFromDB(offset, limit int, search string) ([]models.User, int, error
 		limit = 20
 	}
 
-	baseQuery := "SELECT id, first_name, last_name, company_name, user_type, username, email, balance, upcycling_score, created_at, last_login, oauth_provider, oauth_id, profile_picture FROM users"
+	baseQuery := "SELECT id, first_name, last_name, company_name, user_type, username, email, balance, upcycling_score, created_at, last_login, oauth_provider, oauth_id, profile_picture, manager_id FROM users"
 	countQuery := "SELECT COUNT(*) FROM users"
 	args := []interface{}{}
-	where := ""
+	conditions := []string{}
 	if search != "" {
-		where = " WHERE username LIKE ? OR email LIKE ? OR first_name LIKE ? OR last_name LIKE ?"
+		conditions = append(conditions, "(username LIKE ? OR email LIKE ? OR first_name LIKE ? OR last_name LIKE ?)")
 		term := "%" + search + "%"
 		args = append(args, term, term, term, term)
+	}
+	if len(userTypes) > 0 {
+		placeholders := ""
+		for i, ut := range userTypes {
+			if i > 0 {
+				placeholders += ","
+			}
+			placeholders += "?"
+			args = append(args, ut)
+		}
+		conditions = append(conditions, "user_type IN ("+placeholders+")")
+	}
+	where := ""
+	if len(conditions) > 0 {
+		where = " WHERE " + strings.Join(conditions, " AND ")
 	}
 
 	query := baseQuery + where + " ORDER BY created_at DESC LIMIT ? OFFSET ?"
@@ -44,8 +59,8 @@ func GetUsersFromDB(offset, limit int, search string) ([]models.User, int, error
 		var user models.User
 		var idStr string
 		var createdAt, lastLogin sql.NullString
-		var companyName, oauthProvider, oauthID, profilePicture sql.NullString
-		err := rows.Scan(&idStr, &user.FirstName, &user.LastName, &companyName, &user.UserType, &user.Username, &user.Email, &user.Balance, &user.UpcyclingScore, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture)
+		var companyName, oauthProvider, oauthID, profilePicture, managerID sql.NullString
+		err := rows.Scan(&idStr, &user.FirstName, &user.LastName, &companyName, &user.UserType, &user.Username, &user.Email, &user.Balance, &user.UpcyclingScore, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture, &managerID)
 		if err != nil {
 			return nil, 0, fmt.Errorf("getUsers package db scan : %s", err.Error())
 		}
@@ -70,6 +85,9 @@ func GetUsersFromDB(offset, limit int, search string) ([]models.User, int, error
 		}
 		if profilePicture.Valid {
 			user.ProfilePicture = profilePicture.String
+		}
+		if managerID.Valid {
+			user.ManagerID = &managerID.String
 		}
 		users = append(users, user)
 	}
@@ -117,10 +135,14 @@ func CreateUserInDB(user models.User) error {
 	oauthProvider := sql.NullString{String: user.OAuthProvider, Valid: user.OAuthProvider != ""}
 	oauthID := sql.NullString{String: user.OAuthID, Valid: user.OAuthID != ""}
 	companyName := sql.NullString{String: user.CompanyName, Valid: strings.TrimSpace(user.CompanyName) != ""}
+	var managerID sql.NullString
+	if user.ManagerID != nil && strings.TrimSpace(*user.ManagerID) != "" {
+		managerID = sql.NullString{String: *user.ManagerID, Valid: true}
+	}
 
 	_, err := Db.Exec(
-		"INSERT INTO users (id, first_name, last_name, company_name, user_type, username, email, password_hash, oauth_provider, oauth_id, profile_picture) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-		user.ID.String(), user.FirstName, user.LastName, companyName, user.UserType, user.Username, user.Email, user.Password, oauthProvider, oauthID, user.ProfilePicture,
+		"INSERT INTO users (id, first_name, last_name, company_name, user_type, username, email, password_hash, oauth_provider, oauth_id, profile_picture, manager_id, LLM_quota) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		user.ID.String(), user.FirstName, user.LastName, companyName, user.UserType, user.Username, user.Email, user.Password, oauthProvider, oauthID, user.ProfilePicture, managerID, user.LLMQuota,
 	)
 
 	if err != nil {
@@ -143,10 +165,11 @@ func GetUserByIDFromDB(id uuid.UUID) (models.User, error) {
 	var companyName, oauthProvider, oauthID, profilePicture sql.NullString
 
 	var stripeCustomerID sql.NullString
+	var managerID sql.NullString
 	err := Db.QueryRow(
-		"SELECT id, first_name, last_name, company_name, user_type, username, email, password_hash, balance, upcycling_score, created_at, last_login, oauth_provider, oauth_id, profile_picture, is_premium, stripe_customer_id FROM users WHERE id = ?",
+		"SELECT id, first_name, last_name, company_name, user_type, username, email, password_hash, balance, upcycling_score, created_at, last_login, oauth_provider, oauth_id, profile_picture, is_premium, stripe_customer_id, manager_id FROM users WHERE id = ?",
 		id.String(),
-	).Scan(&idStr, &user.FirstName, &user.LastName, &companyName, &user.UserType, &user.Username, &user.Email, &user.Password, &user.Balance, &user.UpcyclingScore, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture, &user.IsPremium, &stripeCustomerID)
+	).Scan(&idStr, &user.FirstName, &user.LastName, &companyName, &user.UserType, &user.Username, &user.Email, &user.Password, &user.Balance, &user.UpcyclingScore, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture, &user.IsPremium, &stripeCustomerID, &managerID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return user, fmt.Errorf("user not found")
@@ -163,6 +186,9 @@ func GetUserByIDFromDB(id uuid.UUID) (models.User, error) {
 	}
 	if stripeCustomerID.Valid {
 		user.StripeCustomerID = stripeCustomerID.String
+	}
+	if managerID.Valid {
+		user.ManagerID = &managerID.String
 	}
 
 	err = validateUser(user)
@@ -198,6 +224,14 @@ func UpdateUserInDB(id uuid.UUID, updates map[string]interface{}) error {
 	if v, ok := updates["company_name"].(string); ok {
 		cols = append(cols, "company_name = ?")
 		args = append(args, v)
+	}
+	if v, ok := updates["manager_id"]; ok {
+		if v == nil || v == "" {
+			cols = append(cols, "manager_id = NULL")
+		} else if s, ok2 := v.(string); ok2 {
+			cols = append(cols, "manager_id = ?")
+			args = append(args, s)
+		}
 	}
 	if len(cols) == 0 {
 		return nil
@@ -614,7 +648,7 @@ func UpdateSubscriptionInDB(userID uuid.UUID, isPremium int, stripeCustomerID, s
 }
 
 func RevokePremiumByStripeCustomerID(customerID string) error {
-	_, err := Db.Exec("UPDATE users SET is_premium=0 WHERE stripe_customer_id=?", customerID)
+	_, err := Db.Exec("UPDATE users SET is_premium=0, LLM_quota=15 WHERE stripe_customer_id=?", customerID)
 	if err != nil {
 		return fmt.Errorf("revokePremiumByCustomer: %s", err.Error())
 	}
@@ -622,7 +656,7 @@ func RevokePremiumByStripeCustomerID(customerID string) error {
 }
 
 func RevokePremiumByStripeSubscriptionID(subscID string) error {
-	_, err := Db.Exec("UPDATE users SET is_premium=0 WHERE stripe_subscription_id=?", subscID)
+	_, err := Db.Exec("UPDATE users SET is_premium=0, LLM_quota=15 WHERE stripe_subscription_id=?", subscID)
 	if err != nil {
 		return fmt.Errorf("revokePremiumBySubscription: %s", err.Error())
 	}

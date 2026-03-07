@@ -38,13 +38,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (!$user_type_filtered || !in_array($user_type_filtered, [1, 2], true)) {
         $error_message = 'Please select a valid account type';
     } else {
+
+        $llmQuota = 10;
+        if ($user_type_filtered === 2) {
+            $llmQuota = 15;
+        }
+
         $data_payload = [
             'first_name' => trim($first_name_filtered),
             'last_name' => trim($last_name_filtered),
             'user_type' => $user_type_filtered,
             'username' => $no_spaces_username,
             'email' => $email_filtered,
-            'password' => $password_filtered
+            'password' => $password_filtered,
+            'llm_quota' => $llmQuota,
         ];
 
         if ((int) $user_type_filtered === 2) {

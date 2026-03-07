@@ -29,6 +29,9 @@ if (!$data || !is_array($data)) {
 if (isset($data['confirm_password'])) {
     unset($data['confirm_password']);
 }
+if (isset($data['manager_id']) && $data['manager_id'] === '') {
+    unset($data['manager_id']);
+}
 if (isset($data['user_type'])) {
     $data['user_type'] = (int)$data['user_type'];
 }

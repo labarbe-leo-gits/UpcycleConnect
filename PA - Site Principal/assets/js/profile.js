@@ -40,14 +40,16 @@ const paymentModal = document.getElementById('payment-modal');
         paymentModal.setAttribute('aria-hidden', 'true');
     }
 
-    openPaymentModal.addEventListener('click', openModal);
-    closePaymentModal.addEventListener('click', closeModal);
-    cancelPaymentModal.addEventListener('click', closeModal);
-    paymentModal.addEventListener('click', (event) => {
-        if (event.target === paymentModal) {
-            closeModal();
-        }
-    });
+    if (paymentModal && openPaymentModal) {
+        openPaymentModal.addEventListener('click', openModal);
+        closePaymentModal.addEventListener('click', closeModal);
+        cancelPaymentModal.addEventListener('click', closeModal);
+        paymentModal.addEventListener('click', (event) => {
+            if (event.target === paymentModal) {
+                closeModal();
+            }
+        });
+    }
 
     if (savedRadio) savedRadio.addEventListener('change', toggleBankingSections);
     if (newRadio) newRadio.addEventListener('change', toggleBankingSections);

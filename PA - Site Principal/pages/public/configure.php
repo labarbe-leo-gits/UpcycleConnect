@@ -14,9 +14,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $prefill['first_name'] = $firstName;
     $prefill['last_name'] = $lastName;
     $prefill['user_type'] = $userType;
+    $prefill['llm_quota'] = $userType === 2 ? 15 : 10;
     $newUserData = json_encode($prefill);
     $createResponse = askAPI('users', 'POST', $newUserData);
     $user = json_decode($createResponse, true);
+
+    
+
     if (isset($user['id'])) {
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['username'] = $user['username'];
@@ -25,6 +29,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['email'] = $user['email'];
         $_SESSION['user_type'] = $userType;
         $_SESSION['oauth_provider'] = $prefill['oauth_provider'];
+
+        $tokenData = json_encode(['oauth_provider' => $prefill['oauth_provider'], 'oauth_id' => $prefill['oauth_id']]);
+        $tokenResponse = askAPI('oauth/login', 'POST', $tokenData);
+        $tokenDecoded = json_decode($tokenResponse, true);
+        if (isset($tokenDecoded['token'])) {
+            $_SESSION['jwt_token'] = $tokenDecoded['token'];
+        }
+
         unset($_SESSION['sso_active'], $_SESSION['sso_prefill']);
         header('Location: ../customers/profile');
         exit();

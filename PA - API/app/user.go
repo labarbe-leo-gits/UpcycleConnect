@@ -42,7 +42,17 @@ func GetAllUsers(w http.ResponseWriter, r *http.Request) {
 		search = ""
 	}
 
-	users, total, err := db.GetUsersFromDB(offset, limit, search)
+	var userTypes []int
+	for _, v := range q["user_type"] {
+		for _, part := range strings.Split(v, ",") {
+			part = strings.TrimSpace(part)
+			if ut, err := strconv.Atoi(part); err == nil {
+				userTypes = append(userTypes, ut)
+			}
+		}
+	}
+
+	users, total, err := db.GetUsersFromDB(offset, limit, search, userTypes...)
 	if err != nil {
 		fmt.Println("[ERROR] GetAllUsers:", err)
 		sendError(w, "Unable to fetch users", http.StatusInternalServerError)

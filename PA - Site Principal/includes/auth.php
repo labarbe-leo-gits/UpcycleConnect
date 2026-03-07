@@ -24,6 +24,8 @@ function getUserHomePath($userType) {
         return '../pro/profile';
     } elseif ((int) $userType === 3) {
         return $boUrl !== '' ? ($boUrl . '/pages/admin/dashboard') : '../public/login.php';
+    } elseif ((int) $userType === 4) {
+        return '../partials/profile';
     } else {
         return '../customers/profile';
     }

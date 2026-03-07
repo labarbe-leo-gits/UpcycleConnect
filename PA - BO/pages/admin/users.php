@@ -96,7 +96,7 @@ if (ob_get_level()) { @ob_flush(); }
                 <label for="new-password">Password</label>
                 <div class="input-wrapper password-wrapper">
                     <i class="fa-solid fa-lock"></i>
-                    <input type="password" class="iconInput" id="new-password" name="password" placeholder="Create a password" required class="password-input" data-strength="true" />
+                    <input type="password" class="iconInput password-input" id="new-password" name="password" placeholder="Create a password" required data-strength="true" />
                     <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false"><i class="fa-solid fa-eye"></i></button>
                 </div>
                 <div class="password-meter" aria-live="polite">
@@ -115,6 +115,7 @@ if (ob_get_level()) { @ob_flush(); }
             <div class="field">
                 <label for="new-usertype">Role</label>
                 <div class="input-wrapper">
+                    <i class="fa-solid fa-user-tag"></i>
                     <select id="new-usertype" name="user_type">
                         <option value="1">Particular</option>
                         <option value="2">Professional</option>
@@ -128,6 +129,24 @@ if (ob_get_level()) { @ob_flush(); }
                 <div class="input-wrapper">
                     <i class="fa-solid fa-building"></i>
                     <input type="text" id="new-company" name="company_name" placeholder="Company Name" />
+                </div>
+            </div>
+            <div class="field" id="manager-group" style="display:none;">
+                <label>Manager <span style="font-size:.85em;color:#6b7280;font-weight:400;">(optional)</span></label>
+                <input type="hidden" id="new-manager-id" name="manager_id" value="" />
+                <div id="manager-chip" style="display:none;align-items:center;gap:6px;padding:6px 12px;background:#f0fdf4;border:1px solid #a7f3d0;border-radius:20px;width:fit-content;margin-bottom:8px;">
+                    <i class="fa-solid fa-user-tie" style="color:#10b981;font-size:.85em;"></i>
+                    <span id="manager-chip-name" style="font-size:.9em;color:#065f46;font-weight:500;"></span>
+                    <button type="button" id="manager-chip-remove" style="background:none;border:none;cursor:pointer;padding:0 0 0 4px;color:#9ca3af;line-height:1;display:flex;align-items:center;" aria-label="Remove manager">
+                        <i class="fa-solid fa-xmark" style="font-size:.85em;"></i>
+                    </button>
+                </div>
+                <div id="manager-search-wrapper" style="position:relative;">
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-user-tie"></i>
+                        <input type="text" id="manager-search" placeholder="Type name or username…" autocomplete="off" />
+                    </div>
+                    <div id="manager-results" style="position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1px solid #e5e7eb;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:9999;max-height:220px;overflow-y:auto;display:none;"></div>
                 </div>
             </div>
             <div class="field">
