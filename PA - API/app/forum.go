@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/google/uuid"
 )
@@ -244,9 +245,13 @@ func GetForumByID(w http.ResponseWriter, r *http.Request) {
 
 func UpdatePost(w http.ResponseWriter, r *http.Request) {
 
-	idStr := r.URL.Path[len("/forums/") : len(r.URL.Path)-len("/posts/{pID}")]
-	pID := r.URL.Path[len("/forums/{id}/posts/"):]
-
+	postsIdx := strings.Index(r.URL.Path, "/posts/")
+	if postsIdx == -1 {
+		sendError(w, "Forum ID and Post ID are required", http.StatusBadRequest)
+		return
+	}
+	idStr := r.URL.Path[len("/forums/"):postsIdx]
+	pID := r.URL.Path[postsIdx+len("/posts/"):]
 	if idStr == "" || pID == "" {
 		sendError(w, "Forum ID and Post ID are required", http.StatusBadRequest)
 		return
@@ -288,9 +293,13 @@ func UpdatePost(w http.ResponseWriter, r *http.Request) {
 
 func DeletePost(w http.ResponseWriter, r *http.Request) {
 
-	forumID := r.URL.Path[len("/forums/") : len(r.URL.Path)-len("/posts/{pID}")]
-	pID := r.URL.Path[len("/forums/{id}/posts/"):]
-
+	postsIdx := strings.Index(r.URL.Path, "/posts/")
+	if postsIdx == -1 {
+		sendError(w, "Forum ID and Post ID are required", http.StatusBadRequest)
+		return
+	}
+	forumID := r.URL.Path[len("/forums/"):postsIdx]
+	pID := r.URL.Path[postsIdx+len("/posts/"):]
 	if forumID == "" || pID == "" {
 		sendError(w, "Forum ID and Post ID are required", http.StatusBadRequest)
 		return

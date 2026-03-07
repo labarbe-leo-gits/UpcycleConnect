@@ -1133,6 +1133,123 @@ body.dark-mode .updoc-view-actions button {
   color: #e0e0e0;
 }
 
+body.dark-mode .updoc-prose {
+  color: #d1d5db;
+}
+body.dark-mode .updoc-prose h1,
+body.dark-mode .updoc-prose h2,
+body.dark-mode .updoc-prose h3 {
+  color: #e0e0e0;
+}
+body.dark-mode .updoc-prose code {
+  background: #2a2a2a;
+  color: #e0e0e0;
+}
+body.dark-mode .updoc-prose pre {
+  background: #2a2a2a;
+  color: #e0e0e0;
+}
+body.dark-mode .updoc-prose blockquote {
+  background: #1e1e1e;
+  border-left-color: #10b981;
+  color: #cbd5e0;
+}
+
+body.dark-mode .updoc-step-view-card {
+  background: #1e1e1e;
+  border-color: #333;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+body.dark-mode .updoc-step-view-head {
+  background: #2a2a2a;
+  border-bottom: 1px solid #333;
+}
+body.dark-mode .updoc-step-view-title,
+body.dark-mode .updoc-step-view-duration,
+body.dark-mode .updoc-step-view-desc {
+  color: #e0e0e0;
+}
+body.dark-mode .updoc-mat-chip {
+  background: #0c4a6e;
+  border-color: #0369a1;
+  color: #bfdbfe;
+}
+
+body.dark-mode .updoc-like-btn {
+  background: #333;
+  border-color: #e53e3e;
+  color: #e53e3e;
+}
+body.dark-mode .updoc-like-btn:hover,
+body.dark-mode .updoc-like-btn.liked {
+  background: #e53e3e;
+  color: #fff;
+}
+body.dark-mode .updoc-back-btn {
+  background: #333;
+  border-color: #555;
+  color: #e0e0e0;
+}
+body.dark-mode .updoc-back-btn:hover {
+  border-color: #888;
+}
+body.dark-mode .updoc-page-btn {
+  background: #333;
+  border-color: #555;
+  color: #e0e0e0;
+}
+body.dark-mode .updoc-page-btn:hover:not(:disabled) {
+  background: #444;
+  border-color: #10b981;
+  color: #10b981;
+}
+
+body.dark-mode .updoc-comment {
+  background: #2a2a2a;
+  border-color: #444;
+}
+body.dark-mode .updoc-comment-meta {
+  color: #9ca3af;
+}
+body.dark-mode .updoc-comment-author,
+body.dark-mode .updoc-comment-text {
+  color: #e0e0e0;
+}
+body.dark-mode .updoc-comment-action-btn {
+  color: #9ca3af;
+}
+body.dark-mode .updoc-comment-action-btn:hover {
+  color: #e0e0e0;
+}
+body.dark-mode .updoc-comment-action-btn.danger:hover {
+  color: #e53e3e;
+}
+
+body.dark-mode .updoc-comments-sticky {
+  background: #1e1e1e;
+  border-color: #333;
+}
+
+body.dark-mode .updoc-comment-submit,
+body.dark-mode .updoc-comment-add-btn {
+  background: linear-gradient(135deg, #10b981, #34d399);
+  color: #fff;
+}
+
+body.dark-mode .modal-body .field textarea,
+body.dark-mode .modal-body .field input[type="text"],
+body.dark-mode .modal-body .field input[type="number"] {
+  background: #1e1e1e;
+  border-color: #333;
+  color: #e0e0e0;
+}
+body.dark-mode .modal-body .field textarea:focus,
+body.dark-mode .modal-body .field input[type="text"]:focus,
+body.dark-mode .modal-body .field input[type="number"]:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
 body.dark-mode .mfa-status-badge.mfa-enabled {
   background: #15572420;
   color: #d4edda;
