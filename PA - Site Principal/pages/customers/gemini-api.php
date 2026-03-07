@@ -59,6 +59,22 @@ if (!$geminiKey) {
 //
 
 switch ($type) {
+    case 'generate_all':
+        $prompt =
+            "You are a helpful assistant for an upcycling platform.\n" .
+            "Given this project idea, generate two things:\n" .
+            "1. A clear and engaging project description (3-5 sentences).\n" .
+            "2. A numbered list of practical steps to complete the project.\n\n" .
+            "Use exactly this format and nothing else:\n" .
+            "DESCRIPTION:\n" .
+            "<your description here>\n\n" .
+            "STEPS:\n" .
+            "1. Step title - Step description\n" .
+            "2. Step title - Step description\n" .
+            "(etc.)\n\n" .
+            "Project idea: " . $context;
+        break;
+
     case 'generate_description':
         $prompt =
             "You are a helpful assistant for an upcycling platform.\n" .

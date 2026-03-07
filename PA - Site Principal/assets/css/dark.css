@@ -1,0 +1,39 @@
+body {
+  transition:
+    background-color 0.35s ease,
+    color 0.35s ease;
+}
+
+body.dark-mode {
+  background-color: #121212;
+  color: #e0e0e0;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+#dark-toggle i {
+  transition:
+    transform 0.4s ease,
+    color 0.3s ease;
+}
+#dark-toggle:hover i {
+  transform: rotate(20deg);
+}
+body.dark-mode #dark-toggle i::before {
+  content: "\f185";
+}
+
+.profile-card {
+  transition:
+    background-color 0.35s ease,
+    border-color 0.35s ease;
+}
+
+body.dark-mode .profile-card {
+  background-color: #151515;
+  border-color: #333;
+}

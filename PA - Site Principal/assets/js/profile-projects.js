@@ -201,12 +201,15 @@
         var date   = fmtDate(item.created_at);
         var projId = escAttr(item.id || '');
 
+        var aiGenerated = parseInt(item.ai_generated ?? 0) === 1;
+
         el.innerHTML =
             '<div class="updoc-proj-card-body">' +
               '<div class="updoc-proj-card-title">' + escHtml(item.title || 'Untitled') + '</div>' +
               (desc ? '<div class="updoc-proj-card-desc">' + escHtml(desc) + '</div>' : '') +
               '<div class="updoc-proj-card-meta">' +
                 '<span class="updoc-proj-status ' + statusCls + '">' + escHtml(statusLabel) + '</span>' +
+                (aiGenerated ? '<span class="updoc-ai-badge"><i class="fa-solid fa-wand-magic-sparkles"></i> AI</span>' : '') +
                 (date ? '<span><i class="fa-regular fa-calendar"></i> ' + escHtml(date) + '</span>' : '') +
               '</div>' +
             '</div>' +

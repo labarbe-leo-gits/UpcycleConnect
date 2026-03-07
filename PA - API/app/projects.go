@@ -135,7 +135,7 @@ func UpdateProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	allowed := map[string]bool{"title": true, "description": true, "status": true, "annonce_id": true}
+	allowed := map[string]bool{"title": true, "description": true, "status": true, "annonce_id": true, "ai_generated": true}
 	fields := map[string]interface{}{}
 	for k, v := range input {
 		if allowed[k] {

@@ -9,6 +9,7 @@ type Project struct {
 	Title       string     `json:"title"`
 	Description string     `json:"description"`
 	Status      int        `json:"status"`
+	AIGenerated int        `json:"ai_generated"`
 	CreatedAt   string     `json:"created_at"`
 	UpdatedAt   string     `json:"updated_at"`
 }

@@ -4,16 +4,9 @@ $extraCss = [];
 require_once '../../../vendor/autoload.php';
 $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
 
-if ($isAjax) {
-    require_once '../../config/db.php';
-    require_once '../../includes/auth.php';
-    requireUserType(4);
-} else {
-    require_once '../../config/db.php';
-    require_once '../../includes/auth.php';
-    requireUserType(4);
-    trackLastPage();
-}
+require_once '../../config/db.php';
+require_once '../../includes/auth.php';
+requireUserType(4);
 
 $user = getLoggedInUser();
 
@@ -22,28 +15,14 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']) {
     exit();
 }
 
-if (!$isAjax): ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UpcycleConnect - <?= htmlspecialchars($title) ?></title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=SN+Pro:ital,wght@0,200..900;1,200..900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="../../assets/css/style.css">
-    <link rel="stylesheet" href="../../assets/css/customers.css">
-    <link rel="stylesheet" href="../../assets/css/pro.css">
-    <link rel="icon" type="image/png" href="../../assets/img/brand/UpcycleDiminutif.png">
-</head>
-<body>
+if (!$isAjax) {
+    require_once '../../includes/partials-header.php';
+?>
     <div id="initial-loader" aria-hidden="false"><span class="loader" role="status" aria-label="Loading"></span></div>
 <?php
     if (ob_get_level()) { @ob_flush(); }
     @flush();
-endif;
+}
 
 $userDetailsResponse = askAPI("/users/{$user['id']}", 'GET');
 $userDetails = json_decode($userDetailsResponse, true);
@@ -165,39 +144,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 
-<?php if (!$isAjax): ?>
-    <header data-api-base="<?php echo htmlspecialchars($API_URL ?? ''); ?>" data-user-id="<?php echo htmlspecialchars($user['id'] ?? ''); ?>">
-        <div class="left">
-            <h1>Employee Portal</h1>
-        </div>
-        <nav>
-            <div class="nav-dropdown profile-dropdown">
-                <a class="btn-wrapper profile-link" href="../partials/profile">
-                    <?php if (!empty($_SESSION['avatar'])): ?>
-                        <img
-                    data-blob-src="../../../files/uploads/user/<?= htmlspecialchars($user['profile_picture'] ?? 'defaultUser.png') ?>"
-                    src="data:image/gif;base64,R0lGODlhAQABAPAAAP///wAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw=="
-                    alt="Profile Picture"
-                    class="profile-pic-large"
-                    id="profile-pic-preview"
-                >
-                    <?php else: ?>
-                        <i class="fa-solid fa-user fa-lg"></i>
-                    <?php endif; ?>
-                    <p><?= htmlspecialchars(!empty($user['first_name']) ? $user['first_name'] : ($user['username'] ?? '')) ?></p>
-                </a>
-                <div class="dropdown-menu">
-                    <a href="../partials/profile"><i class="fa-solid fa-user"></i>Profile</a>
-                    <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="fa-solid fa-right-from-bracket"></i>Logout</a>
-                </div>
-            </div>
-        </nav>
-    </header>
 
-    <form id="logout-form" action="../public/logout" method="POST" class="hidden-form">
-        <input type="hidden" name="logout" value="1">
-    </form>
-<?php endif; ?>
 
 <div class="container" id="main-content" style="visibility:hidden;">
 

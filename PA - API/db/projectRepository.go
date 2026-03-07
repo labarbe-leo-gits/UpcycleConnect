@@ -8,8 +8,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// ── Projects ──────────────────────────────────────────────────────────────────
-
 func GetProjectsFromDB(offset, limit int, search string) ([]models.Project, int, error) {
 	if offset < 0 {
 		offset = 0
@@ -18,7 +16,7 @@ func GetProjectsFromDB(offset, limit int, search string) ([]models.Project, int,
 		limit = 20
 	}
 
-	baseQuery := "SELECT id, user_id, annonce_id, title, description, status, created_at, updated_at FROM projects WHERE status = 1"
+	baseQuery := "SELECT id, user_id, annonce_id, title, description, status, ai_generated, created_at, updated_at FROM projects WHERE status = 1"
 	countQuery := "SELECT COUNT(*) FROM projects WHERE status = 1"
 	args := []interface{}{}
 	countArgs := []interface{}{}
@@ -47,7 +45,7 @@ func GetProjectsFromDB(offset, limit int, search string) ([]models.Project, int,
 		var annonceIDStr sql.NullString
 		var createdAt, updatedAt sql.NullString
 
-		if err := rows.Scan(&idStr, &userIDStr, &annonceIDStr, &p.Title, &p.Description, &p.Status, &createdAt, &updatedAt); err != nil {
+		if err := rows.Scan(&idStr, &userIDStr, &annonceIDStr, &p.Title, &p.Description, &p.Status, &p.AIGenerated, &createdAt, &updatedAt); err != nil {
 			return nil, 0, fmt.Errorf("scanning project row: %w", err)
 		}
 		p.ID, _ = uuid.Parse(idStr)
@@ -81,9 +79,9 @@ func GetProjectByIDFromDB(id string) (*models.Project, error) {
 	var createdAt, updatedAt sql.NullString
 
 	err := Db.QueryRow(
-		"SELECT id, user_id, annonce_id, title, description, status, created_at, updated_at FROM projects WHERE id = ?",
+		"SELECT id, user_id, annonce_id, title, description, status, ai_generated, created_at, updated_at FROM projects WHERE id = ?",
 		id,
-	).Scan(&idStr, &userIDStr, &annonceIDStr, &p.Title, &p.Description, &p.Status, &createdAt, &updatedAt)
+	).Scan(&idStr, &userIDStr, &annonceIDStr, &p.Title, &p.Description, &p.Status, &p.AIGenerated, &createdAt, &updatedAt)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
@@ -109,8 +107,8 @@ func GetProjectByIDFromDB(id string) (*models.Project, error) {
 func CreateProjectInDB(p models.Project) (*models.Project, error) {
 	id := uuid.New()
 	_, err := Db.Exec(
-		"INSERT INTO projects (id, user_id, annonce_id, title, description, status) VALUES (?, ?, ?, ?, ?, ?)",
-		id.String(), p.UserID.String(), nullableUUID(p.AnnonceID), p.Title, p.Description, p.Status,
+		"INSERT INTO projects (id, user_id, annonce_id, title, description, status, ai_generated) VALUES (?, ?, ?, ?, ?, ?, ?)",
+		id.String(), p.UserID.String(), nullableUUID(p.AnnonceID), p.Title, p.Description, p.Status, p.AIGenerated,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("CreateProjectInDB: %w", err)
@@ -147,7 +145,7 @@ func DeleteProjectFromDB(id string) error {
 
 func GetProjectsByUserIDFromDB(userID string) ([]models.Project, error) {
 	rows, err := Db.Query(
-		"SELECT id, user_id, annonce_id, title, description, status, created_at, updated_at FROM projects WHERE user_id = ? ORDER BY created_at DESC",
+		"SELECT id, user_id, annonce_id, title, description, status, ai_generated, created_at, updated_at FROM projects WHERE user_id = ? ORDER BY created_at DESC",
 		userID,
 	)
 	if err != nil {
@@ -161,7 +159,7 @@ func GetProjectsByUserIDFromDB(userID string) ([]models.Project, error) {
 		var idStr, userIDStr string
 		var annonceIDStr sql.NullString
 		var createdAt, updatedAt sql.NullString
-		if err := rows.Scan(&idStr, &userIDStr, &annonceIDStr, &p.Title, &p.Description, &p.Status, &createdAt, &updatedAt); err != nil {
+		if err := rows.Scan(&idStr, &userIDStr, &annonceIDStr, &p.Title, &p.Description, &p.Status, &p.AIGenerated, &createdAt, &updatedAt); err != nil {
 			return nil, err
 		}
 		p.ID, _ = uuid.Parse(idStr)
