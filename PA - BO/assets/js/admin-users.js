@@ -810,8 +810,7 @@
             params.append(k, v);
         }
 
-        const base = window.location.origin + '/PA/PA%20-%20Site%20Principal/pages/admin';
-        const url = base + '/create-user-api';
+        const url = 'create-user-api';
         console.log('posting create user to', url);
 
         fetch(url, {

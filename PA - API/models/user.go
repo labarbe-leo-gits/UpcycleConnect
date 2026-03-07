@@ -16,6 +16,8 @@ type User struct {
 	Username         string    `json:"username" gorm:"unique;not null"`
 	Email            string    `json:"email" gorm:"unique;not null"`
 	Password         string    `json:"password,omitempty" gorm:"not null"`
+	LLMQuota         int       `json:"llm_quota"`
+	LLMUsageToday    int       `json:"llm_usage_today"`
 	CreatedAt        string    `json:"created_at,omitempty"`
 	LastLogin        string    `json:"last_login,omitempty"`
 	OAuthProvider    string    `json:"oauth_provider,omitempty"`

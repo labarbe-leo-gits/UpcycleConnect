@@ -25,6 +25,8 @@ CREATE TABLE IF NOT EXISTS users (
     twofa_backup_codes TEXT NULL,
     oauth_id VARCHAR(255) NULL,
     profile_picture VARCHAR(500) NULL,
+    LLM_quota INT NOT NULL, /* User : 10/J, Pro : 15/J FREE, 25/J Premium, Employees: 20/J,Admin: 50/J */
+    LLM_usage_today INT NOT NULL DEFAULT 0,
     UNIQUE INDEX idx_oauth (oauth_provider, oauth_id)
 );
 

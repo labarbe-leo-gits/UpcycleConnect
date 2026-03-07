@@ -693,3 +693,52 @@ func GetProfilePictureURLFromDB(userID string) (string, error) {
 
 	return "", nil
 }
+
+func GetLLMUsageByUserIDFromDB(userID string) (int, int, error) {
+	var quota int
+	var usage int
+	err := Db.QueryRow("SELECT LLM_quota, LLM_usage_today FROM users WHERE id = ?", userID).Scan(&quota, &usage)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, 0, fmt.Errorf("user not found")
+		}
+
+		fmt.Printf("[ERROR] GetLLMUsageByUserIDFromDB: %s\n", err.Error())
+		return 0, 0, fmt.Errorf("database error")
+	}
+
+	return quota, usage, nil
+}
+
+func UpdateLLMUsageInDB(userID string, newQuota *int, newUsage *int) error {
+
+	if newQuota == nil && newUsage == nil {
+		return nil
+	}
+
+	setClauses := []string{}
+	args := []interface{}{}
+
+	if newQuota != nil {
+		setClauses = append(setClauses, "LLM_quota = ?")
+		args = append(args, *newQuota)
+	}
+
+	if newUsage != nil {
+		setClauses = append(setClauses, "LLM_usage_today = ?")
+		args = append(args, *newUsage)
+	}
+
+	args = append(args, userID)
+
+	query := "UPDATE users SET " + strings.Join(setClauses, ", ") + " WHERE id = ?"
+
+	_, err := Db.Exec(query, args...)
+	if err != nil {
+		fmt.Printf("[ERROR] UpdateLLMUsageInDB: %s\n", err.Error())
+		return fmt.Errorf("database error")
+	}
+
+	return nil
+
+}

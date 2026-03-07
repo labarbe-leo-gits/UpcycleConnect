@@ -275,6 +275,9 @@ func main() {
 	registerRoute("GET", "/projects/{id}/steps/{sID}/materials", "List materials for a step", app.GetStepMaterials, app.JWTAuthMiddleware)
 	registerRoute("DELETE", "/projects/{id}/steps/{sID}/materials/{fID}", "Remove a material from a step", app.DeleteStepMaterial, app.JWTAuthMiddleware)
 
+	registerRoute("GET", "/users/{id}/llm", "Get the LLM usage for today and quota per day", app.GetLLMUsage, app.JWTAuthMiddleware)
+	registerRoute("PATCH", "/users/{id}/llm", "Update the LLM usage and/or quota for a user", app.UpdateLLMUsage, app.JWTAuthMiddleware)
+
 	registerRoute("GET", "/projects/{id}/likes", "Get like count and liked state", app.GetProjectLikes, app.JWTAuthMiddleware)
 	registerRoute("POST", "/projects/{id}/likes", "Like a project", app.LikeProject, app.JWTAuthMiddleware)
 	registerRoute("DELETE", "/projects/{id}/likes", "Unlike a project", app.UnlikeProject, app.JWTAuthMiddleware)

@@ -35,6 +35,8 @@
                     return;
                 }
 
+                status.style.justifyContent = 'center';
+
                 const btn = this;
                 btn.disabled  = true;
                 btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Asking Gemini…';

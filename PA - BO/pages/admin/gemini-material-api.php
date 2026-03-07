@@ -41,6 +41,21 @@ if (!$apiKey) {
     exit;
 }
 
+$llmRaw = askAPI("/users/{$user['id']}/llm", 'GET');
+$llmData = $llmRaw ? json_decode($llmRaw, true) : null;
+if (!$llmData || !isset($llmData['usage_today'], $llmData['quota'])) {
+    error_log("[gemini-material-api] failed to get LLM usage for user {$user['id']}");
+    http_response_code(502);
+    echo json_encode(['error' => 'Failed to check LLM usage']);
+    exit;
+}
+
+if ($llmData['usage_today'] >= $llmData['quota']) {
+    http_response_code(429);
+    echo json_encode(['error' => 'LLM quota exceeded - try again later']);
+    exit;
+}
+
 $materialSafe = addslashes($material);
 $prompt = <<<PROMPT
 You are an environmental scientist specialised in life-cycle assessment.
@@ -114,6 +129,9 @@ if ($factor <= 0) {
     echo json_encode(['error' => 'Material not recognised by AI']);
     exit;
 }
+
+// If we got here, we have a valid factor. Before returning it, we will increment the users LLM usage by 1 via the PATCH /users/{id}/llm route, to keep track of their usage and enforce quotas.
+askAPI("/users/{$user['id']}/llm", 'PATCH', json_encode(['usage_delta' => 1]));
 
 echo json_encode([
     'facteur_co2' => $factor,

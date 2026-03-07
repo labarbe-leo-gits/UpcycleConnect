@@ -36,12 +36,27 @@ if ($context === '') {
     exit;
 }
 
+$llmRaw  = askAPI("/users/{$user['id']}/llm", 'GET');
+$llmData = $llmRaw ? json_decode($llmRaw, true) : null;
+if (!$llmData || !isset($llmData['usage_today'], $llmData['quota'])) {
+    http_response_code(502);
+    echo json_encode(['error' => 'Failed to check LLM usage']);
+    exit;
+}
+if ($llmData['usage_today'] >= $llmData['quota']) {
+    http_response_code(429);
+    echo json_encode(['error' => 'Daily AI quota exceeded — try again tomorrow']);
+    exit;
+}
+
 $geminiKey = getenv('GEMINI_API_KEY');
 if (!$geminiKey) {
     http_response_code(500);
     echo json_encode(['error' => 'Gemini API key not configured. Add GEMINI_API_KEY to your .env file.']);
     exit;
 }
+
+//
 
 switch ($type) {
     case 'generate_description':
@@ -119,5 +134,7 @@ if ($text === '') {
     echo json_encode(['error' => 'Empty response from Gemini']);
     exit;
 }
+
+askAPI("/users/{$user['id']}/llm", 'PATCH', json_encode(['usage_delta' => 1]));
 
 echo json_encode(['text' => $text]);

@@ -781,3 +781,87 @@ func GetProfilePicture(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"profile_picture_url": profilePictureURL})
 
 }
+
+func GetLLMUsage(w http.ResponseWriter, r *http.Request) {
+
+	userID := strings.TrimPrefix(r.URL.Path, "/users/")
+	userID = strings.TrimSuffix(userID, "/llm")
+
+	if _, err := uuid.Parse(userID); err != nil {
+		fmt.Println("[WARN] GetLLMUsage: invalid UUID", userID)
+		sendError(w, "Invalid user ID format", http.StatusBadRequest)
+		return
+	}
+
+	quota, usage, err := db.GetLLMUsageByUserIDFromDB(userID)
+
+	if err != nil {
+		fmt.Println("[ERROR] GetLLMUsage:", err)
+		sendError(w, "Unable to fetch LLM usage for user", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]int{
+		"usage_today": usage,
+		"quota":       quota,
+	})
+
+}
+
+func UpdateLLMUsage(w http.ResponseWriter, r *http.Request) {
+
+	userID := strings.TrimPrefix(r.URL.Path, "/users/")
+	userID = strings.TrimSuffix(userID, "/llm")
+
+	if _, err := uuid.Parse(userID); err != nil {
+		fmt.Println("[WARN] UpdateLLMUsage: invalid UUID", userID)
+		sendError(w, "Invalid user ID format", http.StatusBadRequest)
+		return
+	}
+
+	var req struct {
+		UsageDelta int  `json:"usage_delta"`
+		Quota      *int `json:"quota"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		fmt.Println("[ERROR] UpdateLLMUsage decode:", err)
+		sendError(w, "Invalid JSON format", http.StatusBadRequest)
+		return
+	}
+
+	if req.Quota != nil && *req.Quota < 0 {
+		sendError(w, "Quota cannot be negative", http.StatusBadRequest)
+		return
+	}
+
+	// Only admins (user_type == 3) may change the quota
+	if req.Quota != nil {
+		callerID, _ := r.Context().Value("user_id").(string)
+		role, roleErr := db.GetUserRoleByIDFromDB(callerID)
+		if roleErr != nil {
+			fmt.Println("[ERROR] UpdateLLMUsage get caller role:", roleErr)
+			sendError(w, "Unable to verify caller permissions", http.StatusInternalServerError)
+			return
+		}
+		if role != 3 {
+			sendError(w, "Only admins can update the quota", http.StatusForbidden)
+			return
+		}
+	}
+
+	err = db.UpdateLLMUsageInDB(userID, req.Quota, &req.UsageDelta)
+	if err != nil {
+		fmt.Println("[ERROR] UpdateLLMUsage DB:", err)
+		sendError(w, "Unable to update LLM usage for user", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]bool{"success": true})
+
+}
