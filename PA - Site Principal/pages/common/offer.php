@@ -160,9 +160,35 @@ if (!empty($offer['created_at'])) {
 	</div>
 
 	<div class="service-details actual-content" style="display: none;">
-		<div class="offer-image">
-			<img src="<?php echo htmlspecialchars($imagePath); ?>" alt="Offer image">
-		</div>
+			<div class="offer-image">
+				<div class="image-slider" id="offer-image-slider">
+					<?php
+					if (is_array($imagesDecoded) && !empty($imagesDecoded)) {
+						foreach ($imagesDecoded as $idx => $img) {
+							$fileName = $img['file_name'] ?? '';
+							if ($fileName !== '') {
+								$imgPath = '../../../files/uploads/annonce/' . $fileName;
+								$alt = 'Offer image ' . ($idx + 1);
+								echo '<img class="slider-img" src="' . htmlspecialchars($imgPath) . '" alt="' . htmlspecialchars($alt) . '" data-index="' . $idx . '" />';
+							}
+						}
+					} else {
+						echo '<img class="slider-img" src="' . htmlspecialchars($imagePath) . '" alt="Offer image" data-index="0" />';
+					}
+					?>
+					<button class="slider-arrow slider-arrow-left" id="slider-arrow-left" aria-label="Previous image">&#10094;</button>
+					<button class="slider-arrow slider-arrow-right" id="slider-arrow-right" aria-label="Next image">&#10095;</button>
+					<div class="slider-dots" id="slider-dots"></div>
+				</div>
+			</div>
+
+			<div id="image-modal" class="image-modal">
+				<span class="modal-close" id="modal-close">&times;</span>
+				<img class="modal-content" id="modal-img" src="" alt="Offer image large view">
+				<div class="modal-caption" id="modal-caption"></div>
+				<button class="modal-arrow modal-arrow-left" id="modal-modal-arrow-left">&#10094;</button>
+				<button class="modal-arrow modal-arrow-right" id="modal-modal-arrow-right">&#10095;</button>
+			</div>
 
 		<div class="service-header">
 			<div class="title-wrapper offer-title-wrapper">
@@ -245,6 +271,7 @@ if (!empty($offer['created_at'])) {
 	</div>
 </div>
 
+
 <script>
 window.addEventListener('load', function() {
 	setTimeout(function() {
@@ -257,6 +284,7 @@ function handlePurchase() {
 	window.location.href = 'order?product_uuid=<?php echo $offerUuid; ?>';
 }
 </script>
+<script src="../../assets/js/offer-slider.js"></script>
 
 <?php
 include_once '../../includes/footer.php';
