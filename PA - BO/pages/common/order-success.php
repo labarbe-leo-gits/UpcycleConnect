@@ -287,7 +287,7 @@ $hasOrderError = (!$paymentVerified) || !empty($orderSaveError);
                     <?php endif; ?>
                 <?php else: ?>
                     <p class="error-message"><?php echo htmlspecialchars($paymentError ?: 'Payment could not be verified.'); ?></p>
-                    <a class="btn-primary" href="order?product_uuid=<?php echo htmlspecialchars($productUuid); ?>">Try again</a>
+                    <a class="btn-primary" href="order?product_uuid=<?php echo htmlspecialchars($productUuid); ?>" style="text-decoration: none;">Try again</a>
                 <?php endif; ?>
             </div>
         </div>

@@ -776,3 +776,42 @@ func UpdateLLMUsageInDB(userID string, newQuota *int, newUsage *int) error {
 	return nil
 
 }
+
+func GetUserBalanceFromDB(userID string) (float64, error) {
+	var balance float64
+	err := Db.QueryRow("SELECT balance FROM users WHERE id = ?", userID).Scan(&balance)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, fmt.Errorf("user not found")
+		}
+
+		fmt.Printf("[ERROR] GetUserBalanceFromDB: %s\n", err.Error())
+		return 0, fmt.Errorf("database error")
+	}
+
+	return balance, nil
+}
+
+func UpdateUserBalanceInDB(userID string, amount float64, operation int) error {
+
+	var query string
+
+	switch operation {
+		case 0:
+			query = "UPDATE users SET balance = balance + ? WHERE id = ?"
+		case 1:
+			query = "UPDATE users SET balance = balance - ? WHERE id = ?"
+		default:
+			return fmt.Errorf("invalid operation type")
+		}
+
+	_, err := Db.Exec(query, amount, userID)
+	if err != nil {
+		fmt.Printf("[ERROR] UpdateUserBalanceInDB: %s\n", err.Error())
+		return fmt.Errorf("database error")
+	}
+
+	return nil
+
+}

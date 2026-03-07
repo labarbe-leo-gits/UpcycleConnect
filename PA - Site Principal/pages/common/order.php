@@ -165,7 +165,7 @@ $freeNotice = $productType === 'offer'
     : 'This is a free service. Click "Complete Order" to confirm your registration.';
 ?>
 
-<div class="container" id="order-page" data-order-token="<?php echo htmlspecialchars($orderToken); ?>" data-product-uuid="<?php echo htmlspecialchars($productUuid); ?>" data-stripe-key="<?php echo htmlspecialchars($stripeConfig['publishable_key'] ?? ''); ?>" data-is-full="<?php echo $isFull ? '1' : '0'; ?>" data-is-free="<?php echo $price == 0 ? '1' : '0'; ?>">
+<div class="container" id="order-page" data-order-token="<?php echo htmlspecialchars($orderToken); ?>" data-product-uuid="<?php echo htmlspecialchars($productUuid); ?>" data-stripe-key="<?php echo htmlspecialchars($stripeConfig['publishable_key'] ?? ''); ?>" data-is-full="<?php echo $isFull ? '1' : '0'; ?>" data-is-free="<?php echo $price == 0 ? '1' : '0'; ?>" data-user-id="<?php echo htmlspecialchars($user['id'] ?? ''); ?>">
     <div class="checkout-container skeleton-checkout-container">
         <div class="checkout-header">
             <div class="skeleton skeleton-checkout-title"></div>
@@ -301,39 +301,51 @@ $freeNotice = $productType === 'offer'
                 <?php else: ?>
                     <form id="payment-form">
                         <input type="hidden" name="product_uuid" value="<?php echo htmlspecialchars($productUuid); ?>">
-                        
-                        <div class="form-group">
-                            <label for="cardholder-name">Cardholder Name</label>
-                            <input type="text" id="cardholder-name" name="cardholder_name" required 
-                                   placeholder="John Doe" class="form-control">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="card-element">Card Information</label>
-                            <div id="card-element" class="stripe-element">
+                        <div class="form-group" id="payment-method-section-tabs">
+                            <label>Payment Method</label>
+                            <div class="payment-method-tabs" id="payment-method-tabs">
+                                <button type="button" class="tab-btn active" data-method="stripe" id="tab-stripe">
+                                    <i class="fa-brands fa-cc-stripe"></i> Credit Card (Stripe)
+                                </button>
+                                <button type="button" class="tab-btn" data-method="balance" id="tab-balance">
+                                    <i class="fa-solid fa-wallet"></i> Use Balance <span id="user-balance" class="badge-balance">...</span>
+                                </button>
+                                <input type="hidden" name="payment_method" id="payment_method_input" value="stripe">
                             </div>
-                            <div id="card-errors" role="alert"></div>
+                            <div class="secure-notice balance-tab-notice" id="balance-notice" style="display:none;">
+                                <i class="fa-solid fa-wallet"></i>
+                                Payment will be made using your site balance.
+                            </div>
                         </div>
-                        
-                        <div class="form-group">
-                            <label for="billing-email">Billing Email</label>
-                            <input type="email" id="billing-email" name="billing_email" 
-                                   value="<?php echo htmlspecialchars($user['email'] ?? ''); ?>" 
-                                   required class="form-control">
+                        <div id="stripe-fields">
+                            <div class="form-group">
+                                <label for="cardholder-name">Cardholder Name</label>
+                                <input type="text" id="cardholder-name" name="cardholder_name" required 
+                                       placeholder="John Doe" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label for="card-element">Card Information</label>
+                                <div id="card-element" class="stripe-element"></div>
+                                <div id="card-errors" role="alert"></div>
+                            </div>
+                            <div class="form-group">
+                                <label for="billing-email">Billing Email</label>
+                                <input type="email" id="billing-email" name="billing_email" 
+                                       value="<?php echo htmlspecialchars($user['email'] ?? ''); ?>" 
+                                       required class="form-control">
+                            </div>
                         </div>
-                        
                         <button type="submit" class="btn-primary btn-complete" id="submit-payment">
                             <span id="button-text">
                                 <i class="fa-solid fa-lock"></i> Pay <?php echo $priceDisplay; ?><?php if ($productType === 'offer' && $priceTTC > 0): ?> (TTC)<?php endif; ?>
                             </span>
                             <span id="spinner" class="spinner" style="display: none;"></span>
                         </button>
-                        
-                        <div class="secure-notice">
+                        <div class="secure-notice" id="stripe-notice">
                             <i class="fa-solid fa-shield-halved"></i>
                             Secure payment powered by Stripe
                         </div>
-                    </form>
+                                            </form>
                 <?php endif; ?>
             </div>
         </div>

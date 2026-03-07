@@ -875,3 +875,68 @@ func UpdateLLMUsage(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]bool{"success": true})
 
 }
+
+func GetUserBalance(w http.ResponseWriter, r *http.Request) {
+
+	userID := strings.TrimPrefix(r.URL.Path, "/users/")
+	userID = strings.TrimSuffix(userID, "/balance")
+
+	if _, err := uuid.Parse(userID); err != nil {
+		fmt.Println("[WARN] GetUserBalance: invalid UUID", userID)
+		sendError(w, "Invalid user ID format", http.StatusBadRequest)
+		return
+	}
+
+	balance, err := db.GetUserBalanceFromDB(userID)
+	if err != nil {
+		fmt.Println("[ERROR] GetUserBalance:", err)
+		sendError(w, "Unable to fetch balance for user", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]float64{"balance": balance})
+
+}
+
+func UpdateUserBalance(w http.ResponseWriter, r *http.Request) {
+
+	userID := strings.TrimPrefix(r.URL.Path, "/users/")
+	userID = strings.TrimSuffix(userID, "/balance")
+
+	if _, err := uuid.Parse(userID); err != nil {
+		fmt.Println("[WARN] UpdateUserBalance: invalid UUID", userID)
+		sendError(w, "Invalid user ID format", http.StatusBadRequest)
+		return
+	}
+
+	var req struct {
+		Amount float64 `json:"amount"`
+		Operation int `json:"operation"` // 1 for add, 2 for subtract
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		fmt.Println("[ERROR] UpdateUserBalance decode:", err)
+		sendError(w, "Invalid JSON format", http.StatusBadRequest)
+		return
+	}
+
+	if req.Operation != 1 && req.Operation != 2 {
+		sendError(w, "Invalid operation type", http.StatusBadRequest)
+		return
+	}
+
+	err = db.UpdateUserBalanceInDB(userID, req.Amount, req.Operation)
+	if err != nil {
+		fmt.Println("[ERROR] UpdateUserBalance DB:", err)
+		sendError(w, "Unable to update balance for user", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]bool{"success": true})
+
+}

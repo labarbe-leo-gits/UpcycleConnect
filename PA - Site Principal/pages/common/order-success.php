@@ -83,6 +83,8 @@ if ($productType === 'offer' && $priceHT > 0) {
     $priceTTC = $priceHT;
 }
 $priceDisplay = ($priceTTC == 0) ? 'Free' : '€ ' . number_format($priceTTC, 2);
+
+$paymentMethod = $_GET['payment_method'] ?? '';
 $paymentIntentId = $_GET['payment_intent'] ?? null;
 
 $maxParticipants = null;
@@ -100,7 +102,10 @@ $orderSaved = false;
 $orderSaveError = '';
 
 if ($priceTTC > 0) {
-    if (!$paymentIntentId) {
+    if ($paymentMethod === 'balance') {
+
+        $paymentVerified = true;
+    } elseif (!$paymentIntentId) {
         $paymentError = 'Missing payment confirmation.';
     } else {
         $stripeConfig = require '../../config/stripe.php';

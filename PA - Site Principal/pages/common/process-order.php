@@ -12,14 +12,33 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$productUuid = $_POST['product_uuid'] ?? null;
-$orderToken = $_POST['order_token'] ?? null;
+
+if (isset($_SERVER['CONTENT_TYPE']) && strpos($_SERVER['CONTENT_TYPE'], 'application/json') !== false) {
+    $payload = json_decode(file_get_contents('php://input'), true);
+    $productUuid = $payload['product_uuid'] ?? null;
+    $orderToken = $payload['order_token'] ?? null;
+    $paymentMethod = $payload['payment_method'] ?? 'stripe';
+} else {
+    $productUuid = $_POST['product_uuid'] ?? null;
+    $orderToken = $_POST['order_token'] ?? null;
+    $paymentMethod = $_POST['payment_method'] ?? 'stripe';
+}
 
 if (!$productUuid || !$orderToken) {
+    if (!empty($_SERVER['HTTP_X_REQUESTED_WITH'])) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Missing product or order token']);
+        exit;
+    }
     redirectBackOrServices();
 }
 
 if (!isset($_SESSION['order_token'][$productUuid]) || $_SESSION['order_token'][$productUuid] !== $orderToken) {
+    if (!empty($_SERVER['HTTP_X_REQUESTED_WITH'])) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Invalid order token']);
+        exit;
+    }
     redirectBackOrServices();
 }
 
@@ -87,7 +106,29 @@ if ($productType === 'service') {
     }
 }
 
+
 $price = floatval($productType === 'service' ? ($service['price'] ?? 0) : ($offer['price'] ?? 0));
+
+if ($paymentMethod === 'balance') {
+    $userId = $_SESSION['user_id'] ?? null;
+    if (!$userId) {
+        http_response_code(401);
+        echo json_encode(['error' => 'Not logged in']);
+        exit;
+    }
+    $userResp = askAPI('/users/' . $userId, 'GET');
+    $userData = json_decode($userResp, true);
+    $userBalance = isset($userData['balance']) ? floatval($userData['balance']) : 0;
+    if ($userBalance < $price) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Insufficient balance']);
+        exit;
+    }
+    
+    echo json_encode(['status' => 'succeeded']);
+    exit;
+}
+
 if ($price > 0) {
     header('Location: order?product_uuid=' . urlencode($productUuid));
     exit;

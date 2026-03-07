@@ -266,21 +266,17 @@ func main() {
 	registerRoute("PATCH", "/projects/{id}", "Update a project", app.UpdateProject, app.JWTAuthMiddleware)
 	registerRoute("DELETE", "/projects/{id}", "Delete a project", app.DeleteProject, app.JWTAuthMiddleware)
 	registerRoute("GET", "/users/{id}/projects", "List all projects by a specific user", app.GetProjectsByUserID, app.JWTAuthMiddleware)
-
 	registerRoute("GET", "/projects/{id}/steps", "List all steps for a project", app.GetProjectSteps, app.JWTAuthMiddleware)
 	registerRoute("POST", "/projects/{id}/steps", "Add a step to a project", app.CreateProjectStep, app.JWTAuthMiddleware)
 	registerRoute("PATCH", "/projects/{id}/steps/{sID}", "Update a project step", app.UpdateProjectStep, app.JWTAuthMiddleware)
 	registerRoute("DELETE", "/projects/{id}/steps/{sID}", "Delete a project step", app.DeleteProjectStep, app.JWTAuthMiddleware)
 	registerRoute("POST", "/projects/{id}/steps/{sID}/images", "Upload image(s) for a step", app.UploadStepImage, app.JWTAuthMiddleware)
 	registerRoute("GET", "/projects/{id}/steps/{sID}/images", "List images for a step", app.GetStepImages, app.JWTAuthMiddleware)
-
 	registerRoute("POST", "/projects/{id}/steps/{sID}/materials", "Add a material to a step", app.AddStepMaterial, app.JWTAuthMiddleware)
 	registerRoute("GET", "/projects/{id}/steps/{sID}/materials", "List materials for a step", app.GetStepMaterials, app.JWTAuthMiddleware)
 	registerRoute("DELETE", "/projects/{id}/steps/{sID}/materials/{fID}", "Remove a material from a step", app.DeleteStepMaterial, app.JWTAuthMiddleware)
-
 	registerRoute("GET", "/users/{id}/llm", "Get the LLM usage for today and quota per day", app.GetLLMUsage, app.JWTAuthMiddleware)
 	registerRoute("PATCH", "/users/{id}/llm", "Update the LLM usage and/or quota for a user", app.UpdateLLMUsage, app.JWTAuthMiddleware)
-
 	registerRoute("GET", "/projects/{id}/likes", "Get like count and liked state", app.GetProjectLikes, app.JWTAuthMiddleware)
 	registerRoute("POST", "/projects/{id}/likes", "Like a project", app.LikeProject, app.JWTAuthMiddleware)
 	registerRoute("DELETE", "/projects/{id}/likes", "Unlike a project", app.UnlikeProject, app.JWTAuthMiddleware)
@@ -288,6 +284,8 @@ func main() {
 	registerRoute("POST", "/projects/{id}/comments", "Post a comment on a project", app.CreateProjectComment, app.JWTAuthMiddleware)
 	registerRoute("PATCH", "/projects/{id}/comments/{cID}", "Edit a comment", app.UpdateProjectComment, app.JWTAuthMiddleware)
 	registerRoute("DELETE", "/projects/{id}/comments/{cID}", "Delete a comment", app.DeleteProjectComment, app.JWTAuthMiddleware)
+	registerRoute("GET", "/users/{id}/balance", "Get the current balance for a user", app.GetUserBalance, app.JWTAuthMiddleware)
+	registerRoute("PATCH", "/users/{id}/balance", "Update a user's balance", app.UpdateUserBalance,  app.JWTAuthMiddleware)
 
 	http.HandleFunc("/", notFoundHandler)
 
