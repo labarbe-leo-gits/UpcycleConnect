@@ -1041,7 +1041,7 @@ body.modal-open {
   overflow: hidden;
 }
 
-#stripe-fields{
+#stripe-fields {
   border: 1px solid #cecece;
   padding: 20px;
   border-top-right-radius: 8px;
@@ -1049,11 +1049,11 @@ body.modal-open {
   border-bottom-right-radius: 8px;
 }
 
-#payment-method-section-tabs{
-  margin-bottom:0px;
+#payment-method-section-tabs {
+  margin-bottom: 0px;
 }
 
-#balance-notice{
+#balance-notice {
   border: 1px solid #cecece;
   padding: 20px;
   border-top-right-radius: 8px;
