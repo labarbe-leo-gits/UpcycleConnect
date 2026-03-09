@@ -20,7 +20,7 @@ func GetUsersFromDB(offset, limit int, search string, userTypes ...int) ([]model
 		limit = 20
 	}
 
-	baseQuery := "SELECT id, first_name, last_name, company_name, user_type, username, email, balance, upcycling_score, created_at, last_login, oauth_provider, oauth_id, profile_picture, manager_id FROM users"
+	baseQuery := "SELECT id, first_name, last_name, company_name, user_type, username, email, balance, upcycling_score, created_at, last_login, oauth_provider, oauth_id, profile_picture, manager_id, user_xp, user_level FROM users"
 	countQuery := "SELECT COUNT(*) FROM users"
 	args := []interface{}{}
 	conditions := []string{}
@@ -60,7 +60,8 @@ func GetUsersFromDB(offset, limit int, search string, userTypes ...int) ([]model
 		var idStr string
 		var createdAt, lastLogin sql.NullString
 		var companyName, oauthProvider, oauthID, profilePicture, managerID sql.NullString
-		err := rows.Scan(&idStr, &user.FirstName, &user.LastName, &companyName, &user.UserType, &user.Username, &user.Email, &user.Balance, &user.UpcyclingScore, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture, &managerID)
+		var userXP, userLevel int
+		err := rows.Scan(&idStr, &user.FirstName, &user.LastName, &companyName, &user.UserType, &user.Username, &user.Email, &user.Balance, &user.UpcyclingScore, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture, &managerID, &userXP, &userLevel)
 		if err != nil {
 			return nil, 0, fmt.Errorf("getUsers package db scan : %s", err.Error())
 		}
@@ -89,6 +90,8 @@ func GetUsersFromDB(offset, limit int, search string, userTypes ...int) ([]model
 		if managerID.Valid {
 			user.ManagerID = &managerID.String
 		}
+		user.UserXP = userXP
+		user.UserLevel = userLevel
 		users = append(users, user)
 	}
 
@@ -158,18 +161,29 @@ func validateUser(user models.User) error {
 
 }
 
+func CreateUserBadgeInDB(userID uuid.UUID, badgeName string) error {
+
+	var badgeID string
+	if err := Db.QueryRow("SELECT id FROM badges WHERE name = ?", badgeName).Scan(&badgeID); err != nil {
+		return err
+	}
+	_, err := Db.Exec("INSERT IGNORE INTO user_badges (id, user_id, badge_id) VALUES (UUID(), ?, ?)", userID.String(), badgeID)
+	return err
+}
+
 func GetUserByIDFromDB(id uuid.UUID) (models.User, error) {
 	var user models.User
 	var idStr string
 	var createdAt, lastLogin sql.NullString
 	var companyName, oauthProvider, oauthID, profilePicture sql.NullString
-
 	var stripeCustomerID sql.NullString
 	var managerID sql.NullString
+	var userXP, userLevel int
+
 	err := Db.QueryRow(
-		"SELECT id, first_name, last_name, company_name, user_type, username, email, password_hash, balance, upcycling_score, created_at, last_login, oauth_provider, oauth_id, profile_picture, is_premium, stripe_customer_id, manager_id FROM users WHERE id = ?",
+		"SELECT id, first_name, last_name, company_name, user_type, username, email, password_hash, balance, upcycling_score, created_at, last_login, oauth_provider, oauth_id, profile_picture, is_premium, stripe_customer_id, manager_id, user_xp, user_level FROM users WHERE id = ?",
 		id.String(),
-	).Scan(&idStr, &user.FirstName, &user.LastName, &companyName, &user.UserType, &user.Username, &user.Email, &user.Password, &user.Balance, &user.UpcyclingScore, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture, &user.IsPremium, &stripeCustomerID, &managerID)
+	).Scan(&idStr, &user.FirstName, &user.LastName, &companyName, &user.UserType, &user.Username, &user.Email, &user.Password, &user.Balance, &user.UpcyclingScore, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture, &user.IsPremium, &stripeCustomerID, &managerID, &userXP, &userLevel)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return user, fmt.Errorf("user not found")
@@ -189,6 +203,21 @@ func GetUserByIDFromDB(id uuid.UUID) (models.User, error) {
 	}
 	if managerID.Valid {
 		user.ManagerID = &managerID.String
+	}
+	user.UserXP = userXP
+	user.UserLevel = userLevel
+
+	badgeRows, err := Db.Query(`SELECT b.id, b.name, b.description, b.file_name FROM user_badges ub JOIN badges b ON ub.badge_id = b.id WHERE ub.user_id = ?`, id.String())
+	if err == nil {
+		defer badgeRows.Close()
+		badges := []models.Badge{}
+		for badgeRows.Next() {
+			var badge models.Badge
+			if err := badgeRows.Scan(&badge.ID, &badge.Name, &badge.Description, &badge.FileName); err == nil {
+				badges = append(badges, badge)
+			}
+		}
+		user.Badges = badges
 	}
 
 	err = validateUser(user)
@@ -223,6 +252,23 @@ func UpdateUserInDB(id uuid.UUID, updates map[string]interface{}) error {
 	}
 	if v, ok := updates["company_name"].(string); ok {
 		cols = append(cols, "company_name = ?")
+		args = append(args, v)
+	}
+
+	if v, ok := updates["user_road_number"].(string); ok {
+		cols = append(cols, "user_road_number = ?")
+		args = append(args, v)
+	}
+	if v, ok := updates["user_road"].(string); ok {
+		cols = append(cols, "user_road = ?")
+		args = append(args, v)
+	}
+	if v, ok := updates["user_zip_code"].(string); ok {
+		cols = append(cols, "user_zip_code = ?")
+		args = append(args, v)
+	}
+	if v, ok := updates["user_city"].(string); ok {
+		cols = append(cols, "user_city = ?")
 		args = append(args, v)
 	}
 	if v, ok := updates["manager_id"]; ok {
@@ -798,13 +844,13 @@ func UpdateUserBalanceInDB(userID string, amount float64, operation int) error {
 	var query string
 
 	switch operation {
-		case 0:
-			query = "UPDATE users SET balance = balance + ? WHERE id = ?"
-		case 1:
-			query = "UPDATE users SET balance = balance - ? WHERE id = ?"
-		default:
-			return fmt.Errorf("invalid operation type")
-		}
+	case 0:
+		query = "UPDATE users SET balance = balance + ? WHERE id = ?"
+	case 1:
+		query = "UPDATE users SET balance = balance - ? WHERE id = ?"
+	default:
+		return fmt.Errorf("invalid operation type")
+	}
 
 	_, err := Db.Exec(query, amount, userID)
 	if err != nil {

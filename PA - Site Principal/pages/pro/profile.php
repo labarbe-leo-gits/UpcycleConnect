@@ -1,6 +1,8 @@
 <?php
+header('Content-Type: text/html; charset=utf-8');
+
 $title    = 'Dashboard';
-$extraCss = ['../../assets/css/subscription.css'];
+$extraCss = ['../../assets/css/subscription.css','../../assets/css/profile-badges.css'];
 require_once '../../../vendor/autoload.php';
 $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
 
@@ -302,6 +304,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <span id="balance-total"><?= htmlspecialchars((string) $balance) ?></span> €
                     </div>
                 </div>
+
+                <?php
+                $user_xp = isset($userDetails['user_xp']) ? (int)$userDetails['user_xp'] : 0;
+                $user_level = isset($userDetails['user_level']) ? (int)$userDetails['user_level'] : floor($user_xp / 1200);
+                $level_progress = $user_xp % 1200;
+                $progress_percent = ($level_progress / 1200) * 100;
+                ?>
+                <div class="user-level-progress">
+                    <div class="progress-wrapper">
+                        <span class="level-label">Level <?= $user_level ?></span>
+                        <div class="user-level-progress-bar-bg">
+                            <div class="user-level-progress-bar" style="width:<?= round($progress_percent) ?>%;"></div>
+                        </div>
+                        <span class="xp-label">XP: <?= $level_progress ?>/1200</span>
+                    </div>
+                </div>
                 <div class="profile-actions">
                     <button type="button" class="btn-primary btn-inline" id="open-payment-modal">
                         <i class="fa-solid fa-money-check-dollar"></i> Request Payment of Balance
@@ -320,17 +338,94 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="profile-tabs">
             <button class="tab-btn active" data-tab="general">General</button>
             <button class="tab-btn" data-tab="business">Business Info</button>
+            <button class="tab-btn" data-tab="badges">Badges</button>
             <?php if (empty($user['oauth_provider'])): ?>
                 <button class="tab-btn" data-tab="security">Security</button>
                 <button class="tab-btn" data-tab="mfa">MFA</button>
             <?php endif; ?>
         </div>
 
+        <div class="tab-content" id="badges-tab" style="display:none">
+            <h3><i class="fa-solid fa-award"></i> My Badges</h3>
+            <div id="badges-skeleton" class="badges-grid" style="display:flex;flex-wrap:wrap;gap:1.5em;align-items:center;">
+                <?php for ($i = 0; $i < 4; $i++): ?>
+                <div class="badge-skeleton badge-card">
+                    <div class="badge-img-skel"></div>
+                    <div class="badge-title-skel"></div>
+                    <div class="badge-desc-skel"></div>
+                </div>
+                <?php endfor; ?>
+            </div>
+            <div id="badges-real" class="badges-grid" style="display:none;flex-wrap:wrap;gap:1.5em;align-items:center;">
+            <?php
+            $badges = isset($userDetails['badges']) && is_array($userDetails['badges']) ? $userDetails['badges'] : [];
+            $defaultBadge = '../../assets/img/default-badge.png';
+            if (empty($badges)) {
+                echo '<p style="color:#888;">No badges earned yet.</p>';
+            } else {
+                foreach ($badges as $badge) {
+                    $imgPath = '../../files/badges/' . rawurlencode($badge['file_name']);
+                    echo '<div class="badge-card">';
+                    echo '<img src="' . $imgPath . '" onerror="this.onerror=null;this.src=\'' . $defaultBadge . '\';" alt="' . htmlspecialchars($badge['name'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '" class="badge-img">';
+                    echo '<div class="badge-title">' . htmlspecialchars($badge['name'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</div>';
+                    echo '<div class="badge-desc">' . htmlspecialchars($badge['description'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</div>';
+                    echo '</div>';
+                }
+            }
+            ?>
+            </div>
+        </div>
+
         <div class="tab-content" id="general-tab">
+            <?php
+            $addressParts = [];
+            if (!empty($userDetails['user_road_number'])) $addressParts[] = $userDetails['user_road_number'];
+            if (!empty($userDetails['user_road'])) $addressParts[] = $userDetails['user_road'];
+            if (!empty($userDetails['user_zip_code'])) $addressParts[] = $userDetails['user_zip_code'];
+            if (!empty($userDetails['user_city'])) $addressParts[] = $userDetails['user_city'];
+            $formattedAddress = htmlspecialchars(implode(' ', $addressParts));
+            ?>
             <p class="balance-note" style="margin-top:.5rem;">
                 <i class="fa-solid fa-circle-info"></i>
                 Your account is active. Use the tabs above to manage your business information and security settings.
             </p>
+
+            <div class="profile-accordion" id="acc-address" data-section="address">
+                <button class="accordion-toggle" type="button" aria-expanded="false">
+                    <span><i class="fa-solid fa-location-dot"></i> My Address</span>
+                    <i class="fa-solid fa-chevron-down accordion-chevron"></i>
+                </button>
+                <div class="accordion-body" style="display:none;padding:1em;">
+                    <div class="profile-fields address-grid">
+                        <div class="profile-field-row editable-row">
+                            <span class="profile-label">Street number:</span>
+                            <span id="user_road_number-value"><?= htmlspecialchars($userDetails['user_road_number'] ?? '') ?></span>
+                            <button class="btn-copy btn-edit-inline" data-edit="user_road_number"><i class="fa-solid fa-pen"></i></button>
+                        </div>
+                        <div class="profile-field-row editable-row">
+                            <span class="profile-label">Street:</span>
+                            <span id="user_road-value"><?= htmlspecialchars($userDetails['user_road'] ?? '') ?></span>
+                            <button class="btn-copy btn-edit-inline" data-edit="user_road"><i class="fa-solid fa-pen"></i></button>
+                        </div>
+                        <div class="profile-field-row editable-row">
+                            <span class="profile-label">Zip code:</span>
+                            <span id="user_zip_code-value"><?= htmlspecialchars($userDetails['user_zip_code'] ?? '') ?></span>
+                            <button class="btn-copy btn-edit-inline" data-edit="user_zip_code"><i class="fa-solid fa-pen"></i></button>
+                        </div>
+                        <div class="profile-field-row editable-row">
+                            <span class="profile-label">City:</span>
+                            <span id="user_city-value"><?= htmlspecialchars($userDetails['user_city'] ?? '') ?></span>
+                            <button class="btn-copy btn-edit-inline" data-edit="user_city"><i class="fa-solid fa-pen"></i></button>
+                        </div>
+                        <?php if ($formattedAddress !== ''): ?>
+                        <div class="profile-field-row full-address-row">
+                            <span class="profile-label">Full address:</span>
+                            <span id="address-value" class="address-clickable"><?= $formattedAddress ?></span>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
 
             <div class="profile-accordion" id="acc-subscription">
                 <button class="accordion-toggle" type="button" aria-expanded="false">
@@ -604,6 +699,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 </div>
 
+<div class="modal-overlay" id="address-modal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="address-modal-title">
+        <div class="modal-header">
+            <h2 id="address-modal-title">Locate Address</h2>
+            <button type="button" class="modal-close" id="address-modal-close" aria-label="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div id="address-map" style="width:100%;height:300px;"></div>
+        </div>
+    </div>
+</div>
+
 <div id="planning-preloader" class="planning-preloader" style="display:none;z-index:10000;">
     <div class="recycle-spinner">
         <div class="rec-arc a"></div>
@@ -616,6 +725,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     window.currentUserId = <?= json_encode($user['id'] ?? '') ?>;
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+<script src="../../assets/js/profile-badges.js" defer></script>
 <script src="../../assets/js/profile.js"></script>
 <script src="../../assets/js/pro-profile.js"></script>
 <?php if (!$isAjax) { include_once '../../includes/footer.php'; } ?>

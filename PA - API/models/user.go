@@ -29,4 +29,7 @@ type User struct {
 	TwoFASecret      string    `json:"-"`
 	TwoFAEnabled     bool      `json:"twofa_enabled,omitempty"`
 	TwoFABackupCodes []string  `json:"-"`
+	UserXP           int       `json:"user_xp"`
+	UserLevel        int       `json:"user_level"`
+	Badges           []Badge   `json:"badges,omitempty"`
 }

@@ -318,6 +318,39 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func AddBadgeToUser(w http.ResponseWriter, r *http.Request) {
+
+	idStr := strings.TrimPrefix(r.URL.Path, "/users/")
+	idStr = strings.TrimSuffix(idStr, "/badges")
+	userID, err := uuid.Parse(idStr)
+	if err != nil {
+		sendError(w, "Invalid user ID", http.StatusBadRequest)
+		return
+	}
+
+	var payload struct {
+		BadgeName string `json:"badge_name"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		sendError(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+	if payload.BadgeName == "" {
+		sendError(w, "badge_name is required", http.StatusBadRequest)
+		return
+	}
+
+	err = db.CreateUserBadgeInDB(userID, payload.BadgeName)
+	if err != nil {
+		fmt.Println("[ERROR] AddBadgeToUser db:", err)
+		sendError(w, "Unable to award badge", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]bool{"success": true})
+}
+
 func JWTAuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
@@ -475,6 +508,25 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	if len(updates) == 0 {
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]string{"status": "no changes"})
+		return
+	}
+
+	addrFields := []string{"user_road_number", "user_road", "user_zip_code", "user_city"}
+	count := 0
+	for _, f := range addrFields {
+		if v, ok := updates[f]; ok {
+			switch t := v.(type) {
+			case string:
+				if strings.TrimSpace(t) != "" {
+					count++
+				}
+			default:
+				count++
+			}
+		}
+	}
+	if count > 0 && count < len(addrFields) {
+		sendError(w, "All address fields must be provided together", http.StatusBadRequest)
 		return
 	}
 
@@ -912,8 +964,8 @@ func UpdateUserBalance(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req struct {
-		Amount float64 `json:"amount"`
-		Operation int `json:"operation"` // 1 for add, 2 for subtract
+		Amount    float64 `json:"amount"`
+		Operation int     `json:"operation"` // 1 for add, 2 for subtract
 	}
 
 	err := json.NewDecoder(r.Body).Decode(&req)

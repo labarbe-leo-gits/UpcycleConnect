@@ -42,7 +42,7 @@ function isExternalAI(string $text): bool {
 
     error_log('[AI-detect] Asking Gemini about ' . mb_strlen(mb_substr($text, 0, 1024)) . ' chars');
 
-    $apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=' . urlencode($apiKey);
+    $apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent?key=' . urlencode($apiKey);
     $payload = json_encode([
         'contents' => [['parts' => [['text' => $prompt]]]],
         'generationConfig' => [

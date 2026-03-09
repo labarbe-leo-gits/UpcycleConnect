@@ -98,7 +98,7 @@ switch ($type) {
         exit;
 }
 
-$apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=' . urlencode($geminiKey);
+$apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent?key=' . urlencode($geminiKey);
 
 $geminiPayload = json_encode([
     'contents' => [

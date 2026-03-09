@@ -1,0 +1,113 @@
+
+.user-level-progress {
+    margin: 1em 0;
+}
+.user-level-progress-bar-bg {
+    flex: 1;
+    background: #eee;
+    border-radius: 16px;
+    overflow: hidden;
+    height: 22px;
+    display: flex;
+    align-items: center;
+}
+.user-level-progress-bar {
+    height: 100%;
+    transition: width .5s;
+    border-radius: 16px;
+    background: linear-gradient(90deg, #43e97b 0%, #00c853 100%);
+}
+
+.dark-mode .user-level-progress-bar-bg {
+    background: #444;
+}
+.dark-mode .user-level-progress-bar {
+    background: linear-gradient(90deg, #5de1a7 0%, #00c853 100%);
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    100% { opacity: 0.5; }
+}
+.badge-card {
+    text-align: center;
+    min-width: 120px;
+    max-width: 160px;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 1em 0.5em 0.7em 0.5em;
+    background: #fff;
+    transition: border-color 0.2s, background 0.2s;
+    box-shadow: 0 2px 8px 0 rgba(0,0,0,0.10);
+}
+.badge-card:hover {
+    border-color: #10b981;
+    background: #f8f8f8;
+}
+.badge-img {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto 0.5em;
+    border-radius: 50%;
+    background: #f8f8f8;
+}
+.badge-title {
+    font-weight: bold;
+    margin-bottom: 0.2em;
+    word-break: break-word;
+    color: #222;
+}
+.badge-desc {
+    font-size: .95em;
+    color: #666;
+    word-break: break-word;
+}
+.badge-img-skel {
+    width: 80px;
+    height: 80px;
+    background: #eee;
+    border-radius: 50%;
+    margin: 0 auto 0.5em;
+    animation: pulse 1.2s infinite alternate;
+}
+.badge-title-skel {
+    height: 18px;
+    width: 60px;
+    background: #eee;
+    margin: 0 auto 0.3em;
+    border-radius: 4px;
+    animation: pulse 1.2s infinite alternate;
+}
+.badge-desc-skel {
+    height: 14px;
+    width: 90px;
+    background: #eee;
+    margin: 0 auto;
+    border-radius: 4px;
+    animation: pulse 1.2s infinite alternate;
+}
+
+.dark-mode .badge-card {
+    border: 2px solid #23272f;
+    background: #181a20;
+}
+.dark-mode .badge-card:hover {
+    border-color: #10b981;
+    background: #20232a;
+}
+.dark-mode .badge-img {
+    background: #23272f;
+}
+.dark-mode .badge-title {
+    color: #f3f4f6;
+}
+.dark-mode .badge-desc {
+    color: #cbd5e1;
+}
+.dark-mode .badge-img-skel,
+.dark-mode .badge-title-skel,
+.dark-mode .badge-desc-skel {
+    background: #23272f;
+}

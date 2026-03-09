@@ -9,10 +9,28 @@ import (
 	"github.com/google/uuid"
 )
 
+func uuidPointerToValue(id *uuid.UUID) interface{} {
+	if id == nil || *id == uuid.Nil {
+		return nil
+	}
+	return *id
+}
+
+func grantBadge(tx *sql.Tx, userID uuid.UUID, badgeName string) error {
+	var badgeID string
+	if err := tx.QueryRow("SELECT id FROM badges WHERE name = ?", badgeName).Scan(&badgeID); err != nil {
+		return err
+	}
+	_, err := tx.Exec("INSERT IGNORE INTO user_badges (id, user_id, badge_id) VALUES (UUID(), ?, ?)", userID.String(), badgeID)
+	return err
+}
+
 const (
 	UpcycleCommissionRate = 0.08
 	StripeFeeRate         = 0.029
 	StripeFixedFee        = 0.30
+
+	BadgeExpertXPThreshold = 5000 // XP required to earn "expert" badge
 )
 
 func CalcTTC(ht float64) float64 {
@@ -104,6 +122,7 @@ func CreateOrderInDB(order models.Order) error {
 		return fmt.Errorf("createOrder package db : %s", err.Error())
 	}
 
+	var ownerID uuid.UUID
 	if order.ProductID != nil && *order.ProductID != uuid.Nil && order.Amount > 0 {
 		var ownerIDStr string
 		err = tx.QueryRow("SELECT user_id FROM annonces WHERE id = ? FOR UPDATE", order.ProductID.String()).Scan(&ownerIDStr)
@@ -128,6 +147,53 @@ func CreateOrderInDB(order models.Order) error {
 			if err != nil {
 				return fmt.Errorf("createOrder package db credit owner: %s", err.Error())
 			}
+
+			var sellerScore float64
+			var oldSellerXP int
+			_ = tx.QueryRow("SELECT user_xp FROM users WHERE id = ? FOR UPDATE", ownerID.String()).Scan(&oldSellerXP)
+			err = tx.QueryRow("SELECT upcycling_score FROM users WHERE id = ?", ownerID.String()).Scan(&sellerScore)
+			if err == nil && order.Amount > 0 {
+				xpSeller := int(math.Round(order.Amount * sellerScore * 0.1 * 4 / 2))
+				if xpSeller > 0 {
+					_, _ = tx.Exec(`UPDATE users SET user_xp = user_xp + ?, user_level = FLOOR((user_xp + ?) / 1200) WHERE id = ?`, xpSeller, xpSeller, ownerID.String())
+					newSellerXP := oldSellerXP + xpSeller
+					if oldSellerXP == 0 {
+						_ = grantBadge(tx, ownerID, "pionnier")
+					}
+					if newSellerXP >= BadgeExpertXPThreshold {
+						_ = grantBadge(tx, ownerID, "expert")
+					}
+				}
+			}
+		}
+	}
+
+	var upcyclingScore float64
+	var oldXP int
+	_ = tx.QueryRow("SELECT user_xp FROM users WHERE id = ? FOR UPDATE", order.UserID.String()).Scan(&oldXP)
+	err = tx.QueryRow("SELECT upcycling_score FROM users WHERE id = ?", order.UserID.String()).Scan(&upcyclingScore)
+	if err == nil && order.Amount > 0 {
+		xpAward := int(math.Round(order.Amount * upcyclingScore * 0.1 * 4))
+		if xpAward > 0 {
+			_, _ = tx.Exec(`UPDATE users SET user_xp = user_xp + ?, user_level = FLOOR((user_xp + ?) / 1200) WHERE id = ?`, xpAward, xpAward, order.UserID.String())
+			newXP := oldXP + xpAward
+			if oldXP == 0 {
+				_ = grantBadge(tx, order.UserID, "pionnier")
+			}
+			if newXP >= BadgeExpertXPThreshold {
+				_ = grantBadge(tx, order.UserID, "expert")
+			}
+		}
+	}
+
+	if ownerID != order.UserID {
+		var sellerScore float64
+		err = tx.QueryRow("SELECT upcycling_score FROM users WHERE id = ?", ownerID.String()).Scan(&sellerScore)
+		if err == nil && order.Amount > 0 {
+			xpSeller := int(math.Round(order.Amount * sellerScore * 0.1 * 4 / 2))
+			if xpSeller > 0 {
+				_, _ = tx.Exec(`UPDATE users SET user_xp = user_xp + ?, user_level = FLOOR((user_xp + ?) / 1200) WHERE id = ?`, xpSeller, xpSeller, ownerID.String())
+			}
 		}
 	}
 
@@ -136,14 +202,6 @@ func CreateOrderInDB(order models.Order) error {
 	}
 
 	return nil
-
-}
-
-func uuidPointerToValue(id *uuid.UUID) interface{} {
-	if id == nil || *id == uuid.Nil {
-		return nil
-	}
-	return *id
 }
 
 func checkAndIncrementParticipants(tx *sql.Tx, eventID uuid.UUID) error {

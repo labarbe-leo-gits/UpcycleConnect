@@ -166,6 +166,18 @@
         var pageInfo = root.querySelector('.acc-page-info');
         var emptyMsg = root.querySelector('.acc-empty');
 
+
+        if (!(section in BUILDERS)) {
+            if (toggle) {
+                toggle.addEventListener('click', function () {
+                    var open = this.getAttribute('aria-expanded') === 'true';
+                    this.setAttribute('aria-expanded', open ? 'false' : 'true');
+                    if (body) body.style.display = open ? 'none' : '';
+                });
+            }
+            return;
+        }
+
         var state = { loaded: false, loading: false, page: 1, total: 0 };
         var cache = {};
 

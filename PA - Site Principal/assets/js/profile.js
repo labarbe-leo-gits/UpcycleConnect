@@ -176,6 +176,8 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
             }
         } else if (tab === 'myupdoc') {
             document.getElementById('myupdoc-tab').style.display = '';
+        } else if (tab === 'badges') {
+            document.getElementById('badges-tab').style.display = '';
         } else if (tab === 'mfa') {
             document.getElementById('mfa-tab').style.display = '';
         }
@@ -300,6 +302,30 @@ document.querySelectorAll('.btn-edit-inline').forEach(btn => {
         async function saveEdit() {
             const newValue = input.value.trim();
             if (newValue === originalValue) { cancelEdit(); return; }
+            
+            var addressFields = ['user_road_number','user_road','user_zip_code','user_city'];
+            if (addressFields.includes(field)) {
+                var anyOther = addressFields.some(f => {
+                    if (f === field) return false;
+                    var el = document.getElementById(f + '-value');
+                    return el && el.textContent.trim() !== '';
+                });
+                if (anyOther && newValue === '') {
+                    input.classList.add('input-error');
+                    let errMsg = row.querySelector('.edit-error-msg');
+                    if (!errMsg) {
+                        errMsg = document.createElement('span');
+                        errMsg.className = 'edit-error-msg';
+                        cancelBtn.insertAdjacentElement('afterend', errMsg);
+                    }
+                    errMsg.textContent = 'Field required when any other address part is set.';
+                    setTimeout(() => {
+                        input.classList.remove('input-error');
+                        if (errMsg) errMsg.remove();
+                    }, 3000);
+                    return;
+                }
+            }
             if (!newValue) return;
 
             saveBtn.disabled = true;
@@ -321,6 +347,16 @@ document.querySelectorAll('.btn-edit-inline').forEach(btn => {
                 saveBtn.remove();
                 cancelBtn.remove();
                 editBtn.style.display = '';
+
+                // if this was an address component, refresh combined display
+                if ([
+                    'user_road_number',
+                    'user_road',
+                    'user_zip_code',
+                    'user_city'
+                ].includes(field)) {
+                    updateCombinedAddress();
+                }
 
                 span.style.transition = 'color .4s';
                 span.style.color = '#10b981';
@@ -351,6 +387,95 @@ document.querySelectorAll('.btn-edit-inline').forEach(btn => {
         });
     });
 });
+
+// helper: update combined address display whenever a component changes
+function updateCombinedAddress() {
+    var parts = [];
+    ['user_road_number','user_road','user_zip_code','user_city'].forEach(function(f){
+        var el = document.getElementById(f + '-value');
+        if (el) {
+            var txt = el.textContent.trim();
+            if (txt) parts.push(txt);
+        }
+    });
+    var addrEl = document.getElementById('address-value');
+    if (addrEl) {
+        if (parts.length > 0) {
+            addrEl.textContent = parts.join(' ');
+            addrEl.parentElement.parentElement.style.display = '';
+        } else {
+            addrEl.textContent = '—';
+            // hide full address row
+            var row = addrEl.closest('.full-address-row');
+            if (row) row.style.display = 'none';
+        }
+    }
+}
+
+// open/close address modal and geocode
+var addressMap, addressMarker;
+function openAddressModal(addr) {
+    if (!addr || addr === '—') return;
+    var modal = document.getElementById('address-modal');
+    if (!modal) return;
+    modal.classList.add('is-visible');
+    document.body.classList.add('modal-open');
+    modal.setAttribute('aria-hidden', 'false');
+
+    // lazy init map
+    setTimeout(function() {
+        if (!addressMap) {
+            addressMap = L.map('address-map').setView([0,0], 2);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(addressMap);
+        }
+
+        // geocode via Nominatim
+        fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(addr))
+            .then(function(r){ return r.json(); })
+            .then(function(data){
+                if (data && data.length) {
+                    var lat = parseFloat(data[0].lat);
+                    var lon = parseFloat(data[0].lon);
+                    addressMap.setView([lat, lon], 16);
+                    if (addressMarker) {
+                        addressMarker.setLatLng([lat,lon]);
+                    } else {
+                        addressMarker = L.marker([lat,lon]).addTo(addressMap);
+                    }
+                }
+            }).catch(function(err){ console.warn('Geocode failed', err); });
+    }, 50);
+}
+
+function closeAddressModal() {
+    var modal = document.getElementById('address-modal');
+    if (!modal) return;
+    modal.classList.remove('is-visible');
+    document.body.classList.remove('modal-open');
+    modal.setAttribute('aria-hidden', 'true');
+}
+
+// click handler for combined address
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.address-clickable')) {
+        e.preventDefault();
+        var addrEl = document.getElementById('address-value');
+        if (addrEl) openAddressModal(addrEl.textContent);
+    }
+});
+
+// close modal when clicking outside or using close button
+var addrModal = document.getElementById('address-modal');
+if (addrModal) {
+    addrModal.addEventListener('click', function(ev) {
+        if (ev.target === addrModal) closeAddressModal();
+    });
+    var closeBtn = document.getElementById('address-modal-close');
+    if (closeBtn) closeBtn.addEventListener('click', closeAddressModal);
+}
+
 
 document.querySelectorAll('.btn-copy').forEach(btn => {
     btn.addEventListener('click', async function(e) {
@@ -415,6 +540,20 @@ function hideLoader(immediate = false) {
 
 document.addEventListener('DOMContentLoaded', function() {
     hideLoader(false);
+
+    // refresh formatted address display if present
+    updateCombinedAddress();
+
+    // ensure address-accordion row visibility
+    var faRow = document.querySelector('.full-address-row');
+    if (faRow) {
+        var addr = document.getElementById('address-value');
+        if (addr && addr.textContent.trim() !== '' && addr.textContent.trim() !== '—') {
+            faRow.style.display = '';
+        } else {
+            faRow.style.display = 'none';
+        }
+    }
 
     // if there is any feedback under password form, show security tab
     var pwdFeedback = document.getElementById('password-feedback');

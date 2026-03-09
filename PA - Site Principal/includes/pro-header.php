@@ -7,6 +7,21 @@ trackLastPage();
 
 $user = getLoggedInUser();
 
+if (!empty($user['id'])) {
+    $apiResp = askAPI("/users/{$user['id']}", 'GET');
+    $apiUser = json_decode($apiResp, true);
+    if (is_array($apiUser)) {
+        if (isset($apiUser['first_name'])) {
+            $_SESSION['first_name'] = $apiUser['first_name'];
+            $user['first_name'] = $apiUser['first_name'];
+        }
+        if (isset($apiUser['last_name'])) {
+            $_SESSION['last_name'] = $apiUser['last_name'];
+            $user['last_name'] = $apiUser['last_name'];
+        }
+    }
+}
+
 if (isset($_SESSION['banned']) && $_SESSION['banned']){
     header('Location: ../public/ban');
     exit();
@@ -25,6 +40,8 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=SN+Pro:ital,wght@0,200..900;1,200..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js" defer></script>
     <link rel="stylesheet" href="../../assets/css/style.css">
     <link rel="stylesheet" href="../../assets/css/customers.css">
     <link rel="stylesheet" href="../../assets/css/pro.css">

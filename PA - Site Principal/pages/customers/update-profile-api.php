@@ -27,14 +27,15 @@ $body  = json_decode(file_get_contents('php://input'), true);
 $field = trim($body['field'] ?? '');
 $value = trim($body['value'] ?? '');
 
-$allowed = ['username', 'email', 'first_name', 'last_name'];
+$allowed = ['username', 'email', 'first_name', 'last_name', 'user_road_number', 'user_road', 'user_zip_code', 'user_city'];
 if (!in_array($field, $allowed, true)) {
     http_response_code(400);
     echo json_encode(['error' => 'Invalid field']);
     exit;
 }
 
-if ($value === '') {
+
+if ($value === '' && !preg_match('/^user_/', $field)) {
     http_response_code(422);
     echo json_encode(['error' => 'Value cannot be empty']);
     exit;

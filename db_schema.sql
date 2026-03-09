@@ -1,4 +1,5 @@
 CREATE DATABASE IF NOT EXISTS upcycle;
+ALTER DATABASE upcycle CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 USE upcycle;
 
 CREATE TABLE IF NOT EXISTS users (
@@ -29,8 +30,33 @@ CREATE TABLE IF NOT EXISTS users (
     LLM_quota INT NOT NULL, /* User : 10/J, Pro : 15/J FREE, 25/J Premium, Employees: 20/J,Admin: 50/J */
     LLM_usage_today INT NOT NULL DEFAULT 0,
     manager_id CHAR(36) NULL,
+    user_level INT NOT NULL DEFAULT 0,
+    user_xp INT NOT NULL DEFAULT 0,
+    user_road VARCHAR(255) NULL,
+    user_city VARCHAR(80) NULL,
+    user_zip_code CHAR(5) NULL,
+    user_road_number INT NULL,
+    siret VARCHAR(14) NULL,
     FOREIGN KEY (manager_id) REFERENCES users(id) ON DELETE SET NULL,
     UNIQUE INDEX idx_oauth (oauth_provider, oauth_id)
+);
+
+CREATE TABLE IF NOT EXISTS badges (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    name VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    file_name VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS user_badges (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    user_id CHAR(36) NOT NULL,
+    badge_id CHAR(36) NOT NULL,
+    awarded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (badge_id) REFERENCES badges(id) ON DELETE CASCADE,
+    UNIQUE INDEX idx_user_badge (user_id, badge_id)
 );
 
 CREATE TABLE IF NOT EXISTS annonces(
@@ -44,6 +70,7 @@ CREATE TABLE IF NOT EXISTS annonces(
     poids_materiaux DOUBLE DEFAULT NULL,
     facteur_id CHAR(36) DEFAULT NULL,
     type_materiaux VARCHAR(100) DEFAULT NULL,
+    item_state INT NOT NULL DEFAULT 0,
     upcycling_score DOUBLE DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -58,6 +85,7 @@ CREATE TABLE IF NOT EXISTS conteneurs(
     conteneur_road VARCHAR(255) NOT NULL,
     conteneur_number VARCHAR(20) NOT NULL,
     conteneur_zip_code CHAR(5) NOT NULL,
+    capacity INT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -67,6 +95,7 @@ CREATE TABLE IF NOT EXISTS demandes_depot (
     user_id CHAR(36) NOT NULL,
     conteneur_id CHAR(36) NOT NULL,
     object_name VARCHAR(80) NOT NULL,
+    object_state INT NOT NULL,
     object_description TEXT NOT NULL,
     status INT NOT NULL DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -109,10 +138,20 @@ CREATE TABLE IF NOT EXISTS evenements (
     event_road VARCHAR(255),
     event_city VARCHAR(80),
     event_zip_code CHAR(5),
+    recurring INT NOT NULL DEFAULT 0,
+    onlineMeetingLink VARCHAR(255) NULL,
     created_by CHAR(36) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS event_availability(
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    event_id CHAR(36) NOT NULL,
+    hour INT NOT NULL,
+    is_available BOOLEAN NOT NULL DEFAULT TRUE,
+    FOREIGN KEY (event_id) REFERENCES evenements(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS conseils (
@@ -141,6 +180,18 @@ CREATE TABLE IF NOT EXISTS orders (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (event_id) REFERENCES evenements(id) ON DELETE CASCADE,
     FOREIGN KEY (product_id) REFERENCES annonces(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS reservations (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    user_id CHAR(36) NOT NULL,
+    event_id CHAR(36) NOT NULL,
+    event_availability_id CHAR(36) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (event_id) REFERENCES evenements(id) ON DELETE CASCADE,
+    FOREIGN KEY (event_availability_id) REFERENCES event_availability(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS notifications (
@@ -288,6 +339,7 @@ CREATE TABLE IF NOT EXISTS tips (
     id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
     title VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
+    poll_id CHAR(36) NULL,
     created_by CHAR(36) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_by CHAR(36) NOT NULL,
@@ -397,3 +449,52 @@ CREATE TABLE IF NOT EXISTS project_comments (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (parent_id) REFERENCES project_comments(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS tags (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    name VARCHAR(255) NOT NULL UNIQUE,
+    bg_color VARCHAR(7) NOT NULL,
+    text_color VARCHAR(7) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS item_have_tags (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    tag_id CHAR(36) NOT NULL,
+    annonce_id CHAR(36) NULL,
+    event_id CHAR(36) NULL,
+    project_id CHAR(36) NULL,
+    FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE,
+    FOREIGN KEY (annonce_id) REFERENCES annonces(id) ON DELETE CASCADE,
+    FOREIGN KEY (event_id) REFERENCES evenements(id) ON DELETE CASCADE,
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS polls (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    question VARCHAR(255) NOT NULL,
+    created_by CHAR(36) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS poll_options (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    poll_id CHAR(36) NOT NULL,
+    option_text VARCHAR(255) NOT NULL,
+    vote_count INT NOT NULL DEFAULT 0,
+    FOREIGN KEY (poll_id) REFERENCES polls(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS poll_votes (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    poll_id CHAR(36) NOT NULL,
+    option_id CHAR(36) NOT NULL,
+    user_id CHAR(36) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (poll_id) REFERENCES polls(id) ON DELETE CASCADE,
+    FOREIGN KEY (option_id) REFERENCES poll_options(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE INDEX idx_poll_vote (poll_id, user_id)
+);
+

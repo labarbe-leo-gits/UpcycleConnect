@@ -1,3 +1,85 @@
+.custom-toast {
+  position: fixed;
+  top: 32px;
+  left: 50%;
+  transform: translateX(-50%) scale(0.98);
+  min-width: 220px;
+  max-width: 90vw;
+  background: #fff;
+  color: #222;
+  border-radius: 8px;
+  box-shadow:
+    0 8px 32px rgba(16, 185, 129, 0.13),
+    0 1.5px 4px rgba(0, 0, 0, 0.04);
+  padding: 16px 32px;
+  font-size: 16px;
+  font-weight: 500;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 3000;
+  transition:
+    opacity 0.35s,
+    transform 0.35s;
+}
+.custom-toast.show {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) scale(1);
+}
+.toast-success {
+  border-left: 6px solid #10b981;
+}
+.toast-error {
+  border-left: 6px solid #e11d48;
+  color: #e11d48;
+}
+
+#cust-addr-results {
+  position: absolute;
+  z-index: 2000;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  background: #fff;
+  border: 1.5px solid #10b981;
+  border-radius: 8px;
+  box-shadow:
+    0 8px 24px rgba(16, 185, 129, 0.13),
+    0 1.5px 4px rgba(0, 0, 0, 0.04);
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 4px 0;
+  min-width: 260px;
+}
+
+#cust-addr-results .addr-result-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+  font-size: 15px;
+  color: #111827;
+  border-radius: 6px;
+  transition: background 0.15s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#cust-addr-results .addr-result-item:hover,
+#cust-addr-results .addr-result-item.addr-active {
+  background: #e6f9f3;
+  color: #059669;
+}
+
+#cust-addr-results:empty {
+  display: none !important;
+}
+
+.addr-search-wrap {
+  position: relative;
+}
 * {
   font-family: "SN Pro", sans-serif;
 }
@@ -1060,4 +1142,30 @@ body.modal-open {
   border-bottom-left-radius: 8px;
   border-bottom-right-radius: 8px;
   margin-top: 0px;
+}
+
+.user-level-progress {
+  margin: 1em 0;
+}
+.user-level-progress-bar-bg {
+  flex: 1;
+  background: #eee;
+  border-radius: 16px;
+  overflow: hidden;
+  height: 22px;
+  display: flex;
+  align-items: center;
+}
+.user-level-progress-bar {
+  height: 100%;
+  transition: width 0.5s;
+  border-radius: 16px;
+  background: linear-gradient(90deg, #43e97b 0%, #00c853 100%);
+}
+
+.dark-mode .user-level-progress-bar-bg {
+  background: #444;
+}
+.dark-mode .user-level-progress-bar {
+  background: linear-gradient(90deg, #5de1a7 0%, #00c853 100%);
 }

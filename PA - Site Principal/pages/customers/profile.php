@@ -1,4 +1,13 @@
 <?php
+
+header('Content-Type: text/html; charset=utf-8');
+
+$httpCharsetHeaderSent = false;
+if (!headers_sent()) {
+    header('Content-Type: text/html; charset=UTF-8');
+    $httpCharsetHeaderSent = true;
+}
+
 $title = "Dashboard";
 $extraCss = ['../../assets/css/updoc.css'];
 require_once '../../../vendor/autoload.php';
@@ -28,6 +37,17 @@ if (!empty($user['id'])) {
         $user['upcycling_score'] = $apiUser['upcycling_score'];
     } else {
         $user['upcycling_score'] = 0;
+    }
+
+    if (is_array($apiUser)) {
+        if (isset($apiUser['first_name'])) {
+            $_SESSION['first_name'] = $apiUser['first_name'];
+            $user['first_name'] = $apiUser['first_name'];
+        }
+        if (isset($apiUser['last_name'])) {
+            $_SESSION['last_name'] = $apiUser['last_name'];
+            $user['last_name'] = $apiUser['last_name'];
+        }
     }
 }
 
@@ -282,6 +302,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 
+<meta charset="UTF-8">
+
+
 <div class="container" id="main-content" style="visibility:hidden;">
     <div id="payment-feedback"></div>
     <?php if (!empty($paymentErrors)): ?>
@@ -295,8 +318,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php endif; ?>
     <h1>Welcome, 
         <?php
-        $first = isset($user['first_name']) && !empty($user['first_name']) ? htmlspecialchars($user['first_name']) : htmlspecialchars($user['username']);
-        $last = isset($user['last_name']) && !empty($user['last_name']) ? ' ' . htmlspecialchars($user['last_name']) : '';
+
+        $firstNameToShow = $userDetails['first_name'] ?? $user['first_name'] ?? $user['username'];
+        $lastNameToShow = $userDetails['last_name'] ?? $user['last_name'] ?? '';
+        $first = !empty($firstNameToShow) ? htmlspecialchars($firstNameToShow) : htmlspecialchars($user['username']);
+        $last = !empty($lastNameToShow) ? ' ' . htmlspecialchars($lastNameToShow) : '';
         echo $first . $last;
         ?>!
     </h1>
@@ -305,16 +331,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="profile-header-flex">
             <div class="profile-picture-section">
                 <div class="img-spinner" aria-hidden="true"></div>
-
                 <?php
-
                 if (!empty($user['oauth_provider'])) {
-
                     $userDetais = askAPI("/users/{$user['id']}/profile-picture", 'GET');
                     $response = json_decode($userDetais, true);
-
                     $avatarUrl = $response['profile_picture_url'] ?? '';
-
                     if ($avatarUrl !== '') {
                         echo '<img src="' . htmlspecialchars($avatarUrl) . '" alt="Profile Picture" class="profile-pic-large" id="profile-pic-preview">';
                     } else {
@@ -323,9 +344,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } else {
                     echo '<img data-blob-src="../../../files/uploads/user/' . htmlspecialchars($user['profile_picture'] ?? 'defaultUser.png') . '" src="data:image/gif;base64,R0lGODlhAQABAPAAAP///wAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==" alt="Profile Picture" class="profile-pic-large" id="profile-pic-preview">';
                 }
-
                 ?>
-
             </div>
             <div class="profile-info-section">
                 <h2>Your Profile</h2>
@@ -350,6 +369,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <span id="balance-total"><?= htmlspecialchars((string) $balance) ?></span> €
                     </div>
                 </div>
+
+                <?php
+                $user_xp = isset($userDetails['user_xp']) ? (int)$userDetails['user_xp'] : 0;
+                $user_level = isset($userDetails['user_level']) ? (int)$userDetails['user_level'] : floor($user_xp / 1200);
+                $level_progress = $user_xp % 1200;
+                $progress_percent = ($level_progress / 1200) * 100;
+                ?>
+                <div class="user-level-progress">
+                    <div style="display:flex;align-items:center;gap:.5em;">
+                        <span style="font-weight:bold;">Level <?= $user_level ?></span>
+                        <div class="user-level-progress-bar-bg">
+                            <div class="user-level-progress-bar" style="width:<?= round($progress_percent) ?>%"></div>
+                        </div>
+                        <span style="min-width:60px;">XP: <?= $level_progress ?>/1200</span>
+                    </div>
+                </div>
                 <div class="profile-actions">
                     <button type="button" class="btn-primary btn-inline" id="open-payment-modal">
                         <i class="fa-solid fa-money-check-dollar"></i> Request Payment of Balance
@@ -364,20 +399,98 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="profile-tabs">
             <button class="tab-btn active" data-tab="general">General</button>
             <button class="tab-btn" data-tab="myupdoc">My UpDoc</button>
-
+            <button class="tab-btn" data-tab="badges">Badges</button>
             <?php 
-
                 if (empty($user['oauth_provider'])) {
                     echo '<button class="tab-btn" data-tab="security">Security</button>';
                     echo '<button class="tab-btn" data-tab="mfa">MFA</button>';
                 }
-
             ?>
             <button class="tab-btn" data-tab="upcyclingScore">Upcycling Score</button>
         </div>
+
+                <div class="tab-content" id="badges-tab" style="display:none">
+                    <div id="badges-skeleton" class="badges-grid" style="display:flex;flex-wrap:wrap;gap:1.5em;align-items:center;">
+
+                        <?php for ($i = 0; $i < 4; $i++): ?>
+                        <div class="badge-skeleton badge-card">
+                            <div class="badge-img-skel"></div>
+                            <div class="badge-title-skel"></div>
+                            <div class="badge-desc-skel"></div>
+                        </div>
+                        <?php endfor; ?>
+                    </div>
+                    <div id="badges-real" class="badges-grid" style="display:none;flex-wrap:wrap;gap:1.5em;align-items:center;">
+                    <?php
+                    $badges = isset($userDetails['badges']) && is_array($userDetails['badges']) ? $userDetails['badges'] : [];
+                    $defaultBadge = '/PA/PA%20-%20Site%20Principal/assets/img/default-badge.png';
+                    if (empty($badges)) {
+                        echo '<p style="color:#888;">No badges earned yet.</p>';
+                    } else {
+                        foreach ($badges as $badge) {
+                            $imgPath = '/PA/files/badges/' . rawurlencode($badge['file_name']);
+                            echo '<div class="badge-card">';
+                            echo '<img data-blob-src="' . $imgPath . '" onerror="this.onerror=null;this.src=\'' . $defaultBadge . '\';" alt="' . htmlspecialchars($badge['name'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '" class="badge-img">';
+                            echo '<div class="badge-title">' . htmlspecialchars($badge['name'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</div>';
+                            echo '<div class="badge-desc">' . htmlspecialchars($badge['description'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</div>';
+                            echo '</div>';
+                        }
+                    }
+                    ?>
+                    </div>
+                    <link rel="stylesheet" href="../../assets/css/profile-badges.css">
+                    <!-- badge and progress bar styles moved to external CSS -->
+                    <script src="../../assets/js/profile-badges.js" defer></script>
+                </div>
         <div class="tab-content" id="general-tab">
 
-            <div class="profile-accordion" id="acc-orders" data-section="orders">
+            <?php
+            $addressParts = [];
+            if (!empty($userDetails['user_road_number'])) $addressParts[] = $userDetails['user_road_number'];
+            if (!empty($userDetails['user_road'])) $addressParts[] = $userDetails['user_road'];
+            if (!empty($userDetails['user_zip_code'])) $addressParts[] = $userDetails['user_zip_code'];
+            if (!empty($userDetails['user_city'])) $addressParts[] = $userDetails['user_city'];
+            $formattedAddress = htmlspecialchars(implode(' ', $addressParts));
+            ?>
+
+            <div class="profile-accordion" id="acc-address" data-section="address">
+                <button class="accordion-toggle" type="button" aria-expanded="false">
+                    <span><i class="fa-solid fa-location-dot"></i> My Address</span>
+                    <i class="fa-solid fa-chevron-down accordion-chevron"></i>
+                </button>
+                <div class="accordion-body" style="display:none;padding:1em;">
+                    <div class="profile-fields address-grid">
+                        <div class="profile-field-row editable-row">
+                            <span class="profile-label">Street number:</span>
+                            <span id="user_road_number-value"><?= htmlspecialchars($userDetails['user_road_number'] ?? '') ?></span>
+                            <button class="btn-copy btn-edit-inline" data-edit="user_road_number"><i class="fa-solid fa-pen"></i></button>
+                        </div>
+                        <div class="profile-field-row editable-row">
+                            <span class="profile-label">Street:</span>
+                            <span id="user_road-value"><?= htmlspecialchars($userDetails['user_road'] ?? '') ?></span>
+                            <button class="btn-copy btn-edit-inline" data-edit="user_road"><i class="fa-solid fa-pen"></i></button>
+                        </div>
+                        <div class="profile-field-row editable-row">
+                            <span class="profile-label">Zip code:</span>
+                            <span id="user_zip_code-value"><?= htmlspecialchars($userDetails['user_zip_code'] ?? '') ?></span>
+                            <button class="btn-copy btn-edit-inline" data-edit="user_zip_code"><i class="fa-solid fa-pen"></i></button>
+                        </div>
+                        <div class="profile-field-row editable-row">
+                            <span class="profile-label">City:</span>
+                            <span id="user_city-value"><?= htmlspecialchars($userDetails['user_city'] ?? '') ?></span>
+                            <button class="btn-copy btn-edit-inline" data-edit="user_city"><i class="fa-solid fa-pen"></i></button>
+                        </div>
+                        <?php if ($formattedAddress !== ''): ?>
+                        <div class="profile-field-row full-address-row">
+                            <span class="profile-label">Full address:</span>
+                            <span id="address-value" class="address-clickable"><?= $formattedAddress ?></span>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+
+        <div class="profile-accordion" id="acc-orders" data-section="orders">
                 <button class="accordion-toggle" type="button" aria-expanded="false">
                     <span><i class="fa-solid fa-box-open"></i> My Orders</span>
                     <i class="fa-solid fa-chevron-down accordion-chevron"></i>
@@ -940,6 +1053,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 </form>
             </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="address-modal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="address-modal-title">
+        <div class="modal-header">
+            <h2 id="address-modal-title">Locate Address</h2>
+            <button type="button" class="modal-close" id="address-modal-close" aria-label="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div id="address-map" style="width:100%;height:300px;"></div>
         </div>
     </div>
 </div>

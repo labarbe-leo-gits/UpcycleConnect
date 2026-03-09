@@ -382,6 +382,26 @@ func CreateAnnonceInDB(annonce models.Annonce) error {
 	if err != nil {
 		return fmt.Errorf("createAnnonce package db : %s", err.Error())
 	}
+
+	var count int
+	err2 := Db.QueryRow("SELECT COUNT(*) FROM annonces WHERE user_id = ?", annonce.UserID.String()).Scan(&count)
+	if err2 != nil {
+		fmt.Println("[DEBUG] first annonce count query error:", err2)
+	} else {
+		fmt.Println("[DEBUG] user", annonce.UserID.String(), "annonce count", count)
+	}
+	if count == 1 {
+		fmt.Println("[DEBUG] awarding pionnier badge to", annonce.UserID.String())
+
+		res, err3 := Db.Exec("INSERT IGNORE INTO user_badges (id, user_id, badge_id) SELECT UUID(), ?, id FROM badges WHERE name = 'pionnier'", annonce.UserID.String())
+		if err3 != nil {
+			fmt.Println("[DEBUG] badge insert error:", err3)
+		} else {
+			rows, _ := res.RowsAffected()
+			fmt.Println("[DEBUG] badge insert rows affected", rows)
+		}
+	}
+
 	return nil
 }
 

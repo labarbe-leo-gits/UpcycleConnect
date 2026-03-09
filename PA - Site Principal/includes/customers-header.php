@@ -7,6 +7,21 @@ trackLastPage();
 
 $user = getLoggedInUser();
 
+if (!empty($user['id'])) {
+    $apiResp = askAPI("/users/{$user['id']}", 'GET');
+    $apiUser = json_decode($apiResp, true);
+    if (is_array($apiUser)) {
+        if (isset($apiUser['first_name'])) {
+            $_SESSION['first_name'] = $apiUser['first_name'];
+            $user['first_name'] = $apiUser['first_name'];
+        }
+        if (isset($apiUser['last_name'])) {
+            $_SESSION['last_name'] = $apiUser['last_name'];
+            $user['last_name'] = $apiUser['last_name'];
+        }
+    }
+}
+
 if (isset($_SESSION['banned']) && $_SESSION['banned']){
     header('Location: ../public/ban');
     exit();

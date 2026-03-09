@@ -169,6 +169,7 @@ func main() {
 	registerRoute("GET", "/users", "Get all users", app.GetAllUsers)
 	registerRoute("GET", "/users/{id}", "Get a specific user by his UUID", app.GetUserByID, app.JWTAuthMiddleware)
 	registerRoute("GET", "/users/{id}/orders", "Get all orders for a specific user by their UUID", app.GetOrdersByUserID, app.JWTAuthMiddleware)
+	registerRoute("POST", "/users/{id}/badges", "Award a badge to a user", app.AddBadgeToUser, app.JWTAuthMiddleware)
 	registerRoute("GET", "/products/services", "Services listing - for the catalog", app.GetServices, app.JWTAuthMiddleware)
 	registerRoute("POST", "/products/services", "Create a new service", app.CreateService, app.JWTAuthMiddleware)
 	registerRoute("GET", "/products/services/{id}", "Get a specific service by its UUID", app.GetServiceByID, app.JWTAuthMiddleware)
@@ -285,7 +286,7 @@ func main() {
 	registerRoute("PATCH", "/projects/{id}/comments/{cID}", "Edit a comment", app.UpdateProjectComment, app.JWTAuthMiddleware)
 	registerRoute("DELETE", "/projects/{id}/comments/{cID}", "Delete a comment", app.DeleteProjectComment, app.JWTAuthMiddleware)
 	registerRoute("GET", "/users/{id}/balance", "Get the current balance for a user", app.GetUserBalance, app.JWTAuthMiddleware)
-	registerRoute("PATCH", "/users/{id}/balance", "Update a user's balance", app.UpdateUserBalance,  app.JWTAuthMiddleware)
+	registerRoute("PATCH", "/users/{id}/balance", "Update a user's balance", app.UpdateUserBalance, app.JWTAuthMiddleware)
 
 	http.HandleFunc("/", notFoundHandler)
 

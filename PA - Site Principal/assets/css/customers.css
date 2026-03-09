@@ -1528,6 +1528,27 @@ body.modal-open {
   color: #111827;
 }
 
+.address-clickable {
+  cursor: pointer;
+  text-decoration: underline;
+  color: var(--color-primary, #3d8b5e);
+}
+.address-clickable:hover {
+  color: var(--color-primary-dark, #2e6b4f);
+}
+
+.address-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem 1.5rem;
+}
+.address-grid .full-address-row {
+  grid-column: 1 / -1;
+}
+
+.full-address-row {
+  display: none;
+}
 .add-modal .form-group {
   display: flex;
   flex-direction: column;
