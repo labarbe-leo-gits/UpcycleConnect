@@ -26,6 +26,10 @@ type User struct {
 	ManagerID        *string   `json:"manager_id,omitempty"`
 	StripeCustomerID string    `json:"stripe_customer_id,omitempty"`
 	UserSecret       string    `json:"user_secret,omitempty"`
+	UserRoadNumber   string    `json:"user_road_number"`
+	UserRoad         string    `json:"user_road"`
+	UserZipCode      string    `json:"user_zip_code"`
+	UserCity         string    `json:"user_city"`
 	TwoFASecret      string    `json:"-"`
 	TwoFAEnabled     bool      `json:"twofa_enabled,omitempty"`
 	TwoFABackupCodes []string  `json:"-"`

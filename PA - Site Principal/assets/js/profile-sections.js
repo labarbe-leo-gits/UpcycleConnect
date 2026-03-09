@@ -165,6 +165,10 @@
         var nextBtn  = root.querySelector('.acc-next');
         var pageInfo = root.querySelector('.acc-page-info');
         var emptyMsg = root.querySelector('.acc-empty');
+        
+        if (body) body.style.display = 'none';
+        if (toggle) toggle.setAttribute('aria-expanded', 'false');
+        root.classList.remove('is-open');
 
 
         if (!(section in BUILDERS)) {
@@ -173,6 +177,14 @@
                     var open = this.getAttribute('aria-expanded') === 'true';
                     this.setAttribute('aria-expanded', open ? 'false' : 'true');
                     if (body) body.style.display = open ? 'none' : '';
+
+                    if (root) {
+                        if (open) {
+                            root.classList.remove('is-open');
+                        } else {
+                            root.classList.add('is-open');
+                        }
+                    }
                 });
             }
             return;
@@ -265,6 +277,18 @@
     }
 
     document.querySelectorAll('.profile-accordion').forEach(initAccordion);
+
+    function collapseAll() {
+        document.querySelectorAll('.profile-accordion').forEach(function(root) {
+            var body = root.querySelector('.accordion-body');
+            var toggle = root.querySelector('.accordion-toggle');
+            if (body) body.style.display = 'none';
+            if (toggle) toggle.setAttribute('aria-expanded', 'false');
+            root.classList.remove('is-open');
+        });
+    }
+    collapseAll();
+    document.addEventListener('DOMContentLoaded', collapseAll);
 
 })();
 

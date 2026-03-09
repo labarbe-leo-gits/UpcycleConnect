@@ -390,43 +390,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 Your account is active. Use the tabs above to manage your business information and security settings.
             </p>
 
-            <div class="profile-accordion" id="acc-address" data-section="address">
-                <button class="accordion-toggle" type="button" aria-expanded="false">
-                    <span><i class="fa-solid fa-location-dot"></i> My Address</span>
-                    <i class="fa-solid fa-chevron-down accordion-chevron"></i>
-                </button>
-                <div class="accordion-body" style="display:none;padding:1em;">
-                    <div class="profile-fields address-grid">
-                        <div class="profile-field-row editable-row">
-                            <span class="profile-label">Street number:</span>
-                            <span id="user_road_number-value"><?= htmlspecialchars($userDetails['user_road_number'] ?? '') ?></span>
-                            <button class="btn-copy btn-edit-inline" data-edit="user_road_number"><i class="fa-solid fa-pen"></i></button>
-                        </div>
-                        <div class="profile-field-row editable-row">
-                            <span class="profile-label">Street:</span>
-                            <span id="user_road-value"><?= htmlspecialchars($userDetails['user_road'] ?? '') ?></span>
-                            <button class="btn-copy btn-edit-inline" data-edit="user_road"><i class="fa-solid fa-pen"></i></button>
-                        </div>
-                        <div class="profile-field-row editable-row">
-                            <span class="profile-label">Zip code:</span>
-                            <span id="user_zip_code-value"><?= htmlspecialchars($userDetails['user_zip_code'] ?? '') ?></span>
-                            <button class="btn-copy btn-edit-inline" data-edit="user_zip_code"><i class="fa-solid fa-pen"></i></button>
-                        </div>
-                        <div class="profile-field-row editable-row">
-                            <span class="profile-label">City:</span>
-                            <span id="user_city-value"><?= htmlspecialchars($userDetails['user_city'] ?? '') ?></span>
-                            <button class="btn-copy btn-edit-inline" data-edit="user_city"><i class="fa-solid fa-pen"></i></button>
-                        </div>
-                        <?php if ($formattedAddress !== ''): ?>
-                        <div class="profile-field-row full-address-row">
-                            <span class="profile-label">Full address:</span>
-                            <span id="address-value" class="address-clickable"><?= $formattedAddress ?></span>
-                        </div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </div>
-
             <div class="profile-accordion" id="acc-subscription">
                 <button class="accordion-toggle" type="button" aria-expanded="false">
                     <span><i class="fas fa-crown"></i> Subscription</span>

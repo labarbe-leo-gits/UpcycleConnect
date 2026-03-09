@@ -460,25 +460,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </button>
                 <div class="accordion-body" style="display:none;padding:1em;">
                     <div class="profile-fields address-grid">
-                        <div class="profile-field-row editable-row">
-                            <span class="profile-label">Street number:</span>
-                            <span id="user_road_number-value"><?= htmlspecialchars($userDetails['user_road_number'] ?? '') ?></span>
-                            <button class="btn-copy btn-edit-inline" data-edit="user_road_number"><i class="fa-solid fa-pen"></i></button>
+                        <div id="address-display-fields">
+                            
+                                <p><span class="profile-label">Street number:</span>
+                                <span id="user_road_number-value"><?= htmlspecialchars($userDetails['user_road_number'] ?? '') ?></span></p>
+                            
+                                <p><span class="profile-label">Street:</span>
+                                <span id="user_road-value"><?= htmlspecialchars($userDetails['user_road'] ?? '') ?></span></p>
+                            
+                                <p><span class="profile-label">Zip code:</span>
+                                <span id="user_zip_code-value"><?= htmlspecialchars($userDetails['user_zip_code'] ?? '') ?></span></p>
+                            
+                                <p><span class="profile-label">City:</span>
+                                <span id="user_city-value"><?= htmlspecialchars($userDetails['user_city'] ?? '') ?></span></p>
+                            
+                            <hr>
+                            <div class="profile-field-row">
+                                <button type="button" id="edit-address-btn" class="btn-secondary" style="display: flex; align-items: center; gap: 0.5em; font-weight: 500; font-size: 1rem; padding: 0.5em 1.2em;"><i class="fa-solid fa-pen"></i> Edit Address</button>
+                            </div>
                         </div>
-                        <div class="profile-field-row editable-row">
-                            <span class="profile-label">Street:</span>
-                            <span id="user_road-value"><?= htmlspecialchars($userDetails['user_road'] ?? '') ?></span>
-                            <button class="btn-copy btn-edit-inline" data-edit="user_road"><i class="fa-solid fa-pen"></i></button>
                         </div>
-                        <div class="profile-field-row editable-row">
-                            <span class="profile-label">Zip code:</span>
-                            <span id="user_zip_code-value"><?= htmlspecialchars($userDetails['user_zip_code'] ?? '') ?></span>
-                            <button class="btn-copy btn-edit-inline" data-edit="user_zip_code"><i class="fa-solid fa-pen"></i></button>
-                        </div>
-                        <div class="profile-field-row editable-row">
-                            <span class="profile-label">City:</span>
-                            <span id="user_city-value"><?= htmlspecialchars($userDetails['user_city'] ?? '') ?></span>
-                            <button class="btn-copy btn-edit-inline" data-edit="user_city"><i class="fa-solid fa-pen"></i></button>
+
+                        <div class="modal-overlay" id="edit-address-modal" aria-hidden="true">
+                            <div class="modal" role="dialog" aria-modal="true" aria-labelledby="edit-address-modal-title">
+                                <div class="modal-header">
+                                    <h2 id="edit-address-modal-title"><i class="fa-solid fa-location-dot"></i> Edit Address</h2>
+                                    <button type="button" class="modal-close" id="close-edit-address-modal" aria-label="Close">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                </div>
+                                <div class="modal-body">
+                                    <form id="edit-address-form" class="address-edit-form" autocomplete="off">
+                                        <div class="field">
+                                            <label for="edit-user_road_number">Street number</label>
+                                            <input type="text" name="user_road_number" id="edit-user_road_number" value="<?= htmlspecialchars($userDetails['user_road_number'] ?? '') ?>" />
+                                        </div>
+                                        <div class="field">
+                                            <label for="edit-user_road">Street</label>
+                                            <input type="text" name="user_road" id="edit-user_road" value="<?= htmlspecialchars($userDetails['user_road'] ?? '') ?>" />
+                                        </div>
+                                        <div class="field">
+                                            <label for="edit-user_zip_code">Zip code</label>
+                                            <input type="text" name="user_zip_code" id="edit-user_zip_code" value="<?= htmlspecialchars($userDetails['user_zip_code'] ?? '') ?>" />
+                                        </div>
+                                        <div class="field">
+                                            <label for="edit-user_city">City</label>
+                                            <input type="text" name="user_city" id="edit-user_city" value="<?= htmlspecialchars($userDetails['user_city'] ?? '') ?>" />
+                                        </div>
+                                        <div class="modal-actions">
+                                            <button type="button" class="btn-secondary" id="cancel-edit-address">Cancel</button>
+                                            <button type="submit" class="btn-primary">Save Address</button>
+                                        </div>
+                                        <div id="address-edit-feedback" class="error-message" style="display:none;"></div>
+                                    </form>
+                                </div>
+                            </div>
                         </div>
                         <?php if ($formattedAddress !== ''): ?>
                         <div class="profile-field-row full-address-row">
@@ -488,7 +524,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <?php endif; ?>
                     </div>
                 </div>
-            </div>
+            
 
         <div class="profile-accordion" id="acc-orders" data-section="orders">
                 <button class="accordion-toggle" type="button" aria-expanded="false">

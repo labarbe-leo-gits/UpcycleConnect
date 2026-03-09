@@ -253,142 +253,86 @@ function updateGauge(score) {
     requestAnimationFrame(animate);
 }
 
-document.querySelectorAll('.btn-edit-inline').forEach(btn => {
-    btn.addEventListener('click', function () {
-        const field = this.getAttribute('data-edit');
-        const row = this.closest('.profile-field-row');
-        const valueSpan = document.getElementById(field + '-value');
-        if (!valueSpan || row.querySelector('.profile-edit-input')) return;
 
-        const originalValue = valueSpan.textContent.trim();
-        const editBtn = this;
+const editAddressBtn = document.getElementById('edit-address-btn');
+const addressDisplayFields = document.getElementById('address-display-fields');
+const addressEditModal = document.getElementById('edit-address-modal');
+const addressEditForm = document.getElementById('edit-address-form');
+const cancelEditAddressBtn = document.getElementById('cancel-edit-address');
+const closeEditAddressModalBtn = document.getElementById('close-edit-address-modal');
+const addressEditFeedback = document.getElementById('address-edit-feedback');
 
-        const input = document.createElement('input');
-        input.type = field === 'email' ? 'email' : 'text';
-        input.value = originalValue;
-        input.className = 'profile-edit-input';
-
-        const saveBtn = document.createElement('button');
-        saveBtn.type = 'button';
-        saveBtn.className = 'btn-edit-save';
-        saveBtn.title = 'Save';
-        saveBtn.innerHTML = '<i class="fa-solid fa-check"></i>';
-
-        const cancelBtn = document.createElement('button');
-        cancelBtn.type = 'button';
-        cancelBtn.className = 'btn-edit-cancel';
-        cancelBtn.title = 'Cancel';
-        cancelBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
-
-        valueSpan.replaceWith(input);
-        editBtn.style.display = 'none';
-        editBtn.insertAdjacentElement('afterend', cancelBtn);
-        editBtn.insertAdjacentElement('afterend', saveBtn);
-        input.focus();
-        input.select();
-
-        function cancelEdit() {
-            const span = document.createElement('span');
-            span.id = field + '-value';
-            span.textContent = originalValue;
-            input.replaceWith(span);
-            saveBtn.remove();
-            cancelBtn.remove();
-            const errMsg = row.querySelector('.edit-error-msg');
-            if (errMsg) errMsg.remove();
-            editBtn.style.display = '';
-        }
-
-        async function saveEdit() {
-            const newValue = input.value.trim();
-            if (newValue === originalValue) { cancelEdit(); return; }
-            
-            var addressFields = ['user_road_number','user_road','user_zip_code','user_city'];
-            if (addressFields.includes(field)) {
-                var anyOther = addressFields.some(f => {
-                    if (f === field) return false;
-                    var el = document.getElementById(f + '-value');
-                    return el && el.textContent.trim() !== '';
-                });
-                if (anyOther && newValue === '') {
-                    input.classList.add('input-error');
-                    let errMsg = row.querySelector('.edit-error-msg');
-                    if (!errMsg) {
-                        errMsg = document.createElement('span');
-                        errMsg.className = 'edit-error-msg';
-                        cancelBtn.insertAdjacentElement('afterend', errMsg);
-                    }
-                    errMsg.textContent = 'Field required when any other address part is set.';
-                    setTimeout(() => {
-                        input.classList.remove('input-error');
-                        if (errMsg) errMsg.remove();
-                    }, 3000);
-                    return;
-                }
-            }
-            if (!newValue) return;
-
-            saveBtn.disabled = true;
-            saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-
-            try {
-                const res = await fetch('update-profile-api', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-                    body: JSON.stringify({ field, value: newValue })
-                });
-                const data = await res.json();
-                if (!res.ok || data.error) throw new Error(data.error || 'Update failed');
-
-                const span = document.createElement('span');
-                span.id = field + '-value';
-                span.textContent = newValue;
-                input.replaceWith(span);
-                saveBtn.remove();
-                cancelBtn.remove();
-                editBtn.style.display = '';
-
-                // if this was an address component, refresh combined display
-                if ([
-                    'user_road_number',
-                    'user_road',
-                    'user_zip_code',
-                    'user_city'
-                ].includes(field)) {
-                    updateCombinedAddress();
-                }
-
-                span.style.transition = 'color .4s';
-                span.style.color = '#10b981';
-                setTimeout(() => { span.style.color = ''; }, 1800);
-            } catch (err) {
-                saveBtn.disabled = false;
-                saveBtn.innerHTML = '<i class="fa-solid fa-check"></i>';
-                input.classList.add('input-error');
-                let errMsg = row.querySelector('.edit-error-msg');
-                if (!errMsg) {
-                    errMsg = document.createElement('span');
-                    errMsg.className = 'edit-error-msg';
-                    cancelBtn.insertAdjacentElement('afterend', errMsg);
-                }
-                errMsg.textContent = err.message;
-                setTimeout(() => {
-                    input.classList.remove('input-error');
-                    if (errMsg) errMsg.remove();
-                }, 3500);
-            }
-        }
-
-        saveBtn.addEventListener('click', saveEdit);
-        cancelBtn.addEventListener('click', cancelEdit);
-        input.addEventListener('keydown', e => {
-            if (e.key === 'Enter') { e.preventDefault(); saveEdit(); }
-            if (e.key === 'Escape') { cancelEdit(); }
-        });
+function openEditAddressModal() {
+    if (addressEditModal) {
+        addressEditModal.classList.add('is-visible');
+        addressEditModal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('modal-open');
+        document.getElementById('edit-user_road_number').value = document.getElementById('user_road_number-value').textContent.trim();
+        document.getElementById('edit-user_road').value = document.getElementById('user_road-value').textContent.trim();
+        document.getElementById('edit-user_zip_code').value = document.getElementById('user_zip_code-value').textContent.trim();
+        document.getElementById('edit-user_city').value = document.getElementById('user_city-value').textContent.trim();
+        addressEditFeedback.style.display = 'none';
+    }
+}
+function closeEditAddressModal() {
+    if (addressEditModal) {
+        addressEditModal.classList.remove('is-visible');
+        addressEditModal.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('modal-open');
+        addressEditFeedback.style.display = 'none';
+    }
+}
+if (editAddressBtn) {
+    editAddressBtn.addEventListener('click', openEditAddressModal);
+}
+if (cancelEditAddressBtn) {
+    cancelEditAddressBtn.addEventListener('click', closeEditAddressModal);
+}
+if (closeEditAddressModalBtn) {
+    closeEditAddressModalBtn.addEventListener('click', closeEditAddressModal);
+}
+if (addressEditModal) {
+    addressEditModal.addEventListener('click', function(event) {
+        if (event.target === addressEditModal) closeEditAddressModal();
     });
-});
+}
+if (addressEditForm) {
+    addressEditForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        addressEditFeedback.style.display = 'none';
+        const user_road_number = document.getElementById('edit-user_road_number').value.trim();
+        const user_road = document.getElementById('edit-user_road').value.trim();
+        const user_zip_code = document.getElementById('edit-user_zip_code').value.trim();
+        const user_city = document.getElementById('edit-user_city').value.trim();
 
-// helper: update combined address display whenever a component changes
+        const payload = {
+            user_road_number,
+            user_road,
+            user_zip_code,
+            user_city
+        };
+        try {
+            const res = await fetch('update-profile-api', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (!res.ok || data.error) throw new Error(data.error || 'Update failed');
+
+            document.getElementById('user_road_number-value').textContent = user_road_number;
+            document.getElementById('user_road-value').textContent = user_road;
+            document.getElementById('user_zip_code-value').textContent = user_zip_code;
+            document.getElementById('user_city-value').textContent = user_city;
+            closeEditAddressModal();
+            updateCombinedAddress();
+        } catch (err) {
+            addressEditFeedback.textContent = err.message;
+            addressEditFeedback.style.display = '';
+        }
+    });
+}
+
 function updateCombinedAddress() {
     var parts = [];
     ['user_road_number','user_road','user_zip_code','user_city'].forEach(function(f){
@@ -412,7 +356,6 @@ function updateCombinedAddress() {
     }
 }
 
-// open/close address modal and geocode
 var addressMap, addressMarker;
 function openAddressModal(addr) {
     if (!addr || addr === '—') return;
@@ -422,7 +365,6 @@ function openAddressModal(addr) {
     document.body.classList.add('modal-open');
     modal.setAttribute('aria-hidden', 'false');
 
-    // lazy init map
     setTimeout(function() {
         if (!addressMap) {
             addressMap = L.map('address-map').setView([0,0], 2);
@@ -431,7 +373,6 @@ function openAddressModal(addr) {
             }).addTo(addressMap);
         }
 
-        // geocode via Nominatim
         fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(addr))
             .then(function(r){ return r.json(); })
             .then(function(data){
@@ -457,7 +398,6 @@ function closeAddressModal() {
     modal.setAttribute('aria-hidden', 'true');
 }
 
-// click handler for combined address
 document.addEventListener('click', function(e) {
     if (e.target.closest('.address-clickable')) {
         e.preventDefault();
@@ -466,7 +406,6 @@ document.addEventListener('click', function(e) {
     }
 });
 
-// close modal when clicking outside or using close button
 var addrModal = document.getElementById('address-modal');
 if (addrModal) {
     addrModal.addEventListener('click', function(ev) {
@@ -541,10 +480,8 @@ function hideLoader(immediate = false) {
 document.addEventListener('DOMContentLoaded', function() {
     hideLoader(false);
 
-    // refresh formatted address display if present
     updateCombinedAddress();
 
-    // ensure address-accordion row visibility
     var faRow = document.querySelector('.full-address-row');
     if (faRow) {
         var addr = document.getElementById('address-value');
@@ -555,7 +492,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // if there is any feedback under password form, show security tab
     var pwdFeedback = document.getElementById('password-feedback');
     if (pwdFeedback && pwdFeedback.textContent.trim().length > 0) {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));

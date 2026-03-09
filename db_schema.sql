@@ -497,4 +497,3 @@ CREATE TABLE IF NOT EXISTS poll_votes (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     UNIQUE INDEX idx_poll_vote (poll_id, user_id)
 );
-

@@ -20,7 +20,7 @@ func GetUsersFromDB(offset, limit int, search string, userTypes ...int) ([]model
 		limit = 20
 	}
 
-	baseQuery := "SELECT id, first_name, last_name, company_name, user_type, username, email, balance, upcycling_score, created_at, last_login, oauth_provider, oauth_id, profile_picture, manager_id, user_xp, user_level FROM users"
+	baseQuery := "SELECT id, first_name, last_name, company_name, user_type, username, email, balance, upcycling_score, created_at, last_login, oauth_provider, oauth_id, profile_picture, manager_id, user_xp, user_level, user_road_number, user_road, user_zip_code, user_city FROM users"
 	countQuery := "SELECT COUNT(*) FROM users"
 	args := []interface{}{}
 	conditions := []string{}
@@ -61,7 +61,8 @@ func GetUsersFromDB(offset, limit int, search string, userTypes ...int) ([]model
 		var createdAt, lastLogin sql.NullString
 		var companyName, oauthProvider, oauthID, profilePicture, managerID sql.NullString
 		var userXP, userLevel int
-		err := rows.Scan(&idStr, &user.FirstName, &user.LastName, &companyName, &user.UserType, &user.Username, &user.Email, &user.Balance, &user.UpcyclingScore, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture, &managerID, &userXP, &userLevel)
+		var userRoadNumber, userRoad, userZipCode, userCity sql.NullString
+		err := rows.Scan(&idStr, &user.FirstName, &user.LastName, &companyName, &user.UserType, &user.Username, &user.Email, &user.Balance, &user.UpcyclingScore, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture, &managerID, &userXP, &userLevel, &userRoadNumber, &userRoad, &userZipCode, &userCity)
 		if err != nil {
 			return nil, 0, fmt.Errorf("getUsers package db scan : %s", err.Error())
 		}
@@ -89,6 +90,18 @@ func GetUsersFromDB(offset, limit int, search string, userTypes ...int) ([]model
 		}
 		if managerID.Valid {
 			user.ManagerID = &managerID.String
+		}
+		if userRoadNumber.Valid {
+			user.UserRoadNumber = userRoadNumber.String
+		}
+		if userRoad.Valid {
+			user.UserRoad = userRoad.String
+		}
+		if userZipCode.Valid {
+			user.UserZipCode = userZipCode.String
+		}
+		if userCity.Valid {
+			user.UserCity = userCity.String
 		}
 		user.UserXP = userXP
 		user.UserLevel = userLevel
@@ -179,11 +192,12 @@ func GetUserByIDFromDB(id uuid.UUID) (models.User, error) {
 	var stripeCustomerID sql.NullString
 	var managerID sql.NullString
 	var userXP, userLevel int
+	var userRoadNumber, userRoad, userZipCode, userCity sql.NullString
 
 	err := Db.QueryRow(
-		"SELECT id, first_name, last_name, company_name, user_type, username, email, password_hash, balance, upcycling_score, created_at, last_login, oauth_provider, oauth_id, profile_picture, is_premium, stripe_customer_id, manager_id, user_xp, user_level FROM users WHERE id = ?",
+		"SELECT id, first_name, last_name, company_name, user_type, username, email, password_hash, balance, upcycling_score, created_at, last_login, oauth_provider, oauth_id, profile_picture, is_premium, stripe_customer_id, manager_id, user_xp, user_level, user_road_number, user_road, user_zip_code, user_city FROM users WHERE id = ?",
 		id.String(),
-	).Scan(&idStr, &user.FirstName, &user.LastName, &companyName, &user.UserType, &user.Username, &user.Email, &user.Password, &user.Balance, &user.UpcyclingScore, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture, &user.IsPremium, &stripeCustomerID, &managerID, &userXP, &userLevel)
+	).Scan(&idStr, &user.FirstName, &user.LastName, &companyName, &user.UserType, &user.Username, &user.Email, &user.Password, &user.Balance, &user.UpcyclingScore, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture, &user.IsPremium, &stripeCustomerID, &managerID, &userXP, &userLevel, &userRoadNumber, &userRoad, &userZipCode, &userCity)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return user, fmt.Errorf("user not found")
@@ -203,6 +217,18 @@ func GetUserByIDFromDB(id uuid.UUID) (models.User, error) {
 	}
 	if managerID.Valid {
 		user.ManagerID = &managerID.String
+	}
+	if userRoadNumber.Valid {
+		user.UserRoadNumber = userRoadNumber.String
+	}
+	if userRoad.Valid {
+		user.UserRoad = userRoad.String
+	}
+	if userZipCode.Valid {
+		user.UserZipCode = userZipCode.String
+	}
+	if userCity.Valid {
+		user.UserCity = userCity.String
 	}
 	user.UserXP = userXP
 	user.UserLevel = userLevel
