@@ -12,7 +12,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func GetUsersFromDB(offset, limit int, search string, userTypes ...int) ([]models.User, int, error) {
+func GetUsersFromDB(offset, limit int, search, sort string, userTypes ...int) ([]models.User, int, error) {
 	if offset < 0 {
 		offset = 0
 	}
@@ -45,7 +45,11 @@ func GetUsersFromDB(offset, limit int, search string, userTypes ...int) ([]model
 		where = " WHERE " + strings.Join(conditions, " AND ")
 	}
 
-	query := baseQuery + where + " ORDER BY created_at DESC LIMIT ? OFFSET ?"
+	orderBy := "ORDER BY created_at DESC"
+	if sort == "oldest" {
+		orderBy = "ORDER BY created_at ASC"
+	}
+	query := baseQuery + where + " " + orderBy + " LIMIT ? OFFSET ?"
 	args = append(args, limit, offset)
 
 	rows, err := Db.Query(query, args...)

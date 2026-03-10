@@ -51,12 +51,34 @@ func GetAllUsers(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+	sort := q.Get("sort")
+	if sort != "oldest" {
+		sort = "newest"
+	}
 
-	users, total, err := db.GetUsersFromDB(offset, limit, search, userTypes...)
+	bannedOnly := false
+	if q.Get("banned") == "1" {
+		bannedOnly = true
+	}
+
+	users, total, err := db.GetUsersFromDB(offset, limit, search, sort, userTypes...)
 	if err != nil {
 		fmt.Println("[ERROR] GetAllUsers:", err)
 		sendError(w, "Unable to fetch users", http.StatusInternalServerError)
 		return
+	}
+
+	if bannedOnly {
+		var filtered []models.User
+		for _, u := range users {
+			bans, err := db.GetUserBansFromDB(u.ID)
+			fmt.Printf("User: %s, Bans found: %d, Error: %v\n", u.ID.String(), len(bans), err)
+			if err == nil && len(bans) > 0 {
+				filtered = append(filtered, u)
+			}
+		}
+		total = len(filtered)
+		users = filtered
 	}
 	if total == 0 {
 		fmt.Printf("[DEBUG] GetAllUsers no results (offset=%d limit=%d search='%s')\n", offset, limit, search)

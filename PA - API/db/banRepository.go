@@ -30,15 +30,29 @@ func DeleteBanRecord(banID uuid.UUID) error {
 }
 
 func GetBanRecordByID(banID uuid.UUID) (models.Ban, error) {
-
 	var ban models.Ban
-	err := Db.QueryRow("SELECT id, user_id, reason, banned_by, duration_days, created_at FROM ban WHERE id = ?", banID.String()).
-
+	err := Db.QueryRow("SELECT id, user_id, reason, banned_by, duration_days, banned_at FROM ban WHERE id = ?", banID.String()).
 		Scan(&ban.ID, &ban.UserID, &ban.Reason, &ban.BannedBy, &ban.DurationDays, &ban.BannedAt)
-
 	if err != nil {
 		return models.Ban{}, fmt.Errorf("getBanByID package db: %s", err.Error())
 	}
-
 	return ban, nil
+}
+
+func GetUserBansFromDB(userID uuid.UUID) ([]models.Ban, error) {
+	rows, err := Db.Query("SELECT id, user_id, reason, banned_by, duration_days, banned_at FROM ban WHERE user_id = ?", userID.String())
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var bans []models.Ban
+	for rows.Next() {
+		var ban models.Ban
+		err := rows.Scan(&ban.ID, &ban.UserID, &ban.Reason, &ban.BannedBy, &ban.DurationDays, &ban.BannedAt)
+		if err != nil {
+			return nil, err
+		}
+		bans = append(bans, ban)
+	}
+	return bans, nil
 }

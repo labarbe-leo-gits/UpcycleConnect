@@ -1,9 +1,9 @@
 <?php return array(
     'root' => array(
         'name' => 'upcycleconnect/site-principal',
-        'pretty_version' => 'dev-main',
-        'version' => 'dev-main',
-        'reference' => 'c6bcc30338d6193f55a8cf556489826a976734ae',
+        'pretty_version' => 'dev-master',
+        'version' => 'dev-master',
+        'reference' => '67c92b7f11cb268fb08fbe422d3e7cd637323e38',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -206,9 +206,9 @@
             'dev_requirement' => false,
         ),
         'upcycleconnect/site-principal' => array(
-            'pretty_version' => 'dev-main',
-            'version' => 'dev-main',
-            'reference' => 'c6bcc30338d6193f55a8cf556489826a976734ae',
+            'pretty_version' => 'dev-master',
+            'version' => 'dev-master',
+            'reference' => '67c92b7f11cb268fb08fbe422d3e7cd637323e38',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
