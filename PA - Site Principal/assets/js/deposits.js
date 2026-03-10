@@ -297,9 +297,8 @@
                 data = text ? JSON.parse(text) : {};
             } catch (parseErr) {
                 console.error('Failed to parse deposits API response:', text, parseErr);
-                throw parseErr; // trigger catch below
+                throw parseErr;
             }
-            // API may return an error object
             if (data && data.error) {
                 throw new Error(data.error || 'Server error');
             }
@@ -1250,7 +1249,8 @@
         return div.innerHTML;
     }
 
-    window.showContainersMap = function(elId) {
+
+    window.showContainersMap = function(elId, searchInputId) {
         if (typeof L === 'undefined') {
             console.warn('Leaflet not loaded, cannot show containers map');
             return;
@@ -1274,6 +1274,65 @@
                 }
             });
         });
+
+        if (searchInputId) {
+            const input = document.getElementById(searchInputId);
+            let resultsDiv = document.getElementById(searchInputId + '-results');
+            if (!resultsDiv) {
+                resultsDiv = document.getElementById(searchInputId.replace(/-input$/, '') + '-results');
+            }
+            if (input && resultsDiv) {
+                let timeout = null;
+                input.addEventListener('input', function() {
+                    const val = input.value.trim();
+                    if (!val) { resultsDiv.innerHTML = ''; resultsDiv.style.display = 'none'; return; }
+                    if (timeout) clearTimeout(timeout);
+                    timeout = setTimeout(() => {
+                        fetch(`https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(val)}`)
+                            .then(r => r.json())
+                            .then(data => {
+                                if (data && data.features && data.features.length) {
+                                    resultsDiv.style.display = 'block';
+                                    resultsDiv.innerHTML = data.features.map(f => {
+                                        const props = f.properties;
+                                        const coords = f.geometry && f.geometry.coordinates ? f.geometry.coordinates : [];
+                                        return `<div class="addr-result-item" data-lat="${coords[1]||''}" data-lon="${coords[0]||''}"><i class='fa-solid fa-location-dot'></i>${props.housenumber||''} ${props.street||''}, ${props.postcode||''} ${props.city||''}</div>`;
+                                    }).join('');
+                                } else {
+                                    resultsDiv.style.display = 'block';
+                                    resultsDiv.innerHTML = '<div style="padding:6px 8px;color:#888;">No results</div>';
+                                }
+                            })
+                            .catch(() => {
+                                resultsDiv.style.display = 'block';
+                                resultsDiv.innerHTML = '<div style="padding:6px 8px;color:#888;">Error</div>';
+                            });
+                    }, 350);
+                });
+                resultsDiv.addEventListener('click', function(e) {
+                    const item = e.target.closest('.addr-result-item');
+                    if (item) {
+                        const lat = parseFloat(item.getAttribute('data-lat'));
+                        const lon = parseFloat(item.getAttribute('data-lon'));                        
+                        if (!isNaN(lat) && !isNaN(lon)) {
+                            map.setView([lat, lon], 15);
+                            const redIcon = L.icon({
+                                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+                                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+                                iconSize: [25, 41],
+                                iconAnchor: [12, 41],
+                                popupAnchor: [1, -34],
+                                shadowSize: [41, 41]
+                            });
+                            L.marker([lat, lon], {icon: redIcon}).addTo(map);
+                        }
+                        resultsDiv.innerHTML = '';
+                        resultsDiv.style.display = 'none';
+                        input.value = '';
+                    }
+                });
+            }
+        }
     };
 
     window.openDepositDetails = openDetailsModal;

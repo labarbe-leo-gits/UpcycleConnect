@@ -459,27 +459,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <i class="fa-solid fa-chevron-down accordion-chevron"></i>
                 </button>
                 <div class="accordion-body" style="display:none;padding:1em;">
-                    <div class="profile-fields address-grid">
+                    <div class="profile-fields">
                         <div id="address-display-fields">
-                            
-                                <p><span class="profile-label">Street number:</span>
-                                <span id="user_road_number-value"><?= htmlspecialchars($userDetails['user_road_number'] ?? '') ?></span></p>
-                            
-                                <p><span class="profile-label">Street:</span>
-                                <span id="user_road-value"><?= htmlspecialchars($userDetails['user_road'] ?? '') ?></span></p>
-                            
-                                <p><span class="profile-label">Zip code:</span>
-                                <span id="user_zip_code-value"><?= htmlspecialchars($userDetails['user_zip_code'] ?? '') ?></span></p>
-                            
-                                <p><span class="profile-label">City:</span>
-                                <span id="user_city-value"><?= htmlspecialchars($userDetails['user_city'] ?? '') ?></span></p>
-                            
-                            <hr class="address-hr">
+                            <div class="address-grid">
+                                <div class="profile-field-row">
+                                    <span class="profile-label">Street number:</span>
+                                    <span id="user_road_number-value"><?= htmlspecialchars($userDetails['user_road_number'] ?? '') ?></span>
+                                </div>
+                                <div class="profile-field-row">
+                                    <span class="profile-label">Street:</span>
+                                    <span id="user_road-value"><?= htmlspecialchars($userDetails['user_road'] ?? '') ?></span>
+                                </div>
+                                <div class="profile-field-row">
+                                    <span class="profile-label">Zip code:</span>
+                                    <span id="user_zip_code-value"><?= htmlspecialchars($userDetails['user_zip_code'] ?? '') ?></span>
+                                </div>
+                                <div class="profile-field-row">
+                                    <span class="profile-label">City:</span>
+                                    <span id="user_city-value"><?= htmlspecialchars($userDetails['user_city'] ?? '') ?></span>
+                                </div>
+                            </div>
+                            <hr class="address-hr" style="margin: 0 auto; margin-top: 20px; margin-bottom: 20px;">
                             <div class="profile-field-row address-edit-btn-row">
                                 <button type="button" id="edit-address-btn" class="btn-secondary"><i class="fa-solid fa-pen"></i> Edit Address</button>
                             </div>
                         </div>
-                        </div>
+                    </div>
 
                         <div class="modal-overlay" id="edit-address-modal" aria-hidden="true">
                             <div class="modal" role="dialog" aria-modal="true" aria-labelledby="edit-address-modal-title">
