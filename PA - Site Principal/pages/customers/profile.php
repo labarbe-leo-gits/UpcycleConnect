@@ -474,9 +474,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <p><span class="profile-label">City:</span>
                                 <span id="user_city-value"><?= htmlspecialchars($userDetails['user_city'] ?? '') ?></span></p>
                             
-                            <hr>
-                            <div class="profile-field-row">
-                                <button type="button" id="edit-address-btn" class="btn-secondary" style="display: flex; align-items: center; gap: 0.5em; font-weight: 500; font-size: 1rem; padding: 0.5em 1.2em;"><i class="fa-solid fa-pen"></i> Edit Address</button>
+                            <hr class="address-hr">
+                            <div class="profile-field-row address-edit-btn-row">
+                                <button type="button" id="edit-address-btn" class="btn-secondary"><i class="fa-solid fa-pen"></i> Edit Address</button>
                             </div>
                         </div>
                         </div>
@@ -491,21 +491,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 </div>
                                 <div class="modal-body">
                                     <form id="edit-address-form" class="address-edit-form" autocomplete="off">
-                                        <div class="field">
-                                            <label for="edit-user_road_number">Street number</label>
-                                            <input type="text" name="user_road_number" id="edit-user_road_number" value="<?= htmlspecialchars($userDetails['user_road_number'] ?? '') ?>" />
+                                        <div class="address-fields-row">
+                                            <div class="field">
+                                                <label for="edit-user_road_number">Street number</label>
+                                                <div class="input-wrapper">
+                                                    <i class="fa-solid fa-hashtag"></i>
+                                                    <input type="text" name="user_road_number" id="edit-user_road_number" value="<?= htmlspecialchars($userDetails['user_road_number'] ?? '') ?>" class="icon-input" />
+                                                </div>
+                                            </div>
+                                            <div class="field">
+                                                <label for="edit-user_road">Street</label>
+                                                <div class="input-wrapper">
+                                                    <i class="fa-solid fa-road"></i>
+                                                    <input type="text" name="user_road" id="edit-user_road" value="<?= htmlspecialchars($userDetails['user_road'] ?? '') ?>" class="icon-input" />
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div class="field">
-                                            <label for="edit-user_road">Street</label>
-                                            <input type="text" name="user_road" id="edit-user_road" value="<?= htmlspecialchars($userDetails['user_road'] ?? '') ?>" />
-                                        </div>
-                                        <div class="field">
-                                            <label for="edit-user_zip_code">Zip code</label>
-                                            <input type="text" name="user_zip_code" id="edit-user_zip_code" value="<?= htmlspecialchars($userDetails['user_zip_code'] ?? '') ?>" />
-                                        </div>
-                                        <div class="field">
-                                            <label for="edit-user_city">City</label>
-                                            <input type="text" name="user_city" id="edit-user_city" value="<?= htmlspecialchars($userDetails['user_city'] ?? '') ?>" />
+                                        <div class="address-fields-row">
+                                            <div class="field">
+                                                <label for="edit-user_zip_code">Zip code</label>
+                                                <div class="input-wrapper">
+                                                    <i class="fa-solid fa-envelope"></i>
+                                                    <input type="text" name="user_zip_code" id="edit-user_zip_code" value="<?= htmlspecialchars($userDetails['user_zip_code'] ?? '') ?>" class="icon-input" />
+                                                </div>
+                                            </div>
+                                            <div class="field">
+                                                <label for="edit-user_city">City</label>
+                                                <div class="input-wrapper">
+                                                    <i class="fa-solid fa-city"></i>
+                                                    <input type="text" name="user_city" id="edit-user_city" value="<?= htmlspecialchars($userDetails['user_city'] ?? '') ?>" class="icon-input" />
+                                                </div>
+                                            </div>
                                         </div>
                                         <div class="modal-actions">
                                             <button type="button" class="btn-secondary" id="cancel-edit-address">Cancel</button>
