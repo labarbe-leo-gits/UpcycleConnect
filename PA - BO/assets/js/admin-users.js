@@ -7,6 +7,9 @@
     let limit = initialSize;
     let totalCount = 0;
     let searchTerm = '';
+    let userTypeFilter = '';
+    let sortFilter = 'newest';
+    let bannedFilter = false;
 
     document.addEventListener('DOMContentLoaded', function() {
         bindToolbar();
@@ -21,12 +24,13 @@
         requestChunk(false);
     });
 
+
     function requestChunk(append) {
         const container = document.getElementById('users-container');
         const moreBtn = document.getElementById('users-show-more');
         if (!container) return;
 
-        console.debug('requestChunk called', { offset, limit, searchTerm, append });
+        console.debug('requestChunk called', { offset, limit, searchTerm, userTypeFilter, sortFilter, append });
 
         if (!append) {
             renderSkeletons(container, initialSize);
@@ -35,6 +39,15 @@
         let url = `users-list-api?offset=${offset}&limit=${limit}`;
         if (searchTerm && searchTerm !== 'undefined' && searchTerm !== 'null') {
             url += `&search=${encodeURIComponent(searchTerm)}`;
+        }
+        if (userTypeFilter) {
+            url += `&user_type=${encodeURIComponent(userTypeFilter)}`;
+        }
+        if (sortFilter) {
+            url += `&sort=${encodeURIComponent(sortFilter)}`;
+        }
+        if (bannedFilter) {
+            url += `&banned=1`;
         }
         console.debug('fetch url', url);
 
@@ -186,6 +199,17 @@
         const search = document.getElementById('user-search');
         const moreBtn = document.getElementById('users-show-more');
         const createBtn = document.getElementById('create-user');
+        const userTypeDropdown = document.getElementById('user-type-filter');
+        const sortDropdown = document.getElementById('user-sort-filter');
+        const bannedCheckbox = document.getElementById('banned-filter');
+        if (bannedCheckbox) {
+            bannedCheckbox.addEventListener('change', function() {
+                bannedFilter = this.checked;
+                offset = 0;
+                limit = initialSize;
+                requestChunk(false);
+            });
+        }
 
         const urlParams = new URLSearchParams(window.location.search);
         if (search && urlParams.has('search')) {
@@ -195,6 +219,25 @@
             }
             search.value = val;
             searchTerm = val;
+        }
+
+        if (userTypeDropdown) {
+            userTypeDropdown.value = userTypeFilter;
+            userTypeDropdown.addEventListener('change', function() {
+                userTypeFilter = this.value;
+                offset = 0;
+                limit = initialSize;
+                requestChunk(false);
+            });
+        }
+        if (sortDropdown) {
+            sortDropdown.value = sortFilter;
+            sortDropdown.addEventListener('change', function() {
+                sortFilter = this.value;
+                offset = 0;
+                limit = initialSize;
+                requestChunk(false);
+            });
         }
 
         if (search) {

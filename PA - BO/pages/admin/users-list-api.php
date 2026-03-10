@@ -25,6 +25,14 @@ if ($search !== '') {
 if (!empty($_GET['user_type'])) {
     $url .= '&user_type=' . urlencode($_GET['user_type']);
 }
+$sort = isset($_GET['sort']) ? $_GET['sort'] : '';
+if ($sort !== '') {
+    $url .= '&sort=' . urlencode($sort);
+}
+$banned = isset($_GET['banned']) ? $_GET['banned'] : '';
+if ($banned !== '') {
+    $url .= '&banned=' . urlencode($banned);
+}
 $resp = askAPI($url, 'GET');
 $decoded = json_decode($resp, true);
 if ($decoded === null) {

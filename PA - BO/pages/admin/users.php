@@ -11,6 +11,21 @@ if (ob_get_level()) { @ob_flush(); }
     <h2 class="center">Users management</h2>
     <div class="admin-toolbar" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;align-items:center;">
         <button class="add-offer-button" id="create-user"><i class="fa-solid fa-user-plus"></i> Create user</button>
+        <select id="user-type-filter" class="admin-filter-select">
+            <option value="">All types</option>
+            <option value="1">Customer</option>
+            <option value="2">Pro</option>
+            <option value="3">Admin</option>
+            <option value="4">Part-time employee</option>
+        </select>
+                <select id="user-sort-filter" class="admin-filter-select">
+            <option value="newest">Newest</option>
+            <option value="oldest">Oldest</option>
+        </select>
+                <label style="display:flex;align-items:center;gap:6px;font-size:1rem;cursor:pointer;user-select:none;">
+                    <input type="checkbox" id="banned-filter" style="accent-color:#1fd082;width:18px;height:18px;cursor:pointer;" />
+                    Banned only
+                </label>
         <div style="position:relative;flex:1;max-width:300px;">
             <i class="fa-solid fa-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#6b7280;"></i>
             <input type="text" id="user-search" placeholder="Search users…" style="width:100%;padding:8px 12px 8px 32px;border:1px solid #d1d5db;border-radius:8px;" />
@@ -32,6 +47,24 @@ if (ob_get_level()) { @ob_flush(); }
     </div>
 </div>
 
+<style>
+    .admin-filter-select {
+        background: #fff;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        min-width: 120px;
+        padding: 8px 12px;
+        font-size: 1rem;
+        color: #222;
+        cursor: pointer;
+        transition: border-color 0.2s;
+        outline: none;
+    }
+    .admin-filter-select:focus {
+        border-color: #1fd082;
+        box-shadow: 0 0 0 2px #1fd08233;
+    }
+</style>
 <script src="../../assets/js/admin-users.js" defer></script>
 
 <script>

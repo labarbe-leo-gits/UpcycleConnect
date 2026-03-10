@@ -73,6 +73,11 @@ try {
                 <select id="deposit-conteneur" name="deposit-conteneur" required>
                     <option value="">-- Select One --</option>
                 </select>
+                <!-- Button "Suggest the nearest conteneur". This unroll 3 choice s: based on adress of user in db, based on position, based on an adress he fills out -->
+                <button type="button" id="suggest-conteneur" style="margin-top:8px;">
+                    <i class="fa-solid fa-location-crosshairs"></i>
+                    Suggest the nearest conteneur
+                </button>
             </div>
             <div class="form-group">
                 <label for="deposit-object-name">Object name</label>

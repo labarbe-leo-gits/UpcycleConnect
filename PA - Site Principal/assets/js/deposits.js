@@ -5,12 +5,19 @@
     let currentPage = 1;
     let totalPages = 1;
 
-    document.addEventListener('DOMContentLoaded', function() {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            currentPage = getPageFromUrl();
+            requestPage(currentPage, true);
+            setupModalHandlers();
+            setupAddDepositModal();
+        });
+    } else {
         currentPage = getPageFromUrl();
         requestPage(currentPage, true);
         setupModalHandlers();
         setupAddDepositModal();
-    });
+    }
 
     function requestPage(page, replaceHistory) {
         const container = document.getElementById('deposits-container');
@@ -649,6 +656,334 @@
                 opt.textContent = label;
                 conteneurSelect.appendChild(opt);
             });
+
+            let infoDiv = document.getElementById('conteneur-info-dropdown');
+            if (!infoDiv) {
+                infoDiv = document.createElement('div');
+                infoDiv.id = 'conteneur-info-dropdown';
+                infoDiv.style.margin = '8px 0 0 0';
+                infoDiv.style.fontSize = '0.98em';
+                infoDiv.style.background = 'linear-gradient(135deg, #10b981, #34d399)';
+                infoDiv.style.color = '#fff';
+                infoDiv.style.borderRadius = '8px';
+                infoDiv.style.padding = '8px';
+                conteneurSelect.parentNode.appendChild(infoDiv);
+            }
+
+            if (!list.length) {
+                infoDiv.style.display = 'none';
+            } else {
+                infoDiv.style.display = '';
+            }
+
+            conteneurSelect.onchange = function() {
+                const val = conteneurSelect.value;
+                const c = list.find(x => (x.id || x.ID || '') == val);
+                if (c) {
+                    infoDiv.innerHTML = `<div style='padding:8px 0 0 0;'><strong>${c.name || c.conteneur_name || ''}</strong><br>${[c.number, c.road, c.postal_code, c.city].filter(Boolean).join(', ')}<br>${c.description ? '<span style="color:#888">'+c.description+'</span>' : ''}</div>`;
+                } else {
+                    infoDiv.innerHTML = '';
+                }
+            };
+        }
+
+        const suggestBtn = document.getElementById('suggest-conteneur');
+        function showCustomModal(message, addressFields = false) {
+            let modal = document.getElementById('custom-modal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'custom-modal';
+                modal.className = 'deposit-modal add-modal';
+                modal.style.display = 'none';
+                modal.innerHTML = `
+                    <div class="deposit-modal-content add-modal-content" style="max-width:400px;text-align:center;">
+                        <span class="close-button" id="close-custom-modal">&times;</span>
+                        <div id="custom-modal-message" style="margin:32px 0 24px;font-size:1.15em;"></div>
+                        <button type="button" id="custom-modal-ok" class="add-offer-button" style="margin-bottom:8px;">OK</button>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+                modal.querySelector('#close-custom-modal').onclick = closeCustomModal;
+                modal.querySelector('#custom-modal-ok').onclick = closeCustomModal;
+            }
+            if (addressFields) {
+                modal.querySelector('#custom-modal-message').innerHTML = `
+                    <div style="margin-bottom:12px;font-weight:600;font-size:1.08em;">Enter an address:</div>
+                    <div style="margin-bottom:8px;">
+                        <label for="manual-searchbar-input" style="display:flex;align-items:center;font-weight:600;margin-bottom:4px;font-size:1em;">
+                            <i class="fa-solid fa-magnifying-glass-location" style="margin-right:8px;color:#10b981;"></i> Search address (datagouv API)
+                        </label>
+                        <input id="manual-searchbar-input" type="text" style="width:100%;padding:8px 10px;font-size:1em;border:1px solid #ccc;border-radius:6px;">
+                        <div id="manual-searchbar-results" style="margin-top:4px;text-align:left;max-height:120px;overflow-y:auto;"></div>
+                    </div>
+                    <hr style="border:none;border-top:2px solid #10b981;margin:16px 0;">
+                    <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;">
+                        <label for="manual-number-input" style="display:flex;align-items:center;font-weight:600;font-size:1em;width:70px;">
+                            <i class="fa-solid fa-hashtag" style="margin-right:6px;color:#10b981;"></i> Number
+                        </label>
+                        <input id="manual-number-input" type="text" style="width:60px;padding:8px 6px;font-size:1em;border:1px solid #ccc;border-radius:6px;">
+                        <label for="manual-road-input" style="display:flex;align-items:center;font-weight:600;font-size:1em;margin-left:8px;">
+                            <i class="fa-solid fa-road" style="margin-right:6px;color:#10b981;"></i> Road
+                        </label>
+                        <input id="manual-road-input" type="text" style="flex:1;padding:8px 10px;font-size:1em;border:1px solid #ccc;border-radius:6px;">
+                    </div>
+                    <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;">
+                        <label for="manual-postal-input" style="display:flex;align-items:center;font-weight:600;font-size:1em;width:110px;">
+                            <i class="fa-solid fa-envelope" style="margin-right:6px;color:#10b981;"></i> Postal code
+                        </label>
+                        <input id="manual-postal-input" type="text" style="width:100px;padding:8px 6px;font-size:1em;border:1px solid #ccc;border-radius:6px;">
+                        <label for="manual-city-input" style="display:flex;align-items:center;font-weight:600;font-size:1em;margin-left:8px;">
+                            <i class="fa-solid fa-city" style="margin-right:6px;color:#10b981;"></i> City
+                        </label>
+                        <input id="manual-city-input" type="text" style="flex:1;padding:8px 10px;font-size:1em;border:1px solid #ccc;border-radius:6px;">
+                    </div>
+                `;
+                const okBtn = modal.querySelector('#custom-modal-ok');
+                okBtn.textContent = 'OK';
+                okBtn.style.background = '#1abc9c';
+                okBtn.style.color = '#fff';
+                okBtn.style.border = 'none';
+                okBtn.style.borderRadius = '24px';
+                okBtn.style.padding = '12px 32px';
+                okBtn.style.fontSize = '1.08em';
+                okBtn.style.fontWeight = '600';
+                okBtn.style.boxShadow = '0 2px 8px rgba(26,188,156,0.12)';
+                okBtn.style.transition = 'background 0.2s';
+                okBtn.onclick = function() {
+                    const number = document.getElementById('manual-number-input').value;
+                    const road = document.getElementById('manual-road-input').value;
+                    const postal = document.getElementById('manual-postal-input').value;
+                    const city = document.getElementById('manual-city-input').value;
+                    const address = [number, road, postal, city].filter(Boolean).join(', ');
+                    closeCustomModal();
+                    if (address) suggestConteneurByAddress(address);
+                };
+                modal.querySelector('#close-custom-modal').onclick = closeCustomModal;
+                modal.style.display = '';
+                modal.classList.add('is-open');
+                modal.setAttribute('aria-hidden', 'false');
+                document.body.classList.add('modal-open');
+                setTimeout(() => {
+                    document.getElementById('manual-number-input').focus();
+                }, 100);
+
+                const searchInput = document.getElementById('manual-searchbar-input');
+                const resultsDiv = document.getElementById('manual-searchbar-results');
+                let searchTimeout = null;
+                searchInput.oninput = function() {
+                    const val = searchInput.value.trim();
+                    if (!val) { resultsDiv.innerHTML = ''; return; }
+                    if (searchTimeout) clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => {
+                        fetch(`https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(val)}`)
+                            .then(r => r.json())
+                            .then(data => {
+                                if (data && data.features && data.features.length) {
+                                    resultsDiv.innerHTML = data.features.slice(0,5).map(f => {
+                                        const props = f.properties;
+                                        return `<div class="search-result-item" style="padding:6px 8px;cursor:pointer;border-bottom:1px solid #eee;" data-number="${props.housenumber||''}" data-road="${props.street||props.name||''}" data-postal="${props.postcode||''}" data-city="${props.city||''}"><i class='fa-solid fa-location-dot' style='font-size:1em;margin-right:8px;color:#1abc9c;'></i>${props.housenumber||''} ${props.street||props.name||''}, ${props.postcode||''} ${props.city||''}</div>`;
+                                    }).join('');
+                                    resultsDiv.querySelectorAll('.search-result-item').forEach(item => {
+                                        item.onclick = function() {
+                                            document.getElementById('manual-number-input').value = item.getAttribute('data-number');
+                                            document.getElementById('manual-road-input').value = item.getAttribute('data-road');
+                                            document.getElementById('manual-postal-input').value = item.getAttribute('data-postal');
+                                            document.getElementById('manual-city-input').value = item.getAttribute('data-city');
+                                            resultsDiv.innerHTML = '';
+                                        };
+                                    });
+                                } else {
+                                    resultsDiv.innerHTML = '<div style="padding:6px 8px;color:#888;">No results</div>';
+                                }
+                            })
+                            .catch(() => { resultsDiv.innerHTML = '<div style="padding:6px 8px;color:#888;">Error</div>'; });
+                    }, 350);
+                };
+            } else {
+                modal.querySelector('#custom-modal-message').innerHTML = message;
+                modal.querySelector('#custom-modal-ok').onclick = closeCustomModal;
+            }
+            modal.style.display = '';
+            modal.classList.add('is-open');
+            modal.setAttribute('aria-hidden', 'false');
+            modal.style.zIndex = 4000;
+            document.body.classList.add('modal-open');
+            function closeCustomModal() {
+                modal.classList.remove('is-open');
+                modal.setAttribute('aria-hidden', 'true');
+                modal.style.display = 'none';
+                document.body.classList.remove('modal-open');
+            }
+        }
+
+        if (suggestBtn) {
+            let menu = null;
+            suggestBtn.classList.add('styled-suggest-btn');
+            suggestBtn.style.background = 'linear-gradient(135deg, #10b981, #34d399)';
+            suggestBtn.style.border = '2px solid transparent';
+            suggestBtn.style.color = '#fff';
+            suggestBtn.style.fontWeight = '600';
+            suggestBtn.style.borderRadius = '8px';
+            suggestBtn.style.fontSize = '1.08em';
+            suggestBtn.style.transition = 'background 0.2s, color 0.2s';
+            suggestBtn.onmouseover = () => { suggestBtn.style.background = 'linear-gradient(135deg, #34d399, #10b981)'; };
+            suggestBtn.onmouseout = () => { suggestBtn.style.background = 'linear-gradient(135deg, #10b981, #34d399)'; };
+
+            suggestBtn.addEventListener('click', function(e) {
+                console.log('[DEBUG] Suggest button clicked');
+                e.preventDefault();
+                if (menu) menu.remove();
+                menu = document.createElement('div');
+                menu.className = 'suggest-menu';
+                menu.style.position = 'fixed';
+                menu.style.zIndex = 99999;
+                menu.style.background = '#fff';
+                menu.style.border = '2px solid #1a7f37';
+                menu.style.boxShadow = '0 4px 16px rgba(0,0,0,0.18)';
+                menu.style.padding = '0';
+                menu.style.minWidth = '260px';
+                menu.style.borderRadius = '12px';
+                menu.style.fontSize = '1.08em';
+                menu.style.overflow = 'hidden';
+                menu.innerHTML = `
+                    <button type="button" class="suggest-menu-item" data-method="db" style="display:flex;align-items:center;width:100%;padding:10px 16px;text-align:left;background:none;border:none;cursor:pointer;font-weight:600;color:#1a7f37;font-size:0.98em;transition:background 0.2s;">
+                        <i class="fa-solid fa-location-dot" style="font-size:1em;margin-right:10px;color:#1a7f37;"></i> Based on my address
+                    </button>
+                    <button type="button" class="suggest-menu-item" data-method="geo" style="display:flex;align-items:center;width:100%;padding:10px 16px;text-align:left;background:none;border:none;cursor:pointer;font-weight:600;color:#1a7f37;font-size:0.98em;transition:background 0.2s;">
+                        <i class="fa-solid fa-location-crosshairs" style="font-size:1em;margin-right:10px;color:#1a7f37;"></i> Based on my position
+                    </button>
+                    <button type="button" class="suggest-menu-item" data-method="manual" style="display:flex;align-items:center;width:100%;padding:10px 16px;text-align:left;background:none;border:none;cursor:pointer;font-weight:600;color:#1a7f37;font-size:0.98em;transition:background 0.2s;">
+                        <i class="fa-solid fa-pencil" style="font-size:1em;margin-right:10px;color:#1a7f37;"></i> Based on an address I fill out
+                    </button>
+                `;
+                document.body.appendChild(menu);
+                const rect = suggestBtn.getBoundingClientRect();
+                let left = rect.left + window.scrollX;
+                let top = rect.bottom + window.scrollY + 4;
+                if (left + 280 > window.innerWidth) left = window.innerWidth/2 - 140;
+                if (top + 160 > window.innerHeight) top = window.innerHeight/2 - 80;
+                menu.style.left = left + 'px';
+                menu.style.top = top + 'px';
+
+                menu.querySelectorAll('.suggest-menu-item').forEach(btn => {
+                    btn.onmouseover = () => { btn.style.background = '#e6f4ea'; };
+                    btn.onmouseout = () => { btn.style.background = 'none'; };
+                });
+
+                function closeMenu(ev) {
+                    if (!menu.contains(ev.target) && ev.target !== suggestBtn) {
+                        menu.remove();
+                        document.removeEventListener('mousedown', closeMenu);
+                    }
+                }
+                setTimeout(() => document.addEventListener('mousedown', closeMenu), 0);
+
+                menu.querySelectorAll('.suggest-menu-item').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const method = btn.getAttribute('data-method');
+                        menu.remove();
+                        if (method === 'db') {
+                            if (window.CURRENT_USER_ID) {
+                                fetch(`get-user-address?id=${encodeURIComponent(window.CURRENT_USER_ID)}`)
+                                    .then(r => r.json())
+                                    .then(data => {
+                                        if (data && data.address) {
+                                            suggestConteneurByAddress(data.address);
+                                        } else {
+                                            showCustomModal('No address found for your account.');
+                                        }
+                                    })
+                                    .catch(() => showCustomModal('Failed to fetch your address.'));
+                            } else {
+                                showCustomModal('User not logged in.');
+                            }
+                        } else if (method === 'geo') {
+                            if (navigator.geolocation) {
+                                navigator.geolocation.getCurrentPosition(function(pos) {
+                                    const coords = pos.coords;
+                                    suggestConteneurByCoords(coords.latitude, coords.longitude);
+                                }, function() {
+                                    showCustomModal('Unable to get your position.');
+                                });
+                            } else {
+                                showCustomModal('Geolocation not supported.');
+                            }
+                        } else if (method === 'manual') {
+                        showCustomModal('', true);
+                        }
+                    });
+                });
+            });
+
+            function suggestConteneurByAddress(address) {
+                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`)
+                    .then(r => r.json())
+                    .then(results => {
+                        if (Array.isArray(results) && results.length) {
+                            const lat = parseFloat(results[0].lat);
+                            const lon = parseFloat(results[0].lon);
+                            suggestConteneurByCoords(lat, lon);
+                        } else {
+                            showCustomModal('Address not found.');
+                        }
+                    })
+                    .catch(() => showCustomModal('Failed to geocode address.'));
+            }
+
+            function suggestConteneurByCoords(lat, lon) {
+                console.log('[DEBUG] Geolocation received:', { lat, lon });
+                const list = Array.isArray(window.AVAILABLE_CONTENEURS) ? window.AVAILABLE_CONTENEURS : [];
+                if (!list.length) return showCustomModal('No conteneurs available.');
+
+                showCustomModal(`<div style='display:flex;flex-direction:column;align-items:center;justify-content:center;'><i class='fa-solid fa-spinner fa-spin' style='font-size:2em;color:#10b981;margin-bottom:12px;'></i><span>Finding the nearest conteneur...</span></div>`);
+                let minDist = Infinity, nearest = null, nearestIndex = -1;
+                let completed = 0;
+                list.forEach((c, idx) => {
+                    const address = [c.number, c.road, c.postal_code, c.city].filter(Boolean).join(', ');
+                    if (!address) {
+                        completed++;
+                        if (completed === list.length) finalize();
+                        return;
+                    }
+                    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`)
+                        .then(r => r.json())
+                        .then(results => {
+                            if (Array.isArray(results) && results.length) {
+                                const clat = parseFloat(results[0].lat);
+                                const clon = parseFloat(results[0].lon);
+                                const d = haversine(lat, lon, clat, clon);
+                                if (d < minDist) { minDist = d; nearest = c; nearestIndex = idx; }
+                            }
+                        })
+                        .catch(() => {})
+                        .finally(() => {
+                            completed++;
+                            if (completed === list.length) finalize();
+                        });
+                });
+                function finalize() {
+
+                    let modal = document.getElementById('custom-modal');
+                    if (modal) { modal.classList.remove('is-open'); modal.setAttribute('aria-hidden', 'true'); modal.style.display = 'none'; document.body.classList.remove('modal-open'); }
+                    if (nearest) {
+                        conteneurSelect.value = nearest.id || nearest.ID || '';
+                        conteneurSelect.dispatchEvent(new Event('change'));
+                        conteneurSelect.focus();
+                    } else {
+                        showCustomModal('No conteneur found near this location.');
+                    }
+                }
+            }
+
+            function haversine(lat1, lon1, lat2, lon2) {
+                function toRad(x) { return x * Math.PI / 180; }
+                const R = 6371;
+                const dLat = toRad(lat2 - lat1);
+                const dLon = toRad(lon2 - lon1);
+                const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                return R * c;
+            }
         }
 
         form.addEventListener('submit', function(ev) {
