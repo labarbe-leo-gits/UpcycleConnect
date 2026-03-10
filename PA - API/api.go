@@ -288,6 +288,18 @@ func main() {
 	registerRoute("GET", "/users/{id}/balance", "Get the current balance for a user", app.GetUserBalance, app.JWTAuthMiddleware)
 	registerRoute("PATCH", "/users/{id}/balance", "Update a user's balance", app.UpdateUserBalance, app.JWTAuthMiddleware)
 
+	registerRoute("GET", "/polls/{id}", "Get details of a specific poll by its UUID", app.GetPollByID, app.JWTAuthMiddleware)
+	registerRoute("POST", "/polls", "Create a new poll", app.CreatePoll, app.JWTAuthMiddleware)
+	registerRoute("GET", "/polls/{id}/options", "List all options for a specific poll by its UUID", app.GetPollOptions, app.JWTAuthMiddleware)
+	registerRoute("POST", "/polls/{id}/options", "Create a new option for a specific poll by its UUID", app.CreatePollOption, app.JWTAuthMiddleware)
+	registerRoute("GET", "/polls/{id}/votes", "List all votes for a specific poll by its UUID", app.GetPollVotes, app.JWTAuthMiddleware)
+	registerRoute("POST", "/polls/{id}/vote", "Cast a vote for a specific poll by its UUID", app.CastPollVote, app.JWTAuthMiddleware)
+	registerRoute("DELETE", "/polls/{id}/user/{uid}/vote", "Remove a user's vote from a specific poll by its UUID", app.RemovePollVote, app.JWTAuthMiddleware)
+	registerRoute("PATCH", "/polls/{id}", "Update a poll's question or expiration by its UUID", app.UpdatePoll, app.JWTAuthMiddleware)
+	registerRoute("DELETE", "/polls/{id}/options/{oID}", "Delete a specific option from a poll by their UUIDs", app.DeletePollOption, app.JWTAuthMiddleware)
+	registerRoute("PATCH", "/polls/{id}/options/{oID}", "Update a specific option's text in a poll by their UUIDs", app.UpdatePollOption, app.JWTAuthMiddleware)
+	registerRoute("DELETE", "/polls/{id}", "Delete a poll by its UUID", app.DeletePoll, app.JWTAuthMiddleware)
+
 	http.HandleFunc("/", notFoundHandler)
 
 	fmt.Println("Listening at : " + host + ":" + port)

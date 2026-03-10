@@ -1,3 +1,52 @@
+.address-hr {
+  width: 80%;
+  margin: 18px auto 18px auto;
+  border: none;
+  border-top: 1.5px solid #e5e7eb;
+}
+.address-edit-btn-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.address-fields-row {
+  display: flex;
+  gap: 18px;
+  margin-bottom: 0;
+}
+.address-fields-row .field {
+  flex: 1 1 0;
+  margin-bottom: 12px;
+}
+.address-edit-form .input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.address-edit-form .input-wrapper i {
+  position: absolute;
+  left: 14px;
+  color: #9ca3af;
+  font-size: 16px;
+  pointer-events: none;
+}
+.address-edit-form .icon-input {
+  padding-left: 48px;
+}
+.address-edit-form .field label {
+  margin-bottom: 6px;
+}
+.address-edit-form .field input {
+  margin-bottom: 0;
+}
+@media (max-width: 600px) {
+  .address-fields-row {
+    flex-direction: column;
+    gap: 0;
+  }
+}
+
 .custom-toast {
   position: fixed;
   top: 32px;
