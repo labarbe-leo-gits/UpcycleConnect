@@ -7,9 +7,30 @@
     let filtered      = [];
     let currentPage   = 1;
     let pendingDeleteId = null;
+    let searchTerm = '';
+    let cityFilter = '';
+    let sortFilter = 'name';
 
     document.addEventListener('DOMContentLoaded', function () {
         bindToolbar();
+
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('search')) {
+            searchTerm = params.get('search') || '';
+            const inp = document.getElementById('container-search');
+            if (inp) inp.value = searchTerm;
+        }
+        if (params.has('city')) {
+            cityFilter = params.get('city') || '';
+        }
+        if (params.has('sort')) {
+            sortFilter = params.get('sort') || sortFilter;
+        }
+
+        if (params.has('page')) {
+            const p = parseInt(params.get('page'), 10);
+            if (!isNaN(p) && p > 0) currentPage = p;
+        }
         loadContainers();
         bindAddressSearch();
     });
@@ -23,6 +44,22 @@
                 currentPage = 1;
                 applyFilter(this.value.trim());
             });
+        const citySel = document.getElementById('container-city-filter');
+        if (citySel) {
+            citySel.addEventListener('change', function() {
+                cityFilter = this.value;
+                currentPage = 1;
+                applyFilter(searchTerm);
+            });
+        }
+        const sortSel = document.getElementById('container-sort-filter');
+        if (sortSel) {
+            sortSel.value = sortFilter;
+            sortSel.addEventListener('change', function() {
+                sortFilter = this.value;
+                applyFilter(searchTerm);
+            });
+        }
 
         document.getElementById('container-form-modal-close')
             ?.addEventListener('click', () => hideModal('container-form-modal'));
@@ -63,9 +100,15 @@
                     : (data && Array.isArray(data.items)) ? data.items
                     : [];
                 allContainers = items;
+                populateCityDropdown(items);
                 filtered      = items.slice();
                 currentPage   = 1;
-                renderPage();
+                
+                if (searchTerm || cityFilter || sortFilter !== 'name') {
+                    applyFilter(searchTerm);
+                } else {
+                    renderPage();
+                }
             })
             .catch(err => {
                 console.error('Failed to load containers', err);
@@ -76,7 +119,17 @@
 
     let _filterTimer = null;
 
+    function populateCityDropdown(items) {
+        const sel = document.getElementById('container-city-filter');
+        if (!sel) return;
+        const cities = Array.from(new Set(items.map(c => (c.city || '').trim()).filter(Boolean))).sort((a,b)=>a.localeCompare(b,undefined,{sensitivity:'base'}));
+        sel.innerHTML = '<option value="">All cities</option>' + cities.map(c => `<option value="${escHtml(c)}">${escHtml(c)}</option>`).join('');
+        if (cityFilter) sel.value = cityFilter;
+    }
+
     function applyFilter(search) {
+        searchTerm = search;
+        updateUrlParams();
         const container = document.getElementById('containers-container');
         renderSkeletons(container, Math.min(allContainers.length || 6, 6));
         document.getElementById('containers-pagination').innerHTML = '';
@@ -85,15 +138,28 @@
         _filterTimer = setTimeout(() => {
             const q = search.toLowerCase();
             filtered = allContainers.filter(c =>
-                (c.name || '').toLowerCase().includes(q) ||
+                ((c.name || '').toLowerCase().includes(q) ||
                 (c.city || '').toLowerCase().includes(q) ||
-                (c.road || '').toLowerCase().includes(q)
+                (c.road || '').toLowerCase().includes(q)) &&
+                (cityFilter === '' || (c.city || '').toLowerCase() === cityFilter.toLowerCase())
             );
+
+            if (sortFilter === 'name') {
+                filtered.sort((a,b)=> (a.name||'').localeCompare(b.name||'',undefined,{sensitivity:'base'}));
+            } else if (sortFilter === 'city') {
+                filtered.sort((a,b)=> (a.city||'').localeCompare(b.city||'',undefined,{sensitivity:'base'}));
+            } else if (sortFilter === 'created') {
+                filtered.sort((a,b)=> (b.created_at||'').localeCompare(a.created_at||''));
+            } else if (sortFilter === 'created_asc') {
+                filtered.sort((a,b)=> (a.created_at||'').localeCompare(b.created_at||''));
+            }
             renderPage();
         }, 200);
     }
 
     function renderPage() {
+
+        updateUrlParams();
         const container  = document.getElementById('containers-container');
         const pagination = document.getElementById('containers-pagination');
 
@@ -263,6 +329,31 @@
         });
 
         results.style.display = 'block';
+    }
+
+    function updateUrlParams() {
+        const url = new URL(window.location.href);
+        if (searchTerm) {
+            url.searchParams.set('search', searchTerm);
+        } else {
+            url.searchParams.delete('search');
+        }
+        if (cityFilter) {
+            url.searchParams.set('city', cityFilter);
+        } else {
+            url.searchParams.delete('city');
+        }
+        if (sortFilter) {
+            url.searchParams.set('sort', sortFilter);
+        } else {
+            url.searchParams.delete('sort');
+        }
+        if (currentPage && currentPage > 1) {
+            url.searchParams.set('page', currentPage);
+        } else {
+            url.searchParams.delete('page');
+        }
+        window.history.replaceState({}, '', url.toString());
     }
 
     function applyAddress(p) {

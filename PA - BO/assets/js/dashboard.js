@@ -176,9 +176,32 @@
         });
     }
 
+    async function refreshKpis() {
+        try {
+            var res = await fetch('dashboard-api.php', { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+            if (!res.ok) throw new Error('Failed to load dashboard data');
+            var d = await res.json();
+            document.getElementById('user-count').textContent = d.userCount;
+            document.getElementById('container-count').textContent = d.containerCount;
+            document.getElementById('income-total').textContent = d.totalIncome.toFixed(2) + ' €';
+            document.getElementById('project-count').textContent = d.projectCount;
+
+            document.querySelector('#user-count + .dashboard-small + .dashboard-small')?.textContent = d.userDelta + ' (' + d.userPct + '%) since yesterday';
+            document.querySelector('#container-count + .dashboard-small + .dashboard-small')?.textContent = d.containerDelta + ' (' + d.containerPct + '%) since yesterday';
+            document.querySelector('#income-total + .dashboard-small + .dashboard-small')?.textContent = (d.incomeDelta>=0?'+':'')+d.incomeDelta.toFixed(2) + ' € (' + d.incomePct + '%) vs yesterday';
+            document.querySelector('#project-count + .dashboard-small + .dashboard-small')?.textContent = d.projectDelta + ' (' + d.projectPct + '%) since yesterday';
+        } catch(e) {
+            console.error(e);
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', async function () {
         var loader = document.getElementById('initial-loader');
-        if (loader) loader.style.display = 'none';
+        if (loader) { loader.style.display = 'none'; loader.setAttribute('aria-hidden','true'); }
+        var main = document.getElementById('main-content');
+        if (main) main.style.visibility = 'visible';
+
+        refreshKpis();
 
         try {
             var res  = await fetch('subscription-api', { headers: { 'X-Requested-With': 'XMLHttpRequest' } });

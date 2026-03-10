@@ -10,6 +10,15 @@ include_once '../../includes/admin-header.php';
         <button class="add-offer-button" id="create-container-btn">
             <i class="fa-solid fa-plus"></i> Add container
         </button>
+        <select id="container-city-filter" class="admin-filter-select">
+            <option value="">All cities</option>
+        </select>
+        <select id="container-sort-filter" class="admin-filter-select">
+            <option value="name">Sort by name</option>
+            <option value="city">Sort by city</option>
+            <option value="created">Newest</option>
+            <option value="created_asc">Oldest</option>
+        </select>
         <div class="toolbar-search-wrap">
             <i class="fa-solid fa-search toolbar-search-icon"></i>
             <input type="text" id="container-search" placeholder="Search by name or city…" />
@@ -84,7 +93,6 @@ include_once '../../includes/admin-header.php';
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-<!-- Create / Edit modal -->
 <div class="add-modal" id="container-form-modal" role="dialog" aria-hidden="true">
     <div class="add-modal-content">
         <span class="close-button" id="container-form-modal-close">&times;</span>

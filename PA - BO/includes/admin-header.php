@@ -56,6 +56,10 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
             <h1>Admin Portal</h1>
         </div>
         <nav>
+            <div class="btn-wrapper" onClick="window.location.href='dashboard'">
+                <i class="fa-solid fa-tachograph-digital"></i>
+                <p>Dashboard</p>
+            </div>
             <div class="nav-dropdown community-dropdown">
                 <a class="btn-wrapper" href="../common/forums">
                     <i class="fa-solid fa-users"></i>
@@ -88,10 +92,6 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
                     <a href="/PA/PA%20-%20BO/pages/customers/services"><i class="fa-solid fa-money-bill-transfer"></i>Payouts</a>
                     <a href="/PA/PA%20-%20BO/pages/admin/refunds"><i class="fa-solid fa-rotate-left"></i>Refunds</a>
                 </div>
-            </div>
-            <div class="btn-wrapper" onClick="window.location.href='<?= htmlspecialchars($principalBaseUrl !== '' ? $principalBaseUrl : '../public/index') ?>'">
-                <i class="fa-solid fa-arrow-left"></i>
-                <p>Main Site</p>
             </div>
             <div class="btn-wrapper" id="dark-toggle" title="Toggle dark mode">
                 <i class="fa-solid fa-moon"></i>

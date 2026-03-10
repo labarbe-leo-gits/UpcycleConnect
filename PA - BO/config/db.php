@@ -51,6 +51,12 @@ function askAPI($endpoint, $method, $data = null){
     } else {
         error_log('askAPI: no JWT token present or endpoint is login/register');
     }
+    
+    $internal = getenv('APP_API_KEY');
+    if (!empty($internal)) {
+        $headers[] = 'X-Internal-Key: ' . $internal;
+        error_log('askAPI: attaching internal key to request');
+    }
     if (!empty($headers)) {
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
     }

@@ -360,3 +360,17 @@
   color: #dc2626;
   border: 1px solid #fecaca;
 }
+
+.dashboard-small { font-size:.85rem; color:#6b7280; }
+#pie-chart, #line-chart { width:100%; height:100%; }
+#pie-chart, #line-chart { border:1px solid #d1d5db; border-radius:8px; padding:4px; box-sizing:border-box; }
+    
+.portal-card {
+  background: #fff !important;
+  border-color: transparent !important;
+  transition: border-color 0.2s;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+.portal-card:hover {
+  border-color: #10b981 !important;
+}
