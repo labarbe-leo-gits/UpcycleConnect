@@ -481,8 +481,7 @@ CREATE TABLE IF NOT EXISTS polls (
 CREATE TABLE IF NOT EXISTS poll_options (
     id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
     poll_id CHAR(36) NOT NULL,
-    option_text VARCHAR(255) NOT NULL,
-    vote_count INT NOT NULL DEFAULT 0,
+    option_text VARCHAR(255) NOT NULL
     FOREIGN KEY (poll_id) REFERENCES polls(id) ON DELETE CASCADE
 );
 

@@ -6,9 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -24,7 +22,7 @@ func GetPollByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	poll, options, err := db.GetPollByIDFromDB(pollID)
+	poll, err := db.GetPollByIDFromDB(pollID)
 	if err != nil {
 		fmt.Println("[ERROR] GetPollByID:", err)
 		sendError(w, "Unable to fetch poll data", http.StatusInternalServerError)
@@ -190,7 +188,7 @@ func CreatePollOption(w http.ResponseWriter, r *http.Request) {
 
 	optionDTO.PollID = pollID
 
-	var validationErrors := ValidatePollOptionDTO(optionDTO)
+	var validationErrors = ValidatePollOptionDTO(optionDTO)
 	if validationErrors != nil {
 		fmt.Println("[ERROR] CreatePollOption validation:", validationErrors)
 		sendError(w, fmt.Sprintf("Validation error: %s", validationErrors.Error()), http.StatusBadRequest)
@@ -298,7 +296,7 @@ func CastPollVote(w http.ResponseWriter, r *http.Request) {
 
 	voteDTO.PollID = pollID
 
-	var validationErrors := ValidatePollVoteDTO(voteDTO)
+	var validationErrors = ValidatePollVoteDTO(voteDTO)
 
 	if validationErrors != nil {
 		fmt.Println("[ERROR] CastPollVote validation:", validationErrors)
@@ -393,7 +391,7 @@ func UpdatePoll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	existingPoll, _, err := db.GetPollByIDFromDB(pollID)
+	existingPoll, err := db.GetPollByIDFromDB(pollID)
 
 	if err != nil {
 		fmt.Println("[ERROR] UpdatePoll fetch existing:", err)
@@ -411,7 +409,7 @@ func UpdatePoll(w http.ResponseWriter, r *http.Request) {
 
 	pollDTO.ID = pollID
 
-	var validationErrors := ValidatePollDTO(pollDTO)
+	var validationErrors = ValidatePollDTO(pollDTO)
 
 	if validationErrors != nil {
 		fmt.Println("[ERROR] UpdatePoll validation:", validationErrors)
@@ -492,7 +490,6 @@ func DeletePollOptions(w http.ResponseWriter, r *http.Request) {
 
 }
 
-
 func UpdatePollOption(w http.ResponseWriter, r *http.Request) {
 
 	pathParts := strings.Split(r.URL.Path, "/")
@@ -555,7 +552,7 @@ func UpdatePollOption(w http.ResponseWriter, r *http.Request) {
 	optionDTO.PollID = pollID
 	optionDTO.ID = optionID
 
-	var validationErrors := ValidatePollOptionDTO(optionDTO)
+	var validationErrors = ValidatePollOptionDTO(optionDTO)
 
 	if validationErrors != nil {
 		fmt.Println("[ERROR] UpdatePollOption validation:", validationErrors)
@@ -629,7 +626,7 @@ func DeletePoll(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	jsonResponse, err := json.Marshal(map[string]string{"message": "Poll deleted successfully"})
+	jsonResponse, err = json.Marshal(map[string]string{"message": "Poll deleted successfully"})
 
 	if err != nil {
 		fmt.Println("[ERROR] DeletePoll marshal:", err)
