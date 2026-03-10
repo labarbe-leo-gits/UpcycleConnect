@@ -279,6 +279,44 @@
   background: #e5e7eb;
   color: #111827;
 }
+
+#manual-searchbar-results {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  z-index: 9999;
+  max-height: 240px;
+  overflow-y: auto;
+  display: none;
+}
+#manual-searchbar-results .addr-result-item {
+  padding: 10px 14px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid #f3f4f6;
+  transition: background 0.1s;
+  text-align: left;
+}
+#manual-searchbar-results .addr-result-item:last-child {
+  border-bottom: none;
+}
+#manual-searchbar-results .addr-result-item:hover {
+  background: #f0fdf4;
+  color: #10b981;
+}
+#manual-searchbar-results .addr-result-item i {
+  color: #10b981;
+  flex-shrink: 0;
+}
 .deposit-modal-grid {
   display: grid;
   grid-template-columns: 1fr 360px;

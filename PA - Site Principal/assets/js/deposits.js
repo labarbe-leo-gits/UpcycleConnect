@@ -5,6 +5,258 @@
     let currentPage = 1;
     let totalPages = 1;
 
+    function showInlineStatus(text) {
+        let st = document.getElementById('suggest-status');
+        if (!st) {
+            st = document.createElement('div');
+            st.id = 'suggest-status';
+            st.style.marginTop = '8px';
+            st.style.fontSize = '0.95em';
+            st.style.color = '#10b981';
+            const parent = document.getElementById('suggest-conteneur');
+            if (parent && parent.parentNode) parent.parentNode.appendChild(st);
+        }
+        if (st) st.textContent = text;
+    }
+    function clearInlineStatus() {
+        const st = document.getElementById('suggest-status');
+        if (st) st.remove();
+    }
+
+    function haversine(lat1, lon1, lat2, lon2) {
+        function toRad(x) { return x * Math.PI / 180; }
+        const R = 6371;
+        const dLat = toRad(lat2 - lat1);
+        const dLon = toRad(lon2 - lon1);
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+    }
+
+    function showCustomModal(message, addressFields = false) {
+        let modal = document.getElementById('custom-modal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'custom-modal';
+            modal.className = 'deposit-modal add-modal';
+            modal.style.display = 'none';
+            modal.innerHTML = `
+                <div class="deposit-modal-content add-modal-content" style="max-width:400px;text-align:center;">
+                    <span class="close-button" id="close-custom-modal">&times;</span>
+                    <div id="custom-modal-message" style="margin:32px 0 24px;font-size:1.15em;"></div>
+                    <button type="button" id="custom-modal-ok" class="add-offer-button" style="margin-bottom:8px;">OK</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            modal.querySelector('#close-custom-modal').onclick = closeCustomModal;
+            modal.querySelector('#custom-modal-ok').onclick = closeCustomModal;
+        }
+        if (addressFields) {
+            modal.querySelector('#custom-modal-message').innerHTML = `
+                <div style="font-weight:600;font-size:1.08em;margin-bottom:12px;">Enter an address:</div>
+                <div class="field" style="margin-bottom:8px;position:relative;">
+                    <div class="input-wrapper" style="width:100%;">
+                        <i class="fa-solid fa-magnifying-glass-location"></i>
+                        <input id="manual-searchbar-input" type="text" placeholder="Search address" autocomplete="off" style="padding-left:36px;width:100%;" />
+                    </div>
+                    <div id="manual-searchbar-results"></div>
+                </div>
+                <div class="manual-fields" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div class="input-wrapper"><i class="fa-solid fa-hashtag"></i><input id="manual-number-input" type="text" placeholder="#" style="padding-left:36px;width:100%;" /></div>
+                    <div class="input-wrapper"><i class="fa-solid fa-road"></i><input id="manual-road-input" type="text" placeholder="Road" style="padding-left:36px;width:100%;" /></div>
+                    <div class="input-wrapper"><i class="fa-solid fa-envelope"></i><input id="manual-postal-input" type="text" placeholder="Postal" style="padding-left:36px;width:100%;" /></div>
+                    <div class="input-wrapper"><i class="fa-solid fa-city"></i><input id="manual-city-input" type="text" placeholder="City" style="padding-left:36px;width:100%;" /></div>
+                </div>
+            `;
+            const okBtn = modal.querySelector('#custom-modal-ok');
+            okBtn.textContent = 'OK';
+            okBtn.style.background = '#1abc9c';
+            okBtn.style.color = '#fff';
+            okBtn.style.border = 'none';
+            okBtn.style.borderRadius = '24px';
+            okBtn.style.padding = '12px 32px';
+            okBtn.style.fontSize = '1.08em';
+            okBtn.style.fontWeight = '600';
+            okBtn.style.boxShadow = '0 2px 8px rgba(26,188,156,0.12)';
+            okBtn.style.transition = 'background 0.2s';
+            okBtn.onclick = function() {
+                const number = document.getElementById('manual-number-input').value;
+                const road = document.getElementById('manual-road-input').value;
+                const postal = document.getElementById('manual-postal-input').value;
+                const city = document.getElementById('manual-city-input').value;
+                const address = [number, road, postal, city].filter(Boolean).join(', ');
+                closeCustomModal();
+                if (address) suggestConteneurByAddress(address);
+            };
+            modal.querySelector('#close-custom-modal').onclick = closeCustomModal;
+            modal.style.display = '';
+            modal.classList.add('is-open');
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('modal-open');
+            setTimeout(() => {
+                document.getElementById('manual-number-input').focus();
+            }, 100);
+
+            const searchInput = document.getElementById('manual-searchbar-input');
+            const resultsDiv = document.getElementById('manual-searchbar-results');
+            let searchTimeout = null;
+            searchInput.oninput = function() {
+                const val = searchInput.value.trim();
+                if (!val) { resultsDiv.innerHTML = ''; resultsDiv.style.display = 'none'; return; }
+                if (searchTimeout) clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    fetch(`https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(val)}`)
+                        .then(r => {
+                            if (!r.ok) throw new Error('datagouv failed');
+                            return r.json();
+                        })
+                        .catch(err => {
+                            console.warn('datagouv lookup failed, using nominatim as fallback', err);
+                            return fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}`)
+                                .then(r => r.json())
+                                .then(items => ({
+                                    features: Array.isArray(items) ? items.map(i => ({
+                                        properties: {
+                                            housenumber: (i.address && i.address.house_number) || '',
+                                            street: (i.address && (i.address.road || i.address.pedestrian || i.address.residential || i.address.cycleway || i.address.footway)) || i.display_name || '',
+                                            postcode: (i.address && i.address.postcode) || '',
+                                            city: (i.address && (i.address.city || i.address.town || i.address.village)) || ''
+                                        }
+                                    })) : []
+                                }));
+                        })
+                        .then(data => {
+                            if (data && data.features && data.features.length) {
+                                resultsDiv.style.display = 'block';
+                                resultsDiv.innerHTML = data.features.slice(0,5).map(f => {
+                                    const props = f.properties;
+                                    return `<div class="addr-result-item" data-number="${props.housenumber||''}" data-road="${props.street||props.name||''}" data-postal="${props.postcode||''}" data-city="${props.city||''}"><i class='fa-solid fa-location-dot'></i>${props.housenumber||''} ${props.street||props.name||''}, ${props.postcode||''} ${props.city||''}</div>`;
+                                }).join('');
+                                resultsDiv.querySelectorAll('.addr-result-item').forEach(item => {
+                                    item.onclick = function() {
+                                        document.getElementById('manual-number-input').value = item.getAttribute('data-number');
+                                        document.getElementById('manual-road-input').value = item.getAttribute('data-road');
+                                        document.getElementById('manual-postal-input').value = item.getAttribute('data-postal');
+                                        document.getElementById('manual-city-input').value = item.getAttribute('data-city');
+                                        resultsDiv.innerHTML = '';
+                                        resultsDiv.style.display = 'none';
+                                    };
+                                });
+                            } else {
+                                resultsDiv.style.display = 'block';
+                                resultsDiv.innerHTML = '<div style="padding:6px 8px;color:#888;">No results</div>';
+                            }
+                        })
+                        .catch(() => { resultsDiv.style.display = 'block'; resultsDiv.innerHTML = '<div style="padding:6px 8px;color:#888;">Error</div>'; });
+                }, 350);
+            };
+        } else {
+            modal.querySelector('#custom-modal-message').innerHTML = message;
+            modal.querySelector('#custom-modal-ok').onclick = closeCustomModal;
+        }
+        modal.style.display = '';
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
+        modal.style.zIndex = 4000;
+        document.body.classList.add('modal-open');
+        function closeCustomModal() {
+            modal.classList.remove('is-open');
+            modal.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('modal-open');
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 220);
+        }
+    }
+
+    function suggestConteneurByAddress(address) {
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`)
+            .then(r => r.json())
+            .then(results => {
+                if (Array.isArray(results) && results.length) {
+                    const lat = parseFloat(results[0].lat);
+                    const lon = parseFloat(results[0].lon);
+                    suggestConteneurByCoords(lat, lon, true, address);
+                } else {
+                    showCustomModal('Address not found.');
+                }
+            })
+            .catch(() => showCustomModal('Failed to geocode address.'));
+    }
+
+    function suggestConteneurByCoords(lat, lon, useModal = true, sourceAddr = '') {
+        console.log('[DEBUG] Geolocation received:', { lat, lon, useModal, sourceAddr });
+        const list = Array.isArray(window.AVAILABLE_CONTENEURS) ? window.AVAILABLE_CONTENEURS : [];
+        if (!list.length) {
+            if (useModal) return showCustomModal('No conteneurs available.');
+            clearInlineStatus();
+            showCustomModal('No conteneurs available.');
+            return;
+        }
+
+        if (useModal) {
+            showCustomModal(`<div style='display:flex;flex-direction:column;align-items:center;justify-content:center;'><i class='fa-solid fa-spinner fa-spin' style='font-size:2em;color:#10b981;margin-bottom:12px;'></i><span>Finding the nearest conteneur...</span></div>`);
+        } else {
+            showInlineStatus('Finding the nearest conteneur...');
+        }
+
+        let minDist = Infinity, nearest = null;
+        let completed = 0;
+        list.forEach((c, idx) => {
+            const address = [c.number, c.road, c.postal_code, c.city].filter(Boolean).join(', ');
+            if (!address) {
+                console.debug('[geocode] skipping container with no address', c);
+                completed++;
+                if (completed === list.length) finalize();
+                return;
+            }
+            geocodeAddress(address).then(coords => {
+                if (coords) {
+                    const clat = coords.lat;
+                    const clon = coords.lon;
+                    const d = haversine(lat, lon, clat, clon);
+                    console.debug('[geocode] ', address, '=>', coords, 'dist', d.toFixed(3));
+                    if (d < minDist) { minDist = d; nearest = c; }
+                } else {
+                    console.warn('[geocode] no coords for', address);
+                }
+            }).catch(err => {
+                console.warn('[geocode] exception for', address, err);
+            }).finally(() => {
+                completed++;
+                if (completed === list.length) finalize();
+            });
+        });
+        function finalize() {
+            if (useModal) {
+                let modal = document.getElementById('custom-modal');
+                if (modal) { modal.classList.remove('is-open'); modal.setAttribute('aria-hidden', 'true'); modal.style.display = 'none'; document.body.classList.remove('modal-open'); }
+            } else {
+                clearInlineStatus();
+            }
+            if (!nearest && sourceAddr) {
+                const low = sourceAddr.toLowerCase();
+                const cand = list.find(c => {
+                    const road = (c.road||'').toLowerCase();
+                    const city = (c.city||'').toLowerCase();
+                    return road && low.indexOf(road) !== -1 && (!city || low.indexOf(city) !== -1);
+                });
+                if (cand) nearest = cand;
+            }
+            if (nearest) {
+                const select = document.getElementById('deposit-conteneur');
+                if (select) {
+                    select.value = nearest.id || nearest.ID || '';
+                    select.dispatchEvent(new Event('change'));
+                    select.focus();
+                }
+            } else {
+                showCustomModal('No conteneur found near this location.');
+            }
+        }
+    }
+
+
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() {
             currentPage = getPageFromUrl();
@@ -347,26 +599,52 @@
     }
 
     function geocodeAddress(address) {
-        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`;
-        return fetch(url, { headers: { 'Accept-Language': 'en' } })
+
+        const nomUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`;
+        return fetch(nomUrl, { headers: { 'Accept-Language': 'en' }, timeout: 8000 })
             .then(r => {
-                if (!r.ok) {
-                    return null;
+                if (!r.ok) throw new Error('nominatim bad status '+r.status);
+                return r.json();
+            })
+            .then(results => {
+                if (Array.isArray(results) && results.length) {
+                    return { lat: parseFloat(results[0].lat), lon: parseFloat(results[0].lon) };
                 }
-                return r.text().then(text => {
-                    try {
-                        const results = JSON.parse(text);
-                        if (!Array.isArray(results) || results.length === 0) {
-                            return null;
-                        }
-                        return { lat: parseFloat(results[0].lat), lon: parseFloat(results[0].lon) };
-                    } catch (err) {
-                        return null;
-                    }
-                });
+                throw new Error('nominatim no results');
             })
             .catch(err => {
-                return null;
+                console.warn('geocodeAddress: nominatim failure', err);
+                const datUrl = `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(address)}&limit=1`;
+                return fetch(datUrl)
+                    .then(r => {
+                        if (!r.ok) throw new Error('datagouv bad status '+r.status);
+                        return r.json();
+                    })
+                    .then(data => {
+                        if (data && data.features && data.features.length) {
+                            const coords = data.features[0].geometry.coordinates;
+                            return { lat: coords[1], lon: coords[0] };
+                        }
+                        return null;
+                    })
+                    .catch(e2 => {
+                        console.warn('geocodeAddress: datagouv failure', e2);
+                        return null;
+                    });
+            });
+    }
+
+    function reverseGeocode(lat, lon) {
+        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`;
+        return fetch(url, { headers: { 'Accept-Language': 'en' } })
+            .then(r => r.ok ? r.json() : Promise.reject('reverse failed'))
+            .then(data => {
+                if (data && data.display_name) return data.display_name;
+                return '';
+            })
+            .catch(err => {
+                console.warn('reverseGeocode failed', err);
+                return '';
             });
     }
 
@@ -670,151 +948,35 @@
                 conteneurSelect.parentNode.appendChild(infoDiv);
             }
 
-            if (!list.length) {
-                infoDiv.style.display = 'none';
-            } else {
-                infoDiv.style.display = '';
-            }
-
-            conteneurSelect.onchange = function() {
+            function updateInfoDiv() {
                 const val = conteneurSelect.value;
+                if (!val) {
+                    infoDiv.style.display = 'none';
+                    infoDiv.innerHTML = '';
+                    return;
+                }
                 const c = list.find(x => (x.id || x.ID || '') == val);
                 if (c) {
                     infoDiv.innerHTML = `<div style='padding:8px 0 0 0;'><strong>${c.name || c.conteneur_name || ''}</strong><br>${[c.number, c.road, c.postal_code, c.city].filter(Boolean).join(', ')}<br>${c.description ? '<span style="color:#888">'+c.description+'</span>' : ''}</div>`;
+                    infoDiv.style.display = '';
                 } else {
+                    infoDiv.style.display = 'none';
                     infoDiv.innerHTML = '';
                 }
-            };
+            }
+
+            // initial state
+            if (!list.length || !conteneurSelect.value) {
+                infoDiv.style.display = 'none';
+            } else {
+                updateInfoDiv();
+            }
+
+            conteneurSelect.onchange = updateInfoDiv;
         }
 
         const suggestBtn = document.getElementById('suggest-conteneur');
-        function showCustomModal(message, addressFields = false) {
-            let modal = document.getElementById('custom-modal');
-            if (!modal) {
-                modal = document.createElement('div');
-                modal.id = 'custom-modal';
-                modal.className = 'deposit-modal add-modal';
-                modal.style.display = 'none';
-                modal.innerHTML = `
-                    <div class="deposit-modal-content add-modal-content" style="max-width:400px;text-align:center;">
-                        <span class="close-button" id="close-custom-modal">&times;</span>
-                        <div id="custom-modal-message" style="margin:32px 0 24px;font-size:1.15em;"></div>
-                        <button type="button" id="custom-modal-ok" class="add-offer-button" style="margin-bottom:8px;">OK</button>
-                    </div>
-                `;
-                document.body.appendChild(modal);
-                modal.querySelector('#close-custom-modal').onclick = closeCustomModal;
-                modal.querySelector('#custom-modal-ok').onclick = closeCustomModal;
-            }
-            if (addressFields) {
-                modal.querySelector('#custom-modal-message').innerHTML = `
-                    <div style="margin-bottom:12px;font-weight:600;font-size:1.08em;">Enter an address:</div>
-                    <div style="margin-bottom:8px;">
-                        <label for="manual-searchbar-input" style="display:flex;align-items:center;font-weight:600;margin-bottom:4px;font-size:1em;">
-                            <i class="fa-solid fa-magnifying-glass-location" style="margin-right:8px;color:#10b981;"></i> Search address (datagouv API)
-                        </label>
-                        <input id="manual-searchbar-input" type="text" style="width:100%;padding:8px 10px;font-size:1em;border:1px solid #ccc;border-radius:6px;">
-                        <div id="manual-searchbar-results" style="margin-top:4px;text-align:left;max-height:120px;overflow-y:auto;"></div>
-                    </div>
-                    <hr style="border:none;border-top:2px solid #10b981;margin:16px 0;">
-                    <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;">
-                        <label for="manual-number-input" style="display:flex;align-items:center;font-weight:600;font-size:1em;width:70px;">
-                            <i class="fa-solid fa-hashtag" style="margin-right:6px;color:#10b981;"></i> Number
-                        </label>
-                        <input id="manual-number-input" type="text" style="width:60px;padding:8px 6px;font-size:1em;border:1px solid #ccc;border-radius:6px;">
-                        <label for="manual-road-input" style="display:flex;align-items:center;font-weight:600;font-size:1em;margin-left:8px;">
-                            <i class="fa-solid fa-road" style="margin-right:6px;color:#10b981;"></i> Road
-                        </label>
-                        <input id="manual-road-input" type="text" style="flex:1;padding:8px 10px;font-size:1em;border:1px solid #ccc;border-radius:6px;">
-                    </div>
-                    <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;">
-                        <label for="manual-postal-input" style="display:flex;align-items:center;font-weight:600;font-size:1em;width:110px;">
-                            <i class="fa-solid fa-envelope" style="margin-right:6px;color:#10b981;"></i> Postal code
-                        </label>
-                        <input id="manual-postal-input" type="text" style="width:100px;padding:8px 6px;font-size:1em;border:1px solid #ccc;border-radius:6px;">
-                        <label for="manual-city-input" style="display:flex;align-items:center;font-weight:600;font-size:1em;margin-left:8px;">
-                            <i class="fa-solid fa-city" style="margin-right:6px;color:#10b981;"></i> City
-                        </label>
-                        <input id="manual-city-input" type="text" style="flex:1;padding:8px 10px;font-size:1em;border:1px solid #ccc;border-radius:6px;">
-                    </div>
-                `;
-                const okBtn = modal.querySelector('#custom-modal-ok');
-                okBtn.textContent = 'OK';
-                okBtn.style.background = '#1abc9c';
-                okBtn.style.color = '#fff';
-                okBtn.style.border = 'none';
-                okBtn.style.borderRadius = '24px';
-                okBtn.style.padding = '12px 32px';
-                okBtn.style.fontSize = '1.08em';
-                okBtn.style.fontWeight = '600';
-                okBtn.style.boxShadow = '0 2px 8px rgba(26,188,156,0.12)';
-                okBtn.style.transition = 'background 0.2s';
-                okBtn.onclick = function() {
-                    const number = document.getElementById('manual-number-input').value;
-                    const road = document.getElementById('manual-road-input').value;
-                    const postal = document.getElementById('manual-postal-input').value;
-                    const city = document.getElementById('manual-city-input').value;
-                    const address = [number, road, postal, city].filter(Boolean).join(', ');
-                    closeCustomModal();
-                    if (address) suggestConteneurByAddress(address);
-                };
-                modal.querySelector('#close-custom-modal').onclick = closeCustomModal;
-                modal.style.display = '';
-                modal.classList.add('is-open');
-                modal.setAttribute('aria-hidden', 'false');
-                document.body.classList.add('modal-open');
-                setTimeout(() => {
-                    document.getElementById('manual-number-input').focus();
-                }, 100);
-
-                const searchInput = document.getElementById('manual-searchbar-input');
-                const resultsDiv = document.getElementById('manual-searchbar-results');
-                let searchTimeout = null;
-                searchInput.oninput = function() {
-                    const val = searchInput.value.trim();
-                    if (!val) { resultsDiv.innerHTML = ''; return; }
-                    if (searchTimeout) clearTimeout(searchTimeout);
-                    searchTimeout = setTimeout(() => {
-                        fetch(`https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(val)}`)
-                            .then(r => r.json())
-                            .then(data => {
-                                if (data && data.features && data.features.length) {
-                                    resultsDiv.innerHTML = data.features.slice(0,5).map(f => {
-                                        const props = f.properties;
-                                        return `<div class="search-result-item" style="padding:6px 8px;cursor:pointer;border-bottom:1px solid #eee;" data-number="${props.housenumber||''}" data-road="${props.street||props.name||''}" data-postal="${props.postcode||''}" data-city="${props.city||''}"><i class='fa-solid fa-location-dot' style='font-size:1em;margin-right:8px;color:#1abc9c;'></i>${props.housenumber||''} ${props.street||props.name||''}, ${props.postcode||''} ${props.city||''}</div>`;
-                                    }).join('');
-                                    resultsDiv.querySelectorAll('.search-result-item').forEach(item => {
-                                        item.onclick = function() {
-                                            document.getElementById('manual-number-input').value = item.getAttribute('data-number');
-                                            document.getElementById('manual-road-input').value = item.getAttribute('data-road');
-                                            document.getElementById('manual-postal-input').value = item.getAttribute('data-postal');
-                                            document.getElementById('manual-city-input').value = item.getAttribute('data-city');
-                                            resultsDiv.innerHTML = '';
-                                        };
-                                    });
-                                } else {
-                                    resultsDiv.innerHTML = '<div style="padding:6px 8px;color:#888;">No results</div>';
-                                }
-                            })
-                            .catch(() => { resultsDiv.innerHTML = '<div style="padding:6px 8px;color:#888;">Error</div>'; });
-                    }, 350);
-                };
-            } else {
-                modal.querySelector('#custom-modal-message').innerHTML = message;
-                modal.querySelector('#custom-modal-ok').onclick = closeCustomModal;
-            }
-            modal.style.display = '';
-            modal.classList.add('is-open');
-            modal.setAttribute('aria-hidden', 'false');
-            modal.style.zIndex = 4000;
-            document.body.classList.add('modal-open');
-            function closeCustomModal() {
-                modal.classList.remove('is-open');
-                modal.setAttribute('aria-hidden', 'true');
-                modal.style.display = 'none';
-                document.body.classList.remove('modal-open');
-            }
-        }
+        // showCustomModal was moved to top level
 
         if (suggestBtn) {
             let menu = null;
@@ -873,6 +1035,7 @@
                 function closeMenu(ev) {
                     if (!menu.contains(ev.target) && ev.target !== suggestBtn) {
                         menu.remove();
+                        clearInlineStatus();
                         document.removeEventListener('mousedown', closeMenu);
                     }
                 }
@@ -885,15 +1048,29 @@
                         if (method === 'db') {
                             if (window.CURRENT_USER_ID) {
                                 fetch(`get-user-address?id=${encodeURIComponent(window.CURRENT_USER_ID)}`)
-                                    .then(r => r.json())
-                                    .then(data => {
+                                    .then(r => {
+                                        console.debug('[address fetch] status', r.status);
+                                        return r.text();
+                                    })
+                                    .then(text => {
+                                        console.debug('[address fetch] raw body', text);
+                                        let data;
+                                        try {
+                                            data = JSON.parse(text);
+                                        } catch (e) {
+                                            console.error('[address fetch] JSON parse error', e);
+                                            throw e;
+                                        }
                                         if (data && data.address) {
                                             suggestConteneurByAddress(data.address);
                                         } else {
                                             showCustomModal('No address found for your account.');
                                         }
                                     })
-                                    .catch(() => showCustomModal('Failed to fetch your address.'));
+                                    .catch(err => {
+                                        console.error('[address fetch] failed', err);
+                                        showCustomModal('Failed to fetch your address.');
+                                    });
                             } else {
                                 showCustomModal('User not logged in.');
                             }
@@ -901,11 +1078,17 @@
                             if (navigator.geolocation) {
                                 navigator.geolocation.getCurrentPosition(function(pos) {
                                     const coords = pos.coords;
-                                    suggestConteneurByCoords(coords.latitude, coords.longitude);
+                                    
+                                    reverseGeocode(coords.latitude, coords.longitude)
+                                        .then(addr => {
+                                            suggestConteneurByCoords(coords.latitude, coords.longitude, false, addr);
+                                        });
                                 }, function() {
+                                    clearInlineStatus();
                                     showCustomModal('Unable to get your position.');
                                 });
                             } else {
+                                clearInlineStatus();
                                 showCustomModal('Geolocation not supported.');
                             }
                         } else if (method === 'manual') {
@@ -915,75 +1098,6 @@
                 });
             });
 
-            function suggestConteneurByAddress(address) {
-                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`)
-                    .then(r => r.json())
-                    .then(results => {
-                        if (Array.isArray(results) && results.length) {
-                            const lat = parseFloat(results[0].lat);
-                            const lon = parseFloat(results[0].lon);
-                            suggestConteneurByCoords(lat, lon);
-                        } else {
-                            showCustomModal('Address not found.');
-                        }
-                    })
-                    .catch(() => showCustomModal('Failed to geocode address.'));
-            }
-
-            function suggestConteneurByCoords(lat, lon) {
-                console.log('[DEBUG] Geolocation received:', { lat, lon });
-                const list = Array.isArray(window.AVAILABLE_CONTENEURS) ? window.AVAILABLE_CONTENEURS : [];
-                if (!list.length) return showCustomModal('No conteneurs available.');
-
-                showCustomModal(`<div style='display:flex;flex-direction:column;align-items:center;justify-content:center;'><i class='fa-solid fa-spinner fa-spin' style='font-size:2em;color:#10b981;margin-bottom:12px;'></i><span>Finding the nearest conteneur...</span></div>`);
-                let minDist = Infinity, nearest = null, nearestIndex = -1;
-                let completed = 0;
-                list.forEach((c, idx) => {
-                    const address = [c.number, c.road, c.postal_code, c.city].filter(Boolean).join(', ');
-                    if (!address) {
-                        completed++;
-                        if (completed === list.length) finalize();
-                        return;
-                    }
-                    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`)
-                        .then(r => r.json())
-                        .then(results => {
-                            if (Array.isArray(results) && results.length) {
-                                const clat = parseFloat(results[0].lat);
-                                const clon = parseFloat(results[0].lon);
-                                const d = haversine(lat, lon, clat, clon);
-                                if (d < minDist) { minDist = d; nearest = c; nearestIndex = idx; }
-                            }
-                        })
-                        .catch(() => {})
-                        .finally(() => {
-                            completed++;
-                            if (completed === list.length) finalize();
-                        });
-                });
-                function finalize() {
-
-                    let modal = document.getElementById('custom-modal');
-                    if (modal) { modal.classList.remove('is-open'); modal.setAttribute('aria-hidden', 'true'); modal.style.display = 'none'; document.body.classList.remove('modal-open'); }
-                    if (nearest) {
-                        conteneurSelect.value = nearest.id || nearest.ID || '';
-                        conteneurSelect.dispatchEvent(new Event('change'));
-                        conteneurSelect.focus();
-                    } else {
-                        showCustomModal('No conteneur found near this location.');
-                    }
-                }
-            }
-
-            function haversine(lat1, lon1, lat2, lon2) {
-                function toRad(x) { return x * Math.PI / 180; }
-                const R = 6371;
-                const dLat = toRad(lat2 - lat1);
-                const dLon = toRad(lon2 - lon1);
-                const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2);
-                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-                return R * c;
-            }
         }
 
         form.addEventListener('submit', function(ev) {
@@ -1135,6 +1249,32 @@
         div.textContent = text || '';
         return div.innerHTML;
     }
+
+    window.showContainersMap = function(elId) {
+        if (typeof L === 'undefined') {
+            console.warn('Leaflet not loaded, cannot show containers map');
+            return;
+        }
+        const mapEl = document.getElementById(elId);
+        if (!mapEl) return;
+        const map = L.map(mapEl, { scrollWheelZoom: false }).setView([46.5, 2], 6);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        const list = Array.isArray(window.AVAILABLE_CONTENEURS) ? window.AVAILABLE_CONTENEURS : [];
+        list.forEach(function(c) {
+            const address = [c.number, c.road, c.postal_code, c.city].filter(Boolean).join(', ');
+            if (!address) return;
+            geocodeAddress(address).then(function(coords) {
+                if (coords) {
+                    const marker = L.marker([coords.lat, coords.lon]).addTo(map);
+                    const label = escapeHtml(c.name || c.conteneur_name || 'Conteneur');
+                    marker.bindPopup(`<strong>${label}</strong><br>${escapeHtml(address)}`);
+                }
+            });
+        });
+    };
 
     window.openDepositDetails = openDetailsModal;
 })();
