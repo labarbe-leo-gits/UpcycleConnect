@@ -30,6 +30,7 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
     <link rel="stylesheet" href="../../assets/css/dark.css">
     <link rel="icon" type="image/png" href="../../assets/img/brand/UpcycleDiminutif.png">
     <script src="../../assets/js/dark.js" defer></script>
+    <script src="../../assets/js/toast.js" defer></script>
     <?php
     if (!empty(
         isset($extraCss) ? $extraCss : null
@@ -83,6 +84,7 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
                 </a>
                 <div class="dropdown-menu">
                     <a href="<?= $profileUrl ?>"><i class="fa-solid fa-user"></i>Profile</a>
+                    <a href="../common/planning"><i class="fa-solid fa-calendar-days"></i>Planning</a>
                     <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="fa-solid fa-right-from-bracket"></i>Logout</a>
                 </div>
             </div>
@@ -93,4 +95,13 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
         <input type="hidden" name="logout" value="1">
     </form>
 
+    <?php if (!empty($_SESSION['flash_message'])): ?>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof showToast === 'function') {
+            showToast(<?php echo json_encode($_SESSION['flash_message']); ?>);
+        }
+    });
+    </script>
+    <?php unset($_SESSION['flash_message']); endif; ?>
     <script src="../../assets/js/blob-images.js"></script>

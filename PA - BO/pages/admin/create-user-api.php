@@ -36,6 +36,10 @@ if (isset($data['user_type'])) {
     $data['user_type'] = (int)$data['user_type'];
 }
 
+if (isset($data['llm_quota'])) {
+    $data['llm_quota'] = (int)$data['llm_quota'];
+}
+
 error_log('create-user payload: ' . var_export($data, true));
 $resp = askAPI('/users', 'POST', json_encode($data));
 error_log('create-user API response: ' . $resp);

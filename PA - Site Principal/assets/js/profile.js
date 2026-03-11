@@ -454,6 +454,114 @@ document.querySelectorAll('.btn-copy').forEach(btn => {
     });
 });
 
+function enableInlineEditing(btn) {
+    const key = btn.getAttribute('data-edit');
+    if (!key) return;
+    const valueEl = document.getElementById(key + '-value');
+    if (!valueEl) return;
+    const orig = valueEl.textContent.trim();
+    const row = btn.closest('.profile-field-row');
+    if (row) row.classList.add('editing');
+
+    btn.disabled = true;
+    btn.style.visibility = 'hidden';
+
+    valueEl.innerHTML = '';
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = orig;
+    input.className = 'profile-edit-input';
+    valueEl.appendChild(input);
+
+    const saveBtn = document.createElement('button');
+    saveBtn.type = 'button';
+    saveBtn.className = 'btn-edit-save';
+    saveBtn.innerHTML = '<i class="fa-solid fa-check"></i>';
+    valueEl.appendChild(saveBtn);
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
+    cancelBtn.className = 'btn-edit-cancel';
+    cancelBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+    valueEl.appendChild(cancelBtn);
+
+    const errorEl = document.createElement('div');
+    errorEl.className = 'edit-error-msg';
+    errorEl.style.display = 'none';
+    valueEl.appendChild(errorEl);
+
+    input.focus();
+    input.select();
+
+    async function submitEdit() {
+        errorEl.style.display = 'none';
+        const newVal = input.value.trim();
+        if (newVal === orig) {
+            finish();
+            return;
+        }
+        saveBtn.disabled = true;
+        cancelBtn.disabled = true;
+        try {
+            const payload = { field: key, value: newVal };
+            const resp = await fetch('update-profile-api', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(payload)
+            });
+            const data = await resp.json().catch(() => null);
+            if (resp.ok && !(data && data.error)) {
+                valueEl.textContent = newVal;
+            } else {
+                const msg = (data && (data.error || (data.errors && data.errors.join(' ')))) || 'Update failed';
+                errorEl.textContent = msg;
+                errorEl.style.display = '';
+                return;
+            }
+        } catch (err) {
+            errorEl.textContent = 'Network error.';
+            errorEl.style.display = '';
+            return;
+        } finally {
+            saveBtn.disabled = false;
+            cancelBtn.disabled = false;
+        }
+        finish();
+    }
+
+    function finish() {
+        if (row) row.classList.remove('editing');
+        btn.disabled = false;
+        btn.style.visibility = '';
+    }
+
+    saveBtn.addEventListener('click', submitEdit);
+    cancelBtn.addEventListener('click', function() {
+
+        valueEl.textContent = orig;
+        finish();
+    });
+
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            submitEdit();
+        } else if (e.key === 'Escape') {
+            cancelBtn.click();
+        }
+    });
+}
+
+document.addEventListener('click', function(e) {
+    const editBtn = e.target.closest('.btn-edit-inline');
+    if (editBtn) {
+        e.preventDefault();
+        enableInlineEditing(editBtn);
+    }
+});
+
 function hideLoader(immediate = false) {
     var loader = document.getElementById('planning-preloader');
     var initial = document.getElementById('initial-loader');

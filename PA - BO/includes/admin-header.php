@@ -56,6 +56,10 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
             <h1>Admin Portal</h1>
         </div>
         <nav>
+            <div class="search-wrapper">
+                <input type="search" id="global-search" placeholder="Search pages, users…" autocomplete="off" aria-label="Global search" />
+                <div id="global-search-dropdown" class="search-dropdown" aria-hidden="true"></div>
+            </div>
             <div class="btn-wrapper" onClick="window.location.href='dashboard'">
                 <i class="fa-solid fa-tachograph-digital"></i>
                 <p>Dashboard</p>
@@ -68,6 +72,7 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
                 <div class="dropdown-menu">
                     <a href="/PA/PA%20-%20BO/pages/common/forums"><i class="fa-solid fa-indent"></i>Forums</a>
                     <a href="/PA/PA%20-%20BO/pages/admin/users"><i class="fa-solid fa-user"></i>Users</a>
+                    <a href="/PA/PA%20-%20BO/pages/admin/moderation"><i class="fa-solid fa-gavel"></i>Moderation</a>
                 </div>
             </div>
             <div class="nav-dropdown">
@@ -78,6 +83,7 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
                 <div class="dropdown-menu">
                     <a href="/PA/PA%20-%20BO/pages/admin/annonces"><i class="fa-solid fa-box-open"></i>Offers</a>
                     <a href="/PA/PA%20-%20BO/pages/admin/services"><i class="fa-solid fa-calendar-days"></i>Services &amp; Events</a>
+                    <a href="/PA/PA%20-%20BO/pages/admin/prestations"><i class="fa-solid fa-tags"></i>Prestations</a>
                     <a href="/PA/PA%20-%20BO/pages/admin/containers"><i class="fa-solid fa-warehouse"></i>Containers</a>
                     <a href="/PA/PA%20-%20BO/pages/admin/materials"><i class="fa-solid fa-recycle"></i>Materials</a>
                 </div>
@@ -117,6 +123,7 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
             </div>
         </nav>
     </header>
+    <script src="/PA/PA%20-%20BO/assets/js/global-search.js" defer></script>
     
     <form id="logout-form" action="/PA/PA%20-%20BO/pages/admin/logout" method="POST" class="hidden-form">
         <input type="hidden" name="logout" value="1">

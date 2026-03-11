@@ -145,6 +145,24 @@ func CheckForExistingUsername(username string) (bool, error) {
 
 }
 
+func defaultLLMQuota(userType int, isPremium bool) int {
+	switch userType {
+	case 1:
+		return 10
+	case 2:
+		if isPremium {
+			return 25
+		}
+		return 15
+	case 3:
+		return 50
+	case 4:
+		return 0
+	default:
+		return 10
+	}
+}
+
 func ValidateUserDto(user models.User) []string {
 
 	var errs []string
@@ -166,6 +184,10 @@ func ValidateUserDto(user models.User) []string {
 
 	if user.Email == "" || !strings.Contains(user.Email, "@") || !strings.Contains(user.Email, ".") {
 		errs = append(errs, "Email must be a valid email address.")
+	}
+
+	if user.LLMQuota < 0 {
+		errs = append(errs, "LLM quota must be a non-negative integer.")
 	}
 
 	if user.OAuthProvider == "" {
@@ -196,6 +218,10 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 			sendError(w, "Invalid JSON format", http.StatusBadRequest)
 		}
 		return
+	}
+
+	if userDto.LLMQuota <= 0 {
+		userDto.LLMQuota = defaultLLMQuota(userDto.UserType, userDto.IsPremium == 1)
 	}
 
 	errs := ValidateUserDto(userDto)

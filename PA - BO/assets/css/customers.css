@@ -141,6 +141,7 @@
   border: none;
   cursor: pointer;
   font-size: 13px;
+  margin-left: 6px;
   transition:
     background 0.15s,
     transform 0.12s;

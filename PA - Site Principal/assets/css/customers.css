@@ -150,6 +150,8 @@
 .btn-edit-save {
   background: #10b981;
   color: white;
+  margin-right: 6px; /* space before cancel button */
+  margin-left: 12px; /* additional gap on left side */
 }
 
 .btn-edit-save:hover {
@@ -166,6 +168,7 @@
 .btn-edit-cancel {
   background: #f3f4f6;
   color: #6b7280;
+  margin-left: 6px; /* extra gap from save button */
 }
 
 .btn-edit-cancel:hover {

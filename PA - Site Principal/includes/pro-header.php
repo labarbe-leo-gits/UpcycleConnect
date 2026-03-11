@@ -43,6 +43,7 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
     <script src="https://unpkg.com/leaflet/dist/leaflet.js" defer></script>
     <link rel="stylesheet" href="../../assets/css/style.css">
+    <script src="../../assets/js/toast.js" defer></script>
     <link rel="stylesheet" href="../../assets/css/customers.css">
     <link rel="stylesheet" href="../../assets/css/pro.css">
     <link rel="icon" type="image/png" href="../../assets/img/brand/UpcycleDiminutif.png">
@@ -112,6 +113,15 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
                 </a>
                 <div class="dropdown-menu">
                     <a href="<?= $profileUrl ?>"><i class="fa-solid fa-user"></i>Profile</a>
+                        
+                    <?php
+
+                        if (!empty($user['is_premium']) && $user['is_premium']) {
+                            echo '<a href="../common/planning"><i class="fa-solid fa-calendar-days"></i>Planning</a>';
+                        }
+
+                    ?>
+
                     <a href="../pro/downloads"><i class="fa-solid fa-download"></i>Downloads</a>
                     <a href="../common/support"><i class="fa-solid fa-headset"></i>Support</a>
                     <a href="../pro/notifications"><i class="fa-solid fa-bell"></i></i>Notifications <span class="notif-badge" id="notifications-count" hidden>0</span></a>
@@ -125,6 +135,16 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
     <form id="logout-form" action="../pro/logout" method="POST" class="hidden-form">
         <input type="hidden" name="logout" value="1">
     </form>
+
+    <?php if (!empty($_SESSION['flash_message'])): ?>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof showToast === 'function') {
+            showToast(<?php echo json_encode($_SESSION['flash_message']); ?>);
+        }
+    });
+    </script>
+    <?php unset($_SESSION['flash_message']); endif; ?>
 
     <script src="../../assets/js/notifications-poll.js"></script>
     <script src="../../assets/js/blob-images.js"></script>

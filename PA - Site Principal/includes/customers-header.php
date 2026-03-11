@@ -47,6 +47,7 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
     <link rel="icon" type="image/png" href="../../assets/img/brand/UpcycleDiminutif.png">
     <link rel="stylesheet" href="../../assets/css/dark.css">
     <script src="../../assets/js/dark.js" defer></script>
+    <script src="../../assets/js/toast.js" defer></script>
     <script>window.basePath = '<?= urldecode(dirname($_SERVER["REQUEST_URI"])) ?>';</script>
     <?php
     if (!empty(
@@ -66,6 +67,15 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
     ?>
 </head>
 <body><script>if(localStorage.getItem('theme')==='dark')document.body.classList.add('dark-mode');</script>
+    <?php if (!empty($_SESSION['flash_message'])): ?>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof showToast === 'function') {
+            showToast(<?php echo json_encode($_SESSION['flash_message']); ?>);
+        }
+    });
+    </script>
+    <?php unset($_SESSION['flash_message']); endif; ?>
     <header data-api-base="<?php echo htmlspecialchars($API_URL ?? ''); ?>" data-user-id="<?php echo htmlspecialchars($user['id'] ?? ''); ?>" data-notif-poll="../customers/notifications-poll">
         <div class="left">
             <h1>Customer Portal</h1>
@@ -118,7 +128,7 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
                     
                     <a href="<?= $profileUrl ?>"><i class="fa-solid fa-user"></i>Profile</a>
                     <a href="../customers/notifications"><i class="fa-solid fa-bell"></i>Notifications <span class="notif-badge" id="notifications-count" hidden>0</span></a>
-                    <a href="../customers/planning"><i class="fa-solid fa-calendar-days"></i>Planning</a>
+                    <a href="../common/planning"><i class="fa-solid fa-calendar-days"></i>Planning</a>
                     <a href="../common/support"><i class="fa-solid fa-headset"></i>Support</a> 
                     <a href="../customers/logout" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="fa-solid fa-right-from-bracket"></i>Logout</a>
                 </div>

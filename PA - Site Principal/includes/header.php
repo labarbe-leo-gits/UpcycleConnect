@@ -36,6 +36,7 @@ if (isLoggedIn() && getLoggedInUserType() === 3) {
     <link rel="icon" type="image/png" href="/PA/PA%20-%20Site%20Principal/assets/img/brand/UpcycleDiminutif.png">
     <link rel="stylesheet" href="/PA/PA%20-%20Site%20Principal/assets/css/dark.css">
     <script src="/PA/PA%20-%20Site%20Principal/assets/js/dark.js" defer></script>
+    <script src="/PA/PA%20-%20Site%20Principal/assets/js/toast.js" defer></script>
     <?php if (isset($title) && $title === 'About'): ?>
         <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
         <script src="https://unpkg.com/leaflet/dist/leaflet.js" defer></script>
@@ -129,3 +130,15 @@ if (isLoggedIn() && getLoggedInUserType() === 3) {
         </form>
     <?php endif; ?>
     
+    <?php // flash message toast (set by backend before redirect) ?>
+    <?php if (!empty($_SESSION['flash_message'])): ?>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof showToast === 'function') {
+            showToast(<?php echo json_encode($_SESSION['flash_message']); ?>);
+        } else {
+            console.warn('flash_message: showToast function not available');
+        }
+    });
+    </script>
+    <?php unset($_SESSION['flash_message']); endif; ?>

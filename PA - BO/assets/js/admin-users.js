@@ -1043,6 +1043,26 @@
             params.append(k, v);
         }
 
+        const ut = params.get('user_type');
+        let quota = 0;
+        switch (ut) {
+            case '1':
+                quota = 10;
+                break;
+            case '2':
+                quota = 15;
+                break;
+            case '3':
+                quota = 50;
+                break;
+            case '4':
+                quota = 0;
+                break;
+            default:
+                quota = 10;
+        }
+        params.set('llm_quota', quota + '');
+
         const url = 'create-user-api';
         console.log('posting create user to', url);
 

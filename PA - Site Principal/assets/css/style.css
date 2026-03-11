@@ -81,6 +81,20 @@
   pointer-events: auto;
   transform: translateX(-50%) scale(1);
 }
+.toast {
+  position: fixed;
+  right: 18px;
+  top: 18px;
+  background: #111827;
+  color: #fff;
+  padding: 10px 14px;
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(2, 6, 23, 0.4);
+  z-index: 4000;
+  opacity: 0.98;
+  font-size: 14px;
+}
+
 .toast-success {
   border-left: 6px solid #10b981;
 }
