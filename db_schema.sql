@@ -133,7 +133,7 @@ CREATE TABLE IF NOT EXISTS evenements (
     price DECIMAL(10, 2) NOT NULL,
     maximum_participants INT,
     current_participants INT DEFAULT 0,
-    event_type INT NOT NULL,
+    event_type CHAR(36) NOT NULL,
     event_date DATE NOT NULL,
     event_road VARCHAR(255),
     event_city VARCHAR(80),
@@ -143,7 +143,8 @@ CREATE TABLE IF NOT EXISTS evenements (
     created_by CHAR(36) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (event_type) REFERENCES typesPrestations(id) ON DELETE RESTRICT
 );
 
 CREATE TABLE IF NOT EXISTS event_availability(
@@ -495,4 +496,18 @@ CREATE TABLE IF NOT EXISTS poll_votes (
     FOREIGN KEY (option_id) REFERENCES poll_options(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     UNIQUE INDEX idx_poll_vote (poll_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS typesPrestations (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    name VARCHAR(255) NOT NULL UNIQUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS logins (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    user_id CHAR(36) NOT NULL,
+    login_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ip_address VARCHAR(45) NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
