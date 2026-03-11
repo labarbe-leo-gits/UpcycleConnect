@@ -4,3 +4,5 @@
 vendor/
 files/uploads
 node_modules/
+*.log
+logs/

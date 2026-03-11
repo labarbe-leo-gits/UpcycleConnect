@@ -25,13 +25,18 @@ func GetServicesFromDB() ([]models.Service, error) {
 		var createdByStr string
 		var createdAt, updatedAt sql.NullString
 		var maxParticipants, currentParticipants sql.NullInt64
-		err := rows.Scan(&idStr, &service.Name, &service.Description, &service.Price, &service.Type, &service.ServiceDate, &service.ServiceRoad, &service.ServiceCity, &service.ServiceZip, &maxParticipants, &currentParticipants, &createdByStr, &createdAt, &updatedAt)
+		var typeStr string
+		err := rows.Scan(&idStr, &service.Name, &service.Description, &service.Price, &typeStr, &service.ServiceDate, &service.ServiceRoad, &service.ServiceCity, &service.ServiceZip, &maxParticipants, &currentParticipants, &createdByStr, &createdAt, &updatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("getServices package db scan : %s", err.Error())
 		}
 		service.ID, err = uuid.Parse(idStr)
 		if err != nil {
 			return nil, fmt.Errorf("getServices package db uuid parse : %s", err.Error())
+		}
+		service.Type, err = uuid.Parse(typeStr)
+		if err != nil {
+			return nil, fmt.Errorf("getServices package db uuid parse event_type : %s", err.Error())
 		}
 		service.CreatedBy, err = uuid.Parse(createdByStr)
 		if err != nil {
@@ -89,13 +94,18 @@ func GetServicesPageFromDB(limit int, offset int, availableOnly bool) ([]models.
 		var createdByStr string
 		var createdAt, updatedAt sql.NullString
 		var maxParticipants, currentParticipants sql.NullInt64
-		err := rows.Scan(&idStr, &service.Name, &service.Description, &service.Price, &service.Type, &service.ServiceDate, &service.ServiceRoad, &service.ServiceCity, &service.ServiceZip, &maxParticipants, &currentParticipants, &createdByStr, &createdAt, &updatedAt)
+		var typeStr string
+		err := rows.Scan(&idStr, &service.Name, &service.Description, &service.Price, &typeStr, &service.ServiceDate, &service.ServiceRoad, &service.ServiceCity, &service.ServiceZip, &maxParticipants, &currentParticipants, &createdByStr, &createdAt, &updatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("getServicesPage package db scan : %s", err.Error())
 		}
 		service.ID, err = uuid.Parse(idStr)
 		if err != nil {
 			return nil, fmt.Errorf("getServicesPage package db uuid parse : %s", err.Error())
+		}
+		service.Type, err = uuid.Parse(typeStr)
+		if err != nil {
+			return nil, fmt.Errorf("getServicesPage package db uuid parse event_type : %s", err.Error())
 		}
 		service.CreatedBy, err = uuid.Parse(createdByStr)
 		if err != nil {
@@ -192,7 +202,8 @@ func GetServiceByIDFromDB(serviceID uuid.UUID) (models.Service, error) {
 	var createdAt, updatedAt sql.NullString
 
 	var maxParticipants, currentParticipants sql.NullInt64
-	err := Db.QueryRow("SELECT id, title, description, price, event_type, event_date, event_road, event_city, event_zip_code, maximum_participants, current_participants, created_by, created_at, updated_at FROM evenements WHERE id = ?", serviceID).Scan(&idStr, &service.Name, &service.Description, &service.Price, &service.Type, &service.ServiceDate, &service.ServiceRoad, &service.ServiceCity, &service.ServiceZip, &maxParticipants, &currentParticipants, &createdByStr, &createdAt, &updatedAt)
+	var typeStr string
+	err := Db.QueryRow("SELECT id, title, description, price, event_type, event_date, event_road, event_city, event_zip_code, maximum_participants, current_participants, created_by, created_at, updated_at FROM evenements WHERE id = ?", serviceID).Scan(&idStr, &service.Name, &service.Description, &service.Price, &typeStr, &service.ServiceDate, &service.ServiceRoad, &service.ServiceCity, &service.ServiceZip, &maxParticipants, &currentParticipants, &createdByStr, &createdAt, &updatedAt)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -204,6 +215,11 @@ func GetServiceByIDFromDB(serviceID uuid.UUID) (models.Service, error) {
 	service.ID, err = uuid.Parse(idStr)
 	if err != nil {
 		return service, fmt.Errorf("getServiceByID package db uuid parse : %s", err.Error())
+	}
+
+	service.Type, err = uuid.Parse(typeStr)
+	if err != nil {
+		return service, fmt.Errorf("getServiceByID package db uuid parse event_type : %s", err.Error())
 	}
 
 	service.CreatedBy, err = uuid.Parse(createdByStr)

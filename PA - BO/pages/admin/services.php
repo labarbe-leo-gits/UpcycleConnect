@@ -9,15 +9,15 @@ include_once '../../includes/admin-header.php';
         <button class="add-offer-button" id="create-service-btn">
             <i class="fa-solid fa-plus"></i> Add service / event
         </button>
+        <button class="add-offer-button" id="create-type-btn" style="margin-left:8px;">
+            <i class="fa-solid fa-plus"></i> Create a type of prestations
+        </button>
         <div class="toolbar-search-wrap">
             <i class="fa-solid fa-search toolbar-search-icon"></i>
             <input type="text" id="service-search" placeholder="Search…" />
         </div>
         <select id="service-type-filter">
             <option value="">All types</option>
-            <option value="1">Formation</option>
-            <option value="2">Event</option>
-            <option value="3">Consulting</option>
         </select>
     </div>
 
@@ -84,9 +84,7 @@ include_once '../../includes/admin-header.php';
             <div class="field">
                 <label for="svc-type">Type *</label>
                 <select id="svc-type" name="type" required>
-                    <option value="1">Formation</option>
-                    <option value="2">Event</option>
-                    <option value="3">Consulting</option>
+                    <option value="">-- select type --</option>
                 </select>
             </div>
             <div class="field">
@@ -152,6 +150,27 @@ include_once '../../includes/admin-header.php';
         <h2>Confirm deletion</h2>
         <div id="service-confirm-body" class="modal-body"></div>
         <div id="service-confirm-actions" class="modal-actions"></div>
+    </div>
+</div>
+
+<!-- type creation modal -->
+<div class="add-modal" id="type-form-modal" role="dialog" aria-hidden="true">
+    <div class="add-modal-content">
+        <span class="close-button" id="type-form-modal-close">&times;</span>
+        <h2 id="type-form-title">Create prestation type</h2>
+        <form id="type-form">
+            <div id="type-form-error" class="form-error" style="display:none;"></div>
+            <div class="field">
+                <label for="type-name">Name *</label>
+                <div class="input-wrapper"><i class="fa-solid fa-tag"></i>
+                    <input type="text" id="type-name" name="name" placeholder="Type name" required />
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary" id="type-form-cancel">Cancel</button>
+                <button type="submit" class="add-offer-button" id="type-form-submit">Save</button>
+            </div>
+        </form>
     </div>
 </div>
 

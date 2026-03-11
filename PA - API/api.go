@@ -297,6 +297,13 @@ func main() {
 	registerRoute("GET", "/users/{id}/balance", "Get the current balance for a user", app.GetUserBalance, app.JWTAuthMiddleware)
 	registerRoute("PATCH", "/users/{id}/balance", "Update a user's balance", app.UpdateUserBalance, app.JWTAuthMiddleware)
 
+	// event types
+	registerRoute("GET", "/typesPrestation", "List all service types", app.GetTypePrestations, app.JWTAuthMiddleware)
+	registerRoute("POST", "/typesPrestation", "Create a new service type", app.CreateTypePrestation, app.JWTAuthMiddleware)
+	registerRoute("GET", "/typesPrestation/{id}", "Get a specific service type by its UUID", app.GetTypePrestationByID, app.JWTAuthMiddleware)
+	registerRoute("PATCH", "/typesPrestation/{id}", "Update a service type by its UUID", app.UpdateTypePrestation, app.JWTAuthMiddleware)
+	registerRoute("DELETE", "/typesPrestation/{id}", "Delete a service type by its UUID", app.DeleteTypePrestation, app.JWTAuthMiddleware)
+
 	registerRoute("GET", "/polls/{id}", "Get details of a specific poll by its UUID", app.GetPollByID, app.JWTAuthMiddleware)
 	registerRoute("POST", "/polls", "Create a new poll", app.CreatePoll, app.JWTAuthMiddleware)
 	registerRoute("GET", "/polls/{id}/options", "List all options for a specific poll by its UUID", app.GetPollOptions, app.JWTAuthMiddleware)

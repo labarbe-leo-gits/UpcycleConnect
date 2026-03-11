@@ -98,8 +98,14 @@ func ValidateServiceDto(serviceDto models.Service) []string {
 		validationErrors = append(validationErrors, "Name is required")
 	}
 
-	if serviceDto.Type < 0 || serviceDto.Type > 2 {
-		validationErrors = append(validationErrors, "Type must be between 0 and 2")
+	if serviceDto.Type == uuid.Nil {
+		validationErrors = append(validationErrors, "Type is required and must be a valid UUID")
+	} else {
+
+		tp, err := db.GetTypePrestationByIDFromDB(serviceDto.Type)
+		if err != nil || tp == nil {
+			validationErrors = append(validationErrors, "Type does not exist")
+		}
 	}
 
 	if serviceDto.ServiceDate != "" {
@@ -222,7 +228,7 @@ func UpdateService(w http.ResponseWriter, r *http.Request) {
 	if serviceDto.Price == 0 {
 		serviceDto.Price = existing.Price
 	}
-	if serviceDto.Type == 0 {
+	if serviceDto.Type == uuid.Nil {
 		serviceDto.Type = existing.Type
 	}
 	if serviceDto.ServiceDate == "" {

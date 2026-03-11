@@ -9,12 +9,14 @@
     let searchTerm    = '';
     let typeFilter    = '';
 
-    const typeLabels = { 1: 'Formation', 2: 'Event', 3: 'Consulting' };
-    const typeIcons  = { 1: 'fa-graduation-cap', 2: 'fa-calendar-days', 3: 'fa-user-tie' };
+
+    let typeLabels = {};
+    let typeIcons  = {};
+    let prestationTypes = [];
 
     document.addEventListener('DOMContentLoaded', function () {
         bindToolbar();
-        requestChunk(false);
+        loadTypes().then(() => requestChunk(false));
         bindAddressSearch();
     });
 
@@ -110,7 +112,7 @@
 
     function bindToolbar() {
         document.getElementById('create-service-btn')?.addEventListener('click', openCreateForm);
-
+        document.getElementById('create-type-btn')?.addEventListener('click', openTypeForm);
         document.getElementById('service-search')?.addEventListener('input', function () {
             searchTerm = this.value.trim();
             resetList();
@@ -149,11 +151,19 @@
             .then(r => r.text())
             .then(text => {
                 const data     = text ? JSON.parse(text) : {};
-                const services = Array.isArray(data.items) ? data.items : (Array.isArray(data) ? data : []);
+                let services = Array.isArray(data.items) ? data.items : (Array.isArray(data) ? data : []);
                 const total    = Number.isFinite(data.total) ? data.total : services.length;
                 totalCount     = total;
 
                 if (!append) container.innerHTML = '';
+
+                if (searchTerm) {
+                    const term = searchTerm.toLowerCase();
+                    services = services.filter(s => (s.name||'').toLowerCase().includes(term));
+                }
+                if (typeFilter) {
+                    services = services.filter(s => s.type_id === typeFilter);
+                }
 
                 if (services.length === 0 && !append) {
                     container.innerHTML = '<p class="empty-list">No services found.</p>';
@@ -191,8 +201,8 @@
             card.className = 'service-item';
             card.dataset.id = svc.id;
 
-            const typeLabel = typeLabels[svc.type] ?? `Type ${svc.type}`;
-            const icon      = typeIcons[svc.type]  ?? 'fa-calendar';
+            const typeLabel = typeLabels[svc.type_id] || svc.type_id || 'Unknown';
+            const icon      = typeIcons[svc.type_id]  || 'fa-calendar';
             const price     = svc.price > 0 ? `€${parseFloat(svc.price).toFixed(2)}` : '<span style="color:#16a34a;">Free</span>';
             const dateStr   = svc.service_date ? new Date(svc.service_date).toLocaleDateString('fr-FR') : '—';
             const city      = [svc.service_city, svc.service_zip].filter(Boolean).join(' ');
@@ -293,7 +303,7 @@
         form.querySelector('#svc-name').value        = svc.name        ?? '';
         form.querySelector('#svc-description').value = svc.description ?? '';
         form.querySelector('#svc-price').value       = svc.price       ?? 0;
-        form.querySelector('#svc-type').value        = svc.type        ?? 1;
+        form.querySelector('#svc-type').value        = svc.type_id || '';
         form.querySelector('#svc-date').value        = (svc.service_date ?? '').substring(0, 10);
         form.querySelector('#svc-max-participants').value = svc.maximum_participants ?? '';
 
@@ -318,7 +328,7 @@
             name:                 this.querySelector('#svc-name').value.trim(),
             description:          this.querySelector('#svc-description').value.trim(),
             price:                parseFloat(this.querySelector('#svc-price').value) || 0,
-            type:                 parseInt(this.querySelector('#svc-type').value, 10),
+            type_id:              this.querySelector('#svc-type').value,
             service_date:         this.querySelector('#svc-date').value,
             service_road:         this.querySelector('#svc-road').value.trim(),
             service_city:         this.querySelector('#svc-city').value.trim(),
@@ -343,8 +353,15 @@
         })
             .then(r => r.text())
             .then(text => {
-                const data = text ? JSON.parse(text) : {};
-                if (data.error) throw new Error(data.error);
+                const trimmed = text.trim();
+                const data = trimmed ? JSON.parse(trimmed) : {};
+                if (data.error) {
+                    let msg = data.error;
+                    if (data.body && msg.startsWith('API returned HTTP')) {
+                        msg = data.body;
+                    }
+                    throw new Error(msg);
+                }
                 hideModal('service-form-modal');
                 resetList();
             })
@@ -397,10 +414,102 @@
 
     function showModal(id) {
         const m = document.getElementById(id);
-        if (!m) return;
-        m.classList.add('is-open');
-        m.setAttribute('aria-hidden', 'false');
+        if (m) { m.classList.add('is-open'); m.setAttribute('aria-hidden', 'false'); }
     }
+
+    function loadTypes() {
+        return fetch('type-prestations-list-api.php')
+            .then(r => r.text())
+            .then(text => {
+                const data = text ? JSON.parse(text) : [];
+                prestationTypes = Array.isArray(data) ? data : (Array.isArray(data.items) ? data.items : []);
+                populateTypeOptions();
+            })
+            .catch(err => { console.error('failed to load types', err); });
+    }
+
+    function populateTypeOptions() {
+        const filter = document.getElementById('service-type-filter');
+        const svcSelect = document.getElementById('svc-type');
+        if (filter) {
+            filter.innerHTML = '<option value="">All types</option>';
+            prestationTypes.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.id;
+                opt.textContent = t.name;
+                filter.appendChild(opt);
+                typeLabels[t.id] = t.name;
+                const nm = t.name.toLowerCase();
+                if (nm.includes('formation')) typeIcons[t.id] = 'fa-graduation-cap';
+                else if (nm.includes('event')) typeIcons[t.id] = 'fa-calendar-days';
+                else if (nm.includes('consult')) typeIcons[t.id] = 'fa-user-tie';
+                else typeIcons[t.id] = 'fa-calendar';
+            });
+        }
+        if (svcSelect) {
+            svcSelect.innerHTML = '<option value="">-- select type --</option>';
+            prestationTypes.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.id;
+                opt.textContent = t.name;
+                svcSelect.appendChild(opt);
+            });
+        }
+    }
+
+    function openTypeForm() {
+        const form = document.getElementById('type-form');
+        if (form) form.reset();
+        showModal('type-form-modal');
+    }
+
+    document.getElementById('type-form')?.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const errorBox = document.getElementById('type-form-error');
+        if (errorBox) { errorBox.style.display = 'none'; errorBox.textContent = ''; }
+        const name = this.querySelector('#type-name').value.trim();
+        if (!name) {
+            if (errorBox) { errorBox.textContent = 'Name is required'; errorBox.style.display = 'block'; }
+            return;
+        }
+        const submitBtn = document.getElementById('type-form-submit');
+        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Saving…'; }
+        fetch('type-prestation-create-api.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name })
+        })
+            .then(r => r.text())
+            .then(text => {
+                console.log('type creation raw response:', text);
+                let data;
+                const trimmed = text.trim();
+                try {
+                    data = trimmed ? JSON.parse(trimmed) : {};
+                } catch (ex) {
+                    console.error('failed to parse type creation response', ex, text);
+                    data = { error: 'Invalid response from server', body: trimmed };
+                }
+                if (data.error) {
+                    let msg = data.error;
+                    if (data.body && (msg.startsWith('API returned HTTP') || msg === 'Invalid response from server')) {
+                        msg = data.body;
+                    }
+                    throw new Error(msg);
+                }
+                hideModal('type-form-modal');
+                loadTypes();
+            })
+            .catch(err => {
+                if (errorBox) { errorBox.textContent = err.message || 'An error occurred.'; errorBox.style.display = 'block'; }
+            })
+            .finally(() => {
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Save'; }
+            });
+    });
+
+    document.getElementById('type-form-cancel')?.addEventListener('click', function () { hideModal('type-form-modal'); });
+    document.getElementById('type-form-modal-close')?.addEventListener('click', function () { hideModal('type-form-modal'); });
     function hideModal(id) {
         const m = document.getElementById(id);
         if (!m) return;

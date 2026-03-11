@@ -9,7 +9,7 @@ type Service struct {
 	Name                string    `json:"name" gorm:"not null"`
 	Description         string    `json:"description,omitempty"`
 	Price               float64   `json:"price,omitempty"`
-	Type                int       `json:"type,omitempty"`
+	Type                uuid.UUID `json:"type_id" gorm:"type:uuid;not null"`
 	ServiceDate         string    `json:"service_date,omitempty"`
 	ServiceRoad         string    `json:"service_road,omitempty"`
 	ServiceCity         string    `json:"service_city,omitempty"`

@@ -133,6 +133,7 @@ CREATE TABLE IF NOT EXISTS evenements (
     price DECIMAL(10, 2) NOT NULL,
     maximum_participants INT,
     current_participants INT DEFAULT 0,
+    /* event_type INT NOT NULL, */
     event_type CHAR(36) NOT NULL,
     event_date DATE NOT NULL,
     event_road VARCHAR(255),
@@ -502,12 +503,4 @@ CREATE TABLE IF NOT EXISTS typesPrestations (
     id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
     name VARCHAR(255) NOT NULL UNIQUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS logins (
-    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
-    user_id CHAR(36) NOT NULL,
-    login_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    ip_address VARCHAR(45) NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
