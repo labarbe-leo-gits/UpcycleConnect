@@ -270,7 +270,7 @@
         } else {
             purchaseButton.textContent = service.priceValue > 0 ? 'Purchase' : 'Get';
             purchaseButton.onclick = function() {
-                window.location.href = `order?product_uuid=${service.id}`;
+                window.location.href = `../common/order?product_uuid=${service.id}`;
             };
         }
 

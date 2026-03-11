@@ -281,7 +281,7 @@ window.addEventListener('load', function() {
 });
 
 function handlePurchase() {
-	window.location.href = 'order?product_uuid=<?php echo $offerUuid; ?>';
+	window.location.href = '../common/order?product_uuid=<?php echo $offerUuid; ?>';
 }
 </script>
 <script src="../../assets/js/offer-slider.js"></script>

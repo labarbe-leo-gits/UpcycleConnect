@@ -1,6 +1,8 @@
 <?php
 // Order/Checkout page
 
+ob_start();
+
 $title = "Checkout";
 include_once '../../config/db.php';
 include_once '../../includes/auth.php';
@@ -50,6 +52,23 @@ $serviceData = askAPI("/products/services/" . $productUuid, "GET");
 $service = json_decode($serviceData, true);
 $offer = null;
 $productType = 'service';
+
+$userDir = '';
+
+if (isset($user['user_type']) && $user['user_type'] == 2) {
+    $userDir = 'pro';
+} else if (isset($user['user_type']) && $user['user_type'] == 1) {
+    $userDir = 'customer';
+} else {
+    $userDir = 'public';
+}
+
+
+if ($productType === 'service' && isset($user['user_type']) && $user['user_type'] == 2) {
+    header('Location: ' . (isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '../' . $userDir . '/profile'));
+    exit;
+}
+
 
 if (isset($service['error'])) {
     $service = null;

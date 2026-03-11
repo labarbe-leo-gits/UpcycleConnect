@@ -234,7 +234,7 @@ window.addEventListener('load', function() {
 });
 
 function handlePurchase() {
-    window.location.href = 'order?product_uuid=<?php echo $serviceUuid; ?>';
+    window.location.href = '../common/order?product_uuid=<?php echo $serviceUuid; ?>';
 }
 </script>
 
