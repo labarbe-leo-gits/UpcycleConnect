@@ -16,10 +16,12 @@ func GetServices(w http.ResponseWriter, r *http.Request) {
 	pageParam := query.Get("page")
 	limitParam := query.Get("limit")
 	availableParam := query.Get("available")
+	searchParam := query.Get("search")
+	typeParam := query.Get("type")
 	availableOnly := availableParam == "1" || availableParam == "true"
 
 	if pageParam == "" && limitParam == "" {
-		services, err := db.GetServicesFromDB()
+		services, err := db.GetServicesFromDB(searchParam, typeParam, availableOnly)
 
 		if err != nil {
 			fmt.Println("[ERROR] GetServices:", err)
@@ -58,14 +60,14 @@ func GetServices(w http.ResponseWriter, r *http.Request) {
 
 	offset := (page - 1) * limit
 
-	total, err := db.CountServicesFromDB(availableOnly)
+	total, err := db.CountServicesFromDB(availableOnly, searchParam, typeParam)
 	if err != nil {
 		fmt.Println("[ERROR] GetServices count:", err)
 		sendError(w, "Unable to fetch services", http.StatusInternalServerError)
 		return
 	}
 
-	services, err := db.GetServicesPageFromDB(limit, offset, availableOnly)
+	services, err := db.GetServicesPageFromDB(limit, offset, availableOnly, searchParam, typeParam)
 	if err != nil {
 		fmt.Println("[ERROR] GetServices page:", err)
 		sendError(w, "Unable to fetch services", http.StatusInternalServerError)

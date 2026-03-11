@@ -5,8 +5,12 @@
     const pageSize = 4;
     let currentPage = 1;
     let totalPages = 1;
+    let searchTerm = '';
+    let typeFilter = '';
 
     document.addEventListener('DOMContentLoaded', function() {
+        bindToolbar();
+        loadTypes();
         currentPage = getPageFromUrl();
         requestPage(currentPage, true);
     });
@@ -23,15 +27,16 @@
         renderSkeletons(container, pageSize);
         renderPaginationSkeletons(pagination);
 
-        fetch(`services-api?page=${page}&limit=${pageSize}`, {
+        let url = `services-api?page=${page}&limit=${pageSize}`;
+        if (searchTerm) url += `&search=${encodeURIComponent(searchTerm)}`;
+        if (typeFilter) url += `&type=${encodeURIComponent(typeFilter)}`;
+        fetch(url, {
             method: 'GET',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest'
             }
         })
             .then(response => {
-                console.log('Response status:', response.status);
-                console.log('Response ok:', response.ok);
                 
                 if (!response.ok) {
                     return response.text().then(text => {
@@ -43,6 +48,7 @@
             })
             .then(text => {
                 const data = JSON.parse(text);
+// populate type select once from response later? will load separately
                 const services = Array.isArray(data.items) ? data.items : (Array.isArray(data) ? data : []);
                 const total = Number.isFinite(data.total) ? data.total : services.length;
                 totalPages = total > 0 ? Math.ceil(total / pageSize) : 1;
@@ -91,6 +97,19 @@
         });
     }
 
+    function bindToolbar() {
+        document.getElementById('service-search')?.addEventListener('input', function() {
+            searchTerm = this.value.trim();
+            currentPage = 1;
+            requestPage(currentPage, true);
+        });
+        document.getElementById('service-type-filter')?.addEventListener('change', function() {
+            typeFilter = this.value;
+            currentPage = 1;
+            requestPage(currentPage, true);
+        });
+    }
+
     function renderPagination(pagination) {
         if (!pagination) {
             return;
@@ -126,6 +145,36 @@
             }
         });
         pagination.appendChild(nextButton);
+    }
+
+    function populateTypeOptions(list) {
+        const filter = document.getElementById('service-type-filter');
+        if (!filter) return;
+        filter.innerHTML = '<option value="">All types</option>';
+        list.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t.id;
+            opt.textContent = t.name;
+            filter.appendChild(opt);
+        });
+    }
+
+    function loadTypes() {
+        fetch('type-prestations-list-api', {
+            method: 'GET',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+            .then(r => r.text())
+            .then(text => {
+                try {
+                    const data = text ? JSON.parse(text) : [];
+                    const list = Array.isArray(data) ? data : (Array.isArray(data.items) ? data.items : []);
+                    populateTypeOptions(list);
+                } catch (e) {
+                    console.error('failed loading types', e, text);
+                }
+            })
+            .catch(err => console.error('error fetching types', err));
     }
 
     function createPageButton(label, disabled, onClick) {

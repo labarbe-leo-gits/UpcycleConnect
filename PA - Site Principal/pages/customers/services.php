@@ -13,6 +13,12 @@ $user = getLoggedInUser();
 ?>
 
 <div class="container">
+    <div class="services-toolbar" style="margin-bottom:16px; display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <input type="text" id="service-search" placeholder="Search…" style="flex:1; padding:6px 8px;" />
+        <select id="service-type-filter" style="padding:6px 8px;">
+            <option value="">All types</option>
+        </select>
+    </div>
     <div class="services-list" id="services-container">
         <?php for ($i = 0; $i < 4; $i++): ?>
         <div class="skeleton-service-item">

@@ -4,14 +4,34 @@ import (
 	"API/models"
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
 )
 
-func GetServicesFromDB() ([]models.Service, error) {
+func GetServicesFromDB(search string, typeUUID string, availableOnly bool) ([]models.Service, error) {
 
 	services := []models.Service{}
-	rows, err := Db.Query("SELECT id, title, description, price, event_type, event_date, event_road, event_city, event_zip_code, maximum_participants, current_participants, created_by, created_at, updated_at FROM evenements")
+	query := "SELECT id, title, description, price, event_type, event_date, event_road, event_city, event_zip_code, maximum_participants, current_participants, created_by, created_at, updated_at FROM evenements"
+	args := []interface{}{}
+	clauses := []string{}
+
+	if availableOnly {
+		clauses = append(clauses, "(maximum_participants IS NULL OR current_participants < maximum_participants)")
+	}
+	if search != "" {
+		clauses = append(clauses, "title LIKE ?")
+		args = append(args, "%"+search+"%")
+	}
+	if typeUUID != "" {
+		clauses = append(clauses, "event_type = ?")
+		args = append(args, typeUUID)
+	}
+	if len(clauses) > 0 {
+		query += " WHERE " + strings.Join(clauses, " AND ")
+	}
+
+	rows, err := Db.Query(query, args...)
 
 	if err != nil {
 		return nil, fmt.Errorf("getServices package db : %s", err.Error())
@@ -67,14 +87,26 @@ func GetServicesFromDB() ([]models.Service, error) {
 
 }
 
-func GetServicesPageFromDB(limit int, offset int, availableOnly bool) ([]models.Service, error) {
+func GetServicesPageFromDB(limit int, offset int, availableOnly bool, search string, typeUUID string) ([]models.Service, error) {
 
 	services := []models.Service{}
 	query := "SELECT id, title, description, price, event_type, event_date, event_road, event_city, event_zip_code, maximum_participants, current_participants, created_by, created_at, updated_at FROM evenements"
 	args := []interface{}{}
+	clauses := []string{}
 
 	if availableOnly {
-		query += " WHERE maximum_participants IS NULL OR current_participants < maximum_participants"
+		clauses = append(clauses, "(maximum_participants IS NULL OR current_participants < maximum_participants)")
+	}
+	if search != "" {
+		clauses = append(clauses, "title LIKE ?")
+		args = append(args, "%"+search+"%")
+	}
+	if typeUUID != "" {
+		clauses = append(clauses, "event_type = ?")
+		args = append(args, typeUUID)
+	}
+	if len(clauses) > 0 {
+		query += " WHERE " + strings.Join(clauses, " AND ")
 	}
 
 	query += " ORDER BY created_at DESC LIMIT ? OFFSET ?"
@@ -135,11 +167,23 @@ func GetServicesPageFromDB(limit int, offset int, availableOnly bool) ([]models.
 	return services, nil
 }
 
-func CountServicesFromDB(availableOnly bool) (int, error) {
+func CountServicesFromDB(availableOnly bool, search string, typeUUID string) (int, error) {
 	query := "SELECT COUNT(*) FROM evenements"
 	args := []interface{}{}
+	clauses := []string{}
 	if availableOnly {
-		query += " WHERE maximum_participants IS NULL OR current_participants < maximum_participants"
+		clauses = append(clauses, "(maximum_participants IS NULL OR current_participants < maximum_participants)")
+	}
+	if search != "" {
+		clauses = append(clauses, "title LIKE ?")
+		args = append(args, "%"+search+"%")
+	}
+	if typeUUID != "" {
+		clauses = append(clauses, "event_type = ?")
+		args = append(args, typeUUID)
+	}
+	if len(clauses) > 0 {
+		query += " WHERE " + strings.Join(clauses, " AND ")
 	}
 
 	var total int

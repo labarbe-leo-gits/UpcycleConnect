@@ -47,6 +47,7 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
     <link rel="icon" type="image/png" href="../../assets/img/brand/UpcycleDiminutif.png">
     <link rel="stylesheet" href="../../assets/css/dark.css">
     <script src="../../assets/js/dark.js" defer></script>
+    <script>window.basePath = '<?= urldecode(dirname($_SERVER["REQUEST_URI"])) ?>';</script>
     <?php
     if (!empty(
         isset($extraCss) ? $extraCss : null

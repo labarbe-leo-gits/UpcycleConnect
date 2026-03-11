@@ -2911,6 +2911,7 @@ body.modal-open {
   background: #f9fafb;
   transition: border-color 0.2s;
   box-sizing: border-box;
+  height: 40px;
 }
 
 #service-search:focus {
@@ -2930,6 +2931,13 @@ body.modal-open {
   min-width: 150px;
   cursor: pointer;
   transition: border-color 0.2s;
+}
+
+.services-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
 }
 
 #service-type-filter:focus {

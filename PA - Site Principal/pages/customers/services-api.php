@@ -28,8 +28,37 @@ if ($limit > 50) {
     $limit = 50;
 }
 
-$services = askAPI("/products/services?page=$page&limit=$limit&available=1", "GET");
+
+$apiQuery = "/products/services?page=$page&limit=$limit&available=1";
+if (!empty($_GET['search'])) {
+    $apiQuery .= '&search=' . urlencode($_GET['search']);
+}
+if (!empty($_GET['type'])) {
+    $apiQuery .= '&type=' . urlencode($_GET['type']);
+}
+$services = askAPI($apiQuery, "GET");
 $decoded = json_decode($services, true);
+
+$typesMap = [];
+$typesResp = askAPI('/typesPrestation', 'GET');
+$typesDecoded = json_decode($typesResp, true);
+if (is_array($typesDecoded)) {
+    $list = isset($typesDecoded['items']) ? $typesDecoded['items'] : $typesDecoded;
+    if (is_array($list)) {
+        foreach ($list as $t) {
+            if (!empty($t['id'])) {
+                $name = $t['name'] ?? '';
+                $icon = 'fa-calendar';
+                $lc = strtolower($name);
+                if (strpos($lc,'formation')!==false) $icon='fa-graduation-cap';
+                elseif (strpos($lc,'event')!==false) $icon='fa-calendar-days';
+                elseif (strpos($lc,'consult')!==false) $icon='fa-user-tie';
+                $cls = 'type-' . preg_replace('/[^a-z0-9]+/','-',trim($lc));
+                $typesMap[$t['id']] = ['label'=>$name,'icon'=>$icon,'class'=>$cls];
+            }
+        }
+    }
+}
 
 $ordersResponse = askAPI("/orders", "GET");
 $ordersDecoded = json_decode($ordersResponse, true);
@@ -84,31 +113,16 @@ foreach ($servicesList as $service) {
         }
     }
     
-    $serviceType = intval($service['type'] ?? 0);
-    $typeLabel = '';
-    $typeIcon = '';
-    $typeClass = '';
-    
-    switch($serviceType) {
-        case 1:
-            $typeLabel = 'Formation';
-            $typeIcon = 'fa-graduation-cap';
-            $typeClass = 'type-formation';
-            break;
-        case 2:
-            $typeLabel = 'Event';
-            $typeIcon = 'fa-calendar-days';
-            $typeClass = 'type-event';
-            break;
-        case 3:
-            $typeLabel = 'Consulting';
-            $typeIcon = 'fa-user-tie';
-            $typeClass = 'type-consulting';
-            break;
-        default:
-            $typeLabel = 'Other';
-            $typeIcon = 'fa-circle-question';
-            $typeClass = 'type-other';
+
+    $typeLabel = 'Other';
+    $typeIcon = 'fa-circle-question';
+    $typeClass = 'type-other';
+    $uuid = $service['type_id'] ?? ($service['type'] ?? '');
+    if (isset($typesMap[$uuid])) {
+        $info = $typesMap[$uuid];
+        $typeLabel = $info['label'];
+        $typeIcon = $info['icon'];
+        $typeClass = $info['class'];
     }
     
     $creatorName = null;
