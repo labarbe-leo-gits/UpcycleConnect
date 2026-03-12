@@ -812,3 +812,26 @@ h1 {
 .team-name{
   margin-top:-15px;
 }
+
+.btn-secondary {
+  padding: 14px 24px;
+  border-radius: 10px;
+  border: 2px solid #e5e7eb;
+  background: #f9fafb;
+  color: #374151;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 20px;
+  text-align: center;
+}
+
+.btn-secondary:hover {
+  border-color: #cbd5e1;
+  background: #f3f4f6;
+}
+
+.btn-secondary a {
+  color: #374151;
+  text-decoration: none;
+}
