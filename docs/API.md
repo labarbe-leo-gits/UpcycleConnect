@@ -74,6 +74,51 @@ Verifies API and database connectivity.
 }
 ```
 
+---
+
+### Moderate Content
+
+Performs a simple word‑list check against the bad‑word list.
+
+**Endpoint**: `POST /moderate`
+
+**Authentication**: JWT (any logged‑in user)
+
+**Request Body**:
+
+```json
+{
+  "content": "some text to evaluate"
+}
+```
+
+**Response**:
+
+```json
+{
+  "flagged": true,
+  "flaggedWords": ["scam", "badword"]
+}
+```
+
+**Notes**:
+
+- The local list is assembled from the remote GitHub repository
+  (LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words) plus
+  any words you add to `data/badwords.json`.
+- Set `BADWORDS_FILE` environment variable to customise the location.
+- The Go API caches the word set on first call; restart to refresh or implement
+  your own refresh logic.
+
+**Example**:
+
+```bash
+curl -X POST http://localhost:9999/moderate \
+  -H "Content-Type: application/json" \
+  -d '{"content":"this is a scam"}' \
+  -H "Authorization: Bearer <token>"
+```
+
 **Error Response** (503 Service Unavailable):
 
 ```json

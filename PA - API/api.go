@@ -175,6 +175,7 @@ func main() {
 	registerRoute("GET", "/{$}", "Health check - verify API and database connection", healthCheck)
 	registerRoute("POST", "/login", "User login - authenticate and return user data", app.LoginUser)
 	registerRoute("POST", "/oauth/login", "OAuth login - generate JWT for an OAuth-authenticated user", app.OAuthLogin)
+	registerRoute("POST", "/moderate", "Moderate arbitrary text using bad‑word list and Gemini AI", app.ModerateContent, app.JWTAuthMiddleware)
 	registerRoute("POST", "/users", "Create a new user", app.CreateUser)
 	registerRoute("POST", "/users/email", "Get user by email - for OAuth lookup", app.GetUserByEmail)
 	registerRoute("GET", "/docs", "Show the API documentation", notFoundHandler)

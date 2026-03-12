@@ -1,0 +1,103 @@
+#header-container {
+  margin: 24px auto;
+  max-width: 1000px;
+  background: #fff;
+  padding: 16px 32px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: border-color 0.2s;
+}
+#header-container:hover {
+  border-color: #10b981;
+}
+#repo-info {
+  text-align: center;
+  margin-bottom: 12px;
+}
+#repo-info a {
+  color: #10b981;
+  text-decoration: none;
+  font-weight: 600;
+}
+#repo-info a:hover {
+  text-decoration: underline;
+}
+#sync-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  font-size: 1rem;
+  margin-left: 15px;
+}
+#search-box {
+  width: 90%;
+  max-width: 800px;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+}
+#search-box:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+}
+
+#badwords-table {
+  width: min(800px, 100%);
+  margin: 0 auto;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+#badwords-table th,
+#badwords-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+#badwords-table thead {
+  background: #10b981;
+  color: white;
+}
+#badwords-table tbody tr:hover {
+  background: #d1fae5;
+}
+.delete-word {
+  cursor: pointer;
+  color: white;
+  font-weight: bold;
+}
+#load-more-btn {
+  margin: 8px auto 0 auto;
+  display: block;
+  position: relative;
+}
+.delete-word.btn-danger {
+  background: #e53e3e;
+  border-radius: 4px;
+  padding: 4px 8px;
+}
+.delete-word.btn-danger:hover {
+  background: #c53030;
+}
+
+#load-more-btn {
+  margin: 8px auto 0 auto;
+  display: block;
+  position: relative;
+}
+
+.text p {
+  text-align: center;
+}
+
+#delete-modal .modal-actions button {
+  width: 100px;
+  max-width: 40%;
+}
+
+.btn-secondary {
+  margin-top: 0px;
+}
