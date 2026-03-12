@@ -87,16 +87,24 @@ $orderPayload = [
     'amount' => $price,
     'payment_method' => 'balance',
     'transaction_id' => 'balance-' . $orderToken,
-    'product_id' => $productUuid,
+
+    'event_id' => $productType === 'service' ? $productUuid : null,
+    'product_id' => $productType === 'offer' ? $productUuid : null,
     'status' => 1
 ];
-// Remove nulls
+
 $orderPayload = array_filter($orderPayload, function($v) { return $v !== null; });
 $orderResp = askAPI('/orders', 'POST', json_encode($orderPayload));
 $orderData = json_decode($orderResp, true);
 if (!isset($orderData['id'])) {
+    error_log("pay-with-balance: order creation failed, refunding balance");
+    $refundPayload = json_encode([ 'amount' => $price, 'operation' => 0 ]);
+    $refundResp = askAPI('/users/' . $userId . '/balance', 'PATCH', $refundPayload);
+    error_log("pay-with-balance: refundResp=" . substr($refundResp,0,500));
+
     http_response_code(500);
-    echo json_encode(['error' => 'Failed to create order']);
+    $errorMsg = isset($orderData['error']) ? $orderData['error'] : 'Failed to create order';
+    echo json_encode(['error' => $errorMsg]);
     exit;
 }
 

@@ -129,6 +129,10 @@ func ValidateServiceDto(serviceDto models.Service) []string {
 		validationErrors = append(validationErrors, "MaximumParticipants must be 0 or greater")
 	}
 
+	if serviceDto.MeetingType != "" && serviceDto.MeetingType != "none" && serviceDto.MeetingType != "zoom" && serviceDto.MeetingType != "other" {
+		validationErrors = append(validationErrors, "MeetingType is invalid")
+	}
+
 	if serviceDto.MeetingType == "other" {
 		if serviceDto.OnlineMeetingLink == "" {
 			validationErrors = append(validationErrors, "Meeting URL is required when type is other")

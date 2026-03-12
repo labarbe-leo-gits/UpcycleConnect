@@ -195,6 +195,63 @@
   background: #fff;
 }
 
+#svc-meeting-url-wrap .input-wrapper input,
+#svc-meeting-url {
+  width: 100%;
+}
+
+.chart-nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(204, 204, 204, 0.5);
+  color: #000;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+.chart-nav-btn:hover {
+  background: #10b981;
+  color: #fff;
+}
+.chart-nav-btn:focus {
+  outline: none;
+}
+.chart-nav-prev {
+  left: 8px;
+}
+.chart-nav-next {
+  right: 8px;
+}
+
+#svc-meeting-url-wrap .input-wrapper input,
+#svc-meeting-url {
+  width: 100%;
+  padding: 14px 16px;
+  padding-left: 48px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  box-sizing: border-box;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
+}
+
+#svc-meeting-url-wrap .input-wrapper input:focus,
+#svc-meeting-url:focus {
+  outline: none;
+  border-color: #10b981;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
 .ctn-delete-btn {
   justify-content: center;
 }
@@ -493,4 +550,61 @@
 }
 .portal-card:hover {
   border-color: #10b981 !important;
+}
+
+.toolbar-search-wrap {
+  position: relative;
+  display: inline-block;
+}
+.toolbar-search-wrap input {
+  padding-left: 28px;
+  border-radius: 8px;
+  height: 32px;
+  border: 1px solid #d1d5db;
+}
+.toolbar-search-wrap .toolbar-search-icon {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6b7280;
+  pointer-events: none;
+}
+.admin-toolbar button.icon-only {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+/* details modal adjustments */
+#type-details-stats {
+  text-align: center;
+  margin-bottom: 12px;
+  color: #374151;
+}
+/* center the search wrapper inside modal */
+#type-details-modal .toolbar-search-wrap {
+  display: block; /* make block so margin auto works */
+  margin: 0 auto 12px auto;
+  position: relative;
+  width: fit-content;
+}
+#type-details-modal .toolbar-search-wrap input {
+  padding-left: 28px;
+  border-radius: 8px;
+  height: 32px;
+  border: 1px solid #d1d5db;
+}
+#type-details-modal .toolbar-search-wrap .toolbar-search-icon {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6b7280;
+  pointer-events: none;
+}
+#type-details-table tbody tr:hover {
+  background: #d1fae5;
 }

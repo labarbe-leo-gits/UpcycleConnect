@@ -21,6 +21,12 @@ function safeDecode($json) {
 $resp = askAPI('/dashboard-metrics', 'GET');
 $metrics = json_decode($resp, true);
 if (!is_array($metrics)) {
+    error_log("dashboard-api.php: invalid response from /dashboard-metrics: $resp");
+    echo $resp;
+    exit;
+}
+if (isset($metrics['error'])) {
+    error_log("dashboard-api.php: API returned error: " . $metrics['error']);
     echo $resp;
     exit;
 }

@@ -108,9 +108,14 @@ func RoleMiddleware(requiredRole int) func(http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 
+			expected := os.Getenv("APP_API_KEY")
+			if expected == "" {
+				next(w, r)
+				return
+			}
+
 			if key := r.Header.Get("X-Internal-Key"); key != "" {
-				expected := os.Getenv("APP_API_KEY")
-				if expected != "" && key == expected {
+				if key == expected {
 					next(w, r)
 					return
 				}
@@ -248,7 +253,29 @@ func main() {
 	/* registerRoute("GET", "/users/{id}/discussions", "List all discussions for a specific user by their UUID", app.GetUserDiscussions, app.JWTAuthMiddleware)
 	registerRoute("POST", "/users/{id}/discussions", "Create a new discussion for a specific user by their UUID", app.CreateDiscussion, app.JWTAuthMiddleware)
 	registerRoute("GET", "/discussions/{id}/messages", "List all messages in a specific discussion by its UUID", app.GetDiscussionMessages, app.JWTAuthMiddleware)
-	registerRoute("POST", "/discussions/{id}/messages", "Create a new message in a specific discussion by its UUID", app.CreateMessage, app.JWTAuthMiddleware) */
+	registerRoute("PATCH", "/discussions/{id}/messages/{mID}", "Edit a specific message in a discussion by their UUIDs", app.UpdateMessage, app.JWTAuthMiddleware)
+	registerRoute("DELETE", "/discussions/{id}/messages/{mID}", "Delete a specific message from a discussion by their UUIDs", app.DeleteMessage, app.JWTAuthMiddleware)
+	registerRoute("POST", "/discussions/{id}/messages", "Create a new message in a specific discussion by its UUID", app.CreateMessage, app.JWTAuthMiddleware) 
+	registerRoute("GET", "/groups", "List all groups", app.GetGroups, app.JWTAuthMiddleware)
+	registerRoute("POST", "/groups", "Create a new group", app.CreateGroup, app.JWTAuthMiddleware)
+	registerRoute("GET", "/groups/{id}", "Get details of a specific group by its UUID", app.GetGroupByID, app.JWTAuthMiddleware)
+	registerRoute("PATCH", "/groups/{id}", "Update a specific group by its UUID", app.UpdateGroup, app.JWTAuthMiddleware)
+	registerRoute("DELETE", "/groups/{id}", "Delete a specific group by its UUID", app.DeleteGroup, app.JWTAuthMiddleware)
+	registerRoute("POST", "/groups/{id}/messages", "Create a new message in a specific group by its UUID", app.CreateGroupMessage, app.JWTAuthMiddleware)
+	registerRoute("GET", "/groups/{id}/messages", "List all messages in a specific group by its UUID", app.GetGroupMessages, app.JWTAuthMiddleware)
+	registerRoute("PATCH", "/groups/{id}/messages/{mID}", "Edit a specific message in a group by their UUIDs", app.UpdateGroupMessage, app.JWTAuthMiddleware)
+	registerRoute("DELETE", "/groups/{id}/messages/{mID}", "Delete a specific message from a group by their UUIDs", app.DeleteGroupMessage, app.JWTAuthMiddleware)
+	registerRoute("GET", "/groups/{id}/members", "List all members of a specific group by its UUID", app.GetGroupMembers, app.JWTAuthMiddleware)
+	registerRoute("POST", "/groups/{id}/members", "Add a member to a specific group by its UUID", app.AddGroupMember, app.JWTAuthMiddleware)
+	registerRoute("DELETE", "/groups/{id}/members/{uid}", "Remove a member from a specific group by their UUIDs", app.RemoveGroupMember, app.JWTAuthMiddleware)
+	registerRoute("POST", "/discussions/{id}/messages/{mID}/reactions", "Add a reaction to a specific message by their UUIDs", app.AddReaction, app.JWTAuthMiddleware)
+	registerRoute("DELETE", "/discussions/{id}/messages/{mID}/reactions", "Remove a reaction from a specific message by their UUIDs", app.RemoveReaction, app.JWTAuthMiddleware)
+	registerRoute("GET", "/discussions/{id}/messages/{mID}/reactions", "List all reactions for a specific message by their UUIDs", app.GetReactions, app.JWTAuthMiddleware)
+	registerRoute("POST"; "/groups/{id}/messages/{mID}/reactions", "Add a reaction to a specific group message by their UUIDs", app.AddGroupMessageReaction, app.JWTAuthMiddleware)
+	registerRoute("DELETE", "/groups/{id}/messages/{mID}/reactions", "Remove a reaction from a specific group message by their UUIDs", app.RemoveGroupMessageReaction, app.JWTAuthMiddleware)
+	registerRoute("GET", "/groups/{id}/messages/{mID}/reactions", "List all reactions for a specific group message by their UUIDs", app.GetGroupMessageReactions, app.JWTAuthMiddleware)
+
+	*/
 	registerRoute("GET", "/tips", "Get the tips from the Database", app.GetTips, app.JWTAuthMiddleware)
 	registerRoute("POST", "/tips", "Create a tip in the Database", app.CreateTip, app.JWTAuthMiddleware)
 	registerRoute("PATCH", "/tips/{id}", "Update a tip in the database", app.UpdateTip, app.JWTAuthMiddleware)

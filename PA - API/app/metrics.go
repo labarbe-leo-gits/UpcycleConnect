@@ -47,6 +47,8 @@ func GetDashboardMetrics(w http.ResponseWriter, r *http.Request) {
 	userPct := 0.0
 	if userCountYesterday > 0 {
 		userPct = float64(userDelta) * 100.0 / float64(userCountYesterday)
+	} else if userCount > 0 {
+		userPct = 100.0
 	}
 
 	loginRows, err := db.Db.Query("SELECT DATE(last_login), COUNT(id) FROM users WHERE last_login IS NOT NULL GROUP BY DATE(last_login)")
@@ -78,18 +80,24 @@ func GetDashboardMetrics(w http.ResponseWriter, r *http.Request) {
 	containerPct := 0.0
 	if containerCountYesterday > 0 {
 		containerPct = float64(containerDelta) * 100.0 / float64(containerCountYesterday)
+	} else if containerCount > 0 {
+		containerPct = 100.0
 	}
 
 	incomeDelta := todayIncome - yesterdayIncome
 	incomePct := 0.0
 	if yesterdayIncome > 0 {
 		incomePct = incomeDelta * 100.0 / yesterdayIncome
+	} else if todayIncome > 0 {
+		incomePct = 100.0
 	}
 
 	projectDelta := projectCount - projectCountYesterday
 	projectPct := 0.0
 	if projectCountYesterday > 0 {
 		projectPct = float64(projectDelta) * 100.0 / float64(projectCountYesterday)
+	} else if projectCount > 0 {
+		projectPct = 100.0
 	}
 
 	aiPct := 0.0

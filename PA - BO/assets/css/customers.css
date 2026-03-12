@@ -3036,7 +3036,6 @@ body.modal-open {
   background: #fff;
 }
 
-/* Admin service card action buttons */
 .service-item .service-actions {
   display: flex;
   gap: 12px;
@@ -3075,6 +3074,7 @@ body.modal-open {
   background: #ef4444;
   color: #fff;
   border: 1.5px solid #ef4444;
+  justify-content: center;
 }
 
 .service-item .service-actions .btn-danger:hover {

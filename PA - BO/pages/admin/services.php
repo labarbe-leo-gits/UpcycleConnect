@@ -162,7 +162,6 @@ include_once '../../includes/admin-header.php';
                 <div class="svc-meet-switcher" id="svc-meet-switcher">
                     <button type="button" class="svc-meet-opt is-active" data-type="none">None</button>
                     <button type="button" class="svc-meet-opt" data-type="zoom">Zoom</button>
-                    <button type="button" class="svc-meet-opt" data-type="jitsi">Jitsi</button>
                     <button type="button" class="svc-meet-opt" data-type="other">Other</button>
                 </div>
                 <div id="svc-meeting-url-wrap" style="display:none;margin-top:8px;">
@@ -197,7 +196,6 @@ include_once '../../includes/admin-header.php';
     </div>
 </div>
 
-<!-- type creation modal -->
 <div class="add-modal" id="type-form-modal" role="dialog" aria-hidden="true">
     <div class="add-modal-content">
         <span class="close-button" id="type-form-modal-close">&times;</span>
@@ -222,6 +220,7 @@ include_once '../../includes/admin-header.php';
     window.API_TOKEN = '<?php echo isset($_SESSION["jwt_token"]) ? $_SESSION["jwt_token"] : ""; ?>';
     window.CURRENT_USER_ID = '<?php echo isset($user["id"]) ? $user["id"] : ""; ?>';
 </script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
 <script src="../../assets/js/admin-services.js" defer></script>
 
 <?php include_once '../../includes/footer.php'; ?>

@@ -289,6 +289,11 @@
     function updateMeetingUI() {
         const wrapper = document.getElementById('svc-meet-switcher');
         if (!wrapper) return;
+        
+        if (!['none','zoom','other'].includes(meetingType)) {
+            meetingType = 'none';
+            meetingUrl = '';
+        }
         wrapper.querySelectorAll('.svc-meet-opt').forEach(b => b.classList.toggle('is-active', b.dataset.type === meetingType));
         const urlWrap = document.getElementById('svc-meeting-url-wrap');
         if (urlWrap) urlWrap.style.display = meetingType === 'other' ? 'block' : 'none';
@@ -500,12 +505,16 @@
                     <span><i class="fa-solid fa-euro-sign"></i> ${price}</span>
                 </div>
                 <div class="service-actions" style="display:flex;gap:8px;justify-content:center;">
+                    <button class="btn-secondary svc-dashboard-btn" data-id="${svc.id}" title="Dashboard">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </button>
                     <button class="btn-secondary svc-edit-btn" data-id="${svc.id}"><i class="fa-solid fa-pen"></i> Edit</button>
                     <button class="btn-danger svc-delete-btn" data-id="${svc.id}">
                         <i class="fa-solid fa-trash"></i> Delete
                     </button>
                 </div>`;
 
+            card.querySelector('.svc-dashboard-btn').addEventListener('click', () => openDashboard(svc));
             card.querySelector('.svc-edit-btn').addEventListener('click', () => openEditForm(svc));
             card.querySelector('.svc-delete-btn').addEventListener('click', () => confirmDelete(svc));
 
@@ -531,6 +540,7 @@
                 '<div class="skeleton-buttons">' +
                     '<div class="skeleton skeleton-button"></div>' +
                     '<div class="skeleton skeleton-button"></div>' +
+                    '<div class="skeleton skeleton-button"></div>' +
                 '</div>' +
             '</div>';
         container.innerHTML = Array(n).fill(card).join('');
@@ -541,6 +551,209 @@
         const mainContent = document.getElementById('main-content');
         if (loader)      { loader.style.display = 'none'; loader.setAttribute('aria-hidden', 'true'); }
         if (mainContent) mainContent.style.visibility = 'visible';
+    }
+
+    function openDashboard(svc) {
+        const title = document.getElementById('service-modal-title');
+        const body  = document.getElementById('service-modal-body');
+        const actions = document.getElementById('service-modal-actions');
+        if (title) title.textContent = `Dashboard: ${svc.name || ''}`;
+        if (body) {
+            body.innerHTML = '';
+            renderDashboardSkeletons(5);
+        }
+        if (actions) {
+            actions.innerHTML = '';
+            const exportBtn = document.createElement('button');
+            exportBtn.id = 'dashboard-export-btn';
+            exportBtn.className = 'btn-secondary';
+            exportBtn.style.marginRight = '8px';
+            exportBtn.textContent = 'Export PDF';
+            exportBtn.addEventListener('click', () => { console.log('export pdf clicked'); });
+            actions.appendChild(exportBtn);
+        }
+        showModal('service-modal');
+        fetchDashboardData(svc.id);
+    }
+
+    function renderDashboardSkeletons(rows) {
+        const body = document.getElementById('service-modal-body');
+        if (!body) return;
+        let html = '<div style="margin-bottom:12px;"><div class="skeleton" style="height:18px;width:50%;border-radius:6px;"></div></div>';
+        html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+                <div class="skeleton" style="height:200px;border-radius:6px;"></div>
+                <div class="skeleton" style="height:200px;border-radius:6px;"></div>
+            </div>`;
+        html += '<div style="max-height:300px;overflow:auto;"><div class="skeleton" style="height:14px;width:100%;border-radius:6px;margin-bottom:8px;"></div><div class="skeleton" style="height:14px;width:100%;border-radius:6px;margin-bottom:8px;"></div><div class="skeleton" style="height:14px;width:100%;border-radius:6px;margin-bottom:8px;"></div></div>';
+        html += '<table style="width:100%;border-collapse:collapse;"><tbody>';
+        for (let i = 0; i < (rows||3); i++) {
+            html += `<tr><td colspan="4" style="padding:8px;"><div class="skeleton" style="height:14px;width:100%;border-radius:6px;"></div></td></tr>`;
+        }
+        html += '</tbody></table>';
+        body.innerHTML = html;
+    }
+
+    function fetchDashboardData(serviceId) {
+        const body = document.getElementById('service-modal-body');
+        if (!body) return;
+        fetch(`service-dashboard-api.php?service_id=${encodeURIComponent(serviceId)}`)
+            .then(r => r.json())
+            .then(data => {
+                renderDashboard(data);
+            })
+            .catch(err => {
+                console.error('dashboard fetch error', err);
+                if (body) body.innerHTML = '<p class="error-message">Unable to load dashboard.</p>';
+            });
+    }
+
+    function renderDashboard(orders) {
+        const body = document.getElementById('service-modal-body');
+        if (!body) return;
+        if (!Array.isArray(orders) || orders.length === 0) {
+            body.innerHTML = '<p>No orders found for this service.</p>';
+            return;
+        }
+        let total = 0;
+        const rowsHtml = orders.map(o => {
+            const user = o.user || {};
+            const date = o.created_at ? new Date(o.created_at).toLocaleDateString('fr-FR') : '';
+            const name = (user.first_name || '') + ' ' + (user.last_name || '');
+            const loc = [user.user_city, user.user_zip_code].filter(Boolean).join(' ');
+            const amt = o.amount != null ? parseFloat(o.amount).toFixed(2) : '0.00';
+            total += parseFloat(amt)||0;
+            return `
+                <tr>
+                    <td style="padding:8px;border-bottom:1px solid #e5e7eb;">${escHtml(date)}</td>
+                    <td style="padding:8px;border-bottom:1px solid #e5e7eb;">${escHtml(name)}</td>
+                    <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right;">€${escHtml(amt)}</td>
+                </tr>`;
+        }).join('');
+        body.innerHTML = `
+            <div style="margin-bottom:12px;display:grid;grid-auto-flow:column;gap:8px;align-items:center;">
+                <span class="badge" style="background:#3b82f6;color:#fff;text-align:center;">Orders: ${orders.length}</span>
+                <span class="badge" style="background:#10b981;color:#fff;text-align:center;">Revenue: €${total.toFixed(2)}</span>
+            </div>
+            <div id="dashboard-charts-container" style="position:relative;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
+                <button id="chart-prev-btn" class="chart-nav-btn chart-nav-prev" aria-label="Previous chart">‹</button>
+                <canvas id="dashboard-timeline-chart" class="dashboard-chart" style="height:200px;display:block;"></canvas>
+                <canvas id="dashboard-revenue-chart" class="dashboard-chart" style="height:200px;display:none;"></canvas>
+                <button id="chart-next-btn" class="chart-nav-btn chart-nav-next" aria-label="Next chart">›</button>
+            </div>
+            <h3 style="margin-top:20px;color:#374151;">Purchases</h3>
+            <div style="max-height:300px;overflow:auto;">
+            <table id="dashboard-buyers-table" style="width:100%;border-collapse:collapse;">
+                <thead>
+                    <tr>
+                        <th style="text-align:left;padding:8px;border-bottom:1px solid #e5e7eb;">Date</th>
+                        <th style="text-align:left;padding:8px;border-bottom:1px solid #e5e7eb;">Name</th>
+                        <th style="text-align:right;padding:8px;border-bottom:1px solid #e5e7eb;">Price</th>
+                    </tr>
+                </thead>
+                <tbody>${rowsHtml}</tbody>
+            </table>
+            </div>`;
+
+        createTimelineChart(orders);
+        createRevenueChart(orders);
+        setupChartNavigation();
+    }
+
+    function createTimelineChart(orders) {
+        const counts = {};
+        orders.forEach(o => {
+            if (o.created_at) {
+                const d = new Date(o.created_at);
+                if (!isNaN(d)) {
+                    const key = d.toISOString().substring(0,10);
+                    counts[key] = (counts[key] || 0) + 1;
+                }
+            }
+        });
+        const labels = Object.keys(counts).sort();
+        const data = labels.map(l => counts[l]);
+        const ctx = document.getElementById('dashboard-timeline-chart');
+        if (!ctx) return;
+        try {
+            new Chart(ctx.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{ label: 'Orders', data, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.2)', fill: true }]
+                },
+                options: { responsive: true, scales: { x: { title: { display: true, text: 'Date' } }, y: { title: { display: true, text: 'Orders' }, beginAtZero: true } } }
+            });
+        } catch (e) {
+            console.error('chart render error', e);
+        }
+    }
+
+    function createRevenueChart(orders) {
+        const sums = {};
+        orders.forEach(o => {
+            if (o.created_at) {
+                const d = new Date(o.created_at);
+                if (!isNaN(d)) {
+                    const key = d.toISOString().substring(0,10);
+                    sums[key] = (sums[key] || 0) + (parseFloat(o.amount) || 0);
+                }
+            }
+        });
+        const labels = Object.keys(sums).sort();
+        const data = labels.map(l => sums[l].toFixed(2));
+        const ctx = document.getElementById('dashboard-revenue-chart');
+        if (!ctx) return;
+        try {
+            new Chart(ctx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{ label: 'Revenue', data, backgroundColor: '#10b981' }]
+                },
+                options: { responsive: true, scales: { x: { title: { display: true, text: 'Date' } }, y: { title: { display: true, text: '€' }, beginAtZero: true } } }
+            });
+        } catch (e) {
+            console.error('chart render error', e);
+        }
+    }
+
+    function renderBuyersTable(orders) {
+        const tbl = document.getElementById('dashboard-buyers-table');
+        if (!tbl) return;
+        const rows = orders.map(o => {
+            const user = o.user || {};
+            const name = ((user.first_name||'') + ' ' + (user.last_name||'')).trim();
+            const date = o.created_at ? new Date(o.created_at).toLocaleDateString('fr-FR') : '';
+            const price = o.amount != null ? parseFloat(o.amount).toFixed(2) : '0.00';
+            return `
+                <tr>
+                    <td style="padding:8px;border-bottom:1px solid #e5e7eb;">${escHtml(date)}</td>
+                    <td style="padding:8px;border-bottom:1px solid #e5e7eb;">${escHtml(name)}</td>
+                    <td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:right;">€${escHtml(price)}</td>
+                </tr>`;
+        }).join('');
+        const body = tbl.querySelector('tbody');
+        if (body) body.innerHTML = rows;
+    }
+
+    function setupChartNavigation() {
+        let index = 0;
+        const charts = Array.from(document.querySelectorAll('.dashboard-chart'));
+        const prevBtn = document.getElementById('chart-prev-btn');
+        const nextBtn = document.getElementById('chart-next-btn');
+        function showIndex(i) {
+            charts.forEach((c,idx)=>{
+                c.style.display = idx === i ? 'block' : 'none';
+            });
+        }
+        if (prevBtn) prevBtn.addEventListener('click', () => {
+            index = (index - 1 + charts.length) % charts.length;
+            showIndex(index);
+        });
+        if (nextBtn) nextBtn.addEventListener('click', () => {
+            index = (index + 1) % charts.length;
+            showIndex(index);
+        });
     }
 
     function setLocationMode(mode) {

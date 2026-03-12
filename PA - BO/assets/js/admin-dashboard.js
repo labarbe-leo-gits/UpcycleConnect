@@ -117,6 +117,25 @@
             console.log('dashboard raw response', d);
             console.log('dashboard metrics', d.dates, d.loginsSeries);
 
+            if (d && d.error) {
+                console.error('dashboard API returned error:', d.error);
+                var errBox = document.getElementById('dashboard-error');
+                if (!errBox) {
+                    errBox = document.createElement('div');
+                    errBox.id = 'dashboard-error';
+                    errBox.style.color = '#c00';
+                    errBox.style.padding = '10px';
+                    errBox.style.background = '#fee';
+                    errBox.style.marginBottom = '10px';
+                    errBox.textContent = 'Unable to load dashboard data: ' + d.error;
+                    var container = document.querySelector('.dashboard-container') || document.body;
+                    container.insertBefore(errBox, container.firstChild);
+                } else {
+                    errBox.textContent = 'Unable to load dashboard data: ' + d.error;
+                }
+                return;
+            }
+
             document.getElementById('user-count').textContent = d.userCount;
             document.getElementById('container-count').textContent = d.containerCount;
             document.getElementById('income-total').textContent = d.totalIncome.toFixed(2) + ' €';

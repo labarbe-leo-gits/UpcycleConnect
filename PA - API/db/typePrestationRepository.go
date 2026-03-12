@@ -89,8 +89,16 @@ func UpdateTypePrestationInDB(typePrestation models.TypePrestation) error {
 
 func DeleteTypePrestationInDB(id uuid.UUID) error {
 
+	updateQuery := "UPDATE evenements SET event_type = '00000000-0000-0000-0000-000000000000' WHERE event_type = ?"
+	_, err := Db.Exec(updateQuery, id)
+
+	if err != nil {
+		fmt.Println("[ERROR] DeleteTypePrestationInDB update prestations:", err)
+		return err
+	}
+
 	query := "DELETE FROM typesPrestations WHERE id = ?"
-	_, err := Db.Exec(query, id)
+	_, err = Db.Exec(query, id)
 
 	if err != nil {
 		fmt.Println("[ERROR] DeleteTypePrestationInDB:", err)

@@ -42,6 +42,8 @@ func ValidateOrderDto(orderDto models.Order) []string {
 
 	if orderDto.EventID == nil && orderDto.ProductID == nil {
 		validationErrors = append(validationErrors, "EventID or ProductID is required")
+	} else if orderDto.EventID != nil && orderDto.ProductID != nil {
+		validationErrors = append(validationErrors, "Only one of EventID or ProductID may be supplied")
 	}
 
 	if orderDto.Amount < 0 {
@@ -84,6 +86,10 @@ func CreateOrder(w http.ResponseWriter, r *http.Request) {
 		}
 		if err.Error() == "event not found" {
 			sendError(w, "Service not found", http.StatusNotFound)
+			return
+		}
+		if err.Error() == "product not found" {
+			sendError(w, "Product not found", http.StatusNotFound)
 			return
 		}
 		sendError(w, "Unable to create order", http.StatusInternalServerError)

@@ -96,8 +96,13 @@ func GetOrdersFromDB() ([]models.Order, error) {
 func CreateOrderInDB(order models.Order) error {
 
 	newID := uuid.New()
+
 	eventID := uuidPointerToValue(order.EventID)
 	productID := uuidPointerToValue(order.ProductID)
+
+	if eventID == nil && productID == nil {
+		return fmt.Errorf("createOrder package db: missing event_id and product_id")
+	}
 
 	tx, err := Db.Begin()
 	if err != nil {
@@ -119,6 +124,10 @@ func CreateOrderInDB(order models.Order) error {
 
 	_, err = tx.Exec("INSERT INTO orders (id, user_id, event_id, product_id, transaction_id, amount, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())", newID, order.UserID, eventID, productID, order.TransactionID, order.Amount, order.Status)
 	if err != nil {
+
+		fmt.Printf("[ERROR] CreateOrderInDB insert: %s, userID=%s, eventID=%#v, productID=%#v, transactionID=%s, amount=%.2f, status=%d\n",
+			err.Error(), order.UserID.String(), eventID, productID, order.TransactionID, order.Amount, order.Status)
+
 		return fmt.Errorf("createOrder package db : %s", err.Error())
 	}
 
