@@ -9,12 +9,19 @@ import (
 	"github.com/google/uuid"
 )
 
-func GetServicesFromDB(search string, typeUUID string, availableOnly bool) ([]models.Service, error) {
+func GetServicesFromDB(search string, typeUUID string, availableOnly bool, employeeUUID string) ([]models.Service, error) {
 
 	services := []models.Service{}
-	query := "SELECT id, title, description, price, event_type, event_date, event_road, event_city, event_zip_code, maximum_participants, current_participants, created_by, created_at, updated_at FROM evenements"
+
+	query := "SELECT id, title, description, price, event_type, event_date, event_road, event_city, event_zip_code, maximum_participants, current_participants, meetingType, onlineMeetingLink, created_by, created_at, updated_at FROM evenements"
 	args := []interface{}{}
 	clauses := []string{}
+
+	if employeeUUID != "" {
+
+		query = "SELECT e.id, e.title, e.description, e.price, e.event_type, e.event_date, e.event_road, e.event_city, e.event_zip_code, e.maximum_participants, e.current_participants, e.meetingType, e.onlineMeetingLink, e.created_by, e.created_at, e.updated_at FROM evenements e INNER JOIN affectedEmployees ae ON ae.event_id = e.id AND ae.user_id = ?"
+		args = append(args, employeeUUID)
+	}
 
 	if availableOnly {
 		clauses = append(clauses, "(maximum_participants IS NULL OR current_participants < maximum_participants)")
@@ -46,9 +53,17 @@ func GetServicesFromDB(search string, typeUUID string, availableOnly bool) ([]mo
 		var createdAt, updatedAt sql.NullString
 		var maxParticipants, currentParticipants sql.NullInt64
 		var typeStr string
-		err := rows.Scan(&idStr, &service.Name, &service.Description, &service.Price, &typeStr, &service.ServiceDate, &service.ServiceRoad, &service.ServiceCity, &service.ServiceZip, &maxParticipants, &currentParticipants, &createdByStr, &createdAt, &updatedAt)
+		var mt sql.NullString
+		var link sql.NullString
+		err := rows.Scan(&idStr, &service.Name, &service.Description, &service.Price, &typeStr, &service.ServiceDate, &service.ServiceRoad, &service.ServiceCity, &service.ServiceZip, &maxParticipants, &currentParticipants, &mt, &link, &createdByStr, &createdAt, &updatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("getServices package db scan : %s", err.Error())
+		}
+		if mt.Valid {
+			service.MeetingType = mt.String
+		}
+		if link.Valid {
+			service.OnlineMeetingLink = link.String
 		}
 		service.ID, err = uuid.Parse(idStr)
 		if err != nil {
@@ -87,12 +102,18 @@ func GetServicesFromDB(search string, typeUUID string, availableOnly bool) ([]mo
 
 }
 
-func GetServicesPageFromDB(limit int, offset int, availableOnly bool, search string, typeUUID string) ([]models.Service, error) {
+func GetServicesPageFromDB(limit int, offset int, availableOnly bool, search string, typeUUID string, employeeUUID string) ([]models.Service, error) {
 
 	services := []models.Service{}
-	query := "SELECT id, title, description, price, event_type, event_date, event_road, event_city, event_zip_code, maximum_participants, current_participants, created_by, created_at, updated_at FROM evenements"
+	query := "SELECT id, title, description, price, event_type, event_date, event_road, event_city, event_zip_code, maximum_participants, current_participants, meetingType, onlineMeetingLink, created_by, created_at, updated_at FROM evenements"
 	args := []interface{}{}
 	clauses := []string{}
+
+	if employeeUUID != "" {
+
+		query = "SELECT e.id, e.title, e.description, e.price, e.event_type, e.event_date, e.event_road, e.event_city, e.event_zip_code, e.maximum_participants, e.current_participants, e.meetingType, e.onlineMeetingLink, e.created_by, e.created_at, e.updated_at FROM evenements e INNER JOIN affectedEmployees ae ON ae.event_id = e.id AND ae.user_id = ?"
+		args = append(args, employeeUUID)
+	}
 
 	if availableOnly {
 		clauses = append(clauses, "(maximum_participants IS NULL OR current_participants < maximum_participants)")
@@ -127,9 +148,17 @@ func GetServicesPageFromDB(limit int, offset int, availableOnly bool, search str
 		var createdAt, updatedAt sql.NullString
 		var maxParticipants, currentParticipants sql.NullInt64
 		var typeStr string
-		err := rows.Scan(&idStr, &service.Name, &service.Description, &service.Price, &typeStr, &service.ServiceDate, &service.ServiceRoad, &service.ServiceCity, &service.ServiceZip, &maxParticipants, &currentParticipants, &createdByStr, &createdAt, &updatedAt)
+		var mt sql.NullString
+		var link sql.NullString
+		err := rows.Scan(&idStr, &service.Name, &service.Description, &service.Price, &typeStr, &service.ServiceDate, &service.ServiceRoad, &service.ServiceCity, &service.ServiceZip, &maxParticipants, &currentParticipants, &mt, &link, &createdByStr, &createdAt, &updatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("getServicesPage package db scan : %s", err.Error())
+		}
+		if mt.Valid {
+			service.MeetingType = mt.String
+		}
+		if link.Valid {
+			service.OnlineMeetingLink = link.String
 		}
 		service.ID, err = uuid.Parse(idStr)
 		if err != nil {
@@ -167,10 +196,14 @@ func GetServicesPageFromDB(limit int, offset int, availableOnly bool, search str
 	return services, nil
 }
 
-func CountServicesFromDB(availableOnly bool, search string, typeUUID string) (int, error) {
+func CountServicesFromDB(availableOnly bool, search string, typeUUID string, employeeUUID string) (int, error) {
 	query := "SELECT COUNT(*) FROM evenements"
 	args := []interface{}{}
 	clauses := []string{}
+	if employeeUUID != "" {
+		query = "SELECT COUNT(*) FROM evenements e INNER JOIN affectedEmployees ae ON ae.event_id = e.id AND ae.user_id = ?"
+		args = append(args, employeeUUID)
+	}
 	if availableOnly {
 		clauses = append(clauses, "(maximum_participants IS NULL OR current_participants < maximum_participants)")
 	}
@@ -204,26 +237,29 @@ func getCurrentTime() string {
 	return currentTime
 }
 
-func CreateServiceInDB(service models.Service) error {
+func CreateServiceInDB(service models.Service) (uuid.UUID, error) {
 
-	newID := uuid.New()
+	id := service.ID
+	if id == uuid.Nil {
+		id = uuid.New()
+	}
 	currentTime := getCurrentTime()
-	_, err := Db.Exec("INSERT INTO evenements (id, title, description, price, event_type, event_date, event_road, event_city, event_zip_code, maximum_participants, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-		newID, service.Name, service.Description, service.Price, service.Type, service.ServiceDate, service.ServiceRoad, service.ServiceCity, service.ServiceZip, service.MaximumParticipants, service.CreatedBy, currentTime, currentTime)
+	_, err := Db.Exec("INSERT INTO evenements (id, title, description, price, event_type, event_date, event_road, event_city, event_zip_code, maximum_participants, meetingType, onlineMeetingLink, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		id, service.Name, service.Description, service.Price, service.Type, service.ServiceDate, service.ServiceRoad, service.ServiceCity, service.ServiceZip, service.MaximumParticipants, service.MeetingType, service.OnlineMeetingLink, service.CreatedBy, currentTime, currentTime)
 
 	if err != nil {
-		return fmt.Errorf("createService package db : %s", err.Error())
+		return uuid.Nil, fmt.Errorf("createService package db : %s", err.Error())
 	}
 
-	return nil
+	return id, nil
 
 }
 
 func UpdateServiceInDB(serviceID uuid.UUID, service models.Service) error {
 	currentTime := getCurrentTime()
 	_, err := Db.Exec(
-		"UPDATE evenements SET title=?, description=?, price=?, event_type=?, event_date=?, event_road=?, event_city=?, event_zip_code=?, maximum_participants=?, updated_at=? WHERE id=?",
-		service.Name, service.Description, service.Price, service.Type, service.ServiceDate, service.ServiceRoad, service.ServiceCity, service.ServiceZip, service.MaximumParticipants, currentTime, serviceID,
+		"UPDATE evenements SET title=?, description=?, price=?, event_type=?, event_date=?, event_road=?, event_city=?, event_zip_code=?, maximum_participants=?, meetingType=?, onlineMeetingLink=?, updated_at=? WHERE id=?",
+		service.Name, service.Description, service.Price, service.Type, service.ServiceDate, service.ServiceRoad, service.ServiceCity, service.ServiceZip, service.MaximumParticipants, service.MeetingType, service.OnlineMeetingLink, currentTime, serviceID,
 	)
 	if err != nil {
 		return fmt.Errorf("updateService package db : %s", err.Error())
@@ -247,8 +283,22 @@ func GetServiceByIDFromDB(serviceID uuid.UUID) (models.Service, error) {
 
 	var maxParticipants, currentParticipants sql.NullInt64
 	var typeStr string
-	err := Db.QueryRow("SELECT id, title, description, price, event_type, event_date, event_road, event_city, event_zip_code, maximum_participants, current_participants, created_by, created_at, updated_at FROM evenements WHERE id = ?", serviceID).Scan(&idStr, &service.Name, &service.Description, &service.Price, &typeStr, &service.ServiceDate, &service.ServiceRoad, &service.ServiceCity, &service.ServiceZip, &maxParticipants, &currentParticipants, &createdByStr, &createdAt, &updatedAt)
 
+	var mt sql.NullString
+	var link sql.NullString
+	err := Db.QueryRow("SELECT id, title, description, price, event_type, event_date, event_road, event_city, event_zip_code, maximum_participants, current_participants, meetingType, onlineMeetingLink, created_by, created_at, updated_at FROM evenements WHERE id = ?", serviceID).Scan(&idStr, &service.Name, &service.Description, &service.Price, &typeStr, &service.ServiceDate, &service.ServiceRoad, &service.ServiceCity, &service.ServiceZip, &maxParticipants, &currentParticipants, &mt, &link, &createdByStr, &createdAt, &updatedAt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return service, fmt.Errorf("service not found")
+		}
+		return service, fmt.Errorf("getServiceByID package db : %s", err.Error())
+	}
+	if mt.Valid {
+		service.MeetingType = mt.String
+	}
+	if link.Valid {
+		service.OnlineMeetingLink = link.String
+	}
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return service, fmt.Errorf("service not found")
@@ -361,6 +411,81 @@ func CancelAndRefundServiceOrdersFromDB(serviceID uuid.UUID, serviceName string)
 
 	if err != nil {
 		return fmt.Errorf("cancelServiceOrders delete orders: %s", err.Error())
+	}
+
+	return nil
+
+}
+
+func GetAffectedEmployeesByServiceIDFromDB(serviceID uuid.UUID) ([]models.AffectedEmployee, error) {
+
+	affectedEmployees := []models.AffectedEmployee{}
+
+	rows, err := Db.Query("SELECT id, user_id, event_id FROM affectedEmployees WHERE event_id = ?", serviceID.String())
+	if err != nil {
+		return nil, fmt.Errorf("getAffectedEmployeesByServiceID package db : %s", err.Error())
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var ae models.AffectedEmployee
+		var idStr, userIDStr, eventIDStr string
+		err := rows.Scan(&idStr, &userIDStr, &eventIDStr)
+
+		if err != nil {
+			return nil, fmt.Errorf("getAffectedEmployeesByServiceID package db scan : %s", err.Error())
+		}
+
+		ae.ID, err = uuid.Parse(idStr)
+		if err != nil {
+			return nil, fmt.Errorf("getAffectedEmployeesByServiceID package db uuid parse id : %s", err.Error())
+		}
+
+		ae.UserID, err = uuid.Parse(userIDStr)
+		if err != nil {
+			return nil, fmt.Errorf("getAffectedEmployeesByServiceID package db uuid parse user_id : %s", err.Error())
+		}
+
+		ae.EventID, err = uuid.Parse(eventIDStr)
+		if err != nil {
+			return nil, fmt.Errorf("getAffectedEmployeesByServiceID package db uuid parse event_id : %s", err.Error())
+		}
+
+		affectedEmployees = append(affectedEmployees, ae)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return nil, fmt.Errorf("getAffectedEmployeesByServiceID package db rows : %s", err.Error())
+	}
+
+	return affectedEmployees, nil
+
+}
+
+func AddAffectedEmployeeInDB(ae models.AffectedEmployee) (uuid.UUID, error) {
+
+	id := ae.ID
+	if id == uuid.Nil {
+		id = uuid.New()
+	}
+
+	_, err := Db.Exec("INSERT INTO affectedEmployees (id, user_id, event_id) VALUES (?, ?, ?)", id, ae.UserID, ae.EventID)
+
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("addAffectedEmployee package db : %s", err.Error())
+	}
+
+	return id, nil
+
+}
+
+func RemoveAffectedEmployeeFromDB(aeID uuid.UUID) error {
+
+	_, err := Db.Exec("DELETE FROM affectedEmployees WHERE id = ?", aeID)
+	if err != nil {
+		return fmt.Errorf("removeAffectedEmployee package db : %s", err.Error())
 	}
 
 	return nil

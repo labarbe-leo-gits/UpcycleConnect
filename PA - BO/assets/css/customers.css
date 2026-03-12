@@ -3019,6 +3019,23 @@ body.modal-open {
   background: #fff;
 }
 
+#employee-filter-search {
+  width: 100%;
+  padding: 9px 14px 9px 36px;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  background: #f9fafb;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+#employee-filter-search:focus {
+  outline: none;
+  border-color: #10b981;
+  background: #fff;
+}
+
 /* Admin service card action buttons */
 .service-item .service-actions {
   display: flex;

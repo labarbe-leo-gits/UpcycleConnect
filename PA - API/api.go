@@ -156,10 +156,10 @@ func RoleMiddleware(requiredRole int) func(http.HandlerFunc) http.HandlerFunc {
 
 func main() {
 
-	err := godotenv.Load("../PA - Site Principal/.env")
+	err := godotenv.Load("../PA - Site Principal/.env", "../PA - BO/.env")
 	if err != nil {
-		fmt.Printf("Error loading .env file: %s", err.Error())
-		return
+		fmt.Printf("Error loading .env files: %s", err.Error())
+
 	}
 
 	port := os.Getenv("API_PORT")
@@ -297,7 +297,10 @@ func main() {
 	registerRoute("GET", "/users/{id}/balance", "Get the current balance for a user", app.GetUserBalance, app.JWTAuthMiddleware)
 	registerRoute("PATCH", "/users/{id}/balance", "Update a user's balance", app.UpdateUserBalance, app.JWTAuthMiddleware)
 
-	// event types
+	registerRoute("GET", "/products/services/{id}/affected-employees", "List all employees affected by a specific service/event by its UUID", app.GetAffectedEmployeesByServiceID, app.JWTAuthMiddleware)
+	registerRoute("POST", "/products/services/{id}/affected-employees", "Add an affected employee to a specific service/event by its UUID", app.AddAffectedEmployee, app.JWTAuthMiddleware)
+	registerRoute("DELETE", "/products/services/{id}/affected-employees/{aeID}", "Remove an affected employee from a specific service/event by their UUIDs", app.RemoveAffectedEmployee, app.JWTAuthMiddleware)
+
 	registerRoute("GET", "/typesPrestation", "List all service types", app.GetTypePrestations, app.JWTAuthMiddleware)
 	registerRoute("POST", "/typesPrestation", "Create a new service type", app.CreateTypePrestation, app.JWTAuthMiddleware)
 	registerRoute("GET", "/typesPrestation/{id}", "Get a specific service type by its UUID", app.GetTypePrestationByID, app.JWTAuthMiddleware)

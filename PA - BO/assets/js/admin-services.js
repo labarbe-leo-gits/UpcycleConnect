@@ -14,10 +14,26 @@
     let typeIcons  = {};
     let prestationTypes = [];
 
+    let selectedEmployees = [];
+    let originalEmployees = [];
+    let currentServiceId = '';
+    let _employeeTimer = null;
+
+    let meetingType = 'none';
+    let meetingUrl  = '';
+
+    // filter-by-employee state
+    let employeeFilterId = '';
+    let employeeFilterName = '';
+    let _filterTimer = null;
+
     document.addEventListener('DOMContentLoaded', function () {
         bindToolbar();
         loadTypes().then(() => requestChunk(false));
         bindAddressSearch();
+        bindEmployeeLookup();
+        bindEmployeeFilterLookup();
+        bindMeetingSwitcher();
     });
 
     let _addrTimer = null;
@@ -109,6 +125,264 @@
         if (results) results.style.display = 'none';
     }
 
+    function bindEmployeeLookup() {
+        const input = document.getElementById('employee-search');
+        const results = document.getElementById('employee-results');
+        if (!input || !results) return;
+
+        input.addEventListener('input', function() {
+            clearTimeout(_employeeTimer);
+            const q = this.value.trim();
+            if (q.length < 2) { results.style.display = 'none'; return; }
+            _employeeTimer = setTimeout(() => {
+                fetch('users-list-api?search=' + encodeURIComponent(q) + '&limit=6&user_type=4')
+                    .then(r => r.json())
+                    .then(data => {
+                        const users = Array.isArray(data.items) ? data.items : [];
+                        results.innerHTML = '';
+                        if (!users.length) { results.style.display = 'none'; return; }
+                        users.forEach(u => {
+                            if (selectedEmployees.some(e => e.userId === u.id)) return;
+                            const item = document.createElement('div');
+                            item.className = 'addr-result-item';
+                            const name = ((u.first_name || '') + ' ' + (u.last_name || '')).trim();
+                            item.innerHTML = '<i class="fa-solid fa-user"></i><span>' + escHtml(name ? name + ' \u2014 ' + u.username : u.username) + '</span>';
+                            item.addEventListener('click', function() {
+                                addEmployee({ userId: u.id, name: name ? name + ' — ' + u.username : u.username });
+                                input.value = '';
+                                results.style.display = 'none';
+                            });
+                            results.appendChild(item);
+                        });
+                        results.style.display = 'block';
+                    })
+                    .catch(() => { results.style.display = 'none'; });
+            }, 300);
+        });
+
+        input.addEventListener('keydown', function(e) {
+            const items = results.querySelectorAll('.addr-result-item');
+            const active = results.querySelector('.addr-result-item.addr-active');
+            if (!items.length) return;
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                const next = active ? (active.nextElementSibling || items[0]) : items[0];
+                if (active) active.classList.remove('addr-active');
+                next.classList.add('addr-active');
+                next.scrollIntoView({ block: 'nearest' });
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                const prev = active ? (active.previousElementSibling || items[items.length - 1]) : items[items.length - 1];
+                if (active) active.classList.remove('addr-active');
+                prev.classList.add('addr-active');
+                prev.scrollIntoView({ block: 'nearest' });
+            } else if (e.key === 'Enter') {
+                if (active) { e.preventDefault(); active.click(); }
+            } else if (e.key === 'Escape') {
+                results.style.display = 'none';
+            }
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!input.contains(e.target) && !results.contains(e.target)) {
+                results.style.display = 'none';
+            }
+        });
+    }
+
+    function bindEmployeeFilterLookup() {
+        const input = document.getElementById('employee-filter-search');
+        const results = document.getElementById('employee-filter-results');
+        const chip = document.getElementById('employee-filter-chip');
+        const chipName = document.getElementById('employee-filter-chip-name');
+        const chipRemove = document.getElementById('employee-filter-chip-remove');
+        if (!input || !results || !chip || !chipName || !chipRemove) return;
+
+        chipRemove.addEventListener('click', function() {
+            employeeFilterId = '';
+            employeeFilterName = '';
+            chip.style.display = 'none';
+            input.closest('#employee-filter-wrapper').querySelector('.input-wrapper').style.display = '';
+            resetList();
+        });
+
+        input.addEventListener('input', function() {
+            clearTimeout(_filterTimer);
+            const q = this.value.trim();
+            if (q.length < 2) { results.style.display = 'none'; return; }
+            _filterTimer = setTimeout(() => {
+                fetch('users-list-api?search=' + encodeURIComponent(q) + '&limit=6&user_type=4')
+                    .then(r => r.json())
+                    .then(data => {
+                        const users = Array.isArray(data.items) ? data.items : [];
+                        results.innerHTML = '';
+                        if (!users.length) { results.style.display = 'none'; return; }
+                        users.forEach(u => {
+                            const item = document.createElement('div');
+                            item.className = 'addr-result-item';
+                            const name = ((u.first_name || '') + ' ' + (u.last_name || '')).trim();
+                            item.innerHTML = '<i class="fa-solid fa-user"></i><span>' + escHtml(name ? name + ' \u2014 ' + u.username : u.username) + '</span>';
+                            item.addEventListener('click', function() {
+                                employeeFilterId = u.id;
+                                employeeFilterName = name ? name + ' — ' + u.username : u.username;
+                                chipName.textContent = employeeFilterName;
+                                chip.style.display = 'flex';
+                                input.closest('#employee-filter-wrapper').querySelector('.input-wrapper').style.display = 'none';
+                                results.style.display = 'none';
+                                resetList();
+                            });
+                            results.appendChild(item);
+                        });
+                        results.style.display = 'block';
+                    })
+                    .catch(() => { results.style.display = 'none'; });
+            }, 300);
+        });
+
+        input.addEventListener('keydown', function(e) {
+            const items = results.querySelectorAll('.addr-result-item');
+            const active = results.querySelector('.addr-result-item.addr-active');
+            if (!items.length) return;
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                const next = active ? (active.nextElementSibling || items[0]) : items[0];
+                if (active) active.classList.remove('addr-active');
+                next.classList.add('addr-active');
+                next.scrollIntoView({ block: 'nearest' });
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                const prev = active ? (active.previousElementSibling || items[items.length - 1]) : items[items.length - 1];
+                if (active) active.classList.remove('addr-active');
+                prev.classList.add('addr-active');
+                prev.scrollIntoView({ block: 'nearest' });
+            } else if (e.key === 'Enter') {
+                if (active) { e.preventDefault(); active.click(); }
+            } else if (e.key === 'Escape') {
+                results.style.display = 'none';
+            }
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!input.contains(e.target) && !results.contains(e.target)) {
+                results.style.display = 'none';
+            }
+        });
+    }
+
+    function bindMeetingSwitcher() {
+        const wrapper = document.getElementById('svc-meet-switcher');
+        if (!wrapper) return;
+        wrapper.addEventListener('click', function(e) {
+            const btn = e.target.closest('.svc-meet-opt');
+            if (!btn) return;
+            wrapper.querySelectorAll('.svc-meet-opt').forEach(b => b.classList.toggle('is-active', b === btn));
+            meetingType = btn.dataset.type;
+            const urlWrap = document.getElementById('svc-meeting-url-wrap');
+            if (urlWrap) urlWrap.style.display = meetingType === 'other' ? 'block' : 'none';
+        });
+        const urlInput = document.getElementById('svc-meeting-url');
+        if (urlInput) {
+            urlInput.addEventListener('input', function() { meetingUrl = this.value; });
+        }
+    }
+
+    function updateMeetingUI() {
+        const wrapper = document.getElementById('svc-meet-switcher');
+        if (!wrapper) return;
+        wrapper.querySelectorAll('.svc-meet-opt').forEach(b => b.classList.toggle('is-active', b.dataset.type === meetingType));
+        const urlWrap = document.getElementById('svc-meeting-url-wrap');
+        if (urlWrap) urlWrap.style.display = meetingType === 'other' ? 'block' : 'none';
+        const urlInput = document.getElementById('svc-meeting-url');
+        if (urlInput) urlInput.value = meetingUrl;
+    }
+
+
+    function addEmployee(emp) {
+        selectedEmployees.push(emp);
+        renderEmployeeChips();
+    }
+
+    function renderEmployeeChips() {
+        const container = document.getElementById('employee-chips');
+        if (!container) return;
+        container.innerHTML = '';
+        selectedEmployees.forEach(emp => {
+            const chip = document.createElement('div');
+            chip.className = 'employee-chip';
+            chip.style = 'display:flex;align-items:center;gap:6px;padding:6px 12px;background:#f0fdf4;border:1px solid #a7f3d0;border-radius:20px;width:fit-content;margin-bottom:8px;';
+            const text = document.createElement('span');
+            text.textContent = emp.name;
+            chip.appendChild(text);
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.style = 'background:none;border:none;cursor:pointer;padding:0 0 0 4px;color:#9ca3af;line-height:1;display:flex;align-items:center;';
+            removeBtn.setAttribute('aria-label','Remove employee');
+            removeBtn.innerHTML = '<i class="fa-solid fa-xmark" style="font-size:.85em;"></i>';
+            removeBtn.addEventListener('click', () => {
+                selectedEmployees = selectedEmployees.filter(e => e.userId !== emp.userId);
+                renderEmployeeChips();
+            });
+            chip.appendChild(removeBtn);
+            container.appendChild(chip);
+        });
+    }
+
+    function loadAffectedEmployees(serviceId) {
+        selectedEmployees = [];
+        originalEmployees = [];
+        renderEmployeeChips();
+        if (!serviceId) return;
+        fetch(`service-affected-list-api.php?service_id=${encodeURIComponent(serviceId)}`)
+            .then(r => r.json())
+            .then(arr => {
+                arr.forEach(ae => {
+                    originalEmployees.push(ae);
+
+                    selectedEmployees.push({ userId: ae.user_id, name: ae.user_id });
+                    renderEmployeeChips();
+
+                    fetch(`user-get-api.php?id=${encodeURIComponent(ae.user_id)}`)
+                        .then(r => r.json())
+                        .then(u => {
+                            const name = ((u.first_name || '') + ' ' + (u.last_name || '')).trim() || u.username;
+
+                            const idx = selectedEmployees.findIndex(e => e.userId === ae.user_id);
+                            if (idx !== -1) {
+                                selectedEmployees[idx].name = name;
+                                renderEmployeeChips();
+                            }
+                        })
+                        .catch(() => {
+
+                        });
+                });
+            });
+    }
+
+    function syncAffectedEmployees(serviceId) {
+        if (!serviceId) return Promise.resolve();
+        const toAdd = selectedEmployees.filter(e => !originalEmployees.some(o => o.user_id === e.userId));
+        const toRemove = originalEmployees.filter(o => !selectedEmployees.some(e => e.userId === o.user_id));
+        const promises = [];
+        toAdd.forEach(e => {
+            promises.push(
+                fetch('service-affected-add-api.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ service_id: serviceId, user_id: e.userId })
+                })
+            );
+        });
+        toRemove.forEach(o => {
+            promises.push(
+                fetch('service-affected-remove-api.php?service_id=' + encodeURIComponent(serviceId) + '&ae_id=' + encodeURIComponent(o.id),
+                    { method: 'DELETE' }
+                )
+            );
+        });
+        return Promise.all(promises);
+    }
+
 
     function bindToolbar() {
         document.getElementById('create-service-btn')?.addEventListener('click', openCreateForm);
@@ -146,6 +420,7 @@
         let url = `services-list-api?page=${Math.floor(offset / initialSize) + 1}&limit=${limit}`;
         if (searchTerm)  url += `&search=${encodeURIComponent(searchTerm)}`;
         if (typeFilter !== '') url += `&type=${encodeURIComponent(typeFilter)}`;
+        if (employeeFilterId) url += `&employee_id=${encodeURIComponent(employeeFilterId)}`;
 
         fetch(url)
             .then(r => r.text())
@@ -291,6 +566,14 @@
         form.reset();
         form.dataset.editId = '';
         setLocationMode('online');
+
+        currentServiceId = '';
+        selectedEmployees = [];
+        originalEmployees = [];
+        renderEmployeeChips();
+        meetingType = 'none';
+        meetingUrl = '';
+        updateMeetingUI();
         showModal('service-form-modal');
     }
 
@@ -315,6 +598,13 @@
             form.querySelector('#svc-zip').value  = svc.service_zip  ?? '';
         }
 
+        currentServiceId = svc.id;
+        loadAffectedEmployees(svc.id);
+
+        meetingType = svc.meeting_type || 'none';
+        meetingUrl  = svc.online_meeting_link || '';
+        updateMeetingUI();
+
         showModal('service-form-modal');
     }
 
@@ -333,6 +623,8 @@
             service_road:         this.querySelector('#svc-road').value.trim(),
             service_city:         this.querySelector('#svc-city').value.trim(),
             service_zip:          this.querySelector('#svc-zip').value.trim(),
+            meeting_type:         meetingType,
+            online_meeting_link:  meetingUrl
         };
 
         const maxP = this.querySelector('#svc-max-participants').value;
@@ -362,8 +654,19 @@
                     }
                     throw new Error(msg);
                 }
-                hideModal('service-form-modal');
-                resetList();
+
+                let svcId = editId || (data && data.id);
+                if (!svcId && data && data.id) svcId = data.id;
+                if (!editId && !svcId) {
+                    hideModal('service-form-modal');
+                    resetList();
+                } else {
+                    syncAffectedEmployees(svcId)
+                        .finally(() => {
+                            hideModal('service-form-modal');
+                            resetList();
+                        });
+                }
             })
             .catch(err => {
                 errorBox.textContent = err.message || 'An error occurred.';

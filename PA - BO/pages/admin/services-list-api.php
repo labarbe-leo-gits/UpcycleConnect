@@ -16,7 +16,21 @@ $page  = isset($_GET['page'])  ? max(1, (int)$_GET['page'])   : 1;
 $limit = isset($_GET['limit']) ? max(1, (int)$_GET['limit'])  : 20;
 if ($limit > 100) $limit = 100;
 
-$resp = askAPI("/products/services?page=$page&limit=$limit", 'GET');
+
+$query = "/products/services?page=$page&limit=$limit";
+if (isset($_GET['search'])) {
+    $query .= '&search=' . urlencode($_GET['search']);
+}
+if (isset($_GET['type'])) {
+    $query .= '&type=' . urlencode($_GET['type']);
+}
+if (isset($_GET['available'])) {
+    $query .= '&available=' . urlencode($_GET['available']);
+}
+if (isset($_GET['employee_id'])) {
+    $query .= '&employee_id=' . urlencode($_GET['employee_id']);
+}
+$resp = askAPI($query, 'GET');
 $decoded = json_decode($resp, true);
 if ($decoded === null) {
     error_log("services-list-api non-json: $resp");

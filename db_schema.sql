@@ -141,6 +141,7 @@ CREATE TABLE IF NOT EXISTS evenements (
     event_zip_code CHAR(5),
     recurring INT NOT NULL DEFAULT 0,
     onlineMeetingLink VARCHAR(255) NULL,
+    meetingType VARCHAR(20) NULL,
     created_by CHAR(36) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -503,4 +504,12 @@ CREATE TABLE IF NOT EXISTS typesPrestations (
     id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
     name VARCHAR(255) NOT NULL UNIQUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS affectedEmployees (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    user_id CHAR(36) NOT NULL,
+    event_id CHAR(36) NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (event_id) REFERENCES evenements(id) ON DELETE CASCADE
 );

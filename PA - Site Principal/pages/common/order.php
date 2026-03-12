@@ -51,7 +51,15 @@ function findOfferById($offerUuid) {
 $serviceData = askAPI("/products/services/" . $productUuid, "GET");
 $service = json_decode($serviceData, true);
 $offer = null;
+
 $productType = 'service';
+if (isset($service['error'])) {
+    $service = null;
+    $offer = findOfferById($productUuid);
+    if ($offer) {
+        $productType = 'offer';
+    }
+}
 
 $userDir = '';
 

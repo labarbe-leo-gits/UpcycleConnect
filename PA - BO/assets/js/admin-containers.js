@@ -381,11 +381,11 @@
         const modal = document.getElementById('container-view-modal');
         if (!modal) return;
 
-        modal.querySelector('#container-view-name').textContent    = c.name || '—';
-        modal.querySelector('#container-view-address').textContent = [c.number, c.road, c.postal_code, c.city].filter(Boolean).join(', ') || '—';
-        modal.querySelector('#container-view-city').textContent    = c.city || '—';
-        modal.querySelector('#container-view-postal').textContent  = c.postal_code || '—';
-        modal.querySelector('#container-view-created').textContent = c.created_at ? new Date(c.created_at).toLocaleDateString('en-GB') : '—';
+        modal.querySelector('#container-view-name').textContent    = c.name || '-';
+        modal.querySelector('#container-view-address').textContent = [c.number, c.road, c.postal_code, c.city].filter(Boolean).join(', ') || '-';
+        modal.querySelector('#container-view-city').textContent    = c.city || '-';
+        modal.querySelector('#container-view-postal').textContent  = c.postal_code || '-';
+        modal.querySelector('#container-view-created').textContent = c.created_at ? new Date(c.created_at).toLocaleDateString('en-GB') : '-';
 
         showModal('container-view-modal');
 

@@ -124,17 +124,17 @@
                 : '<span style="color:#16a34a;">Free</span>';
             const score   = ann.upcycling_score
                 ? `${parseFloat(ann.upcycling_score).toFixed(2)} pts`
-                : '—';
+                : '-';
             const dateStr = ann.created_at
                 ? new Date(ann.created_at).toLocaleDateString('fr-FR')
-                : '—';
+                : '-';
 
             card.innerHTML = `
                 <div class="service-header" style="align-items:flex-start;gap:10px;">
                     <div style="flex:1;">
                         <h3 style="margin:0 0 4px;">${escHtml(ann.title)}</h3>
                         <p style="margin:0;font-size:.85rem;color:#6b7280;">
-                            <i class="fa-solid fa-user"></i> <span data-user-id="${escHtml(ann.user_id ?? '')}">${escHtml(ann.user_id ?? '—')}</span>
+                            <i class="fa-solid fa-user"></i> <span data-user-id="${escHtml(ann.user_id ?? '')}">${escHtml(ann.user_id ?? '-')}</span>
                             &nbsp;·&nbsp;
                             <i class="fa-solid fa-calendar"></i> ${dateStr}
                         </p>

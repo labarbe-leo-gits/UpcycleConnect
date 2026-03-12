@@ -16,6 +16,20 @@ include_once '../../includes/admin-header.php';
             <i class="fa-solid fa-search toolbar-search-icon"></i>
             <input type="text" id="service-search" placeholder="Search…" />
         </div>
+        <div id="employee-filter-wrapper" style="position:relative;display:inline-block;vertical-align:middle;margin-left:8px;">
+            <div class="input-wrapper">
+                <i class="fa-solid fa-user-tie"></i>
+                <input type="text" id="employee-filter-search" placeholder="Filter by employee…" autocomplete="off" />
+            </div>
+            <div id="employee-filter-results" style="position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1px solid #e5e7eb;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:9999;max-height:220px;overflow-y:auto;display:none;"></div>
+            <div id="employee-filter-chip" style="display:none;align-items:center;gap:6px;padding:6px 12px;background:#f0fdf4;border:1px solid #a7f3d0;border-radius:20px;width:fit-content;">
+                <i class="fa-solid fa-user-tie" style="color:#10b981;font-size:.85em;"></i>
+                <span id="employee-filter-chip-name" style="font-size:.9em;color:#065f46;font-weight:500;"></span>
+                <button type="button" id="employee-filter-chip-remove" style="background:none;border:none;cursor:pointer;padding:0 0 0 4px;color:#9ca3af;line-height:1;display:flex;align-items:center;" aria-label="Remove filter">
+                    <i class="fa-solid fa-xmark" style="font-size:.85em;"></i>
+                </button>
+            </div>
+        </div>
         <select id="service-type-filter">
             <option value="">All types</option>
         </select>
@@ -129,6 +143,36 @@ include_once '../../includes/admin-header.php';
                     </div>
                 </div>
             </div>
+
+
+            <div class="field" id="svc-employees-section">
+                <label>Assigned employees</label>
+                <div id="employee-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;"></div>
+                <div id="employee-search-wrapper" style="position:relative;">
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-user-tie"></i>
+                        <input type="text" id="employee-search" placeholder="Type name or username…" autocomplete="off" />
+                    </div>
+                    <div id="employee-results" style="position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1px solid #e5e7eb;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:9999;max-height:220px;overflow-y:auto;display:none;"></div>
+                </div>
+            </div>
+
+            <div class="field" id="svc-meet-section">
+                <label>Meeting</label>
+                <div class="svc-meet-switcher" id="svc-meet-switcher">
+                    <button type="button" class="svc-meet-opt is-active" data-type="none">None</button>
+                    <button type="button" class="svc-meet-opt" data-type="zoom">Zoom</button>
+                    <button type="button" class="svc-meet-opt" data-type="jitsi">Jitsi</button>
+                    <button type="button" class="svc-meet-opt" data-type="other">Other</button>
+                </div>
+                <div id="svc-meeting-url-wrap" style="display:none;margin-top:8px;">
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-link"></i>
+                        <input type="url" id="svc-meeting-url" name="online_meeting_link" placeholder="Meeting link" />
+                    </div>
+                </div>
+            </div>
+
             <div class="field">
                 <label for="svc-max-participants">Max participants <span style="color:#6b7280;font-size:.85em;">(leave empty = unlimited)</span></label>
                 <div class="input-wrapper"><i class="fa-solid fa-users"></i>
