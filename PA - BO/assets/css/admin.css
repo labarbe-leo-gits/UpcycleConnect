@@ -608,3 +608,7 @@
 #type-details-table tbody tr:hover {
   background: #d1fae5;
 }
+
+.btn-secondary{
+  margin-top:0px;
+}

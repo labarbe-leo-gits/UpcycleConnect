@@ -167,7 +167,7 @@ include_once '../../includes/admin-header.php';
 <div class="add-modal" id="container-confirm-modal" role="dialog" aria-hidden="true">
     <div class="add-modal-content" style="max-width:440px;">
         <span class="close-button" id="container-confirm-close">&times;</span>
-        <h2><i class="fa-solid fa-triangle-exclamation" style="color:#ef4444;margin-right:8px;"></i>Delete container</h2>
+        <h2>Delete container</h2>
         <p style="color:#374151;margin:14px 0;">
             Are you sure you want to delete <strong id="container-confirm-name"></strong>?<br>
             <span style="color:#ef4444;font-size:.9rem;">

@@ -84,6 +84,7 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
                     <a href="/PA/PA%20-%20BO/pages/admin/annonces"><i class="fa-solid fa-box-open"></i>Offers</a>
                     <a href="/PA/PA%20-%20BO/pages/admin/services"><i class="fa-solid fa-calendar-days"></i>Services &amp; Events</a>
                     <a href="/PA/PA%20-%20BO/pages/admin/prestations"><i class="fa-solid fa-tags"></i>Prestations</a>
+                    <a href="/PA/PA%20-%20BO/pages/admin/categories"><i class="fa-solid fa-layer-group"></i></i>Categories</a>
                     <a href="/PA/PA%20-%20BO/pages/admin/containers"><i class="fa-solid fa-warehouse"></i>Containers</a>
                     <a href="/PA/PA%20-%20BO/pages/admin/materials"><i class="fa-solid fa-recycle"></i>Materials</a>
                 </div>
