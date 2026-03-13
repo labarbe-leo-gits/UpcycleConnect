@@ -891,3 +891,48 @@ func UpdateUserBalanceInDB(userID string, amount float64, operation int) error {
 	return nil
 
 }
+
+func GetUserDiscussionsFromDB(userID string) ([]models.Discussion, error) {
+
+	// Get all Discussions objects where user is either User1 or User2
+
+	rows, err := Db.Query("SELECT id, user1_id, user2_id, created_at FROM discussions WHERE user1_id = ? OR user2_id = ?", userID, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query discussions: %v", err)
+	}
+
+	defer rows.Close()
+
+	var discussions []models.Discussion
+	for rows.Next() {
+		var discussion models.Discussion
+		err := rows.Scan(&discussion.ID, &discussion.User1ID, &discussion.User2ID, &discussion.CreatedAt)
+
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan discussion: %v", err)
+		}
+
+		discussions = append(discussions, discussion)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating over discussion rows: %v", err)
+	}
+
+	return discussions, nil
+
+}
+
+func CreateDiscussionInDB(discussionDTO models.Discussion) (uuid.UUID, error) {
+
+	newID := uuid.New()
+	CurrentTime := getCurrentTime()
+
+	_, err := Db.Exec("INSERT INTO discussions (id, user1_id, user2_id, created_at) VALUES (?, ?, ?, ?)", newID.String(), discussionDTO.User1ID, discussionDTO.User2ID, CurrentTime)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("failed to create discussion: %v", err)
+	}
+
+	return newID, nil
+
+}

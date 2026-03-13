@@ -1052,3 +1052,90 @@ func UpdateUserBalance(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]bool{"success": true})
 
 }
+
+func GetUserDiscussions(w http.ResponseWriter, r *http.Request) {
+
+	userID := strings.TrimPrefix(r.URL.Path, "/users/")
+	userID = strings.TrimSuffix(userID, "/discussions")
+
+	if _, err := uuid.Parse(userID); err != nil {
+		fmt.Println("[ERROR] GetUserDiscussions: invalid UUID", userID)
+		sendError(w, "Invalid user ID format", http.StatusBadRequest)
+		return
+	}
+
+	discussions, err := db.GetUserDiscussionsFromDB(userID)
+	if err != nil {
+		fmt.Println("[ERROR] GetUserDiscussions:", err)
+		sendError(w, "Unable to fetch discussions for user", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(discussions)
+
+}
+
+func ValidateDiscussionDTO(discussion models.Discussion) []string {
+
+	var errs []string
+
+	if discussion.User1ID == uuid.Nil {
+		errs = append(errs, "user1_id is required and must be a valid UUID")
+	}
+
+	if discussion.User2ID == uuid.Nil {
+		errs = append(errs, "user2_id is required and must be a valid UUID")
+	}
+
+	return errs
+
+}
+
+func CreateDiscussion(w http.ResponseWriter, r *http.Request) {
+
+	userID := strings.TrimPrefix(r.URL.Path, "/users/")
+	userID = strings.TrimSuffix(userID, "/discussions")
+
+	if _, err := uuid.Parse(userID); err != nil {
+		fmt.Println("[ERROR] CreateDiscussion: invalid UUID", userID)
+		sendError(w, "Invalid user ID format", http.StatusBadRequest)
+		return
+	}
+
+	var discussionDTO models.Discussion
+	err := json.NewDecoder(r.Body).Decode(&discussionDTO)
+
+	if err != nil {
+		fmt.Println("[ERROR] CreateDiscussion decode:", err)
+		if err.Error() == "EOF" {
+			sendError(w, "Request body is empty", http.StatusBadRequest)
+		}
+
+		sendError(w, "Invalid JSON format", http.StatusBadRequest)
+		return
+	}
+
+	errs := ValidateDiscussionDTO(discussionDTO)
+	if len(errs) > 0 {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"errors": errs,
+		})
+		return
+	}
+
+	_, err = db.CreateDiscussionInDB(discussionDTO)
+	if err != nil {
+		fmt.Println("[ERROR] CreateDiscussion DB:", err)
+		sendError(w, "Unable to create discussion", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Discussion created successfully"})
+
+}

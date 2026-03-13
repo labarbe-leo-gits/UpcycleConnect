@@ -251,9 +251,10 @@ func main() {
 	registerRoute("POST", "/users/{id}/2fa/enable", "Verify OTP then enable 2FA for the user", app.Enable2FA, app.JWTAuthMiddleware)
 	registerRoute("POST", "/users/{id}/2fa/disable", "Disable 2FA for the user", app.Disable2FA, app.JWTAuthMiddleware)
 	registerRoute("POST", "/2fa/verify", "Complete MFA login: verify temp token + OTP code, return full JWT", app.Verify2FA)
-	/* registerRoute("GET", "/users/{id}/discussions", "List all discussions for a specific user by their UUID", app.GetUserDiscussions, app.JWTAuthMiddleware)
+	
+	registerRoute("GET", "/users/{id}/discussions", "List all discussions for a specific user by their UUID", app.GetUserDiscussions, app.JWTAuthMiddleware)
 	registerRoute("POST", "/users/{id}/discussions", "Create a new discussion for a specific user by their UUID", app.CreateDiscussion, app.JWTAuthMiddleware)
-	registerRoute("GET", "/discussions/{id}/messages", "List all messages in a specific discussion by its UUID", app.GetDiscussionMessages, app.JWTAuthMiddleware)
+	/* registerRoute("GET", "/discussions/{id}/messages", "List all messages in a specific discussion by its UUID", app.GetDiscussionMessages, app.JWTAuthMiddleware)
 	registerRoute("PATCH", "/discussions/{id}/messages/{mID}", "Edit a specific message in a discussion by their UUIDs", app.UpdateMessage, app.JWTAuthMiddleware)
 	registerRoute("DELETE", "/discussions/{id}/messages/{mID}", "Delete a specific message from a discussion by their UUIDs", app.DeleteMessage, app.JWTAuthMiddleware)
 	registerRoute("POST", "/discussions/{id}/messages", "Create a new message in a specific discussion by its UUID", app.CreateMessage, app.JWTAuthMiddleware) 
@@ -272,11 +273,10 @@ func main() {
 	registerRoute("POST", "/discussions/{id}/messages/{mID}/reactions", "Add a reaction to a specific message by their UUIDs", app.AddReaction, app.JWTAuthMiddleware)
 	registerRoute("DELETE", "/discussions/{id}/messages/{mID}/reactions", "Remove a reaction from a specific message by their UUIDs", app.RemoveReaction, app.JWTAuthMiddleware)
 	registerRoute("GET", "/discussions/{id}/messages/{mID}/reactions", "List all reactions for a specific message by their UUIDs", app.GetReactions, app.JWTAuthMiddleware)
-	registerRoute("POST"; "/groups/{id}/messages/{mID}/reactions", "Add a reaction to a specific group message by their UUIDs", app.AddGroupMessageReaction, app.JWTAuthMiddleware)
+	registerRoute("POST", "/groups/{id}/messages/{mID}/reactions", "Add a reaction to a specific group message by their UUIDs", app.AddGroupMessageReaction, app.JWTAuthMiddleware)
 	registerRoute("DELETE", "/groups/{id}/messages/{mID}/reactions", "Remove a reaction from a specific group message by their UUIDs", app.RemoveGroupMessageReaction, app.JWTAuthMiddleware)
 	registerRoute("GET", "/groups/{id}/messages/{mID}/reactions", "List all reactions for a specific group message by their UUIDs", app.GetGroupMessageReactions, app.JWTAuthMiddleware)
-
-	*/
+ */
 	registerRoute("GET", "/tips", "Get the tips from the Database", app.GetTips, app.JWTAuthMiddleware)
 	registerRoute("POST", "/tips", "Create a tip in the Database", app.CreateTip, app.JWTAuthMiddleware)
 	registerRoute("PATCH", "/tips/{id}", "Update a tip in the database", app.UpdateTip, app.JWTAuthMiddleware)
@@ -346,6 +346,13 @@ func main() {
 	registerRoute("DELETE", "/polls/{id}/options/{oID}", "Delete a specific option from a poll by their UUIDs", app.DeletePollOptions, app.JWTAuthMiddleware)
 	registerRoute("PATCH", "/polls/{id}/options/{oID}", "Update a specific option's text in a poll by their UUIDs", app.UpdatePollOption, app.JWTAuthMiddleware)
 	registerRoute("DELETE", "/polls/{id}", "Delete a poll by its UUID", app.DeletePoll, app.JWTAuthMiddleware)
+
+	/* registerRoute("GET", "/categories", "List all categories", app.GetCategories, app.JWTAuthMiddleware)
+	registerRoute("POST", "/categories", "Create a new category", app.CreateCategory, app.JWTAuthMiddleware, RoleMiddleware(3))
+	registerRoute("PATCH", "/categories/{id}", "Update a category by its UUID", app.UpdateCategory, app.JWTAuthMiddleware, RoleMiddleware(3))
+	registerRoute("DELETE", "/categories/{id}", "Delete a category by its UUID", app.DeleteCategory, app.JWTAuthMiddleware, RoleMiddleware(3))
+	registerRoute("GET", "/categories/{id}/items", "List all items in a specific category by its UUID", app.GetItemsByCategoryID, app.JWTAuthMiddleware)
+	registerRoute("GET", "/categories/{id}", "Get details of a specific category by its UUID", app.GetCategoryByID, app.JWTAuthMiddleware) */
 
 	http.HandleFunc("/", notFoundHandler)
 

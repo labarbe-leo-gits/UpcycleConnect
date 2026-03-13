@@ -41,6 +41,12 @@ CREATE TABLE IF NOT EXISTS users (
     UNIQUE INDEX idx_oauth (oauth_provider, oauth_id)
 );
 
+CREATE TABLE IF NOT EXISTS categories (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    name VARCHAR(255) NOT NULL UNIQUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS badges (
     id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
     name VARCHAR(255) NOT NULL,
@@ -71,10 +77,12 @@ CREATE TABLE IF NOT EXISTS annonces(
     facteur_id CHAR(36) DEFAULT NULL,
     type_materiaux VARCHAR(100) DEFAULT NULL,
     item_state INT NOT NULL DEFAULT 0,
+    category_id CHAR(36) NULL,
     upcycling_score DOUBLE DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL,
     FOREIGN KEY (facteur_id) REFERENCES facteurs_materiaux(id)
 );
 
