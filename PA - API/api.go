@@ -32,8 +32,9 @@ func registerRoute(method, path, description string, handler func(http.ResponseW
 	pattern := method + " " + path
 	finalHandler := handler
 	finalHandler = corsMiddleware(finalHandler)
-	for _, mw := range middlewares {
-		finalHandler = mw(finalHandler)
+
+	for i := len(middlewares) - 1; i >= 0; i-- {
+		finalHandler = middlewares[i](finalHandler)
 	}
 	http.HandleFunc(pattern, finalHandler)
 	registeredEndpoints = append(registeredEndpoints, models.Endpoint{
@@ -161,14 +162,19 @@ func RoleMiddleware(requiredRole int) func(http.HandlerFunc) http.HandlerFunc {
 
 func main() {
 
-	err := godotenv.Load("../PA - Site Principal/.env", "../PA - BO/.env")
-	if err != nil {
-		fmt.Printf("Error loading .env files: %s", err.Error())
-
+	if err := godotenv.Load(); err != nil {
+		fmt.Println("No .env file loaded:", err)
 	}
 
 	port := os.Getenv("API_PORT")
+	if port == "" {
+		port = "8080"
+	}
+
 	host := os.Getenv("API_HOST")
+	if host == "" {
+		host = "0.0.0.0"
+	}
 
 	db.Db = db.NewDB()
 
@@ -251,13 +257,13 @@ func main() {
 	registerRoute("POST", "/users/{id}/2fa/enable", "Verify OTP then enable 2FA for the user", app.Enable2FA, app.JWTAuthMiddleware)
 	registerRoute("POST", "/users/{id}/2fa/disable", "Disable 2FA for the user", app.Disable2FA, app.JWTAuthMiddleware)
 	registerRoute("POST", "/2fa/verify", "Complete MFA login: verify temp token + OTP code, return full JWT", app.Verify2FA)
-	
+
 	registerRoute("GET", "/users/{id}/discussions", "List all discussions for a specific user by their UUID", app.GetUserDiscussions, app.JWTAuthMiddleware)
 	registerRoute("POST", "/users/{id}/discussions", "Create a new discussion for a specific user by their UUID", app.CreateDiscussion, app.JWTAuthMiddleware)
 	/* registerRoute("GET", "/discussions/{id}/messages", "List all messages in a specific discussion by its UUID", app.GetDiscussionMessages, app.JWTAuthMiddleware)
 	registerRoute("PATCH", "/discussions/{id}/messages/{mID}", "Edit a specific message in a discussion by their UUIDs", app.UpdateMessage, app.JWTAuthMiddleware)
 	registerRoute("DELETE", "/discussions/{id}/messages/{mID}", "Delete a specific message from a discussion by their UUIDs", app.DeleteMessage, app.JWTAuthMiddleware)
-	registerRoute("POST", "/discussions/{id}/messages", "Create a new message in a specific discussion by its UUID", app.CreateMessage, app.JWTAuthMiddleware) 
+	registerRoute("POST", "/discussions/{id}/messages", "Create a new message in a specific discussion by its UUID", app.CreateMessage, app.JWTAuthMiddleware)
 	registerRoute("GET", "/groups", "List all groups", app.GetGroups, app.JWTAuthMiddleware)
 	registerRoute("POST", "/groups", "Create a new group", app.CreateGroup, app.JWTAuthMiddleware)
 	registerRoute("GET", "/groups/{id}", "Get details of a specific group by its UUID", app.GetGroupByID, app.JWTAuthMiddleware)
@@ -276,7 +282,7 @@ func main() {
 	registerRoute("POST", "/groups/{id}/messages/{mID}/reactions", "Add a reaction to a specific group message by their UUIDs", app.AddGroupMessageReaction, app.JWTAuthMiddleware)
 	registerRoute("DELETE", "/groups/{id}/messages/{mID}/reactions", "Remove a reaction from a specific group message by their UUIDs", app.RemoveGroupMessageReaction, app.JWTAuthMiddleware)
 	registerRoute("GET", "/groups/{id}/messages/{mID}/reactions", "List all reactions for a specific group message by their UUIDs", app.GetGroupMessageReactions, app.JWTAuthMiddleware)
- */
+	*/
 	registerRoute("GET", "/tips", "Get the tips from the Database", app.GetTips, app.JWTAuthMiddleware)
 	registerRoute("POST", "/tips", "Create a tip in the Database", app.CreateTip, app.JWTAuthMiddleware)
 	registerRoute("PATCH", "/tips/{id}", "Update a tip in the database", app.UpdateTip, app.JWTAuthMiddleware)

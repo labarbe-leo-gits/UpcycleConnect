@@ -415,11 +415,21 @@ func JWTAuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 
 		authHeader := r.Header.Get("Authorization")
 
-		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
-			sendError(w, "Missing or invalid Authorization header", http.StatusUnauthorized)
+		var tokenString string
+		if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
+			tokenString = strings.TrimPrefix(authHeader, "Bearer ")
+		} else if q := r.URL.Query().Get("token"); q != "" {
+			tokenString = q
+		} else if c, err := r.Cookie("token"); err == nil {
+			tokenString = c.Value
+		}
+
+		if tokenString == "" {
+
+			fmt.Println("[JWTAuthMiddleware] no token found; Authorization=", authHeader, "cookies=", r.Cookies())
+			sendError(w, "Missing or invalid Authorization token", http.StatusUnauthorized)
 			return
 		}
-		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 		jwtSecret := os.Getenv("JWT_SECRET")
 		if jwtSecret == "" {
 			jwtSecret = "changeme_secret"
@@ -435,8 +445,20 @@ func JWTAuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 		if claims, ok := token.Claims.(jwt.MapClaims); ok {
-			if uid, ok2 := claims["user_id"].(string); ok2 && uid != "" {
-				r = r.WithContext(context.WithValue(r.Context(), "user_id", uid))
+
+			if uidRaw, found := claims["user_id"]; found {
+				if uidStr, ok2 := uidRaw.(string); ok2 && uidStr != "" {
+					r = r.WithContext(context.WithValue(r.Context(), "user_id", uidStr))
+				} else if uidNum, ok2 := uidRaw.(float64); ok2 {
+					r = r.WithContext(context.WithValue(r.Context(), "user_id", fmt.Sprint(uidNum)))
+				}
+			} else if subRaw, found := claims["sub"]; found {
+				if subStr, ok2 := subRaw.(string); ok2 && subStr != "" {
+					r = r.WithContext(context.WithValue(r.Context(), "user_id", subStr))
+				}
+			}
+			if r.Context().Value("user_id") == nil {
+				fmt.Println("[JWTAuthMiddleware] token contains no user_id/sub claim", claims)
 			}
 		}
 		next(w, r)
