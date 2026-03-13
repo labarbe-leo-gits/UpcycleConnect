@@ -175,7 +175,7 @@ function renderSourcesModal() {
     const addRow = document.createElement('div');
     addRow.style.marginBottom = '14px';
     addRow.style.display = 'flex';
-    addRow.style.justifyContent = 'flex-start';
+    addRow.style.justifyContent = 'center';
 
     const addButton = document.createElement('button');
     addButton.className = 'btn-secondary';

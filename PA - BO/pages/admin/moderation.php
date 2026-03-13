@@ -408,7 +408,7 @@ function fetchRemoteWords(array $source): array {
 
     $unique = array_unique($remote);
     if (empty($unique) && !empty($GLOBALS['moderationLastFetchError'])) {
-        return false;
+        return [];
     }
 
     return $unique;
