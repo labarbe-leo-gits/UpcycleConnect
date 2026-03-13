@@ -153,8 +153,17 @@ func ValidateAnnonceDto(annonceDto models.Annonce) []string {
 			validationErrors = append(validationErrors, "FacteurID must reference an existing material")
 		}
 	}
+	if annonceDto.CategoryID != nil {
+		if _, err := db.GetCategoryByIDFromDB(*annonceDto.CategoryID); err != nil {
+			validationErrors = append(validationErrors, "CategoryID must reference an existing category")
+		}
+	}
 	if strings.ToLower(annonceDto.TypeMateriaux) == "other" && annonceDto.EstimationScore <= 0 {
 		validationErrors = append(validationErrors, "EstimationScore is required when material type is other")
+	}
+
+	if annonceDto.ItemState < 0 {
+		validationErrors = append(validationErrors, "Item state is invalid")
 	}
 
 	return validationErrors

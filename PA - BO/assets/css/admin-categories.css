@@ -1,0 +1,12 @@
+.admin-toolbar {
+  margin-bottom: 18px;
+}
+
+#category-form-modal .add-modal-content,
+#category-confirm-modal .add-modal-content {
+  max-width: 420px;
+}
+
+#categories-container .service-item {
+  word-break: break-word;
+}

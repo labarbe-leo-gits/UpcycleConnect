@@ -89,7 +89,11 @@ foreach ($annoncesList as $annonce) {
         'priceValue' => $priceTTC,
         'priceClass' => $priceClass,
         'image' => $imagePath,
-        'status' => $status
+        'status' => $status,
+        'category_name' => $annonce['category_name'] ?? '',
+        'item_state' => isset($annonce['item_state']) ? intval($annonce['item_state']) : 0,
+        'material' => $annonce['type_materiaux'] ?? '',
+        'upcycling_score' => floatval($annonce['upcycling_score'] ?? $annonce['estimation_score'] ?? 0)
     ];
 }
 

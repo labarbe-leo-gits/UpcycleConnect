@@ -47,6 +47,12 @@ if (isset($input['facteur_id'])) {
 if (isset($input['estimation_score'])) {
     $payload['estimation_score'] = floatval($input['estimation_score']);
 }
+if (isset($input['category_id'])) {
+    $payload['category_id'] = $input['category_id'];
+}
+if (isset($input['item_state'])) {
+    $payload['item_state'] = intval($input['item_state']);
+}
 
 $response = askAPI('annonces', 'POST', json_encode($payload));
 

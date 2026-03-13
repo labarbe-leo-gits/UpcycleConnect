@@ -17,6 +17,7 @@
 
     modal.setAttribute('aria-hidden', 'true');
     loadMaterials();
+    loadCategories();
 
     function openModal() {
         lastFocused = document.activeElement;
@@ -228,6 +229,22 @@
                     opt.textContent = f.nom || '';
                     opt.dataset.name = f.nom || '';
                     select.insertBefore(opt, select.querySelector('option[value="other"]'));
+                });
+            });
+    }
+
+    function loadCategories() {
+        var select = document.getElementById('offer-category');
+        if (!select) return;
+        fetch('categories-list-api?limit=100', {headers:{'X-Requested-With':'XMLHttpRequest'}})
+            .then(function(res){ return res.json(); })
+            .then(function(resp){
+                var list = Array.isArray(resp.items) ? resp.items : [];
+                list.forEach(function(cat){
+                    var opt = document.createElement('option');
+                    opt.value = cat.id || '';
+                    opt.textContent = cat.name || '';
+                    select.appendChild(opt);
                 });
             });
     }
@@ -492,13 +509,22 @@
             var originalText = submitButton.innerHTML;
             submitButton.innerHTML = '<i class="fa-solid fa-spinner"></i> Creating...';
 
+            var categorySelect = document.getElementById('offer-category');
+            var category = categorySelect ? categorySelect.value : '';
+            var itemStateSelect = document.getElementById('offer-item-state');
+            var itemState = itemStateSelect ? parseInt(itemStateSelect.value, 10) : 0;
+
             var payload = {
                 title: title,
                 description: description,
                 price: parseFloat(price),
                 poids_materiaux: weight ? parseFloat(weight) : 0,
+                item_state: isNaN(itemState) ? 0 : itemState,
                 user_id: window.currentUserId
             };
+            if (category) {
+                payload.category_id = category;
+            }
             if (material === 'other') {
                 payload.type_materiaux = customMat;
                 payload.estimation_score = parseFloat(estimate);

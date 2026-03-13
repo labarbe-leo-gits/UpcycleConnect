@@ -353,12 +353,13 @@ func main() {
 	registerRoute("PATCH", "/polls/{id}/options/{oID}", "Update a specific option's text in a poll by their UUIDs", app.UpdatePollOption, app.JWTAuthMiddleware)
 	registerRoute("DELETE", "/polls/{id}", "Delete a poll by its UUID", app.DeletePoll, app.JWTAuthMiddleware)
 
-	/* registerRoute("GET", "/categories", "List all categories", app.GetCategories, app.JWTAuthMiddleware)
+	registerRoute("GET", "/categories", "List all categories", app.GetCategories, app.JWTAuthMiddleware)
 	registerRoute("POST", "/categories", "Create a new category", app.CreateCategory, app.JWTAuthMiddleware, RoleMiddleware(3))
 	registerRoute("PATCH", "/categories/{id}", "Update a category by its UUID", app.UpdateCategory, app.JWTAuthMiddleware, RoleMiddleware(3))
 	registerRoute("DELETE", "/categories/{id}", "Delete a category by its UUID", app.DeleteCategory, app.JWTAuthMiddleware, RoleMiddleware(3))
-	registerRoute("GET", "/categories/{id}/items", "List all items in a specific category by its UUID", app.GetItemsByCategoryID, app.JWTAuthMiddleware)
-	registerRoute("GET", "/categories/{id}", "Get details of a specific category by its UUID", app.GetCategoryByID, app.JWTAuthMiddleware) */
+	// TODO: Implement item listing by category if needed
+	// registerRoute("GET", "/categories/{id}/items", "List all items in a specific category by its UUID", app.GetItemsByCategoryID, app.JWTAuthMiddleware)
+	registerRoute("GET", "/categories/{id}", "Get details of a specific category by its UUID", app.GetCategoryByID, app.JWTAuthMiddleware)
 
 	http.HandleFunc("/", notFoundHandler)
 

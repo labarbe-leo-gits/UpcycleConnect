@@ -45,6 +45,22 @@ if(($user['user_type'] == 1) || ($user['user_type'] == 2)){
                 <textarea id="offer-description" name="offer-description" required></textarea>
             </div>
             <div class="form-group">
+                <label for="offer-category">Category:</label>
+                <select id="offer-category" name="offer-category">
+                    <option value="">-- none --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="offer-item-state">Item condition:</label>
+                <select id="offer-item-state" name="offer-item-state">
+                    <option value="0">New</option>
+                    <option value="1">Like new</option>
+                    <option value="2">Good</option>
+                    <option value="3">Fair</option>
+                    <option value="4">Poor</option>
+                </select>
+            </div>
+            <div class="form-group">
                 <label for="offer-price">
                     Your net price (HT - what you will receive):
                     <span class="help-icon" title="Enter the amount you want to receive (excluding UpcycleConnect commission and Stripe fees). The buyer will pay a higher TTC amount calculated automatically.">

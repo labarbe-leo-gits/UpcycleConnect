@@ -19,7 +19,7 @@ func nullableUUID(u *uuid.UUID) interface{} {
 func GetAnnoncesFromDB() ([]models.Annonce, error) {
 
 	annonces := []models.Annonce{}
-	rows, err := Db.Query("SELECT id, user_id, title, description, price, status, view_count, poids_materiaux, facteur_id, type_materiaux, upcycling_score, created_at, updated_at FROM annonces")
+	rows, err := Db.Query("SELECT a.id, a.user_id, a.title, a.description, a.price, a.status, a.view_count, a.poids_materiaux, a.facteur_id, a.type_materiaux, a.upcycling_score, a.item_state, a.category_id, c.name AS category_name, a.created_at, a.updated_at FROM annonces a LEFT JOIN categories c ON a.category_id = c.id")
 
 	if err != nil {
 		return nil, fmt.Errorf("getAnnonces package db : %s", err.Error())
@@ -35,15 +35,27 @@ func GetAnnoncesFromDB() ([]models.Annonce, error) {
 		var price sql.NullFloat64
 		var status sql.NullInt64
 		var poids sql.NullFloat64
-		var factorID sql.NullString
+		var factorID, categoryID, categoryName sql.NullString
 		var matType sql.NullString
 		var score sql.NullFloat64
+		var itemState sql.NullInt64
 
-		err := rows.Scan(&idStr, &userIDStr, &annonce.Title, &description, &price, &status, &annonce.ViewCount, &poids, &factorID, &matType, &score, &createdAt, &updatedAt)
+		err := rows.Scan(&idStr, &userIDStr, &annonce.Title, &description, &price, &status, &annonce.ViewCount, &poids, &factorID, &matType, &score, &itemState, &categoryID, &categoryName, &createdAt, &updatedAt)
 		if factorID.Valid {
 			if uid, err := uuid.Parse(factorID.String); err == nil {
 				annonce.FacteurID = &uid
 			}
+		}
+		if categoryID.Valid {
+			if uid, err := uuid.Parse(categoryID.String); err == nil {
+				annonce.CategoryID = &uid
+			}
+		}
+		if categoryName.Valid {
+			annonce.CategoryName = categoryName.String
+		}
+		if itemState.Valid {
+			annonce.ItemState = int(itemState.Int64)
 		}
 		if err != nil {
 			return nil, fmt.Errorf("getAnnonces package db scan : %s", err.Error())
@@ -104,7 +116,7 @@ func GetAnnoncesFromDB() ([]models.Annonce, error) {
 func GetAnnoncesPageFromDB(limit int, offset int) ([]models.Annonce, error) {
 
 	annonces := []models.Annonce{}
-	rows, err := Db.Query("SELECT id, user_id, title, description, price, status, view_count, poids_materiaux, facteur_id, type_materiaux, upcycling_score, created_at, updated_at FROM annonces ORDER BY created_at DESC LIMIT ? OFFSET ?", limit, offset)
+	rows, err := Db.Query("SELECT a.id, a.user_id, a.title, a.description, a.price, a.status, a.view_count, a.poids_materiaux, a.facteur_id, a.type_materiaux, a.upcycling_score, a.item_state, a.category_id, c.name AS category_name, a.created_at, a.updated_at FROM annonces a LEFT JOIN categories c ON a.category_id = c.id ORDER BY a.created_at DESC LIMIT ? OFFSET ?", limit, offset)
 
 	if err != nil {
 		return nil, fmt.Errorf("getAnnoncesPage package db : %s", err.Error())
@@ -120,15 +132,27 @@ func GetAnnoncesPageFromDB(limit int, offset int) ([]models.Annonce, error) {
 		var price sql.NullFloat64
 		var status sql.NullInt64
 		var poids sql.NullFloat64
-		var factorID sql.NullString
+		var factorID, categoryID, categoryName sql.NullString
 		var matType sql.NullString
 		var score sql.NullFloat64
+		var itemState sql.NullInt64
 
-		err := rows.Scan(&idStr, &userIDStr, &annonce.Title, &description, &price, &status, &annonce.ViewCount, &poids, &factorID, &matType, &score, &createdAt, &updatedAt)
+		err := rows.Scan(&idStr, &userIDStr, &annonce.Title, &description, &price, &status, &annonce.ViewCount, &poids, &factorID, &matType, &score, &itemState, &categoryID, &categoryName, &createdAt, &updatedAt)
 		if factorID.Valid {
 			if uid, err := uuid.Parse(factorID.String); err == nil {
 				annonce.FacteurID = &uid
 			}
+		}
+		if categoryID.Valid {
+			if uid, err := uuid.Parse(categoryID.String); err == nil {
+				annonce.CategoryID = &uid
+			}
+		}
+		if itemState.Valid {
+			annonce.ItemState = int(itemState.Int64)
+		}
+		if categoryName.Valid {
+			annonce.CategoryName = categoryName.String
 		}
 		if err != nil {
 			return nil, fmt.Errorf("getAnnoncesPage package db scan : %s", err.Error())
@@ -188,7 +212,7 @@ func GetAnnoncesPageFromDB(limit int, offset int) ([]models.Annonce, error) {
 func GetAnnoncesByStatusFromDB(status int) ([]models.Annonce, error) {
 
 	annonces := []models.Annonce{}
-	rows, err := Db.Query("SELECT id, user_id, title, description, price, status, view_count, poids_materiaux, facteur_id, type_materiaux, upcycling_score, created_at, updated_at FROM annonces WHERE status = ?", status)
+	rows, err := Db.Query("SELECT a.id, a.user_id, a.title, a.description, a.price, a.status, a.view_count, a.poids_materiaux, a.facteur_id, a.type_materiaux, a.upcycling_score, a.item_state, a.category_id, c.name AS category_name, a.created_at, a.updated_at FROM annonces a LEFT JOIN categories c ON a.category_id = c.id WHERE a.status = ?", status)
 
 	if err != nil {
 		return nil, fmt.Errorf("getAnnoncesByStatus package db : %s", err.Error())
@@ -204,15 +228,27 @@ func GetAnnoncesByStatusFromDB(status int) ([]models.Annonce, error) {
 		var price sql.NullFloat64
 		var statusValue sql.NullInt64
 		var poids sql.NullFloat64
-		var factorID sql.NullString
+		var factorID, categoryID, categoryName sql.NullString
 		var matType sql.NullString
 		var score sql.NullFloat64
+		var itemState sql.NullInt64
 
-		err := rows.Scan(&idStr, &userIDStr, &annonce.Title, &description, &price, &statusValue, &annonce.ViewCount, &poids, &factorID, &matType, &score, &createdAt, &updatedAt)
+		err := rows.Scan(&idStr, &userIDStr, &annonce.Title, &description, &price, &statusValue, &annonce.ViewCount, &poids, &factorID, &matType, &score, &itemState, &categoryID, &categoryName, &createdAt, &updatedAt)
 		if factorID.Valid {
 			if uid, err := uuid.Parse(factorID.String); err == nil {
 				annonce.FacteurID = &uid
 			}
+		}
+		if categoryID.Valid {
+			if uid, err := uuid.Parse(categoryID.String); err == nil {
+				annonce.CategoryID = &uid
+			}
+		}
+		if itemState.Valid {
+			annonce.ItemState = int(itemState.Int64)
+		}
+		if categoryName.Valid {
+			annonce.CategoryName = categoryName.String
 		}
 		if err != nil {
 			return nil, fmt.Errorf("getAnnoncesByStatus package db scan : %s", err.Error())
@@ -273,7 +309,7 @@ func GetAnnoncesByStatusFromDB(status int) ([]models.Annonce, error) {
 func GetAnnoncesPageByStatusFromDB(limit int, offset int, status int) ([]models.Annonce, error) {
 
 	annonces := []models.Annonce{}
-	rows, err := Db.Query("SELECT id, user_id, title, description, price, status, view_count, poids_materiaux, facteur_id, type_materiaux, upcycling_score, created_at, updated_at FROM annonces WHERE status = ? ORDER BY created_at DESC LIMIT ? OFFSET ?", status, limit, offset)
+	rows, err := Db.Query("SELECT a.id, a.user_id, a.title, a.description, a.price, a.status, a.view_count, a.poids_materiaux, a.facteur_id, a.type_materiaux, a.upcycling_score, a.item_state, a.category_id, c.name AS category_name, a.created_at, a.updated_at FROM annonces a LEFT JOIN categories c ON a.category_id = c.id WHERE a.status = ? ORDER BY a.created_at DESC LIMIT ? OFFSET ?", status, limit, offset)
 
 	if err != nil {
 		return nil, fmt.Errorf("getAnnoncesPageByStatus package db : %s", err.Error())
@@ -289,15 +325,27 @@ func GetAnnoncesPageByStatusFromDB(limit int, offset int, status int) ([]models.
 		var price sql.NullFloat64
 		var statusValue sql.NullInt64
 		var poids sql.NullFloat64
-		var factorID sql.NullString
+		var factorID, categoryID, categoryName sql.NullString
 		var matType sql.NullString
 		var score sql.NullFloat64
+		var itemState sql.NullInt64
 
-		err := rows.Scan(&idStr, &userIDStr, &annonce.Title, &description, &price, &statusValue, &annonce.ViewCount, &poids, &factorID, &matType, &score, &createdAt, &updatedAt)
+		err := rows.Scan(&idStr, &userIDStr, &annonce.Title, &description, &price, &statusValue, &annonce.ViewCount, &poids, &factorID, &matType, &score, &itemState, &categoryID, &categoryName, &createdAt, &updatedAt)
 		if factorID.Valid {
 			if uid, err := uuid.Parse(factorID.String); err == nil {
 				annonce.FacteurID = &uid
 			}
+		}
+		if categoryID.Valid {
+			if uid, err := uuid.Parse(categoryID.String); err == nil {
+				annonce.CategoryID = &uid
+			}
+		}
+		if itemState.Valid {
+			annonce.ItemState = int(itemState.Int64)
+		}
+		if categoryName.Valid {
+			annonce.CategoryName = categoryName.String
 		}
 		if err != nil {
 			return nil, fmt.Errorf("getAnnoncesPageByStatus package db scan : %s", err.Error())
@@ -377,7 +425,7 @@ func CreateAnnonceInDB(annonce models.Annonce) error {
 
 	currentTime := getCurrentTime()
 
-	_, err := Db.Exec("INSERT INTO annonces (id, user_id, title, description, price, view_count, poids_materiaux, facteur_id, type_materiaux, upcycling_score, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", annonce.ID.String(), annonce.UserID.String(), annonce.Title, annonce.Description, annonce.Price, annonce.ViewCount, annonce.PoidsMateriaux, nullableUUID(annonce.FacteurID), annonce.TypeMateriaux, annonce.UpcyclingScore, currentTime, currentTime)
+	_, err := Db.Exec("INSERT INTO annonces (id, user_id, title, description, price, view_count, poids_materiaux, facteur_id, type_materiaux, upcycling_score, item_state, category_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", annonce.ID.String(), annonce.UserID.String(), annonce.Title, annonce.Description, annonce.Price, annonce.ViewCount, annonce.PoidsMateriaux, nullableUUID(annonce.FacteurID), annonce.TypeMateriaux, annonce.UpcyclingScore, annonce.ItemState, nullableUUID(annonce.CategoryID), currentTime, currentTime)
 
 	if err != nil {
 		return fmt.Errorf("createAnnonce package db : %s", err.Error())
@@ -409,7 +457,7 @@ func UpdateAnnonceInDB(id string, annonce models.Annonce) error {
 
 	currentTime := getCurrentTime()
 
-	_, err := Db.Exec("UPDATE annonces SET title = ?, description = ?, price = ?, status = ?, view_count = ?, poids_materiaux = ?, facteur_id = ?, type_materiaux = ?, upcycling_score = ?, updated_at = ? WHERE id = ?", annonce.Title, annonce.Description, annonce.Price, annonce.Status, annonce.ViewCount, annonce.PoidsMateriaux, nullableUUID(annonce.FacteurID), annonce.TypeMateriaux, annonce.UpcyclingScore, currentTime, id)
+	_, err := Db.Exec("UPDATE annonces SET title = ?, description = ?, price = ?, status = ?, view_count = ?, poids_materiaux = ?, facteur_id = ?, type_materiaux = ?, upcycling_score = ?, item_state = ?, category_id = ?, updated_at = ? WHERE id = ?", annonce.Title, annonce.Description, annonce.Price, annonce.Status, annonce.ViewCount, annonce.PoidsMateriaux, nullableUUID(annonce.FacteurID), annonce.TypeMateriaux, annonce.UpcyclingScore, annonce.ItemState, nullableUUID(annonce.CategoryID), currentTime, id)
 	if err != nil {
 		return fmt.Errorf("updateAnnonce package db : %s", err.Error())
 	}
@@ -488,7 +536,7 @@ func GetAnnonceByIDFromDB(id string) (*models.Annonce, error) {
 
 	var annonce models.Annonce
 
-	row := Db.QueryRow("SELECT id, user_id, title, description, price, status, view_count, poids_materiaux, facteur_id, type_materiaux, upcycling_score, created_at, updated_at FROM annonces WHERE id = ?", id)
+	row := Db.QueryRow("SELECT a.id, a.user_id, a.title, a.description, a.price, a.status, a.view_count, a.poids_materiaux, a.facteur_id, a.type_materiaux, a.upcycling_score, a.item_state, a.category_id, c.name AS category_name, a.created_at, a.updated_at FROM annonces a LEFT JOIN categories c ON a.category_id = c.id WHERE a.id = ?", id)
 
 	var idStr, userIDStr string
 	var createdAt, updatedAt sql.NullString
@@ -496,15 +544,27 @@ func GetAnnonceByIDFromDB(id string) (*models.Annonce, error) {
 	var price sql.NullFloat64
 	var status sql.NullInt64
 	var poids sql.NullFloat64
-	var factorID sql.NullString
+	var factorID, categoryID, categoryName sql.NullString
 	var matType sql.NullString
 	var score sql.NullFloat64
+	var itemState sql.NullInt64
 
-	err := row.Scan(&idStr, &userIDStr, &annonce.Title, &description, &price, &status, &annonce.ViewCount, &poids, &factorID, &matType, &score, &createdAt, &updatedAt)
+	err := row.Scan(&idStr, &userIDStr, &annonce.Title, &description, &price, &status, &annonce.ViewCount, &poids, &factorID, &matType, &score, &itemState, &categoryID, &categoryName, &createdAt, &updatedAt)
 	if factorID.Valid {
 		if uid, err := uuid.Parse(factorID.String); err == nil {
 			annonce.FacteurID = &uid
 		}
+	}
+	if categoryID.Valid {
+		if uid, err := uuid.Parse(categoryID.String); err == nil {
+			annonce.CategoryID = &uid
+		}
+	}
+	if categoryName.Valid {
+		annonce.CategoryName = categoryName.String
+	}
+	if itemState.Valid {
+		annonce.ItemState = int(itemState.Int64)
 	}
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -571,7 +631,7 @@ func GetAnnonceByIDFromDB(id string) (*models.Annonce, error) {
 func GetAnnoncesByUserIDFromDB(userID string) ([]models.Annonce, error) {
 
 	annonces := []models.Annonce{}
-	rows, err := Db.Query("SELECT id, user_id, title, description, price, status, view_count, poids_materiaux, facteur_id, type_materiaux, upcycling_score, created_at, updated_at FROM annonces WHERE user_id = ?", userID)
+	rows, err := Db.Query("SELECT a.id, a.user_id, a.title, a.description, a.price, a.status, a.view_count, a.poids_materiaux, a.facteur_id, a.type_materiaux, a.upcycling_score, a.item_state, a.category_id, c.name AS category_name, a.created_at, a.updated_at FROM annonces a LEFT JOIN categories c ON a.category_id = c.id WHERE a.user_id = ?", userID)
 
 	if err != nil {
 		return nil, fmt.Errorf("getAnnoncesByUserID package db : %s", err.Error())
@@ -587,15 +647,27 @@ func GetAnnoncesByUserIDFromDB(userID string) ([]models.Annonce, error) {
 		var price sql.NullFloat64
 		var status sql.NullInt64
 		var poids sql.NullFloat64
-		var factorID sql.NullString
+		var factorID, categoryID, categoryName sql.NullString
 		var matType sql.NullString
 		var score sql.NullFloat64
+		var itemState sql.NullInt64
 
-		err := rows.Scan(&idStr, &userIDStr, &annonce.Title, &description, &price, &status, &annonce.ViewCount, &poids, &factorID, &matType, &score, &createdAt, &updatedAt)
+		err := rows.Scan(&idStr, &userIDStr, &annonce.Title, &description, &price, &status, &annonce.ViewCount, &poids, &factorID, &matType, &score, &itemState, &categoryID, &categoryName, &createdAt, &updatedAt)
 		if factorID.Valid {
 			if uid, err := uuid.Parse(factorID.String); err == nil {
 				annonce.FacteurID = &uid
 			}
+		}
+		if categoryID.Valid {
+			if uid, err := uuid.Parse(categoryID.String); err == nil {
+				annonce.CategoryID = &uid
+			}
+		}
+		if categoryName.Valid {
+			annonce.CategoryName = categoryName.String
+		}
+		if itemState.Valid {
+			annonce.ItemState = int(itemState.Int64)
 		}
 		if err != nil {
 			return nil, fmt.Errorf("getAnnoncesByUserID package db scan : %s", err.Error())

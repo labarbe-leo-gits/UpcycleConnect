@@ -62,7 +62,7 @@ func ValidatePollDTO(dto models.Poll) error {
 	}
 
 	if len(validationErrors) > 0 {
-		return fmt.Errorf(strings.Join(validationErrors, "; "))
+		return fmt.Errorf("%s", strings.Join(validationErrors, "; "))
 	}
 
 	return nil
@@ -151,7 +151,7 @@ func ValidatePollOptionDTO(dto models.PollOption) error {
 	}
 
 	if len(validationErrors) > 0 {
-		return fmt.Errorf(strings.Join(validationErrors, "; "))
+		return fmt.Errorf("%s", strings.Join(validationErrors, "; "))
 	}
 
 	return nil
@@ -265,7 +265,7 @@ func ValidatePollVoteDTO(dto models.PollVote) error {
 	}
 
 	if len(validationErrors) > 0 {
-		return fmt.Errorf(strings.Join(validationErrors, "; "))
+		return fmt.Errorf("%s", strings.Join(validationErrors, "; "))
 	}
 
 	return nil

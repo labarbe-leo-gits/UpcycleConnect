@@ -16,6 +16,9 @@ type Annonce struct {
 	TypeMateriaux   string     `json:"type_materiaux,omitempty"`
 	EstimationScore float64    `json:"estimation_score,omitempty"`
 	UpcyclingScore  float64    `json:"upcycling_score,omitempty"`
+	CategoryID      *uuid.UUID `json:"category_id,omitempty"`
+	CategoryName    string     `json:"category_name,omitempty"`
+	ItemState       int        `json:"item_state"`
 
 	CreatedAt string `json:"created_at,omitempty"`
 	UpdatedAt string `json:"updated_at,omitempty"`

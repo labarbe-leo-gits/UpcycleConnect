@@ -47,6 +47,39 @@
   }
 }
 
+.offer-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.offer-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1;
+  border: 1px solid rgba(31, 41, 55, 0.15);
+  background: rgba(220, 231, 255, 0.55);
+  color: #1e3a8a;
+}
+
+.offer-chip--state {
+  background: rgba(220, 253, 242, 0.65);
+  border-color: rgba(5, 150, 105, 0.2);
+  color: #065f46;
+}
+
+.offer-chip--category {
+  background: rgba(240, 249, 255, 0.65);
+  border-color: rgba(29, 78, 216, 0.2);
+  color: #1e40af;
+}
+
 #edit-address-modal .modal-body .field input[type="text"],
 #edit-address-modal .modal-body .field input[type="number"],
 .address-edit-form .icon-input {

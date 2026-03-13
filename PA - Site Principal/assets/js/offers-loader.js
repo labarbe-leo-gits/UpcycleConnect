@@ -178,6 +178,14 @@
         container.innerHTML = skeletons.join('');
     }
 
+    const ITEM_STATE_LABELS = {
+        0: 'New',
+        1: 'Like new',
+        2: 'Good',
+        3: 'Fair',
+        4: 'Poor'
+    };
+
     function createOfferElement(offer) {
         const offerDiv = document.createElement('div');
         offerDiv.className = 'service-item offer-item';
@@ -204,6 +212,31 @@
         const title = document.createElement('h3');
         title.innerHTML = `<i class="fa-solid fa-box-open"></i>${escapeHtml(offer.title)}`;
         offerDiv.appendChild(title);
+
+        const metaRow = document.createElement('div');
+        metaRow.className = 'offer-meta-row';
+        let metaAdded = false;
+
+        if (offer.category_name) {
+            const chip = document.createElement('span');
+            chip.className = 'offer-chip offer-chip--category';
+            chip.textContent = 'Category: ' + offer.category_name;
+            metaRow.appendChild(chip);
+            metaAdded = true;
+        }
+
+        if (typeof offer.item_state !== 'undefined' && offer.item_state !== null) {
+            const stateLabel = ITEM_STATE_LABELS[offer.item_state] || ('State ' + offer.item_state);
+            const chip = document.createElement('span');
+            chip.className = 'offer-chip offer-chip--state';
+            chip.textContent = 'Condition: ' + stateLabel;
+            metaRow.appendChild(chip);
+            metaAdded = true;
+        }
+
+        if (metaAdded) {
+            offerDiv.appendChild(metaRow);
+        }
 
         if (offer.description) {
             const description = document.createElement('p');

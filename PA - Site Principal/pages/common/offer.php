@@ -150,6 +150,27 @@ if (!empty($offer['created_at'])) {
 						<div class="skeleton skeleton-detail-value"></div>
 					</div>
 				</div>
+				<div class="skeleton-detail-info-item">
+					<div class="skeleton skeleton-detail-icon"></div>
+					<div style="flex: 1;">
+						<div class="skeleton skeleton-detail-label"></div>
+						<div class="skeleton skeleton-detail-value"></div>
+					</div>
+				</div>
+				<div class="skeleton-detail-info-item">
+					<div class="skeleton skeleton-detail-icon"></div>
+					<div style="flex: 1;">
+						<div class="skeleton skeleton-detail-label"></div>
+						<div class="skeleton skeleton-detail-value"></div>
+					</div>
+				</div>
+				<div class="skeleton-detail-info-item">
+					<div class="skeleton skeleton-detail-icon"></div>
+					<div style="flex: 1;">
+						<div class="skeleton skeleton-detail-label"></div>
+						<div class="skeleton skeleton-detail-value"></div>
+					</div>
+				</div>
 			</div>
 
 			<div class="service-actions">
@@ -222,6 +243,55 @@ if (!empty($offer['created_at'])) {
 					<div class="info-content">
 						<span class="label">Posted</span>
 						<span class="value"><?php echo $createdAt; ?></span>
+					</div>
+				</div>
+				<?php endif; ?>
+
+				<?php if (!empty($offer['category_name'])): ?>
+				<div class="info-item">
+					<i class="fa-solid fa-tag"></i>
+					<div class="info-content">
+						<span class="label">Category</span>
+						<span class="value"><?php echo htmlspecialchars($offer['category_name']); ?></span>
+					</div>
+				</div>
+				<?php endif; ?>
+
+				<?php if (isset($offer['item_state'])):
+					$stateLabels = [
+						0 => 'New',
+						1 => 'Like new',
+						2 => 'Good',
+						3 => 'Fair',
+						4 => 'Poor'
+					];
+					$stateLabel = $stateLabels[intval($offer['item_state'])] ?? ('State ' . intval($offer['item_state']));
+				?>
+				<div class="info-item">
+					<i class="fa-solid fa-check-circle"></i>
+					<div class="info-content">
+						<span class="label">Condition</span>
+						<span class="value"><?php echo htmlspecialchars($stateLabel); ?></span>
+					</div>
+				</div>
+				<?php endif; ?>
+
+				<?php if (!empty($offer['material'])): ?>
+				<div class="info-item">
+					<i class="fa-solid fa-boxes-stacked"></i>
+					<div class="info-content">
+						<span class="label">Material</span>
+						<span class="value"><?php echo htmlspecialchars($offer['material']); ?></span>
+					</div>
+				</div>
+				<?php endif; ?>
+
+				<?php if (!empty($offer['upcycling_score']) && floatval($offer['upcycling_score']) > 0): ?>
+				<div class="info-item">
+					<i class="fa-solid fa-leaf"></i>
+					<div class="info-content">
+						<span class="label">Upcycling score</span>
+						<span class="value"><?php echo number_format(floatval($offer['upcycling_score']), 2); ?></span>
 					</div>
 				</div>
 				<?php endif; ?>
