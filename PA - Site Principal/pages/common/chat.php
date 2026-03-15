@@ -21,7 +21,10 @@ if ($user['user_type'] == 1) {
 <link rel="stylesheet" href="../../assets/css/chat.css">
 
 <div class="container">
-    
+    <form action="">
+        <input type="text" name="message" id="message" placeholder="Type your message here..." autocomplete="on">
+        <button type="submit">Send</button>
+    </form>
 </div>
 
 <?php

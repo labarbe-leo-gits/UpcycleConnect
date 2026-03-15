@@ -5,15 +5,87 @@ import (
 	"database/sql"
 	"fmt"
 	"math"
+	"strings"
 
 	"github.com/google/uuid"
 )
+
+type AnnonceFilter struct {
+	Status     *int
+	Search     string
+	CategoryID string
+	ItemState  *int
+	MinPrice   *float64
+	MaxPrice   *float64
+	Sort       string
+}
 
 func nullableUUID(u *uuid.UUID) interface{} {
 	if u == nil {
 		return nil
 	}
 	return u.String()
+}
+
+func buildAnnoncesFilterQuery(filter AnnonceFilter) (string, []interface{}) {
+	var whereClauses []string
+	var args []interface{}
+
+	if filter.Status != nil {
+		whereClauses = append(whereClauses, "a.status = ?")
+		args = append(args, *filter.Status)
+	}
+
+	if strings.TrimSpace(filter.Search) != "" {
+		whereClauses = append(whereClauses, "a.title LIKE ?")
+		args = append(args, "%"+strings.TrimSpace(filter.Search)+"%")
+	}
+
+	if strings.TrimSpace(filter.CategoryID) != "" {
+		whereClauses = append(whereClauses, "a.category_id = ?")
+		args = append(args, strings.TrimSpace(filter.CategoryID))
+	}
+
+	if filter.ItemState != nil {
+		whereClauses = append(whereClauses, "a.item_state = ?")
+		args = append(args, *filter.ItemState)
+	}
+
+	if filter.MinPrice != nil {
+		whereClauses = append(whereClauses, "a.price >= ?")
+		args = append(args, *filter.MinPrice)
+	}
+
+	if filter.MaxPrice != nil {
+		whereClauses = append(whereClauses, "a.price <= ?")
+		args = append(args, *filter.MaxPrice)
+	}
+
+	whereSQL := ""
+	if len(whereClauses) > 0 {
+		whereSQL = " WHERE " + strings.Join(whereClauses, " AND ")
+	}
+
+	return whereSQL, args
+}
+
+func buildAnnoncesOrderSQL(sort string) string {
+	switch sort {
+	case "created_asc":
+		return " ORDER BY a.created_at ASC"
+	case "price_asc":
+		return " ORDER BY a.price ASC"
+	case "price_desc":
+		return " ORDER BY a.price DESC"
+	case "title_asc":
+		return " ORDER BY a.title ASC"
+	case "title_desc":
+		return " ORDER BY a.title DESC"
+	case "created_desc":
+		return " ORDER BY a.created_at DESC"
+	default:
+		return " ORDER BY a.created_at DESC"
+	}
 }
 
 func GetAnnoncesFromDB() ([]models.Annonce, error) {
@@ -204,6 +276,123 @@ func GetAnnoncesPageFromDB(limit int, offset int) ([]models.Annonce, error) {
 
 	if err != nil {
 		return nil, fmt.Errorf("getAnnoncesPage package db rows : %s", err.Error())
+	}
+
+	return annonces, nil
+}
+
+func CountAnnoncesFilteredFromDB(filter AnnonceFilter) (int, error) {
+	whereSQL, args := buildAnnoncesFilterQuery(filter)
+	query := "SELECT COUNT(*) FROM annonces a" + whereSQL
+	var total int
+	if err := Db.QueryRow(query, args...).Scan(&total); err != nil {
+		return 0, fmt.Errorf("countAnnonces package db : %s", err.Error())
+	}
+	return total, nil
+}
+
+func GetAnnoncesPageFilteredFromDB(limit int, offset int, filter AnnonceFilter) ([]models.Annonce, error) {
+	orderSQL := buildAnnoncesOrderSQL(filter.Sort)
+	whereSQL, args := buildAnnoncesFilterQuery(filter)
+
+	baseQuery := "SELECT a.id, a.user_id, a.title, a.description, a.price, a.status, a.view_count, a.poids_materiaux, a.facteur_id, a.type_materiaux, a.upcycling_score, a.item_state, a.category_id, c.name AS category_name, a.created_at, a.updated_at FROM annonces a LEFT JOIN categories c ON a.category_id = c.id"
+
+	query := baseQuery + whereSQL + orderSQL
+	var argsWithLimits []interface{}
+	if limit > 0 {
+		query += " LIMIT ? OFFSET ?"
+		argsWithLimits = append(args, limit, offset)
+	} else {
+		argsWithLimits = args
+	}
+
+	rows, err := Db.Query(query, argsWithLimits...)
+	if err != nil {
+		return nil, fmt.Errorf("getAnnoncesPageFiltered package db : %s", err.Error())
+	}
+	defer rows.Close()
+
+	annonces := []models.Annonce{}
+	for rows.Next() {
+		var annonce models.Annonce
+		var idStr, userIDStr string
+		var createdAt, updatedAt sql.NullString
+		var description sql.NullString
+		var price sql.NullFloat64
+		var status sql.NullInt64
+		var poids sql.NullFloat64
+		var factorID, categoryID, categoryName sql.NullString
+		var matType sql.NullString
+		var score sql.NullFloat64
+		var itemState sql.NullInt64
+
+		err := rows.Scan(&idStr, &userIDStr, &annonce.Title, &description, &price, &status, &annonce.ViewCount, &poids, &factorID, &matType, &score, &itemState, &categoryID, &categoryName, &createdAt, &updatedAt)
+		if factorID.Valid {
+			if uid, err := uuid.Parse(factorID.String); err == nil {
+				annonce.FacteurID = &uid
+			}
+		}
+		if categoryID.Valid {
+			if uid, err := uuid.Parse(categoryID.String); err == nil {
+				annonce.CategoryID = &uid
+			}
+		}
+		if itemState.Valid {
+			annonce.ItemState = int(itemState.Int64)
+		}
+		if categoryName.Valid {
+			annonce.CategoryName = categoryName.String
+		}
+		if err != nil {
+			return nil, fmt.Errorf("getAnnoncesPageFiltered package db scan : %s", err.Error())
+		}
+
+		annonce.ID, err = uuid.Parse(idStr)
+		if err != nil {
+			return nil, fmt.Errorf("getAnnoncesPageFiltered package db uuid parse : %s", err.Error())
+		}
+
+		annonce.UserID, err = uuid.Parse(userIDStr)
+		if err != nil {
+			return nil, fmt.Errorf("getAnnoncesPageFiltered package db uuid parse user_id : %s", err.Error())
+		}
+
+		if createdAt.Valid {
+			annonce.CreatedAt = createdAt.String
+		}
+
+		if updatedAt.Valid {
+			annonce.UpdatedAt = updatedAt.String
+		}
+
+		if description.Valid {
+			annonce.Description = description.String
+		}
+
+		if price.Valid {
+			annonce.Price = price.Float64
+		}
+
+		if status.Valid {
+			annonce.Status = int(status.Int64)
+		}
+		if poids.Valid {
+			annonce.PoidsMateriaux = poids.Float64
+		}
+		if matType.Valid {
+			annonce.TypeMateriaux = matType.String
+		}
+		if score.Valid {
+			annonce.UpcyclingScore = score.Float64
+		}
+
+		annonces = append(annonces, annonce)
+	}
+
+	err = rows.Err()
+
+	if err != nil {
+		return nil, fmt.Errorf("getAnnoncesPageFiltered package db rows : %s", err.Error())
 	}
 
 	return annonces, nil

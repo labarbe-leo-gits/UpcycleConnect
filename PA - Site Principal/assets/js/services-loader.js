@@ -2,7 +2,7 @@
 (function() {
     'use strict';
 
-    const pageSize = 4;
+    let pageSize = 4;
     let currentPage = 1;
     let totalPages = 1;
     let searchTerm = '';
@@ -12,6 +12,7 @@
         bindToolbar();
         loadTypes();
         currentPage = getPageFromUrl();
+        readParamsFromUrl();
         requestPage(currentPage, true);
     });
 
@@ -27,9 +28,7 @@
         renderSkeletons(container, pageSize);
         renderPaginationSkeletons(pagination);
 
-        let url = `services-api?page=${page}&limit=${pageSize}`;
-        if (searchTerm) url += `&search=${encodeURIComponent(searchTerm)}`;
-        if (typeFilter) url += `&type=${encodeURIComponent(typeFilter)}`;
+        const url = `services-api?${buildQueryParams(page)}`;
         fetch(url, {
             method: 'GET',
             headers: {
@@ -108,6 +107,25 @@
             currentPage = 1;
             requestPage(currentPage, true);
         });
+
+        const pageSizeSelect = document.getElementById('service-page-size');
+        if (pageSizeSelect) {
+            pageSizeSelect.addEventListener('change', function() {
+                const value = parseInt(this.value, 10);
+                if (!Number.isNaN(value) && value > 0) {
+                    pageSize = Math.min(value, 50);
+                    currentPage = 1;
+                    requestPage(currentPage, true);
+                }
+            });
+        }
+
+        const resetBtn = document.getElementById('service-reset-filters');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', function() {
+                resetFilters();
+            });
+        }
     }
 
     function renderPagination(pagination) {
@@ -303,9 +321,52 @@
         return pageParam;
     }
 
+    function readParamsFromUrl() {
+        const params = new URLSearchParams(window.location.search);
+        searchTerm = params.get('search') || '';
+        typeFilter = params.get('type') || '';
+
+        const limitParam = parseInt(params.get('limit'), 10);
+        if (!Number.isNaN(limitParam) && limitParam > 0) {
+            pageSize = Math.min(limitParam, 50);
+        }
+
+        const searchInput = document.getElementById('service-search');
+        if (searchInput) searchInput.value = searchTerm;
+
+        const typeSelect = document.getElementById('service-type-filter');
+        if (typeSelect) typeSelect.value = typeFilter;
+
+        const pageSizeSelect = document.getElementById('service-page-size');
+        if (pageSizeSelect) pageSizeSelect.value = String(pageSize);
+    }
+
+    function resetFilters() {
+        searchTerm = '';
+        typeFilter = '';
+
+        const searchInput = document.getElementById('service-search');
+        if (searchInput) searchInput.value = '';
+
+        const typeSelect = document.getElementById('service-type-filter');
+        if (typeSelect) typeSelect.value = '';
+
+        currentPage = 1;
+        requestPage(currentPage, true);
+    }
+
+    function buildQueryParams(page) {
+        const params = new URLSearchParams();
+        params.set('page', String(page));
+        params.set('limit', String(pageSize));
+        if (searchTerm) params.set('search', searchTerm);
+        if (typeFilter) params.set('type', typeFilter);
+        return params.toString();
+    }
+
     function updateUrlPage(page, replace) {
         const url = new URL(window.location.href);
-        url.searchParams.set('page', String(page));
+        url.search = buildQueryParams(page);
         if (replace) {
             window.history.replaceState({}, '', url.toString());
         } else {

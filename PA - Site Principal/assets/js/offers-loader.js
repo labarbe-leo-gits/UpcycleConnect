@@ -1,12 +1,21 @@
 (function() {
     'use strict';
 
-    const pageSize = 4;
+    let pageSize = 4;
     let currentPage = 1;
     let totalPages = 1;
+    let searchTerm = '';
+    let categoryFilter = '';
+    let conditionFilter = '';
+    let minPrice = '';
+    let maxPrice = '';
+    let sortOrder = '';
 
     document.addEventListener('DOMContentLoaded', function() {
+        bindToolbar();
+        loadCategories();
         currentPage = getPageFromUrl();
+        readFiltersFromUrl();
         requestPage(currentPage, true);
     });
 
@@ -21,7 +30,8 @@
 
         renderSkeletons(container, pageSize);
 
-        fetch(`offers-api?page=${page}&limit=${pageSize}`, {
+        const url = `offers-api?${buildQueryParams(page)}`;
+        fetch(url, {
             method: 'GET',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest'
@@ -77,6 +87,217 @@
             });
     }
 
+    function buildQueryParams(page) {
+        const params = new URLSearchParams();
+        params.set('page', String(page));
+        params.set('limit', String(pageSize));
+        if (searchTerm) params.set('search', searchTerm);
+        if (categoryFilter) params.set('category', categoryFilter);
+        if (conditionFilter) params.set('condition', conditionFilter);
+        if (minPrice) params.set('price_min', minPrice);
+        if (maxPrice) params.set('price_max', maxPrice);
+        if (sortOrder) params.set('sort', sortOrder);
+        return params.toString();
+    }
+
+    function readFiltersFromUrl() {
+        const params = new URLSearchParams(window.location.search);
+        searchTerm = params.get('search') || '';
+        categoryFilter = params.get('category') || '';
+        conditionFilter = params.get('condition') || '';
+        minPrice = params.get('price_min') || '';
+        maxPrice = params.get('price_max') || '';
+        sortOrder = params.get('sort') || '';
+
+        const limitParam = parseInt(params.get('limit'), 10);
+        if (!Number.isNaN(limitParam) && limitParam > 0) {
+            pageSize = Math.min(limitParam, 50);
+        }
+
+        const searchInput = document.getElementById('offers-search');
+        if (searchInput) searchInput.value = searchTerm;
+
+        const categorySelect = document.getElementById('offers-category-filter');
+        if (categorySelect) categorySelect.value = categoryFilter;
+
+        const conditionSelect = document.getElementById('offers-condition-filter');
+        if (conditionSelect) conditionSelect.value = conditionFilter;
+
+        const minPriceInput = document.getElementById('offers-price-min');
+        if (minPriceInput) minPriceInput.value = minPrice;
+
+        const maxPriceInput = document.getElementById('offers-price-max');
+        if (maxPriceInput) maxPriceInput.value = maxPrice;
+
+        const sortSelect = document.getElementById('offers-sort');
+        if (sortSelect) sortSelect.value = sortOrder;
+
+        const pageSizeSelect = document.getElementById('offers-page-size');
+        if (pageSizeSelect) pageSizeSelect.value = String(pageSize);
+    }
+
+    function resetFilters() {
+        searchTerm = '';
+        categoryFilter = '';
+        conditionFilter = '';
+        minPrice = '';
+        maxPrice = '';
+        sortOrder = '';
+
+        const searchInput = document.getElementById('offers-search');
+        if (searchInput) searchInput.value = '';
+
+        const categorySelect = document.getElementById('offers-category-filter');
+        if (categorySelect) categorySelect.value = '';
+
+        const conditionSelect = document.getElementById('offers-condition-filter');
+        if (conditionSelect) conditionSelect.value = '';
+
+        const minPriceInput = document.getElementById('offers-price-min');
+        if (minPriceInput) minPriceInput.value = '';
+
+        const maxPriceInput = document.getElementById('offers-price-max');
+        if (maxPriceInput) maxPriceInput.value = '';
+
+        const sortSelect = document.getElementById('offers-sort');
+        if (sortSelect) sortSelect.value = '';
+
+        currentPage = 1;
+        requestPage(currentPage, true);
+    }
+
+    function updateUrlPage(page, replace) {
+        const url = new URL(window.location.href);
+        const query = buildQueryParams(page);
+        url.search = query;
+        if (replace) {
+            window.history.replaceState({}, '', url.toString());
+        } else {
+            window.history.pushState({}, '', url.toString());
+        }
+    }
+
+    function bindToolbar() {
+        const searchInput = document.getElementById('offers-search');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                searchTerm = this.value.trim();
+                currentPage = 1;
+                requestPage(currentPage, true);
+            });
+        }
+
+        const categorySelect = document.getElementById('offers-category-filter');
+        if (categorySelect) {
+            categorySelect.addEventListener('change', function() {
+                categoryFilter = this.value;
+                currentPage = 1;
+                requestPage(currentPage, true);
+            });
+        }
+
+        const conditionSelect = document.getElementById('offers-condition-filter');
+        if (conditionSelect) {
+            conditionSelect.addEventListener('change', function() {
+                conditionFilter = this.value;
+                currentPage = 1;
+                requestPage(currentPage, true);
+            });
+        }
+
+        const minPriceInput = document.getElementById('offers-price-min');
+        const maxPriceInput = document.getElementById('offers-price-max');
+        if (minPriceInput) {
+            minPriceInput.addEventListener('input', function() {
+                minPrice = this.value;
+                currentPage = 1;
+                requestPage(currentPage, true);
+            });
+        }
+        if (maxPriceInput) {
+            maxPriceInput.addEventListener('input', function() {
+                maxPrice = this.value;
+                currentPage = 1;
+                requestPage(currentPage, true);
+            });
+        }
+
+        const sortSelect = document.getElementById('offers-sort');
+        if (sortSelect) {
+            sortSelect.addEventListener('change', function() {
+                sortOrder = this.value;
+                currentPage = 1;
+                requestPage(currentPage, true);
+            });
+        }
+
+        const pageSizeSelect = document.getElementById('offers-page-size');
+        if (pageSizeSelect) {
+            pageSizeSelect.addEventListener('change', function() {
+                const value = parseInt(this.value, 10);
+                if (!Number.isNaN(value) && value > 0) {
+                    pageSize = Math.min(value, 50);
+                    currentPage = 1;
+                    requestPage(currentPage, true);
+                }
+            });
+        }
+
+        const resetBtn = document.getElementById('offers-reset-filters');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', function() {
+                resetFilters();
+            });
+        }
+    }
+
+    function loadCategories() {
+        fetch('categories-list-api', {
+            method: 'GET',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+            .then(r => r.text())
+            .then(text => {
+                try {
+                    const data = text ? JSON.parse(text) : [];
+                    const list = Array.isArray(data) ? data : (Array.isArray(data.items) ? data.items : []);
+                    populateCategoryOptions(list);
+                } catch (e) {
+                    console.error('failed loading categories', e, text);
+                }
+            })
+            .catch(err => console.error('error fetching categories', err));
+    }
+
+    function populateCategoryOptions(list) {
+        const filter = document.getElementById('offers-category-filter');
+        const addFormSelect = document.getElementById('offer-category');
+        if (filter) {
+            const current = filter.value;
+            filter.innerHTML = '<option value="">All categories</option>';
+            list.forEach(category => {
+                const opt = document.createElement('option');
+                opt.value = category.id;
+                opt.textContent = category.name;
+                filter.appendChild(opt);
+            });
+            filter.value = current;
+        }
+        if (addFormSelect) {
+            const current = addFormSelect.value;
+            addFormSelect.innerHTML = '';
+            addFormSelect.appendChild(document.createElement('option')).value = '';
+            addFormSelect.querySelector('option').textContent = '-- none --';
+            list.forEach(category => {
+                const opt = document.createElement('option');
+                opt.value = category.id;
+                opt.textContent = category.name;
+                addFormSelect.appendChild(opt);
+            });
+            addFormSelect.value = current;
+        }
+    }
+
     function renderOffers(offers, container) {
         offers.forEach(offer => {
             const offerItem = createOfferElement(offer);
@@ -127,16 +348,6 @@
             return 1;
         }
         return pageParam;
-    }
-
-    function updateUrlPage(page, replace) {
-        const url = new URL(window.location.href);
-        url.searchParams.set('page', String(page));
-        if (replace) {
-            window.history.replaceState({}, '', url.toString());
-        } else {
-            window.history.pushState({}, '', url.toString());
-        }
     }
 
 

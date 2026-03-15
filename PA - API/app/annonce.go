@@ -28,15 +28,54 @@ func GetAnnonces(w http.ResponseWriter, r *http.Request) {
 		statusFilter = &parsedStatus
 	}
 
-	if pageParam == "" && limitParam == "" {
-		var annonces []models.Annonce
-		var err error
-		if statusFilter != nil {
-			annonces, err = db.GetAnnoncesByStatusFromDB(*statusFilter)
-		} else {
-			annonces, err = db.GetAnnoncesFromDB()
+	search := strings.TrimSpace(query.Get("search"))
+	category := strings.TrimSpace(query.Get("category"))
+	conditionParam := query.Get("condition")
+	conditionFilter := (*int)(nil)
+	if conditionParam != "" {
+		parsedCondition, err := strconv.Atoi(conditionParam)
+		if err != nil {
+			sendError(w, "Invalid condition value", http.StatusBadRequest)
+			return
 		}
+		conditionFilter = &parsedCondition
+	}
 
+	minPriceParam := strings.TrimSpace(query.Get("price_min"))
+	maxPriceParam := strings.TrimSpace(query.Get("price_max"))
+	minPrice := (*float64)(nil)
+	maxPrice := (*float64)(nil)
+	if minPriceParam != "" {
+		v, err := strconv.ParseFloat(minPriceParam, 64)
+		if err != nil {
+			sendError(w, "Invalid price_min value", http.StatusBadRequest)
+			return
+		}
+		minPrice = &v
+	}
+	if maxPriceParam != "" {
+		v, err := strconv.ParseFloat(maxPriceParam, 64)
+		if err != nil {
+			sendError(w, "Invalid price_max value", http.StatusBadRequest)
+			return
+		}
+		maxPrice = &v
+	}
+
+	sort := strings.TrimSpace(query.Get("sort"))
+
+	filter := db.AnnonceFilter{
+		Status:     statusFilter,
+		Search:     search,
+		CategoryID: category,
+		ItemState:  conditionFilter,
+		MinPrice:   minPrice,
+		MaxPrice:   maxPrice,
+		Sort:       sort,
+	}
+
+	if pageParam == "" && limitParam == "" {
+		annonces, err := db.GetAnnoncesPageFilteredFromDB(0, 0, filter)
 		if err != nil {
 			fmt.Println("[ERROR] GetAnnonces:", err)
 			sendError(w, "Unable to fetch annonces", http.StatusInternalServerError)
@@ -76,11 +115,7 @@ func GetAnnonces(w http.ResponseWriter, r *http.Request) {
 
 	var total int
 	var err error
-	if statusFilter != nil {
-		total, err = db.CountAnnoncesByStatusFromDB(*statusFilter)
-	} else {
-		total, err = db.CountAnnoncesFromDB()
-	}
+	total, err = db.CountAnnoncesFilteredFromDB(filter)
 	if err != nil {
 		fmt.Println("[ERROR] GetAnnonces count:", err)
 		sendError(w, "Unable to fetch annonces", http.StatusInternalServerError)
@@ -88,11 +123,7 @@ func GetAnnonces(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var annonces []models.Annonce
-	if statusFilter != nil {
-		annonces, err = db.GetAnnoncesPageByStatusFromDB(limit, offset, *statusFilter)
-	} else {
-		annonces, err = db.GetAnnoncesPageFromDB(limit, offset)
-	}
+	annonces, err = db.GetAnnoncesPageFilteredFromDB(limit, offset, filter)
 	if err != nil {
 		fmt.Println("[ERROR] GetAnnonces page:", err)
 		sendError(w, "Unable to fetch annonces", http.StatusInternalServerError)

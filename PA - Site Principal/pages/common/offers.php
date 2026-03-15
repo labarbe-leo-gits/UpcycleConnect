@@ -18,18 +18,6 @@ if (!$user) {
 
 <div class="container">
 
-<?php
-if(($user['user_type'] == 1) || ($user['user_type'] == 2)){
-	echo "
-	<div class=\"offers-header\">
-		<button class=\"add-offer-button\" id=\"add-offer\">
-			<i class=\"fa-solid fa-plus\"></i>
-			Add Offer
-		</button>
-	</div>";
-}
-?>
-
 <?php if(($user['user_type'] == 1) || ($user['user_type'] == 2)): ?>
 <div class="add-modal">
     <div class="add-modal-content">
@@ -136,6 +124,64 @@ if(($user['user_type'] == 1) || ($user['user_type'] == 2)){
     </div>
 </div>
 <?php endif; ?>
+
+    <div class="offers-toolbar">
+        <div class="offers-toolbar-filters">
+            <select id="offers-category-filter">
+                <option value="">All categories</option>
+            </select>
+            <select id="offers-condition-filter">
+                <option value="">All conditions</option>
+                <option value="0">New</option>
+                <option value="1">Like new</option>
+                <option value="2">Good</option>
+                <option value="3">Fair</option>
+                <option value="4">Poor</option>
+            </select>
+            <div class="offers-price-range">
+                <input id="offers-price-min" type="number" min="0" step="0.01" placeholder="Min price" />
+                <input id="offers-price-max" type="number" min="0" step="0.01" placeholder="Max price" />
+            </div>
+            <select id="offers-sort">
+                <option value="">Sort</option>
+                <option value="created_desc">Newest</option>
+                <option value="created_asc">Oldest</option>
+                <option value="price_asc">Price (low → high)</option>
+                <option value="price_desc">Price (high → low)</option>
+                <option value="title_asc">Name (A → Z)</option>
+                <option value="title_desc">Name (Z → A)</option>
+            </select>
+            <select id="offers-page-size">
+                <option value="4">4 / page</option>
+                <option value="8">8 / page</option>
+                <option value="12">12 / page</option>
+                <option value="20">20 / page</option>
+                <option value="50">50 / page</option>
+            </select>
+        </div>
+        <div class="offers-toolbar-search">
+            <div class="toolbar-search-wrap">
+                <i class="fa-solid fa-search toolbar-search-icon"></i>
+                <input id="offers-search" type="search" placeholder="Search by name..." autocomplete="off" />
+            </div>
+            <button id="offers-reset-filters" class="btn-secondary" type="button">
+                <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
+                Reset filters
+            </button>
+        </div>
+    </div>
+
+    <?php
+if(($user['user_type'] == 1) || ($user['user_type'] == 2)){
+	echo "
+	<div class=\"offers-header\">
+		<button class=\"add-offer-button\" id=\"add-offer\">
+			<i class=\"fa-solid fa-plus\"></i>
+			Add Offer
+		</button>
+	</div>";
+}
+?>
 
 	<div class="services-list" id="offers-container">
 		<?php for ($i = 0; $i < 4; $i++): ?>

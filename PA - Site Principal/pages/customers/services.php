@@ -13,11 +13,29 @@ $user = getLoggedInUser();
 ?>
 
 <div class="container">
-    <div class="services-toolbar" style="margin-bottom:16px; display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-        <input type="text" id="service-search" placeholder="Search…" style="flex:1; padding:6px 8px;" />
-        <select id="service-type-filter" style="padding:6px 8px;">
-            <option value="">All types</option>
-        </select>
+    <div class="services-toolbar offers-toolbar">
+        <div class="offers-toolbar-filters">
+            <select id="service-type-filter">
+                <option value="">All types</option>
+            </select>
+            <select id="service-page-size">
+                <option value="4">4 / page</option>
+                <option value="8">8 / page</option>
+                <option value="12">12 / page</option>
+                <option value="20">20 / page</option>
+                <option value="50">50 / page</option>
+            </select>
+            <button id="service-reset-filters" class="btn-secondary" type="button">
+                <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
+                Reset filters
+            </button>
+        </div>
+        <div class="offers-toolbar-search">
+            <div class="toolbar-search-wrap">
+                <i class="fa-solid fa-search toolbar-search-icon"></i>
+                <input id="service-search" type="search" placeholder="Search…" autocomplete="off" />
+            </div>
+        </div>
     </div>
     <div class="services-list" id="services-container">
         <?php for ($i = 0; $i < 4; $i++): ?>

@@ -28,7 +28,20 @@ if ($limit > 50) {
     $limit = 50;
 }
 
-$annoncesResponse = askAPI('/annonces?page=' . $page . '&limit=' . $limit . '&status=0', 'GET');
+$queryParams = [
+    'page' => $page,
+    'limit' => $limit,
+    'status' => 0,
+];
+
+foreach (['search', 'category', 'condition', 'price_min', 'price_max', 'sort'] as $param) {
+    if (isset($_GET[$param]) && $_GET[$param] !== '') {
+        $queryParams[$param] = $_GET[$param];
+    }
+}
+
+$qs = http_build_query($queryParams);
+$annoncesResponse = askAPI('/annonces?' . $qs, 'GET');
 $annoncesDecoded = json_decode($annoncesResponse, true);
 
 if (isset($annoncesDecoded['error'])) {
