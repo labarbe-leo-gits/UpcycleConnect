@@ -78,6 +78,20 @@ if (empty($user['oauth_provider'])) {
     $twoFAEnabled = isset($twoFAData['enabled']) && $twoFAData['enabled'] === true;
 }
 
+$profileTitles = [
+    0 => 'Baby Upcycler',
+    1 => 'Novice Recycler',
+    2 => 'Eco-Friendly Enthusiast',
+    3 => 'Sustainability Advocate',
+    4 => 'Green Innovator',
+    5 => 'Upcycling Master',
+    6 => 'Circular Economy Champion',
+    7 => 'Zero Waste Hero',
+    8 => 'Eco-Warrior',
+    9 => 'Planet Protector',
+    10 => 'Sustainability Legend'
+];
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $formType = $_POST['form_type'] ?? '';
     if ($formType === 'password_change') {
@@ -326,6 +340,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         echo $first . $last;
         ?>!
     </h1>
+
+    <div class="profileTitle">
+        <?php
+        $user_xp = isset($userDetails['user_xp']) ? (int)$userDetails['user_xp'] : 0;
+        $user_level = isset($userDetails['user_level']) ? (int)$userDetails['user_level'] : floor($user_xp / 1200);
+        $displayLevel = min($user_level, 10);
+        $profileTitle = $profileTitles[$displayLevel] ?? 'Upcycler';
+        echo htmlspecialchars($profileTitle);
+        ?>
+    </div>
     
     <div class="profile-card">
         <div class="profile-header-flex">

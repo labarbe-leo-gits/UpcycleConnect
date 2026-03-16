@@ -44,7 +44,21 @@ func GetProjects(w http.ResponseWriter, r *http.Request) {
 		search = ""
 	}
 
-	projects, total, err := db.GetProjectsFromDB(offset, limit, search)
+	sort := strings.TrimSpace(q.Get("sort"))
+	if sort == "" {
+		sort = "newest"
+	}
+
+	authorID := strings.TrimSpace(q.Get("author_id"))
+
+	var aiGenerated *int
+	if v := strings.TrimSpace(q.Get("ai_generated")); v != "" {
+		if iv, err := strconv.Atoi(v); err == nil {
+			aiGenerated = &iv
+		}
+	}
+
+	projects, total, err := db.GetProjectsFromDB(offset, limit, search, sort, authorID, aiGenerated)
 	if err != nil {
 		fmt.Println("[ERROR] GetProjects:", err)
 		sendError(w, "Unable to fetch projects", http.StatusInternalServerError)
@@ -77,6 +91,9 @@ func GetProjectByID(w http.ResponseWriter, r *http.Request) {
 	if project == nil {
 		sendError(w, "Project not found", http.StatusNotFound)
 		return
+	}
+	if err := db.IncrementProjectViewsInDB(idStr); err != nil {
+		fmt.Println("[WARN] IncrementProjectViewsInDB:", err)
 	}
 
 	w.Header().Set("Content-Type", "application/json")

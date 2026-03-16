@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func GetProjectsFromDB(offset, limit int, search string) ([]models.Project, int, error) {
+func GetProjectsFromDB(offset, limit int, search, sort, authorID string, aiGenerated *int) ([]models.Project, int, error) {
 	if offset < 0 {
 		offset = 0
 	}
@@ -16,20 +16,44 @@ func GetProjectsFromDB(offset, limit int, search string) ([]models.Project, int,
 		limit = 20
 	}
 
-	baseQuery := "SELECT id, user_id, annonce_id, title, description, status, ai_generated, created_at, updated_at FROM projects WHERE status = 1"
-	countQuery := "SELECT COUNT(*) FROM projects WHERE status = 1"
+	baseQuery := "SELECT p.id, p.user_id, CONCAT_WS(' ', u.first_name, u.last_name) AS author_name, p.annonce_id, p.title, p.description, p.status, p.ai_generated, p.views, p.created_at, p.updated_at FROM projects p JOIN users u ON p.user_id = u.id WHERE p.status = 1"
+	countQuery := "SELECT COUNT(*) FROM projects p WHERE p.status = 1"
 	args := []interface{}{}
 	countArgs := []interface{}{}
 
 	if search != "" {
 		like := fmt.Sprintf("%%%s%%", search)
-		baseQuery += " AND (title LIKE ? OR description LIKE ?)"
-		countQuery += " AND (title LIKE ? OR description LIKE ?)"
+		baseQuery += " AND (p.title LIKE ? OR p.description LIKE ?)"
+		countQuery += " AND (p.title LIKE ? OR p.description LIKE ?)"
 		args = append(args, like, like)
 		countArgs = append(countArgs, like, like)
 	}
 
-	baseQuery += " ORDER BY created_at DESC LIMIT ? OFFSET ?"
+	if authorID != "" {
+		baseQuery += " AND p.user_id = ?"
+		countQuery += " AND p.user_id = ?"
+		args = append(args, authorID)
+		countArgs = append(countArgs, authorID)
+	}
+
+	if aiGenerated != nil {
+		baseQuery += " AND p.ai_generated = ?"
+		countQuery += " AND p.ai_generated = ?"
+		args = append(args, *aiGenerated)
+		countArgs = append(countArgs, *aiGenerated)
+	}
+
+	orderBy := "p.created_at DESC"
+	switch sort {
+	case "oldest":
+		orderBy = "p.created_at ASC"
+	case "name":
+		orderBy = "p.title ASC"
+	case "popular":
+		orderBy = "p.views DESC"
+	}
+
+	baseQuery += " ORDER BY " + orderBy + " LIMIT ? OFFSET ?"
 	args = append(args, limit, offset)
 
 	rows, err := Db.Query(baseQuery, args...)
@@ -41,15 +65,16 @@ func GetProjectsFromDB(offset, limit int, search string) ([]models.Project, int,
 	projects := []models.Project{}
 	for rows.Next() {
 		var p models.Project
-		var idStr, userIDStr string
+		var idStr, userIDStr, authorName string
 		var annonceIDStr sql.NullString
 		var createdAt, updatedAt sql.NullString
 
-		if err := rows.Scan(&idStr, &userIDStr, &annonceIDStr, &p.Title, &p.Description, &p.Status, &p.AIGenerated, &createdAt, &updatedAt); err != nil {
+		if err := rows.Scan(&idStr, &userIDStr, &authorName, &annonceIDStr, &p.Title, &p.Description, &p.Status, &p.AIGenerated, &p.Views, &createdAt, &updatedAt); err != nil {
 			return nil, 0, fmt.Errorf("scanning project row: %w", err)
 		}
 		p.ID, _ = uuid.Parse(idStr)
 		p.UserID, _ = uuid.Parse(userIDStr)
+		p.AuthorName = authorName
 		if annonceIDStr.Valid {
 			uid, _ := uuid.Parse(annonceIDStr.String)
 			p.AnnonceID = &uid
@@ -79,9 +104,9 @@ func GetProjectByIDFromDB(id string) (*models.Project, error) {
 	var createdAt, updatedAt sql.NullString
 
 	err := Db.QueryRow(
-		"SELECT id, user_id, annonce_id, title, description, status, ai_generated, created_at, updated_at FROM projects WHERE id = ?",
+		"SELECT p.id, p.user_id, CONCAT_WS(' ', u.first_name, u.last_name) AS author_name, p.annonce_id, p.title, p.description, p.status, p.ai_generated, p.views, p.created_at, p.updated_at FROM projects p JOIN users u ON p.user_id = u.id WHERE p.id = ?",
 		id,
-	).Scan(&idStr, &userIDStr, &annonceIDStr, &p.Title, &p.Description, &p.Status, &p.AIGenerated, &createdAt, &updatedAt)
+	).Scan(&idStr, &userIDStr, &p.AuthorName, &annonceIDStr, &p.Title, &p.Description, &p.Status, &p.AIGenerated, &p.Views, &createdAt, &updatedAt)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
@@ -104,11 +129,16 @@ func GetProjectByIDFromDB(id string) (*models.Project, error) {
 	return &p, nil
 }
 
+func IncrementProjectViewsInDB(id string) error {
+	_, err := Db.Exec("UPDATE projects SET views = views + 1 WHERE id = ?", id)
+	return err
+}
+
 func CreateProjectInDB(p models.Project) (*models.Project, error) {
 	id := uuid.New()
 	_, err := Db.Exec(
-		"INSERT INTO projects (id, user_id, annonce_id, title, description, status, ai_generated) VALUES (?, ?, ?, ?, ?, ?, ?)",
-		id.String(), p.UserID.String(), nullableUUID(p.AnnonceID), p.Title, p.Description, p.Status, p.AIGenerated,
+		"INSERT INTO projects (id, user_id, annonce_id, title, description, status, ai_generated, views) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+		id.String(), p.UserID.String(), nullableUUID(p.AnnonceID), p.Title, p.Description, p.Status, p.AIGenerated, 0,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("CreateProjectInDB: %w", err)
