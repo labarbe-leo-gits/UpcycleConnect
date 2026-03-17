@@ -91,7 +91,7 @@ func buildAnnoncesOrderSQL(sort string) string {
 func GetAnnoncesFromDB() ([]models.Annonce, error) {
 
 	annonces := []models.Annonce{}
-	rows, err := Db.Query("SELECT a.id, a.user_id, a.title, a.description, a.price, a.status, a.view_count, a.poids_materiaux, a.facteur_id, a.type_materiaux, a.upcycling_score, a.item_state, a.category_id, c.name AS category_name, a.created_at, a.updated_at FROM annonces a LEFT JOIN categories c ON a.category_id = c.id")
+	rows, err := Db.Query("SELECT a.id, a.user_id, a.title, a.description, a.price, a.status, a.view_count, a.poids_materiaux, a.facteur_id, a.type_materiaux, a.upcycling_score, a.item_state, a.category_id, c.name AS category_name, a.ad_campaign_id, u.user_type, a.created_at, a.updated_at FROM annonces a LEFT JOIN categories c ON a.category_id = c.id LEFT JOIN users u ON u.id = a.user_id")
 
 	if err != nil {
 		return nil, fmt.Errorf("getAnnonces package db : %s", err.Error())
@@ -107,12 +107,13 @@ func GetAnnoncesFromDB() ([]models.Annonce, error) {
 		var price sql.NullFloat64
 		var status sql.NullInt64
 		var poids sql.NullFloat64
-		var factorID, categoryID, categoryName sql.NullString
+		var factorID, categoryID, categoryName, adCampaignID sql.NullString
 		var matType sql.NullString
 		var score sql.NullFloat64
 		var itemState sql.NullInt64
+		var sellerUserType sql.NullInt64
 
-		err := rows.Scan(&idStr, &userIDStr, &annonce.Title, &description, &price, &status, &annonce.ViewCount, &poids, &factorID, &matType, &score, &itemState, &categoryID, &categoryName, &createdAt, &updatedAt)
+		err := rows.Scan(&idStr, &userIDStr, &annonce.Title, &description, &price, &status, &annonce.ViewCount, &poids, &factorID, &matType, &score, &itemState, &categoryID, &categoryName, &adCampaignID, &sellerUserType, &createdAt, &updatedAt)
 		if factorID.Valid {
 			if uid, err := uuid.Parse(factorID.String); err == nil {
 				annonce.FacteurID = &uid
@@ -128,6 +129,16 @@ func GetAnnoncesFromDB() ([]models.Annonce, error) {
 		}
 		if itemState.Valid {
 			annonce.ItemState = int(itemState.Int64)
+		}
+		if adCampaignID.Valid {
+			if uid, err := uuid.Parse(adCampaignID.String); err == nil {
+				annonce.AdCampaignID = &uid
+				annonce.Promoted = true
+			}
+		}
+		if sellerUserType.Valid {
+			sellerType := int(sellerUserType.Int64)
+			annonce.SellerUserType = &sellerType
 		}
 		if err != nil {
 			return nil, fmt.Errorf("getAnnonces package db scan : %s", err.Error())
@@ -188,7 +199,7 @@ func GetAnnoncesFromDB() ([]models.Annonce, error) {
 func GetAnnoncesPageFromDB(limit int, offset int) ([]models.Annonce, error) {
 
 	annonces := []models.Annonce{}
-	rows, err := Db.Query("SELECT a.id, a.user_id, a.title, a.description, a.price, a.status, a.view_count, a.poids_materiaux, a.facteur_id, a.type_materiaux, a.upcycling_score, a.item_state, a.category_id, c.name AS category_name, a.created_at, a.updated_at FROM annonces a LEFT JOIN categories c ON a.category_id = c.id ORDER BY a.created_at DESC LIMIT ? OFFSET ?", limit, offset)
+	rows, err := Db.Query("SELECT a.id, a.user_id, a.title, a.description, a.price, a.status, a.view_count, a.poids_materiaux, a.facteur_id, a.type_materiaux, a.upcycling_score, a.item_state, a.category_id, c.name AS category_name, a.ad_campaign_id, u.user_type, a.created_at, a.updated_at FROM annonces a LEFT JOIN categories c ON a.category_id = c.id LEFT JOIN users u ON u.id = a.user_id ORDER BY a.created_at DESC LIMIT ? OFFSET ?", limit, offset)
 
 	if err != nil {
 		return nil, fmt.Errorf("getAnnoncesPage package db : %s", err.Error())
@@ -204,12 +215,13 @@ func GetAnnoncesPageFromDB(limit int, offset int) ([]models.Annonce, error) {
 		var price sql.NullFloat64
 		var status sql.NullInt64
 		var poids sql.NullFloat64
-		var factorID, categoryID, categoryName sql.NullString
+		var factorID, categoryID, categoryName, adCampaignID sql.NullString
 		var matType sql.NullString
 		var score sql.NullFloat64
 		var itemState sql.NullInt64
+		var sellerUserType sql.NullInt64
 
-		err := rows.Scan(&idStr, &userIDStr, &annonce.Title, &description, &price, &status, &annonce.ViewCount, &poids, &factorID, &matType, &score, &itemState, &categoryID, &categoryName, &createdAt, &updatedAt)
+		err := rows.Scan(&idStr, &userIDStr, &annonce.Title, &description, &price, &status, &annonce.ViewCount, &poids, &factorID, &matType, &score, &itemState, &categoryID, &categoryName, &adCampaignID, &sellerUserType, &createdAt, &updatedAt)
 		if factorID.Valid {
 			if uid, err := uuid.Parse(factorID.String); err == nil {
 				annonce.FacteurID = &uid
@@ -225,6 +237,16 @@ func GetAnnoncesPageFromDB(limit int, offset int) ([]models.Annonce, error) {
 		}
 		if categoryName.Valid {
 			annonce.CategoryName = categoryName.String
+		}
+		if adCampaignID.Valid {
+			if uid, err := uuid.Parse(adCampaignID.String); err == nil {
+				annonce.AdCampaignID = &uid
+				annonce.Promoted = true
+			}
+		}
+		if sellerUserType.Valid {
+			sellerType := int(sellerUserType.Int64)
+			annonce.SellerUserType = &sellerType
 		}
 		if err != nil {
 			return nil, fmt.Errorf("getAnnoncesPage package db scan : %s", err.Error())
@@ -295,7 +317,7 @@ func GetAnnoncesPageFilteredFromDB(limit int, offset int, filter AnnonceFilter) 
 	orderSQL := buildAnnoncesOrderSQL(filter.Sort)
 	whereSQL, args := buildAnnoncesFilterQuery(filter)
 
-	baseQuery := "SELECT a.id, a.user_id, a.title, a.description, a.price, a.status, a.view_count, a.poids_materiaux, a.facteur_id, a.type_materiaux, a.upcycling_score, a.item_state, a.category_id, c.name AS category_name, a.created_at, a.updated_at FROM annonces a LEFT JOIN categories c ON a.category_id = c.id"
+	baseQuery := "SELECT a.id, a.user_id, a.title, a.description, a.price, a.status, a.view_count, a.poids_materiaux, a.facteur_id, a.type_materiaux, a.upcycling_score, a.item_state, a.category_id, c.name AS category_name, a.ad_campaign_id, u.user_type, a.created_at, a.updated_at FROM annonces a LEFT JOIN categories c ON a.category_id = c.id LEFT JOIN users u ON u.id = a.user_id"
 
 	query := baseQuery + whereSQL + orderSQL
 	var argsWithLimits []interface{}
@@ -321,12 +343,13 @@ func GetAnnoncesPageFilteredFromDB(limit int, offset int, filter AnnonceFilter) 
 		var price sql.NullFloat64
 		var status sql.NullInt64
 		var poids sql.NullFloat64
-		var factorID, categoryID, categoryName sql.NullString
+		var factorID, categoryID, categoryName, adCampaignID sql.NullString
 		var matType sql.NullString
 		var score sql.NullFloat64
 		var itemState sql.NullInt64
+		var sellerUserType sql.NullInt64
 
-		err := rows.Scan(&idStr, &userIDStr, &annonce.Title, &description, &price, &status, &annonce.ViewCount, &poids, &factorID, &matType, &score, &itemState, &categoryID, &categoryName, &createdAt, &updatedAt)
+		err := rows.Scan(&idStr, &userIDStr, &annonce.Title, &description, &price, &status, &annonce.ViewCount, &poids, &factorID, &matType, &score, &itemState, &categoryID, &categoryName, &adCampaignID, &sellerUserType, &createdAt, &updatedAt)
 		if factorID.Valid {
 			if uid, err := uuid.Parse(factorID.String); err == nil {
 				annonce.FacteurID = &uid
@@ -342,6 +365,16 @@ func GetAnnoncesPageFilteredFromDB(limit int, offset int, filter AnnonceFilter) 
 		}
 		if categoryName.Valid {
 			annonce.CategoryName = categoryName.String
+		}
+		if adCampaignID.Valid {
+			if uid, err := uuid.Parse(adCampaignID.String); err == nil {
+				annonce.AdCampaignID = &uid
+				annonce.Promoted = true
+			}
+		}
+		if sellerUserType.Valid {
+			sellerType := int(sellerUserType.Int64)
+			annonce.SellerUserType = &sellerType
 		}
 		if err != nil {
 			return nil, fmt.Errorf("getAnnoncesPageFiltered package db scan : %s", err.Error())
@@ -498,7 +531,7 @@ func GetAnnoncesByStatusFromDB(status int) ([]models.Annonce, error) {
 func GetAnnoncesPageByStatusFromDB(limit int, offset int, status int) ([]models.Annonce, error) {
 
 	annonces := []models.Annonce{}
-	rows, err := Db.Query("SELECT a.id, a.user_id, a.title, a.description, a.price, a.status, a.view_count, a.poids_materiaux, a.facteur_id, a.type_materiaux, a.upcycling_score, a.item_state, a.category_id, c.name AS category_name, a.created_at, a.updated_at FROM annonces a LEFT JOIN categories c ON a.category_id = c.id WHERE a.status = ? ORDER BY a.created_at DESC LIMIT ? OFFSET ?", status, limit, offset)
+	rows, err := Db.Query("SELECT a.id, a.user_id, a.title, a.description, a.price, a.status, a.view_count, a.poids_materiaux, a.facteur_id, a.type_materiaux, a.upcycling_score, a.item_state, a.category_id, c.name AS category_name, a.ad_campaign_id, u.user_type, a.created_at, a.updated_at FROM annonces a LEFT JOIN categories c ON a.category_id = c.id LEFT JOIN users u ON u.id = a.user_id ORDER BY a.created_at DESC LIMIT ? OFFSET ?", limit, offset)
 
 	if err != nil {
 		return nil, fmt.Errorf("getAnnoncesPageByStatus package db : %s", err.Error())

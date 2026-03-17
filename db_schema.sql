@@ -525,4 +525,93 @@ CREATE TABLE IF NOT EXISTS affectedEmployees (
     FOREIGN KEY (event_id) REFERENCES evenements(id) ON DELETE CASCADE
 );
 
+-- Contracts / Subscriptions / Ads
+CREATE TABLE IF NOT EXISTS contracts (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    contract_ref VARCHAR(64) NULL,
+    contract_type TINYINT NOT NULL DEFAULT 1,
+    subscriptionID VARCHAR(255) NOT NULL,
+    stripe_customer_id VARCHAR(255) NULL,
+    stripe_price_id VARCHAR(255) NULL,
+    stripe_product_id VARCHAR(255) NULL,
+    user_id CHAR(36) NOT NULL,
+    amount DECIMAL(10,2) NULL,
+    currency CHAR(3) NOT NULL DEFAULT 'EUR',
+    billing_interval VARCHAR(16) NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    cancel_at_period_end BOOLEAN NOT NULL DEFAULT FALSE,
+    cancelled_at TIMESTAMP NULL DEFAULT NULL,
+    stripe_subscription_status VARCHAR(50) NULL,
+    status INT NOT NULL DEFAULT 0,
+    metadata JSON NULL,
+    last_billed_at TIMESTAMP NULL DEFAULT NULL,
+    next_billing_at TIMESTAMP NULL DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE INDEX idx_contract_subscription (subscriptionID),
+    INDEX idx_contract_user (user_id),
+    INDEX idx_contract_type (contract_type)
+);
+
+CREATE TABLE IF NOT EXISTS invoices (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    user_id CHAR(36) NOT NULL,
+    contract_id CHAR(36) NULL,
+    stripe_invoice_id VARCHAR(255) NULL,
+    stripe_payment_intent_id VARCHAR(255) NULL,
+    amount_due DECIMAL(10,2) NOT NULL,
+    amount_paid DECIMAL(10,2) NOT NULL DEFAULT 0,
+    currency CHAR(3) NOT NULL DEFAULT 'EUR',
+    status VARCHAR(32) NOT NULL DEFAULT 'draft',
+    due_date DATE NULL,
+    period_start DATE NULL,
+    period_end DATE NULL,
+    invoice_url VARCHAR(512) NULL,
+    receipt_url VARCHAR(512) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (contract_id) REFERENCES contracts(id) ON DELETE SET NULL,
+    INDEX idx_invoice_contract (contract_id),
+    INDEX idx_invoice_user (user_id),
+    INDEX idx_invoice_status (status),
+    UNIQUE INDEX idx_invoice_stripe_invoice (stripe_invoice_id)
+);
+
+CREATE TABLE IF NOT EXISTS invoice_items (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    invoice_id CHAR(36) NOT NULL,
+    description VARCHAR(512) NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    quantity INT NOT NULL DEFAULT 1,
+    currency CHAR(3) NOT NULL DEFAULT 'EUR',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS ad_campaigns (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    user_id CHAR(36) NOT NULL,
+    contract_id CHAR(36) NULL,
+    name VARCHAR(255) NOT NULL,
+    description TEXT NULL,
+    status TINYINT NOT NULL DEFAULT 0 COMMENT '0=draft,1=active,2=paused,3=cancelled',
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    budget DECIMAL(10,2) NOT NULL,
+    currency CHAR(3) NOT NULL DEFAULT 'EUR',
+    stripe_payment_intent_id VARCHAR(255) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (contract_id) REFERENCES contracts(id) ON DELETE SET NULL
+);
+
+ALTER TABLE annonces
+    ADD COLUMN ad_campaign_id CHAR(36) NULL,
+    ADD CONSTRAINT fk_annonce_ad_campaign FOREIGN KEY (ad_campaign_id) REFERENCES ad_campaigns(id) ON DELETE SET NULL,
+    ADD INDEX idx_annonce_ad_campaign (ad_campaign_id);
+
 SET FOREIGN_KEY_CHECKS = 1;

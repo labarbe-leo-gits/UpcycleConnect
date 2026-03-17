@@ -199,10 +199,125 @@ if(($user['user_type'] == 1) || ($user['user_type'] == 2)){
 	<div class="offers-pagination" id="offers-pagination"></div>
 </div>
 
+<?php if(($user['user_type'] == 2)): ?>
+<style>
+
+.promote-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.45);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.promote-modal.is-open {
+    display: flex;
+}
+
+.promote-modal-content {
+    background: #ffffff;
+    border-radius: 12px;
+    max-width: 520px;
+    width: 100%;
+    padding: 22px 24px;
+    box-shadow: 0 18px 38px rgba(0,0,0,0.25);
+    position: relative;
+}
+
+.promote-modal-content .close-button {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    font-size: 22px;
+    cursor: pointer;
+    color: #374151;
+}
+
+.promote-modal-content h2 {
+    margin-top: 0;
+    margin-bottom: 14px;
+}
+
+.promote-modal-content .form-group {
+    margin-bottom: 14px;
+}
+
+.promote-modal-content .form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+}
+
+.promote-modal-content .form-group input,
+.promote-modal-content .form-group textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.95rem;
+}
+
+.promote-modal-content button[type="submit"] {
+    width: 100%;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 8px;
+    background: #10b981;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.promote-modal-content button[type="submit"]:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+</style>
+
+<div class="promote-modal" id="promote-modal">
+    <div class="promote-modal-content">
+        <span class="close-button" id="close-promote-modal">&times;</span>
+        <h2>Promote Offer</h2>
+        <form id="promote-offer-form">
+            <input type="hidden" id="promote-offer-id" name="offer_id" />
+            <div class="form-group">
+                <label for="promote-name">Campaign name</label>
+                <input type="text" id="promote-name" name="name" placeholder="Promotion name" required />
+            </div>
+            <div class="form-group">
+                <label for="promote-budget">Budget (€ per day)</label>
+                <input type="number" id="promote-budget" name="budget" min="10" step="0.01" value="10" required />
+                <small class="note">Minimum 10€ per day.</small>
+            </div>
+            <p class="note">Payments are non-refundable once processed.</p>
+            <div class="form-group">
+                <label for="promote-duration">Duration (days)</label>
+                <input type="number" id="promote-duration" name="duration_days" min="1" step="1" value="7" required />
+            </div>
+            <div class="form-group">
+                <label for="promote-description">Description (optional)</label>
+                <textarea id="promote-description" name="description" rows="3"></textarea>
+            </div>
+            <button type="submit">
+                <i class="fa-solid fa-bullhorn"></i>
+                Promote Offer
+            </button>
+            <div id="promote-feedback" style="margin-top:12px;"></div>
+        </form>
+    </div>
+</div>
+<?php endif; ?>
+
 <script src="../../assets/js/offers-loader.js"></script>
 <script src="../../assets/js/offers-modal.js"></script>
 <script>
 	window.currentUserId = <?php echo json_encode($user['id'] ?? ''); ?>;
+	window.currentUserType = <?php echo json_encode($user['user_type'] ?? ''); ?>;
 </script>
 
 <?php

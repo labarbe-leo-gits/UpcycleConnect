@@ -46,7 +46,13 @@
                 return response.text();
             })
             .then(text => {
-                const data = JSON.parse(text);
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch (err) {
+                    console.error('Failed to parse offers API response as JSON', err, text);
+                    throw err;
+                }
                 const offers = Array.isArray(data.items) ? data.items : (Array.isArray(data) ? data : []);
                 const total = Number.isFinite(data.total) ? data.total : offers.length;
                 totalPages = total > 0 ? Math.ceil(total / pageSize) : 1;
@@ -431,7 +437,7 @@
         if (offer.category_name) {
             const chip = document.createElement('span');
             chip.className = 'offer-chip offer-chip--category';
-            chip.textContent = 'Category: ' + offer.category_name;
+            chip.textContent = offer.category_name;
             metaRow.appendChild(chip);
             metaAdded = true;
         }
@@ -440,7 +446,23 @@
             const stateLabel = ITEM_STATE_LABELS[offer.item_state] || ('State ' + offer.item_state);
             const chip = document.createElement('span');
             chip.className = 'offer-chip offer-chip--state';
-            chip.textContent = 'Condition: ' + stateLabel;
+            chip.textContent = stateLabel;
+            metaRow.appendChild(chip);
+            metaAdded = true;
+        }
+
+        if (offer.user_type === 2) {
+            const chip = document.createElement('span');
+            chip.className = 'offer-chip offer-chip--pro';
+            chip.textContent = 'Pro';
+            metaRow.appendChild(chip);
+            metaAdded = true;
+        }
+
+        if (offer.promoted) {
+            const chip = document.createElement('span');
+            chip.className = 'offer-chip offer-chip--promoted';
+            chip.textContent = 'Promoted';
             metaRow.appendChild(chip);
             metaAdded = true;
         }
@@ -505,6 +527,26 @@
         }
         buttonsWrapper.appendChild(detailsButton);
 
+        const isPro = typeof window !== 'undefined' && window.currentUserType === 2;
+        const promotedLocal = isOfferPromotedLocally(offer.id);
+        const promoted = !!offer.promoted || promotedLocal;
+
+        if (promoted) {
+            offer.promoted = true;
+        }
+
+        if (isOwner && isPro) {
+            const promoteButton = document.createElement('button');
+            promoteButton.type = 'button';
+            promoteButton.className = 'offer-promote-btn btn-secondary';
+            promoteButton.textContent = promoted ? 'Promoted' : 'Promote';
+            promoteButton.disabled = promoted;
+            promoteButton.addEventListener('click', function() {
+                openPromoteModal(offer);
+            });
+            buttonsWrapper.appendChild(promoteButton);
+        }
+
         offerDiv.appendChild(buttonsWrapper);
 
         return offerDiv;
@@ -515,6 +557,178 @@
         div.textContent = text;
         return div.innerHTML;
     }
+
+    function getPromotedOfferIds() {
+        try {
+            const stored = localStorage.getItem('promotedOffers');
+            if (!stored) return [];
+            const parsed = JSON.parse(stored);
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function isOfferPromotedLocally(offerId) {
+        if (!offerId) return false;
+        const list = getPromotedOfferIds();
+        return list.includes(offerId);
+    }
+
+    function markOfferPromotedLocally(offerId) {
+        if (!offerId) return;
+        const list = getPromotedOfferIds();
+        if (!list.includes(offerId)) {
+            list.push(offerId);
+            localStorage.setItem('promotedOffers', JSON.stringify(list));
+        }
+    }
+
+    function openPromoteModal(offer) {
+        const modal = document.getElementById('promote-modal');
+        const offerIdInput = document.getElementById('promote-offer-id');
+        const nameInput = document.getElementById('promote-name');
+        const budgetInput = document.getElementById('promote-budget');
+        const durationInput = document.getElementById('promote-duration');
+        const descInput = document.getElementById('promote-description');
+        const feedback = document.getElementById('promote-feedback');
+
+        if (!modal || !offerIdInput || !nameInput || !budgetInput || !durationInput || !descInput) {
+            return;
+        }
+
+        offerIdInput.value = offer.id || '';
+        nameInput.value = 'Promote: ' + (offer.title || 'Offer');
+        budgetInput.value = 10;
+        durationInput.value = 7;
+        descInput.value = '';
+        if (feedback) feedback.innerHTML = '';
+
+        modal.classList.add('is-open');
+    }
+
+    function closePromoteModal() {
+        const modal = document.getElementById('promote-modal');
+        if (!modal) return;
+        modal.classList.remove('is-open');
+    }
+
+    function setPromoteFeedback(message, isError) {
+        const feedback = document.getElementById('promote-feedback');
+        if (!feedback) return;
+        feedback.innerHTML = '<div class="' + (isError ? 'error-message' : 'success-message') + '">' + escapeHtml(message) + '</div>';
+    }
+
+    function initPromoteModal() {
+        const modal = document.getElementById('promote-modal');
+        if (!modal) return;
+
+        const closeBtn = document.getElementById('close-promote-modal');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', closePromoteModal);
+        }
+
+        modal.addEventListener('click', function(event) {
+            if (event.target === modal) {
+                closePromoteModal();
+            }
+        });
+
+        const form = document.getElementById('promote-offer-form');
+        if (!form) return;
+
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const offerId = document.getElementById('promote-offer-id').value;
+            const name = document.getElementById('promote-name').value;
+            const budget = parseFloat(document.getElementById('promote-budget').value);
+            const durationDays = parseInt(document.getElementById('promote-duration').value, 10);
+            const description = document.getElementById('promote-description').value;
+
+            if (!offerId) {
+                setPromoteFeedback('Unable to determine offer.', true);
+                return;
+            }
+
+            if (!budget || budget < 10) {
+                setPromoteFeedback('Budget must be at least €10 per day.', true);
+                return;
+            }
+
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalLabel = submitBtn ? submitBtn.innerHTML : null;
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Creating...';
+            }
+
+            fetch('promote-offer-api', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    offer_id: offerId,
+                    name: name,
+                    budget: budget,
+                    duration_days: durationDays,
+                    description: description
+                })
+            })
+            .then(res => res.text())
+            .then(text => {
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch (err) {
+                    console.error('Promote offer response is not valid JSON', err, text);
+                    throw err;
+                }
+                if (data && data.success) {
+                   
+                    var form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = 'promote-order';
+                    form.style.display = 'none';
+
+                    var fields = {
+                        offer_id: offerId,
+                        budget: budget,
+                        duration_days: durationDays,
+                        name: name,
+                        description: description
+                    };
+
+                    Object.keys(fields).forEach(function(key) {
+                        var input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = key;
+                        input.value = fields[key];
+                        form.appendChild(input);
+                    });
+
+                    document.body.appendChild(form);
+                    form.submit();
+                    return;
+                }
+                setPromoteFeedback(data.error || 'Unable to promote offer.', true);
+            })
+            .catch(err => {
+                console.error('Error promoting offer', err);
+                setPromoteFeedback('Network error. Please try again.', true);
+            })
+            .finally(() => {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    if (originalLabel) submitBtn.innerHTML = originalLabel;
+                }
+            });
+        });
+    }
+
+    initPromoteModal();
 
     window.loadOffers = function() {
         currentPage = 1;

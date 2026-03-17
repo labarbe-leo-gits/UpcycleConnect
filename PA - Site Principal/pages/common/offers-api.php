@@ -60,6 +60,7 @@ $annoncesList = $annoncesDecoded['items'] ?? $annoncesDecoded;
 $total = $annoncesDecoded['total'] ?? (is_array($annoncesList) ? count($annoncesList) : 0);
 
 $processedAnnonces = [];
+
 foreach ($annoncesList as $annonce) {
     $annonceId = $annonce['id'] ?? '';
     if ($annonceId === '') {
@@ -93,9 +94,25 @@ foreach ($annoncesList as $annonce) {
     $priceDisplay = ($priceTTC == 0) ? 'Free' : '€ ' . number_format($priceTTC, 2);
     $priceClass = ($priceTTC == 0) ? 'free' : '';
 
+    $sellerUserId = $annonce['user_id'] ?? '';
+    $sellerUserType = null;
+    if (isset($annonce['seller_user_type'])) {
+        $sellerUserType = intval($annonce['seller_user_type']);
+    } elseif (isset($annonce['user_type'])) {
+        $sellerUserType = intval($annonce['user_type']);
+    }
+
+    $isPromoted = false;
+    if (isset($annonce['promoted'])) {
+        $isPromoted = boolval($annonce['promoted']);
+    } elseif (!empty($annonce['ad_campaign_id'])) {
+        $isPromoted = true;
+    }
+
     $processedAnnonces[] = [
         'id' => $annonceId,
-        'user_id' => $annonce['user_id'] ?? '',
+        'user_id' => $sellerUserId,
+        'user_type' => $sellerUserType,
         'title' => $annonce['title'] ?? 'Untitled offer',
         'description' => $annonce['description'] ?? '',
         'price' => $priceDisplay,
@@ -106,7 +123,8 @@ foreach ($annoncesList as $annonce) {
         'category_name' => $annonce['category_name'] ?? '',
         'item_state' => isset($annonce['item_state']) ? intval($annonce['item_state']) : 0,
         'material' => $annonce['type_materiaux'] ?? '',
-        'upcycling_score' => floatval($annonce['upcycling_score'] ?? $annonce['estimation_score'] ?? 0)
+        'upcycling_score' => floatval($annonce['upcycling_score'] ?? $annonce['estimation_score'] ?? 0),
+        'promoted' => $isPromoted
     ];
 }
 

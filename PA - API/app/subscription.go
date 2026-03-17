@@ -38,6 +38,10 @@ func ActivateSubscription(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := db.UpsertContractFromStripe(userID, payload.StripeCustomerID, payload.StripeSubscriptionID); err != nil {
+		fmt.Println("[WARN] ActivateSubscription: failed to upsert contract:", err)
+	}
+
 	premiumQuota := 25
 	if err := db.UpdateLLMUsageInDB(userID.String(), &premiumQuota, nil); err != nil {
 		fmt.Println("[WARN] ActivateSubscription: failed to set LLM quota:", err)
@@ -66,6 +70,9 @@ func RevokeSubscription(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("[ERROR] RevokeSubscription by sub:", err)
 			sendError(w, "Failed to revoke subscription", http.StatusInternalServerError)
 			return
+		}
+		if err := db.RevokeContractBySubscriptionID(payload.StripeSubscriptionID); err != nil {
+			fmt.Println("[WARN] RevokeSubscription: failed to revoke contract:", err)
 		}
 		fmt.Printf("[INFO] Premium revoked for subscription %s\n", payload.StripeSubscriptionID)
 	} else if payload.StripeCustomerID != "" {

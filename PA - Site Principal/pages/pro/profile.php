@@ -305,7 +305,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 </div>
 
-                <?php
+                <!-- <?php
                 $user_xp = isset($userDetails['user_xp']) ? (int)$userDetails['user_xp'] : 0;
                 $user_level = isset($userDetails['user_level']) ? (int)$userDetails['user_level'] : floor($user_xp / 1200);
                 $level_progress = $user_xp % 1200;
@@ -319,7 +319,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                         <span class="xp-label">XP: <?= $level_progress ?>/1200</span>
                     </div>
-                </div>
+                </div> -->
                 <div class="profile-actions">
                     <button type="button" class="btn-primary btn-inline" id="open-payment-modal">
                         <i class="fa-solid fa-money-check-dollar"></i> Request Payment of Balance
@@ -338,6 +338,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="profile-tabs">
             <button class="tab-btn active" data-tab="general">General</button>
             <button class="tab-btn" data-tab="business">Business Info</button>
+            <button class="tab-btn" data-tab="contracts">Contracts</button>
+            <button class="tab-btn" data-tab="billing">Billing history</button>
             <button class="tab-btn" data-tab="badges">Badges</button>
             <?php if (empty($user['oauth_provider'])): ?>
                 <button class="tab-btn" data-tab="security">Security</button>
@@ -436,6 +438,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <span>Professional</span>
                 </div>
             </div>
+        </div>
+
+        <div class="tab-content" id="contracts-tab" style="display:none;">
+            <h3><i class="fa-solid fa-file-contract"></i> Contracts</h3>
+            <div id="contracts-skeleton" class="acc-skeleton-row" style="display:none;">
+                <div class="acc-skel-card"></div>
+                <div class="acc-skel-card"></div>
+                <div class="acc-skel-card"></div>
+                <div class="acc-skel-card"></div>
+            </div>
+            <div id="contracts-grid" class="acc-carousel" style="display:none;">
+                <div class="acc-track" role="list"></div>
+                <div class="acc-nav">
+                    <button class="btn-secondary acc-prev" type="button" disabled><i class="fa-solid fa-chevron-left"></i> Previous</button>
+                    <span class="acc-page-info"></span>
+                    <button class="btn-secondary acc-next" type="button">See more <i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+            </div>
+            <p id="contracts-empty" class="acc-empty" style="display:none">No contracts found yet.</p>
+        </div>
+
+        <div class="tab-content" id="billing-tab" style="display:none;">
+            <h3><i class="fa-solid fa-receipt"></i> Billing history</h3>
+            <div id="billing-skeleton" class="acc-skeleton-row" style="display:none;">
+                <div class="acc-skel-card"></div>
+                <div class="acc-skel-card"></div>
+                <div class="acc-skel-card"></div>
+                <div class="acc-skel-card"></div>
+            </div>
+            <div id="billing-grid" class="acc-carousel" style="display:none;">
+                <div class="acc-track" role="list"></div>
+                <div class="acc-nav">
+                    <button class="btn-secondary acc-prev" type="button" disabled><i class="fa-solid fa-chevron-left"></i> Previous</button>
+                    <span class="acc-page-info"></span>
+                    <button class="btn-secondary acc-next" type="button">See more <i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+            </div>
+            <p id="billing-empty" class="acc-empty" style="display:none">No invoices found yet.</p>
         </div>
 
         <div class="tab-content" id="security-tab" style="display:none;">

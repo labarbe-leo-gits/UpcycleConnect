@@ -739,6 +739,15 @@ func RevokePremiumByStripeSubscriptionID(subscID string) error {
 	return nil
 }
 
+func GetUserIDByStripeCustomerID(customerID string) (uuid.UUID, error) {
+	var idStr string
+	err := Db.QueryRow("SELECT id FROM users WHERE stripe_customer_id = ?", customerID).Scan(&idStr)
+	if err != nil {
+		return uuid.UUID{}, err
+	}
+	return uuid.Parse(idStr)
+}
+
 func GetRefundRequestsByUserIDFromDB(userID string) ([]models.RefundRequest, error) {
 
 	rows, err := Db.Query("SELECT id, order_id, user_id, reason, status, created_at, updated_at FROM refundsRequests WHERE user_id = ?", userID)

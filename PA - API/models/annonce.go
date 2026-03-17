@@ -20,6 +20,10 @@ type Annonce struct {
 	CategoryName    string     `json:"category_name,omitempty"`
 	ItemState       int        `json:"item_state"`
 
+	AdCampaignID   *uuid.UUID `json:"ad_campaign_id,omitempty"`
+	SellerUserType *int       `json:"seller_user_type,omitempty"`
+	Promoted       bool       `json:"promoted,omitempty"`
+
 	CreatedAt string `json:"created_at,omitempty"`
 	UpdatedAt string `json:"updated_at,omitempty"`
 }
