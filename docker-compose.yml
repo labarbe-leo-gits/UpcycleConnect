@@ -24,6 +24,8 @@ services:
     container_name: upcycleconnect_api
     ports:
       - "9999:9999"
+    env_file:
+      - "PA - API/.env"
     environment:
       API_PORT: "9999"
       API_HOST: "0.0.0.0"
@@ -38,9 +40,31 @@ services:
         condition: service_healthy
     networks:
       - DataNetwork
+      - APIClientNetwork
+
+  bo:
+    image: llabarbe/upcycleconnect-bo
+    container_name: upcycleconnect_bo
+    env_file:
+      - "PA - BO/.env"
+    environment:
+      - API_HOST=api
+      - BASE_URL=/
+    volumes:
+      - ./files:/var/www/html/files
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+      - api
+    networks:
+      - APIClientNetwork
+    
 
 networks:
   DataNetwork:
+    driver: bridge
+  APIClientNetwork:
     driver: bridge
 
 volumes:

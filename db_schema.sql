@@ -80,6 +80,7 @@ CREATE TABLE IF NOT EXISTS annonces(
     type_materiaux VARCHAR(100) DEFAULT NULL,
     item_state INT NOT NULL DEFAULT 0,
     category_id CHAR(36) NULL,
+    ad_campaign_id CHAR(36) NULL,
     upcycling_score DOUBLE DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

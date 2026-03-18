@@ -332,6 +332,8 @@
                 if (data && data.error) throw new Error(data.error);
                 hideModal('type-confirm-modal');
                 loadTypes();
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-trash"></i> Delete';
             })
             .catch(err => {
                 const msg = 'Delete failed: ' + (err.message || 'Unknown error');
@@ -342,7 +344,7 @@
                     alert(msg);
                 }
                 btn.disabled = false;
-                btn.textContent = 'Delete';
+                btn.innerHTML = '<i class="fa-solid fa-trash"></i> Delete';
             });
     }
 

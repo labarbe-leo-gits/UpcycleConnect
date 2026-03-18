@@ -279,6 +279,8 @@
                 if (data && data.error) throw new Error(data.error);
                 hideModal('category-confirm-modal');
                 loadCategories();
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-trash"></i> Delete';
             })
             .catch(err => {
                 const msg = 'Delete failed: ' + (err.message || 'Unknown error');
@@ -289,8 +291,9 @@
                     alert(msg);
                 }
                 btn.disabled = false;
-                btn.textContent = 'Delete';
+                btn.innerHTML = '<i class="fa-solid fa-trash"></i> Delete';
             });
+
     }
 
     function showModal(id) {

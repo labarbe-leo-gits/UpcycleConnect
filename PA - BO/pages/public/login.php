@@ -149,9 +149,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <button type="submit">Login</button>
         </form>
-        <div class="btn-secondary">
-            <a href="<?= htmlspecialchars(principalUrlForUserType(1)) ?>">Go to UpcycleConnect</a>
-        </div>
+        <button class="btn-secondary" style="margin-top:20px;width:100%;" onclick="window.location.href='../../../PA - Site Principal/pages/public/login'">
+            Back to UpcycleConnect
+        </button>
     </div>
 
     <script src="/PA/PA%20-%20BO/assets/js/login.js"></script>

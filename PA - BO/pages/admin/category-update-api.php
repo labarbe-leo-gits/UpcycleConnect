@@ -12,13 +12,18 @@ if (!$user) {
     exit;
 }
 
-if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+if (!isset($_GET['id'])) {
     http_response_code(400);
     echo json_encode(['error' => 'Missing or invalid id']);
     exit;
 }
 
-$id = (int) $_GET['id'];
+$id = trim((string) $_GET['id']);
+if ($id === '') {
+    http_response_code(400);
+    echo json_encode(['error' => 'Missing or invalid id']);
+    exit;
+}
 
 $input = file_get_contents('php://input');
 $data = json_decode($input, true);
