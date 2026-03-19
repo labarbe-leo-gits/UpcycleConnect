@@ -1,5 +1,17 @@
 package main
 
+// @title           UpcycleConnect PA API
+// @version         1.0
+// @description     REST API pour UpcycleConnect (PA).
+// @termsOfService  http://example.com/terms/
+// @contact.name    API Support
+// @contact.url     http://example.com/support
+// @contact.email   support@upcycleconnect.cloud
+// @license.name    None
+// @license.url     https://opensource.org/licenses/MIT
+// @host            localhost:9999
+// @BasePath        /
+
 import (
 	"API/app"
 	"API/db"
@@ -8,12 +20,89 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"reflect"
+	"regexp"
+	"runtime"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 var registeredEndpoints []models.Endpoint
+
+var pathParamRegex = regexp.MustCompile(`\{([^/}]+)\}`)
+
+type moderationRequestBody struct {
+	Content string `json:"content"`
+}
+
+type llmUsageRequestBody struct {
+	UsageDelta int  `json:"usage_delta"`
+	Quota      *int `json:"quota,omitempty"`
+}
+
+var requestBodyTypes = map[string]reflect.Type{
+	"POST /login":                                     reflect.TypeOf(app.LoginRequest{}),
+	"POST /users":                                     reflect.TypeOf(models.User{}),
+	"POST /moderate":                                  reflect.TypeOf(moderationRequestBody{}),
+	"POST /annonces":                                  reflect.TypeOf(models.Annonce{}),
+	"PATCH /annonces/{id}":                            reflect.TypeOf(models.Annonce{}),
+	"POST /facteurs":                                  reflect.TypeOf(models.FacteurMateriaux{}),
+	"PATCH /facteurs/{id}":                            reflect.TypeOf(models.FacteurMateriaux{}),
+	"POST /users/{id}/badges":                         reflect.TypeOf(models.Badge{}),
+	"POST /products/services":                         reflect.TypeOf(models.Service{}),
+	"PATCH /products/services/{id}":                   reflect.TypeOf(models.Service{}),
+	"POST /orders":                                    reflect.TypeOf(models.Order{}),
+	"POST /annonces/{id}/images":                      reflect.TypeOf(models.Image{}),
+	"POST /notifications":                             reflect.TypeOf(models.Notification{}),
+	"POST /payment-requests":                          reflect.TypeOf(models.PaymentRequest{}),
+	"POST /payouts":                                   reflect.TypeOf(models.Payout{}),
+	"POST /banking-details":                           reflect.TypeOf(models.BankingDetails{}),
+	"POST /forums":                                    reflect.TypeOf(models.Forum{}),
+	"POST /forums/{id}/posts":                         reflect.TypeOf(models.ForumPost{}),
+	"POST /users/{id}/planning":                       reflect.TypeOf(models.Planning{}),
+	"PATCH /users/{id}":                               reflect.TypeOf(models.User{}),
+	"PATCH /forums/{id}/posts/{pID}":                  reflect.TypeOf(models.ForumPost{}),
+	"POST /conteneurs":                                reflect.TypeOf(models.Conteneur{}),
+	"POST /deposits":                                  reflect.TypeOf(models.Deposit{}),
+	"POST /deposits/{id}/files":                       reflect.TypeOf(models.DepositFile{}),
+	"POST /users/{id}/2fa/setup":                      reflect.TypeOf(struct{}{}),
+	"POST /users/{id}/2fa/enable":                     reflect.TypeOf(struct{}{}),
+	"POST /users/{id}/2fa/disable":                    reflect.TypeOf(struct{}{}),
+	"POST /2fa/verify":                                reflect.TypeOf(struct{}{}),
+	"POST /users/{id}/discussions":                    reflect.TypeOf(models.Discussion{}),
+	"POST /tips":                                      reflect.TypeOf(models.Tip{}),
+	"PATCH /tips/{id}":                                reflect.TypeOf(models.Tip{}),
+	"PATCH /users/{id}/planning/{pID}":                reflect.TypeOf(models.Planning{}),
+	"POST /ban":                                       reflect.TypeOf(models.Ban{}),
+	"POST /refund-requests":                           reflect.TypeOf(models.RefundRequest{}),
+	"POST /internal/subscription/activate":            reflect.TypeOf(struct{}{}),
+	"POST /internal/subscription/revoke":              reflect.TypeOf(struct{}{}),
+	"POST /internal/subscription/invoice":             reflect.TypeOf(struct{}{}),
+	"POST /internal/promotion/complete":               reflect.TypeOf(struct{}{}),
+	"POST /projects":                                  reflect.TypeOf(models.Project{}),
+	"PATCH /projects/{id}":                            reflect.TypeOf(models.Project{}),
+	"POST /projects/{id}/steps":                       reflect.TypeOf(models.ProjectStep{}),
+	"PATCH /projects/{id}/steps/{sID}":                reflect.TypeOf(models.ProjectStep{}),
+	"POST /projects/{id}/steps/{sID}/materials":       reflect.TypeOf(models.ProjectStepMaterial{}),
+	"PATCH /users/{id}/llm":                           reflect.TypeOf(llmUsageRequestBody{}),
+	"POST /projects/{id}/likes":                       reflect.TypeOf(struct{}{}),
+	"POST /projects/{id}/comments":                    reflect.TypeOf(models.ProjectComment{}),
+	"PATCH /projects/{id}/comments/{cID}":             reflect.TypeOf(models.ProjectComment{}),
+	"PATCH /users/{id}/balance":                       reflect.TypeOf(struct{}{}),
+	"POST /products/services/{id}/affected-employees": reflect.TypeOf(models.AffectedEmployee{}),
+	"POST /typesPrestation":                           reflect.TypeOf(models.TypePrestation{}),
+	"PATCH /typesPrestation/{id}":                     reflect.TypeOf(models.TypePrestation{}),
+	"POST /polls":                                     reflect.TypeOf(models.Poll{}),
+	"POST /polls/{id}/options":                        reflect.TypeOf(models.PollOption{}),
+	"POST /polls/{id}/vote":                           reflect.TypeOf(models.PollVote{}),
+	"PATCH /polls/{id}":                               reflect.TypeOf(models.Poll{}),
+	"PATCH /polls/{id}/options/{oID}":                 reflect.TypeOf(models.PollOption{}),
+	"POST /categories":                                reflect.TypeOf(models.Category{}),
+	"PATCH /categories/{id}":                          reflect.TypeOf(models.Category{}),
+}
 
 func corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -33,17 +122,42 @@ func registerRoute(method, path, description string, handler func(http.ResponseW
 	finalHandler := handler
 	finalHandler = corsMiddleware(finalHandler)
 
+	requiresAuth := false
+	for _, m := range middlewares {
+
+		name := runtime.FuncForPC(reflect.ValueOf(m).Pointer()).Name()
+		if strings.Contains(name, "JWTAuthMiddleware") || strings.Contains(name, "InternalKeyMiddleware") || strings.Contains(name, "RoleMiddleware") {
+			requiresAuth = true
+			break
+		}
+	}
+
+	hasRequestBody := false
+	if strings.EqualFold(method, "POST") || strings.EqualFold(method, "PUT") || strings.EqualFold(method, "PATCH") {
+		hasRequestBody = true
+	}
+
 	for i := len(middlewares) - 1; i >= 0; i-- {
 		finalHandler = middlewares[i](finalHandler)
 	}
 	http.HandleFunc(pattern, finalHandler)
 	registeredEndpoints = append(registeredEndpoints, models.Endpoint{
-		Method:      method,
-		Path:        path,
-		Description: description,
+		Method:         method,
+		Path:           path,
+		Description:    description,
+		RequiresAuth:   requiresAuth,
+		HasRequestBody: hasRequestBody,
 	})
 }
 
+// @Summary      Health check
+// @Description  Vérifie que l'API et la base de données répondent.
+// @Tags         health
+// @Accept       json
+// @Produce      json
+// @Success      200  {object} map[string]string
+// @Failure      503  {object} map[string]string
+// @Router       / [get]
 func healthCheck(w http.ResponseWriter, r *http.Request) {
 
 	err := db.Db.Ping()
@@ -77,6 +191,192 @@ func notFoundHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(response)
+}
+
+// @Summary      OpenAPI spec
+// @Description  Retourne le document OpenAPI (swagger) pour l'API.
+// @Tags         docs
+// @Produce      json
+// @Success      200  {object} map[string]interface{}
+// @Router       /openapi.json [get]
+func openapiSpecHandler(w http.ResponseWriter, r *http.Request) {
+	serverURL := "http://localhost:9999"
+	if host := os.Getenv("API_HOST"); host != "" {
+		port := os.Getenv("API_PORT")
+		if port == "" {
+			port = "8080"
+		}
+		serverURL = fmt.Sprintf("http://%s:%s", host, port)
+	}
+
+	spec := buildOpenAPISpec(serverURL)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(spec)
+}
+
+func generateJSONSchema(t reflect.Type) map[string]interface{} {
+	if t == nil {
+		return map[string]interface{}{"type": "object"}
+	}
+	for t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+
+	switch t.Kind() {
+	case reflect.Struct:
+		props := map[string]interface{}{}
+		required := []string{}
+		for i := 0; i < t.NumField(); i++ {
+			f := t.Field(i)
+			if f.PkgPath != "" {
+				continue
+			}
+			jsonTag := f.Tag.Get("json")
+			if jsonTag == "-" {
+				continue
+			}
+			name := strings.Split(jsonTag, ",")[0]
+			if name == "" {
+				name = f.Name
+			}
+			if name == "-" {
+				continue
+			}
+			fieldSchema := generateJSONSchema(f.Type)
+			props[name] = fieldSchema
+			if !strings.Contains(jsonTag, "omitempty") {
+				required = append(required, name)
+			}
+		}
+		schema := map[string]interface{}{
+			"type":       "object",
+			"properties": props,
+		}
+		if len(required) > 0 {
+			schema["required"] = required
+		}
+		return schema
+	case reflect.Slice, reflect.Array:
+		return map[string]interface{}{
+			"type":  "array",
+			"items": generateJSONSchema(t.Elem()),
+		}
+	case reflect.Map:
+		return map[string]interface{}{
+			"type":                 "object",
+			"additionalProperties": generateJSONSchema(t.Elem()),
+		}
+	case reflect.String:
+		if t.PkgPath() == "github.com/google/uuid" && t.Name() == "UUID" {
+			return map[string]interface{}{"type": "string", "format": "uuid"}
+		}
+		return map[string]interface{}{"type": "string"}
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return map[string]interface{}{"type": "integer"}
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return map[string]interface{}{"type": "integer"}
+	case reflect.Float32, reflect.Float64:
+		return map[string]interface{}{"type": "number"}
+	case reflect.Bool:
+		return map[string]interface{}{"type": "boolean"}
+	default:
+		return map[string]interface{}{"type": "string"}
+	}
+}
+
+func buildOpenAPISpec(serverURL string) map[string]interface{} {
+	paths := map[string]interface{}{}
+
+	for _, e := range registeredEndpoints {
+		path := e.Path
+		if path == "/{$}" {
+			path = "/"
+		}
+		if !strings.HasPrefix(path, "/") {
+			path = "/" + path
+		}
+
+		method := strings.ToLower(e.Method)
+
+		params := []map[string]interface{}{}
+		for _, match := range pathParamRegex.FindAllStringSubmatch(path, -1) {
+			if len(match) < 2 {
+				continue
+			}
+			params = append(params, map[string]interface{}{
+				"name":     match[1],
+				"in":       "path",
+				"required": true,
+				"schema": map[string]interface{}{
+					"type": "string",
+				},
+			})
+		}
+
+		operation := map[string]interface{}{
+			"summary": e.Description,
+			"responses": map[string]interface{}{
+				"200": map[string]interface{}{
+					"description": "Success",
+					"content": map[string]interface{}{
+						"application/json": map[string]interface{}{
+							"schema": map[string]interface{}{"type": "object"},
+						},
+					},
+				},
+			},
+		}
+
+		if e.RequiresAuth {
+			operation["security"] = []map[string][]string{{"bearerAuth": {}}}
+		}
+
+		if e.HasRequestBody {
+			schema := map[string]interface{}{"type": "object"}
+			if t, ok := requestBodyTypes[strings.ToUpper(e.Method)+" "+e.Path]; ok {
+				schema = generateJSONSchema(t)
+			}
+			operation["requestBody"] = map[string]interface{}{
+				"required":    true,
+				"description": "JSON request body (see API implementation for expected fields)",
+				"content": map[string]interface{}{
+					"application/json": map[string]interface{}{
+						"schema": schema,
+					},
+				},
+			}
+		}
+
+		if len(params) > 0 {
+			operation["parameters"] = params
+		}
+
+		if paths[path] == nil {
+			paths[path] = map[string]interface{}{}
+		}
+		paths[path].(map[string]interface{})[method] = operation
+	}
+
+	return map[string]interface{}{
+		"openapi": "3.0.3",
+		"info": map[string]interface{}{
+			"title":       "UpcycleConnect PA API",
+			"version":     "1.0",
+			"description": "Document d'API généré automatiquement.",
+		},
+		"servers": []map[string]interface{}{{"url": serverURL}},
+		"paths":   paths,
+		"components": map[string]interface{}{
+			"securitySchemes": map[string]interface{}{
+				"bearerAuth": map[string]interface{}{
+					"type":         "http",
+					"scheme":       "bearer",
+					"bearerFormat": "JWT",
+				},
+			},
+		},
+	}
 }
 
 func checkRoleIntValue(targetRole int, userID uuid.UUID) (bool, error) {
@@ -185,6 +485,7 @@ func main() {
 	registerRoute("POST", "/users", "Create a new user", app.CreateUser)
 	registerRoute("POST", "/users/email", "Get user by email - for OAuth lookup", app.GetUserByEmail)
 	registerRoute("GET", "/docs", "Show the API documentation", notFoundHandler)
+	registerRoute("GET", "/openapi.json", "OpenAPI (Swagger) spec for the API", openapiSpecHandler)
 
 	registerRoute("GET", "/users", "Get all users", app.GetAllUsers)
 	registerRoute("GET", "/dashboard-metrics", "Get aggregated dashboard metrics (admin only)", app.GetDashboardMetrics, app.JWTAuthMiddleware, RoleMiddleware(3))
@@ -365,6 +666,9 @@ func main() {
 	// registerRoute("GET", "/categories/{id}/items", "List all items in a specific category by its UUID", app.GetItemsByCategoryID, app.JWTAuthMiddleware)
 	registerRoute("GET", "/categories/{id}", "Get details of a specific category by its UUID", app.GetCategoryByID, app.JWTAuthMiddleware)
 
+	http.Handle("/swagger/", httpSwagger.Handler(httpSwagger.URL("/openapi.json")))
+
+	http.HandleFunc("/swagger/doc.json", openapiSpecHandler)
 	http.HandleFunc("/", notFoundHandler)
 
 	fmt.Println("Listening at : " + host + ":" + port)
