@@ -25,14 +25,14 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=SN+Pro:ital,wght@0,200..900;1,200..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="/PA/PA%20-%20BO/assets/css/style.css">
-    <link rel="stylesheet" href="/PA/PA%20-%20BO/assets/css/customers.css">
-    <link rel="stylesheet" href="/PA/PA%20-%20BO/assets/css/pro.css">
-    <link rel="stylesheet" href="/PA/PA%20-%20BO/assets/css/admin.css">
-    <link rel="icon" type="image/png" href="/PA/PA%20-%20BO/assets/img/brand/UpcycleDiminutif.png">
-    <link rel="stylesheet" href="/PA/PA%20-%20BO/assets/css/dark.css">
-    <script src="/PA/PA%20-%20BO/assets/js/dark.js" defer></script>
-    <script src="/PA/PA%20-%20BO/assets/js/blob-images.js"></script>
+    <link rel="stylesheet" href="<?= base_url('assets/css/style.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('assets/css/customers.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('assets/css/pro.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('assets/css/admin.css') ?>">
+    <link rel="icon" type="image/png" href="<?= base_url('assets/img/brand/UpcycleDiminutif.png') ?>">
+    <link rel="stylesheet" href="<?= base_url('assets/css/dark.css') ?>">
+    <script src="<?= base_url('assets/js/dark.js') ?>" defer></script>
+    <script src="<?= base_url('assets/js/blob-images.js') ?>"></script>
     <?php
     if (!empty(
         isset($extraCss) ? $extraCss : null
@@ -70,34 +70,34 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
                     <p>Community</p>
                 </a>
                 <div class="dropdown-menu">
-                    <a href="/PA/PA%20-%20BO/pages/common/forums"><i class="fa-solid fa-indent"></i>Forums</a>
-                    <a href="/PA/PA%20-%20BO/pages/admin/users"><i class="fa-solid fa-user"></i>Users</a>
-                    <a href="/PA/PA%20-%20BO/pages/admin/moderation"><i class="fa-solid fa-gavel"></i>Moderation</a>
+                    <a href="<?= base_url('pages/common/forums') ?>"><i class="fa-solid fa-indent"></i>Forums</a>
+                    <a href="<?= base_url('pages/admin/users') ?>"><i class="fa-solid fa-user"></i>Users</a>
+                    <a href="<?= base_url('pages/admin/moderation') ?>"><i class="fa-solid fa-gavel"></i>Moderation</a>
                 </div>
             </div>
             <div class="nav-dropdown">
-                <a class="btn-wrapper" href="/PA/PA%20-%20BO/pages/admin/annonces">
+                <a class="btn-wrapper" href="<?= base_url('pages/admin/annonces') ?>">
                     <i class="fa-solid fa-box-open"></i>
                     <p>Products</p>
                 </a>
                 <div class="dropdown-menu">
-                    <a href="/PA/PA%20-%20BO/pages/admin/annonces"><i class="fa-solid fa-box-open"></i>Offers</a>
-                    <a href="/PA/PA%20-%20BO/pages/admin/services"><i class="fa-solid fa-calendar-days"></i>Services &amp; Events</a>
-                    <a href="/PA/PA%20-%20BO/pages/admin/prestations"><i class="fa-solid fa-tags"></i>Prestations</a>
-                    <a href="/PA/PA%20-%20BO/pages/admin/categories"><i class="fa-solid fa-layer-group"></i></i>Categories</a>
-                    <a href="/PA/PA%20-%20BO/pages/admin/containers"><i class="fa-solid fa-warehouse"></i>Containers</a>
-                    <a href="/PA/PA%20-%20BO/pages/admin/materials"><i class="fa-solid fa-recycle"></i>Materials</a>
+                    <a href="<?= base_url('pages/admin/annonces') ?>"><i class="fa-solid fa-box-open"></i>Offers</a>
+                    <a href="<?= base_url('pages/admin/services') ?>"><i class="fa-solid fa-calendar-days"></i>Services &amp; Events</a>
+                    <a href="<?= base_url('pages/admin/prestations') ?>"><i class="fa-solid fa-tags"></i>Prestations</a>
+                    <a href="<?= base_url('pages/admin/categories') ?>"><i class="fa-solid fa-layer-group"></i></i>Categories</a>
+                    <a href="<?= base_url('pages/admin/containers') ?>"><i class="fa-solid fa-warehouse"></i>Containers</a>
+                    <a href="<?= base_url('pages/admin/materials') ?>"><i class="fa-solid fa-recycle"></i>Materials</a>
                 </div>
             </div>
             <div class="nav-dropdown">
-                <a class="btn-wrapper" href="/PA/PA%20-%20BO/pages/requests">
+                <a class="btn-wrapper" href="<?= base_url('pages/requests') ?>">
                     <i class="fa-solid fa-bell-concierge"></i>
                     <p>Requests</p>
                 </a>
                 <div class="dropdown-menu">
-                    <a href="/PA/PA%20-%20BO/pages/admin/offers"><i class="fa-solid fa-hand-holding-hand"></i>Deposits</a>
-                    <a href="/PA/PA%20-%20BO/pages/customers/services"><i class="fa-solid fa-money-bill-transfer"></i>Payouts</a>
-                    <a href="/PA/PA%20-%20BO/pages/admin/refunds"><i class="fa-solid fa-rotate-left"></i>Refunds</a>
+                    <a href="<?= base_url('pages/admin/offers') ?>"><i class="fa-solid fa-hand-holding-hand"></i>Deposits</a>
+                    <a href="<?= base_url('pages/customers/services') ?>"><i class="fa-solid fa-money-bill-transfer"></i>Payouts</a>
+                    <a href="<?= base_url('pages/admin/refunds') ?>"><i class="fa-solid fa-rotate-left"></i>Refunds</a>
                 </div>
             </div>
             <div class="btn-wrapper" id="dark-toggle" title="Toggle dark mode">
@@ -119,7 +119,7 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
                 </a>
                 <div class="dropdown-menu">
                     <a href="<?= $profileUrl ?>"><i class="fa-solid fa-user"></i>Profile</a>
-                    <a href="/PA/PA%20-%20BO/pages/admin/logout.php" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="fa-solid fa-right-from-bracket"></i>Logout</a>
+                    <a href="<?= base_url('pages/admin/logout.php') ?>" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="fa-solid fa-right-from-bracket"></i>Logout</a>
                 </div>
             </div>
         </nav>

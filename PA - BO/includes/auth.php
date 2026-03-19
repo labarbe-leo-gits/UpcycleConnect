@@ -1,6 +1,11 @@
 <?php
 // Session authentication helper
 
+require_once __DIR__ . '/../config/base.php';
+
+error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
+ini_set('display_errors', '0');
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
