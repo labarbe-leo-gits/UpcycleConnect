@@ -187,7 +187,7 @@
             var contEl = document.querySelector('#container-count + .dashboard-small + .dashboard-small');
             if (contEl) {
                 contEl.classList.add('detail');
-                contEl.textContent = d.containerDelta + ' of new deposits since yesterday';
+                contEl.textContent = d.containerDelta + ' of new container since yesterday';
             }
             var contCard = document.querySelector('.portal-card.green');
             if (contCard) {
@@ -195,7 +195,7 @@
                 if (existing) existing.remove();
                 var wrapper = document.createElement('span');
                 wrapper.className = 'pct-chip-wrapper';
-                wrapper.innerHTML = pctChip(d.containerPct, 'of new deposits since yesterday');
+                wrapper.innerHTML = pctChip(d.containerPct, 'of new container since yesterday');
                 contCard.appendChild(wrapper);
             }
 
