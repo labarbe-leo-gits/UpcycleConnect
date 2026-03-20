@@ -609,6 +609,29 @@
   background: #d1fae5;
 }
 
-.btn-secondary{
-  margin-top:0px;
+.deposit-status {
+  display: inline-flex;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.deposit-status.pending {
+  background: #f97316;
+}
+.deposit-status.accepted {
+  background: #10b981;
+}
+.deposit-status.rejected {
+  background: #ef4444;
+}
+.deposit-status.completed {
+  background: #1d4ed8;
+}
+
+.btn-secondary {
+  margin-top: 0px;
 }

@@ -9,12 +9,14 @@ type Deposit struct {
 	ObjectName        string    `json:"object_name" db:"object_name"`
 	ObjectDescription string    `json:"object_description" db:"object_description"`
 	Status            int       `json:"status" db:"status"`
+	Barcode           string    `json:"barcode,omitempty" db:"barcode"`
 	CreatedAt         string    `json:"created_at" db:"created_at"`
 	UpdatedAt         string    `json:"updated_at" db:"updated_at"`
 }
 
 type UpdateDepositStatusDto struct {
-	Status int `json:"status"`
+	Status int    `json:"status"`
+	ID     string `json:"id,omitempty"`
 }
 
 type DepositFile struct {

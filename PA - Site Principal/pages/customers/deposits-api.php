@@ -29,8 +29,13 @@ try {
     $resp = askAPI('/users/' . $user['id'] . '/deposits?page=' . $page . '&limit=' . $limit, 'GET');
     $decoded = json_decode($resp, true);
     if (isset($decoded['error'])) {
-        http_response_code(500);
-        echo json_encode(['error' => $decoded['error']]);
+        http_response_code($decoded['http_code'] ?? 500);
+        echo json_encode([
+            'error' => $decoded['error'],
+            'http_code' => $decoded['http_code'] ?? null,
+            'upstream_body' => $decoded['body'] ?? null,
+            'resp' => $resp,
+        ]);
         exit;
     }
 

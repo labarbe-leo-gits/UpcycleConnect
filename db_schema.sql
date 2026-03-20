@@ -107,11 +107,14 @@ CREATE TABLE IF NOT EXISTS demandes_depot (
     conteneur_id CHAR(36) NOT NULL,
     object_name VARCHAR(80) NOT NULL,
     object_state INT NOT NULL,
+    object_category_id CHAR(36) NULL,
     object_description TEXT NOT NULL,
     status INT NOT NULL DEFAULT 0,
+    barcode VARCHAR(128) NULL UNIQUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (object_category_id) REFERENCES categories(id) ON DELETE SET NULL,
     FOREIGN KEY (conteneur_id) REFERENCES conteneurs(id) ON DELETE CASCADE
 );
 

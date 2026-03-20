@@ -512,7 +512,7 @@ func GetUserByOAuthFromDB(provider, oauthID string) (models.User, error) {
 
 func GetDepositsByUserIDFromDB(userID uuid.UUID) ([]models.Deposit, error) {
 
-	rows, err := Db.Query("SELECT id, user_id, conteneur_id, object_name, object_description, status, created_at, updated_at FROM demandes_depot WHERE user_id = ?", userID.String())
+	rows, err := Db.Query("SELECT id, user_id, conteneur_id, object_name, object_description, status, barcode, created_at, updated_at FROM demandes_depot WHERE user_id = ?", userID.String())
 	if err != nil {
 		return nil, fmt.Errorf("failed to query deposits: %v", err)
 	}
@@ -523,10 +523,14 @@ func GetDepositsByUserIDFromDB(userID uuid.UUID) ([]models.Deposit, error) {
 
 	for rows.Next() {
 		var deposit models.Deposit
-		err := rows.Scan(&deposit.ID, &deposit.UserID, &deposit.ConteneurID, &deposit.ObjectName, &deposit.ObjectDescription, &deposit.Status, &deposit.CreatedAt, &deposit.UpdatedAt)
+		var barcode sql.NullString
+		err := rows.Scan(&deposit.ID, &deposit.UserID, &deposit.ConteneurID, &deposit.ObjectName, &deposit.ObjectDescription, &deposit.Status, &barcode, &deposit.CreatedAt, &deposit.UpdatedAt)
 
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan deposit: %v", err)
+		}
+		if barcode.Valid {
+			deposit.Barcode = barcode.String
 		}
 
 		deposits = append(deposits, deposit)
@@ -542,7 +546,7 @@ func GetDepositsByUserIDFromDB(userID uuid.UUID) ([]models.Deposit, error) {
 
 func GetDepositsPageByUserIDFromDB(userID uuid.UUID, limit int, offset int) ([]models.Deposit, error) {
 	rows, err := Db.Query(
-		"SELECT id, user_id, conteneur_id, object_name, object_description, status, created_at, updated_at FROM demandes_depot WHERE user_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?",
+		"SELECT id, user_id, conteneur_id, object_name, object_description, status, barcode, created_at, updated_at FROM demandes_depot WHERE user_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?",
 		userID.String(), limit, offset,
 	)
 	if err != nil {
@@ -553,9 +557,13 @@ func GetDepositsPageByUserIDFromDB(userID uuid.UUID, limit int, offset int) ([]m
 	var deposits []models.Deposit
 	for rows.Next() {
 		var deposit models.Deposit
-		err := rows.Scan(&deposit.ID, &deposit.UserID, &deposit.ConteneurID, &deposit.ObjectName, &deposit.ObjectDescription, &deposit.Status, &deposit.CreatedAt, &deposit.UpdatedAt)
+		var barcode sql.NullString
+		err := rows.Scan(&deposit.ID, &deposit.UserID, &deposit.ConteneurID, &deposit.ObjectName, &deposit.ObjectDescription, &deposit.Status, &barcode, &deposit.CreatedAt, &deposit.UpdatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan deposit row: %v", err)
+		}
+		if barcode.Valid {
+			deposit.Barcode = barcode.String
 		}
 		deposits = append(deposits, deposit)
 	}

@@ -545,6 +545,7 @@ func main() {
 	registerRoute("GET", "/conteneurs", "List all conteneurs in the system", app.GetConteneurs, app.JWTAuthMiddleware)
 	registerRoute("POST", "/conteneurs", "Create a new conteneur", app.CreateConteneur, RoleMiddleware(3), app.JWTAuthMiddleware)
 	registerRoute("GET", "/deposits", "List all deposits in the system", app.GetDeposits, app.JWTAuthMiddleware)
+	registerRoute("GET", "/deposits/{id}", "Get details of a deposit request", app.GetDepositByID, app.JWTAuthMiddleware)
 	registerRoute("POST", "/deposits", "Create a new deposit request", app.CreateDeposit, app.JWTAuthMiddleware)
 	registerRoute("PATCH", "/deposits/{id}/status", "Update the status of a deposit request", app.UpdateDepositStatus, app.JWTAuthMiddleware)
 	registerRoute("GET", "/deposits/{id}/files", "List all files attached to a deposit request", app.GetDepositFiles, app.JWTAuthMiddleware)

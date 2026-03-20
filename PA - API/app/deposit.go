@@ -89,6 +89,20 @@ func UpdateDepositStatus(w http.ResponseWriter, r *http.Request) {
 
 	idStr := r.URL.Query().Get("id")
 	if idStr == "" {
+		parts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+		n := len(parts)
+		if n >= 3 && parts[n-3] == "deposits" && parts[n-1] == "status" {
+			idStr = parts[n-2]
+		} else if n >= 2 && parts[n-2] == "deposits" {
+			idStr = parts[n-1]
+		}
+	}
+
+	if idStr == "" && requestData.ID != "" {
+		idStr = requestData.ID
+	}
+
+	if idStr == "" {
 		http.Error(w, "Deposit ID is required", http.StatusBadRequest)
 		return
 	}
@@ -99,7 +113,16 @@ func UpdateDepositStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	deposit, err := db.GetDepositByIDFromDB(idStr)
+	if err != nil {
+		fmt.Println("[ERROR] UpdateDepositStatus - GetDepositByID after status update failed:", err)
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(deposit)
 
 }
 
@@ -107,7 +130,7 @@ func GetDepositByID(w http.ResponseWriter, r *http.Request) {
 	idStr := r.URL.Query().Get("id")
 	if idStr == "" {
 		parts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
-		if len(parts) >= 4 && parts[len(parts)-2] == "deposits" {
+		if len(parts) >= 2 && parts[len(parts)-2] == "deposits" {
 			idStr = parts[len(parts)-1]
 		}
 	}
