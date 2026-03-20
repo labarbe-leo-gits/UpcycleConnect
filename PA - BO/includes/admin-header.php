@@ -90,12 +90,12 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
                 </div>
             </div>
             <div class="nav-dropdown">
-                <a class="btn-wrapper" href="<?= base_url('pages/requests') ?>">
+                <a class="btn-wrapper" href="<?= base_url('pages/admin/deposits') ?>">
                     <i class="fa-solid fa-bell-concierge"></i>
                     <p>Requests</p>
                 </a>
                 <div class="dropdown-menu">
-                    <a href="<?= base_url('pages/admin/offers') ?>"><i class="fa-solid fa-hand-holding-hand"></i>Deposits</a>
+                    <a href="<?= base_url('pages/admin/deposits') ?>"><i class="fa-solid fa-hand-holding-hand"></i>Deposits</a>
                     <a href="<?= base_url('pages/customers/services') ?>"><i class="fa-solid fa-money-bill-transfer"></i>Payouts</a>
                     <a href="<?= base_url('pages/admin/refunds') ?>"><i class="fa-solid fa-rotate-left"></i>Refunds</a>
                 </div>

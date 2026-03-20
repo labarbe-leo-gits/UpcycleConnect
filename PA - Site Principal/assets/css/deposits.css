@@ -227,6 +227,30 @@
   outline: 3px solid rgba(16, 185, 129, 0.12);
 }
 
+#deposits-page-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+#deposits-page-dots .page-btn {
+  min-width: 32px;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 0.9rem;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#deposits-page-dots .page-btn.active {
+  background: var(--accent);
+  color: #fff;
+}
+
 .deposit-modal.add-modal {
   position: fixed;
   inset: 0;

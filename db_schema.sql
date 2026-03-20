@@ -613,9 +613,58 @@ CREATE TABLE IF NOT EXISTS ad_campaigns (
     FOREIGN KEY (contract_id) REFERENCES contracts(id) ON DELETE SET NULL
 );
 
-ALTER TABLE annonces
-    ADD COLUMN ad_campaign_id CHAR(36) NULL,
-    ADD CONSTRAINT fk_annonce_ad_campaign FOREIGN KEY (ad_campaign_id) REFERENCES ad_campaigns(id) ON DELETE SET NULL,
-    ADD INDEX idx_annonce_ad_campaign (ad_campaign_id);
+CREATE TABLE IF NOT EXISTS materiaux_manipules(
+    proID CHAR(36) NOT NULL,
+    facteurID CHAR(36) NOT NULL,
+    PRIMARY KEY (proID, facteurID),
+    FOREIGN KEY (proID) REFERENCES projects(id) ON DELETE CASCADE,
+    FOREIGN KEY (facteurID) REFERENCES facteurs_materiaux(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS types_prestations_pro(
+    proID CHAR(36) NOT NULL,
+    typePrestationID CHAR(36) NOT NULL,
+    PRIMARY KEY (proID, typePrestationID),
+    FOREIGN KEY (proID) REFERENCES projects(id) ON DELETE CASCADE,
+    FOREIGN KEY (typePrestationID) REFERENCES typesPrestations(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS litiges (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    order_id CHAR(36) NOT NULL,
+    user_id CHAR(36) NOT NULL,
+    reason TEXT NOT NULL,
+    status INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+/* To IMPLEMENT FRONT END WISE
+- Litiges
+- Types Prestations Pro
+- Validation Comptes Pro + Sire(t)(n)
+- Matériaux manipulés par pro
+- types prestations pro
+- Conseils + sondages
+- refunds
+- reports
+- dispo employé pour event
+- ajout après achat service au calendrier
+- affichage des items dans le conteneur pour le pro
+- statut récupéré
+- payout
+- modération
+- mode dark / light 100%
+- pdf
+- glpi
+- dispos d'event à certaines horaires pour les formations par exemple
+- heure dans les services
+- récurrent ?
+
+/!\ IL FAUT AUSSI LE FRONTEND
+
+ */
 
 SET FOREIGN_KEY_CHECKS = 1;
