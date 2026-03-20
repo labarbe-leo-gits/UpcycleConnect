@@ -503,21 +503,68 @@
 
             const depositImageEl = document.querySelector('.deposit-image');
             if (depositImageEl) {
-                const imgSrc = (conteneur.image && conteneur.image.length) ? conteneur.image : '../../assets/img/defaults/container.png';
-
                 let imgHtml = '';
-                if (typeof imgSrc === 'string' && imgSrc.indexOf('data:') === 0) {
-                    imgHtml = `<img src="${imgSrc}" alt="Conteneur" />`;
-                } else {
-                    imgHtml = `<img data-blob-src="${imgSrc}" alt="Conteneur" />`;
-                }
 
-                depositImageEl.innerHTML = imgHtml;
+                if (deposit.barcode && deposit.barcode.trim() !== '') {
+                    const barcodeText = deposit.barcode.trim();
+
+                    if (window.JsBarcode && typeof JsBarcode === 'function') {
+                        const barcodeId = `deposit-barcode-svg-${Date.now()}`;
+                        imgHtml = `
+                            <div class="barcode-preview">
+                                <svg id="${barcodeId}" class="deposit-barcode-svg" aria-label="Deposit barcode"></svg>
+                                <div class="barcode-label">${escapeHtml(barcodeText)}</div>
+                            </div>
+                        `;
+                        depositImageEl.innerHTML = imgHtml;
+                        const svgEl = document.getElementById(barcodeId);
+                        if (svgEl) {
+                            try {
+                                JsBarcode(svgEl, barcodeText, {
+                                    format: 'CODE128',
+                                    lineColor: '#000',
+                                    width: 2,
+                                    height: 80,
+                                    displayValue: false,
+                                    margin: 10,
+                                });
+                            } catch (err) {
+                                console.warn('JsBarcode failed, falling back to remote generator', err);
+                                depositImageEl.innerHTML = `
+                                    <div class="barcode-preview">
+                                        <img src="https://api.qrserver.com/v1/barcode?data=${encodeURIComponent(barcodeText)}&code=Code128&dpi=150" alt="Deposit barcode" />
+                                        <div class="barcode-label">${escapeHtml(barcodeText)}</div>
+                                    </div>
+                                `;
+                            }
+                        }
+                    } else {
+                        imgHtml = `
+                            <div class="barcode-preview">
+                                <img src="https://api.qrserver.com/v1/barcode?data=${encodeURIComponent(barcodeText)}&code=Code128&dpi=150" alt="Deposit barcode" />
+                                <div class="barcode-label">${escapeHtml(barcodeText)}</div>
+                            </div>
+                        `;
+                        depositImageEl.innerHTML = imgHtml;
+                    }
+                } else {
+                    const imgSrc = (conteneur.image && conteneur.image.length) ? conteneur.image : '../../assets/img/defaults/container.png';
+                    if (typeof imgSrc === 'string' && imgSrc.indexOf('data:') === 0) {
+                        imgHtml = `<img src="${imgSrc}" alt="Conteneur" />`;
+                    } else {
+                        imgHtml = `<img data-blob-src="${imgSrc}" alt="Conteneur" />`;
+                    }
+                    depositImageEl.innerHTML = imgHtml;
+                }
 
                 const imgNode = depositImageEl.querySelector('img');
                 if (imgNode) {
                     const markLoaded = () => { imgNode.classList.add('fade-in'); };
-                    const onError = () => { imgNode.src = '../../assets/img/defaults/container.png'; imgNode.classList.add('fade-in'); };
+                    const onError = () => {
+                        const fallbackSrc = (conteneur.image && conteneur.image.length) ? conteneur.image : '../../assets/img/defaults/container.png';
+                        imgNode.src = fallbackSrc;
+                        imgNode.classList.add('fade-in');
+                    };
 
                     if (imgNode.complete && imgNode.naturalWidth) {
                         markLoaded();

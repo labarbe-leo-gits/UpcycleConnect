@@ -387,6 +387,38 @@
   opacity: 1;
   transform: translateY(0);
 }
+.deposit-image .barcode-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  text-align: center;
+  max-width: 320px;
+  width: 100%;
+}
+.deposit-image .barcode-preview img,
+.deposit-image .barcode-preview svg {
+  cursor: copy;
+  width: 100%;
+  max-width: 280px;
+  height: auto;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+}
+.deposit-image .barcode-label {
+  font-size: 0.9rem;
+  color: #363636;
+  font-weight: 600;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px 10px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
 .deposit-image.skeleton img {
   opacity: 0;
   transform: translateY(6px);
