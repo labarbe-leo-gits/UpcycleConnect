@@ -641,6 +641,9 @@ CREATE TABLE IF NOT EXISTS litiges (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+/* Default Admin */
+INSERT INTO users (first_name, last_name, username, email, password_hash, user_type, is_active) VALUES ('Admin', 'Upcycle', 'admin', 'admin@upcycleconnect.cloud', '$2a$12$C/CCS/1leF1IJMkUZPWLiu78ja2wnfJN2LDCrBa6MuZuL4CPc/rLa', 3, 1);
+
 /* To IMPLEMENT FRONT END WISE
 - Litiges
 - Types Prestations Pro
