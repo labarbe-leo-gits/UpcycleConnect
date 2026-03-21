@@ -97,7 +97,7 @@ if (isLoggedIn() && getLoggedInUserType() === 3) {
                     <a href="/PA/PA%20-%20Site%20Principal/pages/common/forums"><i class="fa-solid fa-indent"></i>Forums</a>
                 </div>
             </div>
-            <div class="btn-wrapper" onClick="openFile('/PA/PA%20-%20Site%20Principal/pages/public/contact.php')">
+            <div class="btn-wrapper" onClick="openFile('/PA/PA%20-%20Site%20Principal/pages/public/contact')">
                 <i class="fa-solid fa-envelope"></i>
                 <p>Contact</p>
             </div>
