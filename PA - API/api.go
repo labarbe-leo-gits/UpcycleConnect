@@ -543,7 +543,7 @@ func main() {
 	registerRoute("PATCH", "/forums/{id}/posts/{pID}", "Update a specific post in a forum by its UUID", app.UpdatePost, app.JWTAuthMiddleware)
 	registerRoute("DELETE", "/forums/{id}/posts/{pID}", "Delete a post from the forum", app.DeletePost, app.JWTAuthMiddleware)
 	registerRoute("GET", "/conteneurs", "List all conteneurs in the system", app.GetConteneurs, app.JWTAuthMiddleware)
-	registerRoute("POST", "/conteneurs", "Create a new conteneur", app.CreateConteneur, RoleMiddleware(3), app.JWTAuthMiddleware)
+	registerRoute("POST", "/conteneurs", "Create a new conteneur", app.CreateConteneur, app.JWTAuthMiddleware, RoleMiddleware(3),)
 	registerRoute("GET", "/deposits", "List all deposits in the system", app.GetDeposits, app.JWTAuthMiddleware)
 	registerRoute("GET", "/deposits/{id}", "Get details of a deposit request", app.GetDepositByID, app.JWTAuthMiddleware)
 	registerRoute("POST", "/deposits", "Create a new deposit request", app.CreateDeposit, app.JWTAuthMiddleware)

@@ -96,7 +96,7 @@ CREATE TABLE IF NOT EXISTS conteneurs(
     conteneur_road VARCHAR(255) NOT NULL,
     conteneur_number VARCHAR(20) NOT NULL,
     conteneur_zip_code CHAR(5) NOT NULL,
-    capacity INT NOT NULL,
+    capacity INT NOT NULL DEFAULT 100,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
