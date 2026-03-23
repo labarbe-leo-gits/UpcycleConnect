@@ -100,6 +100,15 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
                     <a href="<?= base_url('pages/admin/refunds') ?>"><i class="fa-solid fa-rotate-left"></i>Refunds</a>
                 </div>
             </div>
+            <div class="nav-dropdown">
+                <a class="btn-wrapper" href="<?= base_url('pages/admin/deposits') ?>">
+                    <i class="fa-solid fa-gears"></i>
+                    <p>Upcycle</p>
+                </a>
+                <div class="dropdown-menu">
+                    <a href="<?= base_url('pages/admin/deposits') ?>"><i class="fa-solid fa-clipboard"></i>Logs</a>
+                </div>
+            </div>
             <div class="btn-wrapper" id="dark-toggle" title="Toggle dark mode">
                 <i class="fa-solid fa-moon"></i>
                 <p>Theme</p>

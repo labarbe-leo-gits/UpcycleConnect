@@ -16,6 +16,8 @@ if (isLoggedIn() && getLoggedInUserType() === 3) {
     }
 }
 
+include_once __DIR__ . '/../pages/common/log-utility.php';
+
 ?>
 
 <!DOCTYPE html>

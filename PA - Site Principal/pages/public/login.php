@@ -1,7 +1,11 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 session_unset();
 session_destroy();
+
 session_start();
 require_once '../../config/db.php';
 require_once '../../includes/auth.php';
@@ -88,13 +92,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['recaptcha_token']) &&
 
         $user = $decoded['user'] ?? $decoded;
         if (isset($user['id'])) {
-            session_start();
+
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
             $_SESSION['first_name'] = $user['first_name'] ?? '';
             $_SESSION['last_name'] = $user['last_name'] ?? '';
             $_SESSION['email'] = $user['email'];
             $_SESSION['user_type'] = isset($user['user_type']) ? (int) $user['user_type'] : 1;
+
+            // Log the login
+            include_once __DIR__ . '/../common/log-utility.php';
+            WriteLog("login", "INFO", $_SERVER['REMOTE_ADDR'], "User {$_SESSION['username']} (ID: {$_SESSION['user_id']}) logged in successfully.");
+
             if (isset($_SESSION['page_after_login']) && (int) $_SESSION['user_type'] === 1) {
                 $page = $_SESSION['page_after_login'];
                 unset($_SESSION['page_after_login']);
