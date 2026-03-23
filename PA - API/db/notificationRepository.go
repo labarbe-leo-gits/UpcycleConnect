@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func GetNotificationsFromDB()([]models.Notification, error){
+func GetNotificationsFromDB() ([]models.Notification, error) {
 
 	notifications := []models.Notification{}
 	rows, err := Db.Query("SELECT id, user_id, message, is_read, created_at FROM notifications")
@@ -62,8 +62,12 @@ func CreateNotificationInDB(notification models.Notification) error {
 
 	newID := uuid.New()
 	userID := notification.UserID
+	var annonceID interface{} = nil
+	if notification.AnnonceID != uuid.Nil {
+		annonceID = notification.AnnonceID
+	}
 
-	_, err := Db.Exec("INSERT INTO notifications (id, user_id, annonce_id, message, created_at) VALUES (?, ?, ?, ?, NOW())", newID, userID, notification.AnnonceID, notification.Message)
+	_, err := Db.Exec("INSERT INTO notifications (id, user_id, annonce_id, message, created_at) VALUES (?, ?, ?, ?, NOW())", newID, userID, annonceID, notification.Message)
 
 	if err != nil {
 		return fmt.Errorf("createNotification package db : %s", err.Error())

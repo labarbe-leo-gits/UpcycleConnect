@@ -58,7 +58,7 @@ func CreateDepositInDB(deposit models.Deposit) (uuid.UUID, error) {
 
 	_, err := Db.Exec(
 		"INSERT INTO demandes_depot (id, user_id, conteneur_id, object_name, object_description, status, barcode, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-		newID, deposit.UserID, deposit.ConteneurID, deposit.ObjectName, deposit.ObjectDescription, 0, barcodeValue, currentTime, currentTime,
+		newID, deposit.UserID, deposit.ConteneurID, deposit.ObjectName, deposit.ObjectDescription, 1, barcodeValue, currentTime, currentTime,
 	)
 
 	if err != nil {
@@ -93,6 +93,59 @@ func UpdateDepositStatusInDB(depositIDStr string, status int) error {
 		return fmt.Errorf("failed to update deposit status: %v", err)
 	}
 
+	return nil
+}
+
+func UpdateDepositInDB(depositIDStr string, conteneurIDStr string, objectName string, objectDescription string) error {
+	depositID, err := uuid.Parse(depositIDStr)
+	if err != nil {
+		return fmt.Errorf("invalid deposit ID format: %v", err)
+	}
+
+	conteneurID, err := uuid.Parse(conteneurIDStr)
+	if err != nil {
+		return fmt.Errorf("invalid conteneur ID format: %v", err)
+	}
+
+	if strings.TrimSpace(objectName) == "" {
+		return fmt.Errorf("object name is required")
+	}
+	if strings.TrimSpace(objectDescription) == "" {
+		return fmt.Errorf("object description is required")
+	}
+
+	var status int
+	err = Db.QueryRow("SELECT status FROM demandes_depot WHERE id = ?", depositID).Scan(&status)
+	if err != nil {
+		return fmt.Errorf("failed to fetch deposit status: %v", err)
+	}
+	if status != 1 {
+		return fmt.Errorf("only pending deposits can be edited")
+	}
+
+	currentTime := getCurrentTime()
+	_, err = Db.Exec("UPDATE demandes_depot SET conteneur_id = ?, object_name = ?, object_description = ?, updated_at = ? WHERE id = ?", conteneurID, objectName, objectDescription, currentTime, depositID)
+	if err != nil {
+		return fmt.Errorf("failed to update deposit: %v", err)
+	}
+
+	return nil
+}
+
+func GetDepositFileByIDFromDB(fileIDStr string) (models.DepositFile, error) {
+	var file models.DepositFile
+	err := Db.QueryRow("SELECT id, deposit_id, filename, original_name, created_at FROM demandes_depot_files WHERE id = ?", fileIDStr).Scan(&file.ID, &file.DepositID, &file.Filename, &file.OriginalName, &file.CreatedAt)
+	if err != nil {
+		return file, fmt.Errorf("failed to query deposit file by ID: %v", err)
+	}
+	return file, nil
+}
+
+func DeleteDepositFileFromDB(fileIDStr string) error {
+	_, err := Db.Exec("DELETE FROM demandes_depot_files WHERE id = ?", fileIDStr)
+	if err != nil {
+		return fmt.Errorf("failed to delete deposit file: %v", err)
+	}
 	return nil
 }
 

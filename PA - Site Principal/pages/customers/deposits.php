@@ -40,6 +40,7 @@ include_once '../../includes/customers-header.php';
                     <h4 style="margin:0 0 8px">Attached Photos</h4>
                     <div id="deposit-modal-gallery" class="photo-drive"></div>
                     <div id="deposit-modal-downloads" class="photo-downloads"></div>
+                    <div style="margin-top:10px;"><button id="deposit-download-zip" class="btn-primary" type="button" style="display:none;"><i class="fa-solid fa-file-zipper" style="margin-right:6px;"></i>Download ZIP</button></div>
                 </div>
             </div>
 
@@ -87,6 +88,11 @@ try {
             <div class="form-group">
                 <label for="deposit-object-description">Description</label>
                 <textarea id="deposit-object-description" name="deposit-object-description" maxlength="1000" rows="4" required></textarea>
+            </div>
+            <input type="hidden" id="deposit-id" name="deposit-id" value="" />
+            <div class="form-group">
+                <label>Existing photos</label>
+                <div id="deposit-existing-files" class="file-chips-grid" style="min-height:40px;"></div>
             </div>
             <div class="form-group">
                 <label>Photos of the item <span class="label-hint">(optional, max 5)</span></label>

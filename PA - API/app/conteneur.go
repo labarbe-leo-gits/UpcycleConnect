@@ -210,7 +210,7 @@ func DeleteConteneur(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, deposit := range deposits {
-		if deposit.Status == 0 {
+		if deposit.Status == 1 {
 			if err := db.UpdateDepositStatusInDB(deposit.ID.String(), 9); err != nil {
 				fmt.Println("[ERROR] DeleteConteneur - DB error while refusing deposit:", err)
 				http.Error(w, "Failed to update deposit statuses", http.StatusInternalServerError)

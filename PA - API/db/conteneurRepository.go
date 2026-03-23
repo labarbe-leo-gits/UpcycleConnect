@@ -170,7 +170,7 @@ func GetItemsByConteneurIDFromDB(conteneurIDStr string) ([]models.ConteneurItem,
 	rows, err := Db.Query(
 		`SELECT id, user_id, conteneur_id, object_name, object_description, status, created_at, updated_at
 		 FROM demandes_depot
-		 WHERE conteneur_id = ? AND status = 1
+		 WHERE conteneur_id = ? AND status IN (2, 4)
 		 ORDER BY created_at ASC`,
 		conteneurIDStr,
 	)
@@ -204,5 +204,3 @@ func GetItemsByConteneurIDFromDB(conteneurIDStr string) ([]models.ConteneurItem,
 	}
 	return items, nil
 }
-
-

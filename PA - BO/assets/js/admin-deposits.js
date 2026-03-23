@@ -156,14 +156,14 @@
             const statusClass = mapStatusClass(item.status);
 
             let actionsHtml = '';
-            if (item.status === 0) {
+            if (item.status === 1) {
                 actionsHtml = `
                     <button class="btn-primary" data-action="approve" data-id="${item.id}">Approve</button>
                     <button class="btn-danger" data-action="reject" data-id="${item.id}">Reject</button>
                 `;
             }
 
-            if (item.status === 1 && item.barcode) {
+            if (item.status === 2 && item.barcode) {
                 actionsHtml += `<div style="margin-top:8px;">Barcode: <strong>${escapeHtml(item.barcode)}</strong></div>`;
             }
 
@@ -190,9 +190,9 @@
                 if (action === 'details') {
                     showDepositDetails(depositId);
                 } else if (action === 'approve') {
-                    updateDepositStatus(depositId, 1);
-                } else if (action === 'reject') {
                     updateDepositStatus(depositId, 2);
+                } else if (action === 'reject') {
+                    updateDepositStatus(depositId, 3);
                 }
             });
         });
@@ -590,7 +590,7 @@
 
     function updateDepositStatus(depositId, status) {
         if (!depositId) return;
-        showStatus(status === 1 ? 'Approving...' : 'Rejecting...', '#0b7285');
+        showStatus(status === 2 ? 'Approving...' : 'Rejecting...', '#0b7285');
 
         fetch('deposit-update-status-api.php?id=' + encodeURIComponent(depositId), {
             method: 'POST',
@@ -615,12 +615,14 @@
                     throw new Error(data.error + (data.upstream_body ? ' | upstream: ' + JSON.stringify(data.upstream_body) : ''));
                 }
 
-                showStatus(status === 1 ? 'Deposit approved and barcode generated.' : 'Deposit rejected.', '#10b981');
+                showStatus(status === 2 ? 'Deposit approved and barcode generated.' : 'Deposit rejected.', '#10b981');
+                showToast(status === 2 ? 'Deposit approved and notification sent to customer.' : 'Deposit rejected and notification sent to customer.', 4500);
                 loadDeposits();
             })
             .catch(err => {
                 console.error('Update status failed', err);
                 showStatus('Failed to update status.', '#b00020');
+                showToast('Failed to update deposit status. Please retry.', 4500);
             });
     }
 
@@ -684,27 +686,36 @@
 
     function mapStatusLabel(status) {
         switch (Number(status || 0)) {
+            case 0:
             case 1:
-                return 'Accepted';
+                return 'Pending';
             case 2:
-                return 'Rejected';
+                return 'Accepted';
             case 3:
+                return 'Rejected';
+            case 4:
+                return 'Deposited';
+            case 5:
                 return 'Completed';
             default:
-                return 'Pending';
+                return 'Unknown';
         }
     }
 
     function mapStatusClass(status) {
         switch (Number(status || 0)) {
             case 1:
-                return 'accepted';
+                return 'pending';
             case 2:
-                return 'rejected';
+                return 'accepted';
             case 3:
+                return 'rejected';
+            case 4:
+                return 'deposited';
+            case 5:
                 return 'completed';
             default:
-                return 'pending';
+                return 'unknown';
         }
     }
 
@@ -810,6 +821,36 @@
             URL.revokeObjectURL(url);
         };
         img.src = url;
+    }
+
+    function showToast(message, timeout = 4500) {
+        if (typeof window.showToast === 'function' && window.showToast !== showToast) {
+            return window.showToast(message, timeout);
+        }
+
+        const t = document.createElement('div');
+        t.className = 'toast';
+        t.style.position = 'fixed';
+        t.style.bottom = '20px';
+        t.style.right = '20px';
+        t.style.padding = '10px 14px';
+        t.style.color = '#fff';
+        t.style.background = 'rgba(0, 0, 0, 0.8)';
+        t.style.borderRadius = '8px';
+        t.style.zIndex = '9999';
+        t.style.maxWidth = '320px';
+        t.style.boxShadow = '0 2px 10px rgba(0,0,0,.3)';
+        t.style.opacity = '1';
+        t.style.transition = 'opacity 0.3s ease';
+        t.textContent = message;
+
+        document.body.appendChild(t);
+        setTimeout(() => {
+            t.style.opacity = '0';
+            setTimeout(() => {
+                if (t.parentNode) t.parentNode.removeChild(t);
+            }, 300);
+        }, timeout);
     }
 
     function showStatus(message, color) {

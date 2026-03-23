@@ -24,10 +24,11 @@ requireUserType(3);
         </div>
         <select id="deposits-status-filter" class="admin-filter-select" style="min-width:140px;">
             <option value="">All status</option>
-            <option value="0">Pending</option>
-            <option value="1">Accepted</option>
-            <option value="2">Rejected</option>
-            <option value="3">Completed</option>
+            <option value="1">Pending</option>
+            <option value="2">Accepted</option>
+            <option value="3">Rejected</option>
+            <option value="4">Deposited</option>
+            <option value="5">Completed</option>
         </select>
         <select id="deposits-sort" class="admin-filter-select" style="min-width:140px;">
             <option value="newest">Newest</option>

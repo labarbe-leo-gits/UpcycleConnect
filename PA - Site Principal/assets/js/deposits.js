@@ -5,6 +5,11 @@
     let currentPage = 1;
     let totalPages = 1;
 
+    let editMode = false;
+    let editingDepositId = null;
+    let existingDepositFiles = [];
+    let removedDepositFileIds = [];
+
     function showInlineStatus(text) {
         let st = document.getElementById('suggest-status');
         if (!st) {
@@ -381,8 +386,147 @@
             });
             actions.appendChild(detailsBtn);
 
+            const currentStatus = parseInt(item.status || 0, 10);
+            if (currentStatus === 1) {
+                const editBtn = document.createElement('button');
+                editBtn.type = 'button';
+                editBtn.className = 'btn-secondary';
+                editBtn.innerHTML = '<i class="fa-solid fa-pencil" style="margin-right:6px;"></i>Edit';
+                editBtn.title = 'Edit this pending deposit';
+                editBtn.addEventListener('click', function() {
+                    openEditDepositModal(item);
+                });
+                actions.appendChild(editBtn);
+            }
+            if (currentStatus === 2) {
+                const depositedBtn = document.createElement('button');
+                depositedBtn.type = 'button';
+                depositedBtn.className = 'btn-primary';
+                depositedBtn.textContent = 'Mark as Deposited';
+                depositedBtn.title = 'Finalize this approved deposit as deposited';
+
+                depositedBtn.addEventListener('click', function() {
+                    depositedBtn.disabled = true;
+                    depositedBtn.textContent = 'Updating...';
+                    const apiUrl = '../customers/deposit-status-api';
+
+                    fetch(apiUrl, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({ id: item.id, status: 4 })
+                    })
+                    .then(r => r.text())
+                    .then(txt => {
+                        let res = {};
+                        try { res = txt ? JSON.parse(txt) : {}; } catch (e) { res = {}; }
+                        if (res && !res.error) {
+                            showToast('Deposit marked as deposited', 'success');
+                            requestPage(currentPage, true);
+                        } else {
+                            showToast('Failed to set deposited', 'error');
+                            depositedBtn.disabled = false;
+                            depositedBtn.textContent = 'Mark as Deposited';
+                        }
+                    })
+                    .catch(() => {
+                        showToast('Failed to set deposited', 'error');
+                        depositedBtn.disabled = false;
+                        depositedBtn.textContent = 'Mark as Deposited';
+                    });
+                });
+                actions.appendChild(depositedBtn);
+            }
+
             card.appendChild(actions);
             container.appendChild(card);
+        });
+    }
+
+    function openEditDepositModal(item) {
+        editMode = true;
+        editingDepositId = item.id;
+        existingDepositFiles = [];
+        removedDepositFileIds = [];
+
+        const modal = document.getElementById('add-deposit-modal');
+        if (!modal) return;
+
+        document.getElementById('deposit-id').value = item.id || '';
+        document.getElementById('deposit-conteneur').value = item.conteneur_id || item.conteneur?.id || '';
+        document.getElementById('deposit-object-name').value = item.object_name || '';
+        document.getElementById('deposit-object-description').value = item.object_description || '';
+
+        renderExistingFiles();
+        fetch(`deposits-detail-api?deposit_id=${encodeURIComponent(item.id)}`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(r => r.json())
+        .then(data => {
+            existingDepositFiles = Array.isArray(data.files) ? data.files : [];
+            renderExistingFiles();
+        })
+        .catch(err => {
+            console.error('Failed to fetch deposit details for edit', err);
+        });
+
+        const title = modal.querySelector('h2');
+        if (title) title.textContent = 'Edit Deposit Request';
+
+        const submitBtn = document.getElementById('add-deposit-submit');
+        if (submitBtn) {
+            submitBtn.innerHTML = '<i class="fa-solid fa-save"></i> Save changes';
+        }
+
+        modal.classList.add('is-open');
+        document.body.classList.add('modal-open');
+        modal.setAttribute('aria-hidden', 'false');
+
+        const focusTarget = document.getElementById('deposit-object-name');
+        if (focusTarget) focusTarget.focus();
+    }
+
+    function renderExistingFiles() {
+        const existing = document.getElementById('deposit-existing-files');
+        if (!existing) return;
+        if (!Array.isArray(existingDepositFiles) || existingDepositFiles.length === 0) {
+            existing.innerHTML = '<p style="color:#6b7280;margin:0;">No existing files.</p>';
+            return;
+        }
+
+        existing.innerHTML = '';
+        existingDepositFiles.forEach(function(f) {
+            const chip = document.createElement('div');
+            chip.className = 'file-chip';
+
+            const iconWrap = document.createElement('div');
+            iconWrap.className = 'file-chip-icon';
+            const ico = document.createElement('i');
+            ico.className = 'fa-solid fa-file-image';
+            iconWrap.appendChild(ico);
+            chip.appendChild(iconWrap);
+
+            const name = document.createElement('span');
+            name.className = 'file-chip-name';
+            name.textContent = f.original_name || f.filename;
+            name.title = f.original_name || f.filename;
+            chip.appendChild(name);
+
+            const remove = document.createElement('button');
+            remove.type = 'button';
+            remove.className = 'file-chip-remove';
+            remove.setAttribute('aria-label', 'Remove ' + (f.original_name || f.filename));
+            remove.innerHTML = '&times;';
+            remove.addEventListener('click', function() {
+                removedDepositFileIds.push(f.id);
+                existingDepositFiles = existingDepositFiles.filter(function(x) { return x.id !== f.id; });
+                renderExistingFiles();
+            });
+            chip.appendChild(remove);
+
+            existing.appendChild(chip);
         });
     }
 
@@ -453,11 +597,16 @@
             const filesSection = document.getElementById('deposit-files-section');
             const gallery = document.getElementById('deposit-modal-gallery');
             const downloads = document.getElementById('deposit-modal-downloads');
+            const downloadZipBtn = document.getElementById('deposit-download-zip');
             const files = Array.isArray(data.files) ? data.files : [];
-            if (filesSection && gallery && downloads) {
+            if (filesSection && gallery && downloads && downloadZipBtn) {
                 if (files.length > 0) {
                     gallery.innerHTML = '';
                     downloads.innerHTML = '';
+                    downloadZipBtn.style.display = '';
+                    downloadZipBtn.onclick = function() {
+                        window.location.href = 'deposit-download-files?deposit_id=' + encodeURIComponent(deposit.id);
+                    };
                     files.forEach(function(f) {
                         const imgUrl = '/PA/files/uploads/deposit/' + encodeURIComponent(f.filename);
                         const thumb = document.createElement('img');
@@ -481,12 +630,43 @@
                         txt.textContent = f.original_name || f.filename;
                         link.appendChild(txt);
                         downloads.appendChild(link);
+
+                        if (deposit.status === 1) {
+                            const delBtn = document.createElement('button');
+                            delBtn.type = 'button';
+                            delBtn.className = 'btn-secondary';
+                            delBtn.style.marginLeft = '8px';
+                            delBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+                            delBtn.title = 'Remove this file from deposit';
+                            delBtn.addEventListener('click', function() {
+                                fetch('delete-deposit-file', {
+                                    method: 'DELETE',
+                                    headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                                    body: JSON.stringify({ deposit_id: deposit.id, file_id: f.id })
+                                })
+                                .then(r => r.json())
+                                .then(resp => {
+                                    if (resp && resp.status === 'ok') {
+                                        showToast('File removed', 'success');
+                                        openDetailsModal(deposit.id);
+                                    } else {
+                                        showToast(resp.error || 'Failed to remove file', 'error');
+                                    }
+                                })
+                                .catch(err => {
+                                    console.error('Delete deposit file failed', err);
+                                    showToast('Failed to remove file', 'error');
+                                });
+                            });
+                            downloads.appendChild(delBtn);
+                        }
                     });
                     filesSection.style.display = '';
                 } else {
                     filesSection.style.display = 'none';
                     gallery.innerHTML = '';
                     downloads.innerHTML = '';
+                    if (downloadZipBtn) downloadZipBtn.style.display = 'none';
                 }
             }
 
@@ -905,6 +1085,7 @@
             });
         }
 
+
         function updateDropzoneState() {
             if (!dropzone) return;
             if (selectedFiles.length >= MAX_FILES) {
@@ -955,8 +1136,18 @@
             if (errorDiv) { errorDiv.style.display = 'none'; errorDiv.textContent = ''; }
             if (filePreview) filePreview.innerHTML = '';
             if (fileInput) fileInput.value = '';
+            if (document.getElementById('deposit-id')) document.getElementById('deposit-id').value = '';
             selectedFiles = [];
+            existingDepositFiles = [];
+            removedDepositFileIds = [];
+            editMode = false;
+            editingDepositId = null;
             updateDropzoneState();
+            document.getElementById('deposit-existing-files').innerHTML = '';
+            const title = modal.querySelector('h2');
+            if (title) title.textContent = 'New Deposit Request';
+            const submitBtn = document.getElementById('add-deposit-submit');
+            if (submitBtn) submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send Request';
         }
 
         function trapFocus(event) {
@@ -1183,11 +1374,23 @@
                 })).then(function(results) { return results.filter(Boolean); });
             }
 
+            const isEdit = editMode && editingDepositId;
+            const apiEndpoint = isEdit ? 'update-deposit' : 'create-deposit';
             readFilesAsBase64(filesPayload_files).then(function(filesPayload) {
-                return fetch('create-deposit', {
-                    method: 'POST',
+                const body = {
+                    conteneur_id: conteneurId,
+                    object_name: name,
+                    object_description: desc,
+                    files: filesPayload
+                };
+                if (isEdit) {
+                    body.id = editingDepositId;
+                    body.removed_file_ids = removedDepositFileIds;
+                }
+                return fetch(apiEndpoint, {
+                    method: isEdit ? 'PATCH' : 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-                    body: JSON.stringify({ conteneur_id: conteneurId, object_name: name, object_description: desc, files: filesPayload })
+                    body: JSON.stringify(body)
                 });
             })
             .then(function(r) { return r.text().then(function(t) { try { return JSON.parse(t); } catch (e) { throw new Error('Invalid response from server'); } }); })
@@ -1274,19 +1477,24 @@
 
     function mapStatusLabel(status) {
         switch (parseInt(status || 0, 10)) {
-            case 1: return 'Accepted';
-            case 2: return 'Rejected';
-            case 3: return 'Completed';
-            default: return 'Pending';
+            case 0:
+            case 1: return 'Pending';
+            case 2: return 'Accepted';
+            case 3: return 'Rejected';
+            case 4: return 'Deposited';
+            case 5: return 'Completed';
+            default: return 'Unknown';
         }
     }
 
     function mapStatusClass(status) {
         switch (parseInt(status || 0, 10)) {
-            case 1: return 'accepted';
-            case 2: return 'rejected';
-            case 3: return 'completed';
-            default: return 'pending';
+            case 1: return 'pending';
+            case 2: return 'accepted';
+            case 3: return 'rejected';
+            case 4: return 'deposited';
+            case 5: return 'completed';
+            default: return 'unknown';
         }
     }
 
