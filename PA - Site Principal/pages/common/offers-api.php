@@ -16,10 +16,50 @@ header('Content-Type: application/json');
 
 $user = getLoggedInUser();
 
-if (!$user) {
-    http_response_code(401);
-    echo json_encode(['error' => 'Unauthorized']);
-    exit;
+function askAPIInternal($endpoint, $method = 'GET', $data = null) {
+    $internalKey = getenv('APP_API_KEY') ?: '';
+    $API_HOST = getenv('API_HOST') ?: '127.0.0.1';
+    $API_PORT = getenv('API_PORT') ?: '9999';
+    $base = "http://$API_HOST:$API_PORT";
+    $path = '/' . ltrim($endpoint, '/');
+    $url = rtrim($base, '/') . $path;
+
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, strtoupper($method));
+
+    $headers = [];
+    if ($data !== null && in_array(strtoupper($method), ['POST', 'PUT', 'PATCH'])) {
+        $payload = is_array($data)?json_encode($data):$data;
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+        $headers[] = 'Content-Type: application/json';
+        $headers[] = 'Content-Length: ' . strlen($payload);
+    }
+
+    if ($internalKey !== '') {
+        $headers[] = 'X-Internal-Key: ' . $internalKey;
+    }
+
+    if (!empty($headers)) {
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    }
+
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $errno = curl_errno($ch);
+    $error = curl_error($ch);
+    curl_close($ch);
+
+    if ($errno) {
+        return json_encode(['error' => "Connection failed: ($errno) $error"]);
+    }
+
+    if ($httpCode < 200 || $httpCode >= 300) {
+        return json_encode(['error' => "API returned HTTP $httpCode", 'http_code' => $httpCode, 'body' => $response]);
+    }
+
+    return $response;
 }
 
 $page = isset($_GET['page']) ? max(1, (int) $_GET['page']) : 1;
@@ -34,14 +74,23 @@ $queryParams = [
     'status' => 0,
 ];
 
-foreach (['search', 'category', 'condition', 'price_min', 'price_max', 'sort'] as $param) {
+foreach (['search', 'category', 'condition', 'price_min', 'price_max', 'sort', 'promoted'] as $param) {
     if (isset($_GET[$param]) && $_GET[$param] !== '') {
         $queryParams[$param] = $_GET[$param];
     }
 }
 
 $qs = http_build_query($queryParams);
-$annoncesResponse = askAPI('/annonces?' . $qs, 'GET');
+if ($user) {
+    $annoncesResponse = askAPI('/annonces?' . $qs, 'GET');
+} else {
+    $annoncesResponse = askAPI('/annonces?' . $qs, 'GET');
+    $decoded = json_decode($annoncesResponse, true);
+    if (is_array($decoded) && isset($decoded['error']) && isset($decoded['http_code']) && $decoded['http_code'] === 401) {
+        $annoncesResponse = askAPIInternal('/annonces?' . $qs, 'GET');
+    }
+}
+
 $annoncesDecoded = json_decode($annoncesResponse, true);
 
 if (isset($annoncesDecoded['error'])) {
@@ -67,8 +116,21 @@ foreach ($annoncesList as $annonce) {
         continue;
     }
 
-    $imagesResponse = askAPI('/annonces/' . $annonceId . '/images', 'GET');
-    $imagesDecoded = json_decode($imagesResponse, true);
+    if ($user) {
+        $imagesResponse = askAPI('/annonces/' . $annonceId . '/images', 'GET');
+        $imagesDecoded = json_decode($imagesResponse, true);
+        if (is_array($imagesDecoded) && isset($imagesDecoded['error']) && isset($imagesDecoded['http_code']) && $imagesDecoded['http_code'] === 401) {
+            $imagesResponse = askAPIInternal('/annonces/' . $annonceId . '/images', 'GET');
+            $imagesDecoded = json_decode($imagesResponse, true);
+        }
+    } else {
+        $imagesResponse = askAPI('/annonces/' . $annonceId . '/images', 'GET');
+        $imagesDecoded = json_decode($imagesResponse, true);
+        if (is_array($imagesDecoded) && isset($imagesDecoded['error']) && isset($imagesDecoded['http_code']) && $imagesDecoded['http_code'] === 401) {
+            $imagesResponse = askAPIInternal('/annonces/' . $annonceId . '/images', 'GET');
+            $imagesDecoded = json_decode($imagesResponse, true);
+        }
+    }
 
     $imagePath = null;
     if (is_array($imagesDecoded) && !empty($imagesDecoded)) {

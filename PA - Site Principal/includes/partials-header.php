@@ -62,6 +62,7 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
                 <div class="dropdown-menu">
                     <a href="../common/forums"><i class="fa-solid fa-indent"></i>Forums</a>
                     <a href="../common/chat"><i class="fa-solid fa-comment"></i>Chat</a>
+                    <a href="tips"><i class="fa-solid fa-lightbulb"></i>Tips</a>
                 </div>
             </div>
 

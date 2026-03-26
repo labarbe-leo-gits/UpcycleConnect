@@ -96,6 +96,7 @@ include_once __DIR__ . '/../pages/common/log-utility.php';
                     <p>Community</p>
                 </a>
                 <div class="dropdown-menu">
+                    <a href="../common/offers"><i class="fa-solid fa-box-open"></i>Offers</a>
                     <a href="/PA/PA%20-%20Site%20Principal/pages/common/forums"><i class="fa-solid fa-indent"></i>Forums</a>
                 </div>
             </div>

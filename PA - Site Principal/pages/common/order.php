@@ -9,6 +9,12 @@ include_once '../../includes/auth.php';
 $user = getLoggedInUser();
 trackLastPage();
 
+if (!$user){
+    // Set error to display on login page
+    $_SESSION['error_message'] = "You must be logged in to access the checkout page.";
+    header('Location: ../public/login');
+}
+
 if (!$user) {
     include_once '../../includes/header.php';
 } else if (isset($user['user_type']) && $user['user_type'] == 1) {

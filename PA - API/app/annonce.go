@@ -41,6 +41,23 @@ func GetAnnonces(w http.ResponseWriter, r *http.Request) {
 		conditionFilter = &parsedCondition
 	}
 
+	promotedParam := strings.TrimSpace(query.Get("promoted"))
+	promotedFilter := (*bool)(nil)
+	if promotedParam != "" {
+		p := strings.ToLower(promotedParam)
+		switch p {
+		case "1", "true", "yes":
+			trueVal := true
+			promotedFilter = &trueVal
+		case "0", "false", "no":
+			falseVal := false
+			promotedFilter = &falseVal
+		default:
+			sendError(w, "Invalid promoted value", http.StatusBadRequest)
+			return
+		}
+	}
+
 	minPriceParam := strings.TrimSpace(query.Get("price_min"))
 	maxPriceParam := strings.TrimSpace(query.Get("price_max"))
 	minPrice := (*float64)(nil)
@@ -66,6 +83,7 @@ func GetAnnonces(w http.ResponseWriter, r *http.Request) {
 
 	filter := db.AnnonceFilter{
 		Status:     statusFilter,
+		Promoted:   promotedFilter,
 		Search:     search,
 		CategoryID: category,
 		ItemState:  conditionFilter,

@@ -3,6 +3,13 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+$error_message = '';
+
+if (isset($_SESSION['error_message'])) {
+    $error_message = $_SESSION['error_message'];
+    unset($_SESSION['error_message']);
+}
+
 session_unset();
 session_destroy();
 
@@ -10,7 +17,6 @@ session_start();
 require_once '../../config/db.php';
 require_once '../../includes/auth.php';
 $title = "Login";
-$error_message = '';
 $success_message = '';
 
 $forgot_error = '';

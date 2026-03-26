@@ -12,6 +12,7 @@ import (
 
 type AnnonceFilter struct {
 	Status     *int
+	Promoted   *bool
 	Search     string
 	CategoryID string
 	ItemState  *int
@@ -49,6 +50,14 @@ func buildAnnoncesFilterQuery(filter AnnonceFilter) (string, []interface{}) {
 	if filter.ItemState != nil {
 		whereClauses = append(whereClauses, "a.item_state = ?")
 		args = append(args, *filter.ItemState)
+	}
+
+	if filter.Promoted != nil {
+		if *filter.Promoted {
+			whereClauses = append(whereClauses, "a.ad_campaign_id IS NOT NULL")
+		} else {
+			whereClauses = append(whereClauses, "a.ad_campaign_id IS NULL")
+		}
 	}
 
 	if filter.MinPrice != nil {

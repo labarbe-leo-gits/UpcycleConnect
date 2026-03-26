@@ -7,6 +7,7 @@
     let searchTerm = '';
     let categoryFilter = '';
     let conditionFilter = '';
+    let promotedFilter = '';
     let minPrice = '';
     let maxPrice = '';
     let sortOrder = '';
@@ -103,6 +104,7 @@
         if (minPrice) params.set('price_min', minPrice);
         if (maxPrice) params.set('price_max', maxPrice);
         if (sortOrder) params.set('sort', sortOrder);
+    if (promotedFilter) params.set('promoted', promotedFilter);
         return params.toString();
     }
 
@@ -111,9 +113,11 @@
         searchTerm = params.get('search') || '';
         categoryFilter = params.get('category') || '';
         conditionFilter = params.get('condition') || '';
+        promotedFilter = params.get('promoted') || '';
         minPrice = params.get('price_min') || '';
         maxPrice = params.get('price_max') || '';
         sortOrder = params.get('sort') || '';
+        promotedFilter = params.get('promoted') || '';
 
         const limitParam = parseInt(params.get('limit'), 10);
         if (!Number.isNaN(limitParam) && limitParam > 0) {
@@ -149,6 +153,7 @@
         minPrice = '';
         maxPrice = '';
         sortOrder = '';
+        promotedFilter = '';
 
         const searchInput = document.getElementById('offers-search');
         if (searchInput) searchInput.value = '';
@@ -167,6 +172,9 @@
 
         const sortSelect = document.getElementById('offers-sort');
         if (sortSelect) sortSelect.value = '';
+
+        const promotedSelect = document.getElementById('offers-promoted-filter');
+        if (promotedSelect) promotedSelect.value = '';
 
         currentPage = 1;
         requestPage(currentPage, true);
@@ -211,6 +219,15 @@
             });
         }
 
+        const promotedSelect = document.getElementById('offers-promoted-filter');
+        if (promotedSelect) {
+            promotedSelect.addEventListener('change', function() {
+                promotedFilter = this.value;
+                currentPage = 1;
+                requestPage(currentPage, true);
+            });
+        }
+
         const minPriceInput = document.getElementById('offers-price-min');
         const maxPriceInput = document.getElementById('offers-price-max');
         if (minPriceInput) {
@@ -235,6 +252,11 @@
                 currentPage = 1;
                 requestPage(currentPage, true);
             });
+        }
+
+        //const promotedSelect = document.getElementById('offers-promoted-filter');
+        if (promotedSelect) {
+            promotedSelect.value = promotedFilter;
         }
 
         const pageSizeSelect = document.getElementById('offers-page-size');

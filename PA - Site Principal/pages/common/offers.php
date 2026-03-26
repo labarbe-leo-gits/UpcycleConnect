@@ -6,19 +6,23 @@ include_once '../../includes/auth.php';
 $user = getLoggedInUser();
 trackLastPage();
 
+$isCustomerOrPro = isset($user['user_type']) && in_array($user['user_type'], [1, 2], true);
+
 if (!$user) {
     include_once '../../includes/header.php';
-} else if (isset($user['user_type']) && $user['user_type'] == 1) {
+} else if ($user['user_type'] == 1) {
     include_once '../../includes/customers-header.php';
-} else {
+} else if ($user['user_type'] == 2) {
     include_once '../../includes/pro-header.php';
+} else {
+    include_once '../../includes/header.php';
 }
 
 ?>
 
 <div class="container">
 
-<?php if(($user['user_type'] == 1) || ($user['user_type'] == 2)): ?>
+<?php if ($isCustomerOrPro): ?>
 <div class="add-modal">
     <div class="add-modal-content">
         <span class="close-button" id="close-add-modal">&times;</span>
@@ -138,9 +142,14 @@ if (!$user) {
                 <option value="3">Fair</option>
                 <option value="4">Poor</option>
             </select>
+            <select id="offers-promoted-filter">
+                <option value="">All offers</option>
+                <option value="1">Promoted</option>
+                <option value="0">Not promoted</option>
+            </select>
             <div class="offers-price-range">
-                <input id="offers-price-min" type="number" min="0" step="0.01" placeholder="Min price" />
-                <input id="offers-price-max" type="number" min="0" step="0.01" placeholder="Max price" />
+                <input id="offers-price-min" style="width: 40px;" type="number" min="0" step="0.01" placeholder="Min price" />
+                <input id="offers-price-max" style="width: 40px;" type="number" min="0" step="0.01" placeholder="Max price" />
             </div>
             <select id="offers-sort">
                 <option value="">Sort</option>
@@ -151,6 +160,8 @@ if (!$user) {
                 <option value="title_asc">Name (A → Z)</option>
                 <option value="title_desc">Name (Z → A)</option>
             </select>
+            <!-- Promoted boolean -->
+
             <select id="offers-page-size">
                 <option value="4">4 / page</option>
                 <option value="8">8 / page</option>
@@ -171,17 +182,14 @@ if (!$user) {
         </div>
     </div>
 
-    <?php
-if(($user['user_type'] == 1) || ($user['user_type'] == 2)){
-	echo "
-	<div class=\"offers-header\">
-		<button class=\"add-offer-button\" id=\"add-offer\">
-			<i class=\"fa-solid fa-plus\"></i>
-			Add Offer
-		</button>
-	</div>";
-}
-?>
+    <?php if ($isCustomerOrPro): ?>
+    <div class="offers-header">
+        <button class="add-offer-button" id="add-offer">
+            <i class="fa-solid fa-plus"></i>
+            Add Offer
+        </button>
+    </div>
+    <?php endif; ?>
 
 	<div class="services-list" id="offers-container">
 		<?php for ($i = 0; $i < 4; $i++): ?>
@@ -199,7 +207,7 @@ if(($user['user_type'] == 1) || ($user['user_type'] == 2)){
 	<div class="offers-pagination" id="offers-pagination"></div>
 </div>
 
-<?php if(($user['user_type'] == 2)): ?>
+<?php if (isset($user['user_type']) && $user['user_type'] == 2): ?>
 <style>
 
 .promote-modal {
@@ -316,8 +324,8 @@ if(($user['user_type'] == 1) || ($user['user_type'] == 2)){
 <script src="../../assets/js/offers-loader.js"></script>
 <script src="../../assets/js/offers-modal.js"></script>
 <script>
-	window.currentUserId = <?php echo json_encode($user['id'] ?? ''); ?>;
-	window.currentUserType = <?php echo json_encode($user['user_type'] ?? ''); ?>;
+	window.currentUserId = <?php echo json_encode($user['id'] ?? null); ?>;
+	window.currentUserType = <?php echo json_encode($user['user_type'] ?? null); ?>;
 </script>
 
 <?php

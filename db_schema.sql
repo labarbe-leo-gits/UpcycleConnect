@@ -175,13 +175,62 @@ CREATE TABLE IF NOT EXISTS conseils (
     id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
     title VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
+    poll_id CHAR(36) DEFAULT NULL,
     conseil_type INT NOT NULL,
     created_by CHAR(36) NOT NULL,
     updated_by CHAR(36) DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (poll_id) REFERENCES polls(id) ON DELETE SET NULL,
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS conseils_comments (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    conseil_id CHAR(36) NOT NULL,
+    parent_id CHAR(36) DEFAULT NULL,
+    user_id CHAR(36) NOT NULL,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (conseil_id) REFERENCES conseils(id) ON DELETE CASCADE,
+    FOREIGN KEY (parent_id) REFERENCES conseils_comments(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS conseils_likes (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    conseil_id CHAR(36) NOT NULL,
+    user_id CHAR(36) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (conseil_id) REFERENCES conseils(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE (conseil_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS conseils_reviews (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    conseil_id CHAR(36) NOT NULL,
+    manager_id CHAR(36) NOT NULL,
+    review_type ENUM('comment','status','request_changes') NOT NULL DEFAULT 'comment',
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (conseil_id) REFERENCES conseils(id) ON DELETE CASCADE,
+    FOREIGN KEY (manager_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS conseils_history (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    conseil_id CHAR(36) NOT NULL,
+    previous_title VARCHAR(255),
+    previous_description TEXT,
+    new_title VARCHAR(255),
+    new_description TEXT,
+    edited_by CHAR(36) NOT NULL,
+    edited_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (conseil_id) REFERENCES conseils(id) ON DELETE CASCADE,
+    FOREIGN KEY (edited_by) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS orders (

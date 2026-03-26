@@ -1,6 +1,13 @@
 <?php
 $title = "Home";
 include_once '../../includes/header.php';
+
+include_once '../../config/db.php';
+include_once '../../includes/auth.php';
+
+$user = getLoggedInUser();
+trackLastPage();
+
 ?>
 
 <section class="hero-landing-wrapper">
@@ -33,6 +40,64 @@ include_once '../../includes/header.php';
 	</div>
 </section>
 
+<section class="home-illustration-intro">
+    <div class="container">
+        <div class="intro-content">
+            <div class="intro-text">
+                <h2>Join the circular economy movement</h2>
+                <p>Discover and promote high-quality upcycling offers from local artisans and businesses. Our community supports reuse, repair, and creative transformation.</p>
+                <div class="intro-h-tags">
+                    <span><i class="fa-solid fa-seedling"></i> Green-friendly</span>
+                    <span><i class="fa-solid fa-recycle"></i> Circular reuse</span>
+                    <span><i class="fa-solid fa-handshake-angle"></i> Local connection</span>
+                </div>
+				<section class="big-home-card-section">
+    <div class="container">
+        <div class="big-home-card">
+            <div class="big-card-text">
+                <h3>Explore trending deals from our top green partners</h3>
+                <p style="text-align: left;">Boost your impact with carefully selected upcycled offers. Each item is subject for inspection, transparency, and circular value. We make sure that any offers on our platform reflects their real aspect. Your support helps reduce waste and pollution !</p>
+                <ul>
+                    <li>Profesionnal Offers</li>
+                    <li>Verified condition & material data</li>
+                    <li>UpcyclingScore for every purchase</li>
+                </ul>
+                <a href="../common/offers" class="btn-cta">Browse all offers</a>
+            </div>
+            <div class="big-card-image">
+                <img src="https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=950&q=80" alt="Upcycling process illustration" />
+            </div>
+        </div>
+    </div>
+</section>
+            </div>
+            <div class="intro-illustrations">
+                <img src="https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=920&q=80" alt="Upcycle illustration" />
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="featured-offers-section">
+    <div class="container">
+        <div class="featured-offers-header">
+            <h2>Featured promoted offers</h2>
+            <a class="btn-view-all" href="../common/offers?promoted=1">View all promoted</a>
+        </div>
+        <div id="featured-promoted-row" class="featured-offers-row" aria-live="polite"></div>
+    </div>
+</section>
+
+<section class="featured-offers-section">
+    <div class="container">
+        <div class="featured-offers-header">
+            <h2>Discover random offers</h2>
+            <a class="btn-view-all" href="../common/offers">View all offers</a>
+        </div>
+        <div id="featured-random-row" class="featured-offers-row" aria-live="polite"></div>
+    </div>
+</section>
+
 <div id="easterEggModal" role="dialog" aria-modal="true" aria-labelledby="easterEggTitle" aria-describedby="easterEggDesc">
 	<div class="egg-card">
 		<button class="egg-close" aria-label="Close Easter Egg Modal">&times;</button>
@@ -42,6 +107,7 @@ include_once '../../includes/header.php';
 	</div>
 </div>
 
+<script src="../../assets/js/featured-offers.js"></script>
 <script src="../../assets/js/easter-egg.js"></script>
 
 <?php
