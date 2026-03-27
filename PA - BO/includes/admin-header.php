@@ -101,12 +101,12 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
                 </div>
             </div>
             <div class="nav-dropdown">
-                <a class="btn-wrapper" href="<?= base_url('pages/admin/deposits') ?>">
+                <a class="btn-wrapper" href="<?= base_url('pages/admin/logs') ?>">
                     <i class="fa-solid fa-gears"></i>
                     <p>Upcycle</p>
                 </a>
                 <div class="dropdown-menu">
-                    <a href="<?= base_url('pages/admin/deposits') ?>"><i class="fa-solid fa-clipboard"></i>Logs</a>
+                    <a href="<?= base_url('pages/admin/logs') ?>"><i class="fa-solid fa-clipboard"></i>Logs</a>
                 </div>
             </div>
             <div class="btn-wrapper" id="dark-toggle" title="Toggle dark mode">

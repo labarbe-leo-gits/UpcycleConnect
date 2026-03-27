@@ -1,0 +1,202 @@
+.admin-logs-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.admin-logs-toolbar input,
+.admin-logs-toolbar select {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.95rem;
+}
+
+.log-table {
+  width: 100%;
+  border-collapse: collapse;
+  max-width: 100%;
+  border: 1px solid #08b97c;
+  border-radius: 12px 12px 0 0;
+  background: #ffffff;
+  table-layout: fixed;
+}
+
+#main-content > div[style*="overflow-x:auto"] {
+  overflow-x: auto;
+}
+
+.log-table th,
+.log-table td {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.log-table thead {
+  background: #08b97c22;
+  color: #026143;
+}
+
+.log-table thead th {
+  border-top: none;
+  color: #026143;
+}
+
+.log-table tbody tr {
+  background: #ffffff;
+}
+
+.log-table th,
+.log-table td {
+  padding: 10px 12px;
+  border: 1px solid #e0f2fe;
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+.log-table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.log-table tbody tr:hover {
+  background: #e0f2fe;
+}
+
+.row-delete-btn {
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 6px;
+}
+
+.row-delete-btn:hover {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.log-quote,
+.info-quote,
+.error-quote {
+  margin-top: 8px;
+  padding: 10px;
+  border-left: 4px solid #3b82f6;
+  background: #eff6ff;
+  color: #1e3a8a;
+}
+
+.error-quote {
+  border-left-color: #dc2626;
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.log-quote {
+  border-left-color: #6b7280;
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.log-table tbody tr:nth-child(even) {
+  background: #f9fafb;
+}
+
+.log-table td span.log-level {
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.log-table td span.log-level.info {
+  background: #dcfce7;
+  color: #059669;
+}
+.log-table td span.log-level.warn {
+  background: #fef3c7;
+  color: #b45309;
+}
+.log-table td span.log-level.error {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.log-table td a.ip-link {
+  display: inline-block;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  background: #e6fffa;
+  color: #047857;
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid #a7f3d0;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.log-table td a.ip-link:hover {
+  background: #34d399;
+  color: #065f46;
+}
+
+#ip-map-modal .add-modal-content {
+  width: min(760px, 95vw);
+  max-height: 85vh;
+  overflow: hidden;
+}
+
+#ip-map-modal #ip-map {
+  width: 100%;
+  height: 320px;
+  border-radius: 8px;
+  margin-top: 10px;
+  position: relative;
+  background: #edf2f7;
+}
+
+#ip-map-modal #ip-map.map-unavailable {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+  background: #f8fafc;
+  color: #6b7280;
+  position: relative;
+}
+
+#ip-map-modal #ip-map.map-unavailable::before {
+  content: "\2716";
+  font-size: 3rem;
+  color: rgba(239, 68, 68, 0.8);
+}
+
+#ip-map-modal #ip-map.map-unavailable .map-error-text {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #dc2626;
+  text-align: center;
+  padding: 0 14px;
+}
+#ip-map-info {
+  margin-top: 10px;
+  font-size: 0.93rem;
+  color: #374151;
+}
+
+#ip-map-status {
+  margin-top: 8px;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+@media (max-width: 768px) {
+  .log-table {
+    font-size: 0.82rem;
+  }
+}

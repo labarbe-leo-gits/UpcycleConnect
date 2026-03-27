@@ -1,0 +1,228 @@
+<?php
+$title = "Logs";
+
+$extraCss = [
+    '/PA/PA - BO/assets/css/admin-logs.css',
+    'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+];
+$extraJs = [
+    'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
+    '/PA/PA - BO/assets/js/admin-logs.js',
+];
+
+$logDir = realpath(__DIR__ . '/../../../files/logs');
+
+function listLogFiles($logDir)
+{
+    if (!$logDir || !is_dir($logDir)) {
+        return [];
+    }
+    $files = [];
+    foreach (glob($logDir . '/*.log') as $f) {
+        $files[] = basename($f);
+    }
+    sort($files);
+    return $files;
+}
+
+function readLogEntries($logDir)
+{
+    $entries = [];
+    if (!$logDir || !is_dir($logDir)) {
+        return $entries;
+    }
+
+    foreach (glob($logDir . '/*.log') as $logFilePath) {
+        $fileName = basename($logFilePath);
+        $lines = @file($logFilePath, FILE_IGNORE_NEW_LINES);
+        if (!is_array($lines)) {
+            continue;
+        }
+
+        foreach ($lines as $lineIndex => $line) {
+            $text = trim($line);
+            if ($text === '') {
+                continue;
+            }
+
+            $entry = [
+                'timestamp' => '',
+                'level' => '',
+                'ip' => '',
+                'message' => $text,
+                'file' => $fileName,
+                'line' => $lineIndex,
+            ];
+
+            if (preg_match('/^\[(.+?)\]\s+\[(.+?)\]\s+\[(.+?)\]\s+(.*)$/', $text, $matches)) {
+                $entry['timestamp'] = $matches[1];
+                $entry['level'] = $matches[2];
+                $entry['ip'] = $matches[3];
+                $entry['message'] = $matches[4];
+            }
+
+            $entries[] = $entry;
+        }
+    }
+
+    usort($entries, function ($a, $b) {
+        $t1 = strtotime($a['timestamp']);
+        $t2 = strtotime($b['timestamp']);
+        if ($t1 === false || $t2 === false) {
+            return 0;
+        }
+        return $t2 <=> $t1;
+    });
+
+    return $entries;
+}
+
+function deleteLogEntry($logDir, $fileName, $lineIndex)
+{
+    $target = realpath($logDir . '/' . $fileName);
+    if (!$target || strpos($target, realpath($logDir)) !== 0 || !is_file($target)) {
+        return false;
+    }
+
+    $lines = @file($target, FILE_IGNORE_NEW_LINES);
+    if ($lines === false || !isset($lines[$lineIndex])) {
+        return false;
+    }
+
+    array_splice($lines, $lineIndex, 1);
+    $result = @file_put_contents($target, implode(PHP_EOL, $lines) . PHP_EOL);
+    return $result !== false;
+}
+
+if (isset($_GET['ajax']) && $_GET['ajax'] == 1) {
+    $offset = max(0, (int)($_GET['offset'] ?? 0));
+    $limit = max(10, min(200, (int)($_GET['limit'] ?? 40)));
+    $filter = trim((string)($_GET['file'] ?? ''));
+    $search = trim((string)($_GET['search'] ?? ''));
+
+    $entries = readLogEntries($logDir);
+
+    if ($filter !== '' && $filter !== 'all') {
+        $entries = array_filter($entries, function ($entry) use ($filter) {
+            return isset($entry['file']) && $entry['file'] === $filter;
+        });
+    }
+
+    if ($search !== '') {
+        $lowerSearch = mb_strtolower($search);
+        $entries = array_filter($entries, function ($entry) use ($lowerSearch) {
+            return mb_strpos(mb_strtolower($entry['timestamp'] ?? ''), $lowerSearch) !== false
+                || mb_strpos(mb_strtolower($entry['level'] ?? ''), $lowerSearch) !== false
+                || mb_strpos(mb_strtolower($entry['ip'] ?? ''), $lowerSearch) !== false
+                || mb_strpos(mb_strtolower($entry['message'] ?? ''), $lowerSearch) !== false
+                || mb_strpos(mb_strtolower($entry['file'] ?? ''), $lowerSearch) !== false;
+        });
+    }
+
+    $total = count($entries);
+    $slice = array_slice($entries, $offset, $limit);
+
+    header('Content-Type: application/json');
+    echo json_encode(['total' => $total, 'entries' => array_values($slice)]);
+    exit();
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete') {
+    $fileName = basename(trim((string)($_POST['file'] ?? '')));
+    $lineIndex = isset($_POST['line']) ? (int)$_POST['line'] : -1;
+
+    $success = false;
+    $message = '';
+
+    if ($fileName && $lineIndex >= 0) {
+        $success = deleteLogEntry($logDir, $fileName, $lineIndex);
+        if (!$success) {
+            $message = 'Delete operation failed.';
+        }
+    } else {
+        $message = 'Invalid request.';
+    }
+
+    header('Content-Type: application/json');
+    echo json_encode(['success' => $success, 'message' => $message]);
+    exit();
+}
+
+include_once '../../includes/admin-header.php';
+
+$logFiles = listLogFiles($logDir);
+?>
+
+<script>
+window.LOG_FILES = <?php echo json_encode($logFiles, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
+</script>
+
+<div class="container" id="main-content">
+    <h2 class="center">Server logs</h2>
+
+    <div class="admin-logs-toolbar">
+        <label for="logs-file-filter">Log file</label>
+        <select id="logs-file-filter"></select>
+
+        <label for="logs-search">Search</label>
+        <input type="search" id="logs-search" placeholder="Search timestamps, level, IP, text…" autocomplete="off" />
+
+        <label for="logs-page-size">Rows per page</label>
+        <select id="logs-page-size" class="admin-filter-select">
+            <option value="20">20</option>
+            <option value="40" selected>40</option>
+            <option value="80">80</option>
+            <option value="120">120</option>
+        </select>
+
+        <span class="live-mode-wrap" style="margin-left:auto; display:flex; align-items:center; gap:8px;">
+            <label for="logs-live-mode" style="margin:0;">Live mode</label>
+            <input type="checkbox" id="logs-live-mode" />
+        </span>
+    </div>
+
+    <div style="overflow-x:auto;">
+        <table class="log-table" id="logs-table">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Level</th>
+                    <th>IP</th>
+                    <th>Message</th>
+                    <th>Source</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:12px;">
+        <button id="logs-load-more" class="btn-secondary" type="button" style="display:none;">Load more</button>
+        <span id="logs-count" style="align-self:center;color:#4b5563; font-size:0.9rem;"></span>
+    </div>
+</div>
+
+<div class="add-modal" id="ip-map-modal" role="dialog" aria-hidden="true">
+    <div class="add-modal-content">
+        <span class="close-button" id="ip-map-close">&times;</span>
+        <h2>IP Location</h2>
+        <div id="ip-map-status">Click an IP to geolocate with OpenStreetMap</div>
+        <div id="ip-map-info"></div>
+        <div id="ip-map"></div>
+    </div>
+</div>
+
+<div class="add-modal" id="delete-confirm-modal" role="dialog" aria-hidden="true">
+    <div class="add-modal-content" style="max-width:420px;">
+        <span class="close-button" id="delete-confirm-close">&times;</span>
+        <h2>Confirm delete</h2>
+        <p id="delete-confirm-message" style="margin:0 0 14px; color:#334155;">Are you sure you want to delete this log entry? This cannot be undone.</p>
+        <div class="modal-actions" style="display:flex;justify-content:flex-end;gap:10px;margin-top:12px;">
+            <button id="delete-cancel-btn" class="btn-secondary" type="button">Cancel</button>
+            <button id="delete-confirm-btn" class="btn-primary" type="button">Delete</button>
+        </div>
+    </div>
+</div>
+
+<?php include_once '../../includes/footer.php'; ?>
