@@ -4,7 +4,14 @@ require_once '../../config/db.php';
 require_once '../../includes/auth.php';
 ob_end_clean();
 
-requireUserType(1);
+requireLogin();
+$userType = getLoggedInUserType();
+if ($userType !== 1 && $userType !== 2) {
+    http_response_code(403);
+    header('Content-Type: application/json');
+    echo json_encode(['error' => 'Forbidden']);
+    exit;
+}
 
 if (
     !isset($_SERVER['HTTP_X_REQUESTED_WITH']) ||

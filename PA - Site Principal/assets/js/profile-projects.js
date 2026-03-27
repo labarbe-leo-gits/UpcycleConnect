@@ -261,7 +261,10 @@
         hide(emptyMsg);
         show(skelGrid, 'grid');
 
-        fetch('profile-section-api?section=projects&page=' + page + '&limit=' + LIMIT, {
+        var apiUrl = (window.profileSectionApiPath || 'profile-section-api')
+            + '?section=projects&page=' + page + '&limit=' + LIMIT;
+
+        fetch(apiUrl, {
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
         .then(function (r) { return r.json(); })

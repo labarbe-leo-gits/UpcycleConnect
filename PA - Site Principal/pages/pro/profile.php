@@ -340,6 +340,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <button class="tab-btn" data-tab="business">Business Info</button>
             <button class="tab-btn" data-tab="contracts">Contracts</button>
             <button class="tab-btn" data-tab="billing">Billing history</button>
+            <button class="tab-btn" data-tab="marketplace">Marketplace</button>
             <button class="tab-btn" data-tab="badges">Badges</button>
             <?php if (empty($user['oauth_provider'])): ?>
                 <button class="tab-btn" data-tab="security">Security</button>
@@ -436,6 +437,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="profile-field-row">
                     <span class="profile-label">Account type:</span>
                     <span>Professional</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="marketplace-tab" style="display:none;">
+            <h3><i class="fa-solid fa-store"></i> Marketplace</h3>
+            <p class="balance-note" style="margin-top:.5rem;"><i class="fa-solid fa-circle-info"></i> Manage your posted offers and order history here.</p>
+
+            <div class="profile-accordion" id="acc-orders" data-section="orders">
+                <button class="accordion-toggle" type="button" aria-expanded="false">
+                    <span><i class="fa-solid fa-box-open"></i> My Orders</span>
+                    <i class="fa-solid fa-chevron-down accordion-chevron"></i>
+                </button>
+                <div class="accordion-body" style="display:none">
+                    <div class="acc-skeleton-row" aria-hidden="true" style="display:none">
+                        <div class="acc-skel-card"></div>
+                        <div class="acc-skel-card"></div>
+                        <div class="acc-skel-card"></div>
+                        <div class="acc-skel-card"></div>
+                    </div>
+                    <div class="acc-carousel" style="display:none">
+                        <div class="acc-track" role="list"></div>
+                        <div class="acc-nav">
+                            <button class="btn-secondary acc-prev" type="button" disabled><i class="fa-solid fa-chevron-left"></i> Previous</button>
+                            <span class="acc-page-info"></span>
+                            <button class="btn-secondary acc-next" type="button"><i class="fa-solid fa-chevron-right"></i> See more</button>
+                        </div>
+                    </div>
+                    <p class="acc-empty" style="display:none">You have no orders yet.</p>
+                </div>
+            </div>
+
+            <div class="profile-accordion" id="acc-annonces" data-section="annonces">
+                <button class="accordion-toggle" type="button" aria-expanded="false">
+                    <span><i class="fa-solid fa-tag"></i> My Posted Offers</span>
+                    <i class="fa-solid fa-chevron-down accordion-chevron"></i>
+                </button>
+                <div class="accordion-body" style="display:none">
+                    <div class="acc-skeleton-row" aria-hidden="true" style="display:none">
+                        <div class="acc-skel-card"></div>
+                        <div class="acc-skel-card"></div>
+                        <div class="acc-skel-card"></div>
+                        <div class="acc-skel-card"></div>
+                    </div>
+                    <div class="acc-carousel" style="display:none">
+                        <div class="acc-track" role="list"></div>
+                        <div class="acc-nav">
+                            <button class="btn-secondary acc-prev" type="button" disabled><i class="fa-solid fa-chevron-left"></i> Previous</button>
+                            <span class="acc-page-info"></span>
+                            <button class="btn-secondary acc-next" type="button"><i class="fa-solid fa-chevron-right"></i> See more</button>
+                        </div>
+                    </div>
+                    <p class="acc-empty" style="display:none">You have no posted offers yet.</p>
                 </div>
             </div>
         </div>
@@ -726,8 +780,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <script>
     window.currentUserId = <?= json_encode($user['id'] ?? '') ?>;
+    window.profileSectionApiPath = '../customers/profile-section-api';
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+<script src="../../assets/js/profile-sections.js"></script>
 <script src="../../assets/js/profile-badges.js" defer></script>
 <script src="../../assets/js/profile.js"></script>
 <script src="../../assets/js/pro-profile.js"></script>

@@ -87,7 +87,7 @@ foreach ($offerList as $row) {
     $imagesResponse = askAPIInternal('/annonces/' . urlencode($row['id'] ?? '') . '/images', 'GET');
     $imagesDecoded = json_decode($imagesResponse, true);
     if (is_array($imagesDecoded) && !empty($imagesDecoded) && is_array($imagesDecoded[0]) && !empty($imagesDecoded[0]['file_name'])) {
-        $imagePath = '../../files/uploads/annonce/' . $imagesDecoded[0]['file_name'];
+        $imagePath = '../../../files/uploads/annonce/' . $imagesDecoded[0]['file_name'];
     }
 
     $offers[] = [

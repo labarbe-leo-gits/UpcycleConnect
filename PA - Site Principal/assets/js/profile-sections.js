@@ -155,6 +155,11 @@
     function escAttr(str) { return escHtml(str); }
 
     function initAccordion(root) {
+        
+        if (root.id === 'acc-subscription') {
+            return;
+        }
+
         var section  = root.dataset.section;
         var toggle   = root.querySelector('.accordion-toggle');
         var body     = root.querySelector('.accordion-body');
@@ -236,7 +241,11 @@
             hide(carousel);
             hide(emptyMsg);
 
-            fetch('profile-section-api?section=' + encodeURIComponent(section) + '&page=' + page, {
+            var apiUrl = (window.profileSectionApiPath || 'profile-section-api')
+                + '?section=' + encodeURIComponent(section)
+                + '&page=' + page;
+
+            fetch(apiUrl, {
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
             })
             .then(function (r) { return r.json(); })
