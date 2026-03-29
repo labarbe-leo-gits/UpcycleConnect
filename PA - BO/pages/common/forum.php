@@ -58,7 +58,12 @@ if (!$user) {
     </section>
 
     <?php if ($user): ?>
-    <div class="forum-actions" style="margin-bottom:16px; display:flex;">
+    <div class="forum-actions" style="margin-bottom:16px; display:flex; gap:10px;">
+        <?php if (isset($user['user_type']) && $user['user_type'] == 3): ?>
+            <button class="btn-danger" id="delete-forum-btn" style="margin-left:auto;">
+                <i class="fa-solid fa-trash-alt"></i> Delete Forum
+            </button>
+        <?php endif; ?>
         <button class="add-offer-button" id="add-post" style="margin-left:auto;">
             <i class="fa-solid fa-plus"></i> New Post
         </button>
@@ -87,6 +92,7 @@ if (!$user) {
 <?php if ($user): ?>
 <script>
     window.currentUserId = <?= json_encode($user['id'] ?? '') ?>;
+    window.currentUserType = <?= json_encode($user['user_type'] ?? 0) ?>;
 </script>
 <?php endif; ?>
 
@@ -128,10 +134,23 @@ if (!$user) {
     <div class="add-modal-content">
         <span class="close-button close-delete-modal">&times;</span>
         <h2>Delete Post</h2>
-        <p>Are you sure you want to delete this post?</p>
+        <p>Are you sure you want to delete this post? This action cannot be undone.</p>
         <form id="delete-post-form">
             <button type="submit" class="btn-danger">
-                <i class="fa-solid fa-trash"></i> Delete
+                <i class="fa-solid fa-trash"></i> Delete Post
+            </button>
+        </form>
+    </div>
+</div>
+
+<div class="add-modal" id="delete-forum-modal">
+    <div class="add-modal-content">
+        <span class="close-button close-delete-forum-modal">&times;</span>
+        <h2>Delete Forum</h2>
+        <p>Are you sure you want to delete this forum and all posts associated with it? This action cannot be undone.</p>
+        <form id="delete-forum-form">
+            <button type="submit" class="btn-danger">
+                <i class="fa-solid fa-trash"></i> Delete Forum
             </button>
         </form>
     </div>

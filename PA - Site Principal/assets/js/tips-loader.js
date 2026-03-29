@@ -8,6 +8,14 @@
     document.addEventListener('DOMContentLoaded', function() {
         currentPage = getPageFromUrl();
         requestPage(currentPage, true);
+
+        document.getElementById('tips-search').addEventListener('input', () => requestPage(1, true));
+        document.getElementById('tips-search-clear').addEventListener('click', () => {
+            document.getElementById('tips-search').value = '';
+            requestPage(1, true);
+        });
+        document.getElementById('tips-filter-status').addEventListener('change', () => requestPage(1, true));
+        document.getElementById('tips-sort').addEventListener('change', () => requestPage(1, true));
     });
 
     function requestPage(page, replaceHistory) {
@@ -47,13 +55,44 @@
                 const total = Number.isFinite(data.total) ? data.total : tips.length;
                 totalPages = total > 0 ? Math.ceil(total / pageSize) : 1;
 
-                if (!tips || tips.length === 0) {
-                    const msg = data.error || 'No tips available at the moment.';
+                let filteredTips = tips;
+
+                const searchValue = document.getElementById('tips-search').value.trim().toLowerCase();
+                if (searchValue) {
+                    filteredTips = filteredTips.filter(t => (t.title || '').toLowerCase().includes(searchValue) || (t.description || '').toLowerCase().includes(searchValue));
+                }
+
+                const statusValue = document.getElementById('tips-filter-status').value;
+                if (statusValue !== 'all') {
+                    filteredTips = filteredTips.filter(t => (t.status || 'new') === statusValue);
+                }
+
+                const sortValue = document.getElementById('tips-sort').value;
+                if (sortValue === 'newest') {
+                    filteredTips = filteredTips.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+                } else {
+                    filteredTips = filteredTips.sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
+                }
+
+                if (!filteredTips || filteredTips.length === 0) {
+                    const msg = 'No tips match your search/filter.';
                     container.innerHTML = `<p class="empty-tips">${escapeHtml(msg)}</p>`;
                     if (pagination) pagination.innerHTML = '';
-                    updateUrlPage(1, true);
                     return;
                 }
+
+                const totalFiltered = filteredTips.length;
+                totalPages = totalFiltered > 0 ? Math.ceil(totalFiltered / pageSize) : 1;
+
+                if (page > totalPages) {
+                    currentPage = totalPages;
+                    updateUrlPage(currentPage, true);
+                    requestPage(currentPage, true);
+                    return;
+                }
+
+                const pageStart = (page - 1) * pageSize;
+                const pageItems = filteredTips.slice(pageStart, pageStart + pageSize);
 
                 if (page > totalPages) {
                     currentPage = totalPages;
@@ -68,7 +107,7 @@
                 container.innerHTML = '';
                 if (pagination) pagination.innerHTML = '';
 
-                renderTips(tips, container);
+                renderTips(pageItems, container);
                 renderPagination(pagination);
             })
             .catch(error => {

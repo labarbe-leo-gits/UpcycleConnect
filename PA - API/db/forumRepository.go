@@ -308,7 +308,7 @@ func DeleteForumPostFromDB(postIDStr string) error {
 
 func DeleteForumFromDB(forumIDStr string) error {
 
-	_, err := Db.Exec("DELETE FROM forums WHERE id = ?", forumIDStr)
+	_, err := Db.Exec("DELETE FROM forum WHERE id = ?", forumIDStr)
 
 	if err != nil {
 		return fmt.Errorf("deleteForum package db : %s", err.Error())

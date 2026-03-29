@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -80,6 +81,9 @@ func CreatePoll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	pollDTO.ID = uuid.New()
+	pollDTO.CreatedAt = time.Now().Format("2006-01-02 15:04:05")
+
 	validationErr := ValidatePollDTO(pollDTO)
 	if validationErr != nil {
 		fmt.Println("[ERROR] CreatePoll validation:", validationErr)
@@ -96,7 +100,7 @@ func CreatePoll(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	jsonResponse, err := json.Marshal(map[string]string{"message": "Poll created successfully"})
+	jsonResponse, err := json.Marshal(map[string]string{"message": "Poll created successfully", "id": pollDTO.ID.String()})
 
 	if err != nil {
 		fmt.Println("[ERROR] CreatePoll marshal:", err)
@@ -187,6 +191,9 @@ func CreatePollOption(w http.ResponseWriter, r *http.Request) {
 	}
 
 	optionDTO.PollID = pollID
+	if optionDTO.ID == uuid.Nil {
+		optionDTO.ID = uuid.New()
+	}
 
 	var validationErrors = ValidatePollOptionDTO(optionDTO)
 	if validationErrors != nil {
@@ -275,7 +282,7 @@ func ValidatePollVoteDTO(dto models.PollVote) error {
 func CastPollVote(w http.ResponseWriter, r *http.Request) {
 
 	idStr := strings.TrimPrefix(r.URL.Path, "/polls/")
-	idStr = strings.TrimSuffix(idStr, "/votes")
+	idStr = strings.TrimSuffix(idStr, "/vote")
 	pollID, err := uuid.Parse(idStr)
 
 	if err != nil {
@@ -295,6 +302,20 @@ func CastPollVote(w http.ResponseWriter, r *http.Request) {
 	}
 
 	voteDTO.PollID = pollID
+
+	if voteDTO.UserID == uuid.Nil {
+		if uidRaw := r.Context().Value("user_id"); uidRaw != nil {
+			if uidStr, ok := uidRaw.(string); ok && uidStr != "" {
+				if uid, err := uuid.Parse(uidStr); err == nil {
+					voteDTO.UserID = uid
+				}
+			}
+		}
+	}
+
+	if voteDTO.ID == uuid.Nil {
+		voteDTO.ID = uuid.New()
+	}
 
 	var validationErrors = ValidatePollVoteDTO(voteDTO)
 

@@ -9,6 +9,30 @@ $user = getLoggedInUser();
 ?>
 
 <div class="container">
+    <div class="tips-controls">
+        <div class="tips-search">
+            <input id="tips-search" type="text" placeholder="Search tips..." />
+            <button id="tips-search-clear" class="btn-secondary" type="button">Clear</button>
+        </div>
+        <div class="tips-filters">
+            <label>
+                <span>Status</span>
+                <select id="tips-filter-status">
+                    <option value="all">All</option>
+                    <option value="new">New</option>
+                    <option value="reviewed">Reviewed</option>
+                </select>
+            </label>
+            <label>
+                <span>Sort</span>
+                <select id="tips-sort">
+                    <option value="newest">Newest</option>
+                    <option value="oldest">Oldest</option>
+                </select>
+            </label>
+        </div>
+    </div>
+
     <div class="tips-list" id="tips-container">
         <?php for ($i = 0; $i < 6; $i++): ?>
         <div class="skeleton-tip-item">

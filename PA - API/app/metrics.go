@@ -2,9 +2,13 @@ package app
 
 import (
 	"API/db"
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
+	"regexp"
 	"sort"
 	"time"
 )
@@ -51,18 +55,37 @@ func GetDashboardMetrics(w http.ResponseWriter, r *http.Request) {
 		userPct = 100.0
 	}
 
-	loginRows, err := db.Db.Query("SELECT DATE(last_login), COUNT(id) FROM users WHERE last_login IS NOT NULL GROUP BY DATE(last_login)")
-	if err != nil {
-		fmt.Println("[ERROR] login query:", err)
-	} else {
-		defer loginRows.Close()
-	}
 	loginCounts := make(map[string]int)
-	var loginDate string
-	var loginCnt int
-	for loginRows != nil && loginRows.Next() {
-		if err := loginRows.Scan(&loginDate, &loginCnt); err == nil {
-			loginCounts[loginDate] = loginCnt
+
+	loginLogCandidates := []string{
+		"/files/logs/login.log",
+		"../files/logs/login.log",
+		"../../files/logs/login.log",
+	}
+	parsedFromLog := false
+	for _, p := range loginLogCandidates {
+		if counts, err := loadLoginCountsFromLog(p); err == nil {
+			loginCounts = counts
+			parsedFromLog = true
+			break
+		} else {
+			fmt.Println("[WARN] unable to read login log", p, err)
+		}
+	}
+
+	if !parsedFromLog {
+		loginRows, err := db.Db.Query("SELECT DATE(last_login), COUNT(id) FROM users WHERE last_login IS NOT NULL GROUP BY DATE(last_login)")
+		if err != nil {
+			fmt.Println("[ERROR] login query:", err)
+		} else {
+			defer loginRows.Close()
+		}
+		var loginDate string
+		var loginCnt int
+		for loginRows != nil && loginRows.Next() {
+			if err := loginRows.Scan(&loginDate, &loginCnt); err == nil {
+				loginCounts[loginDate] = loginCnt
+			}
 		}
 	}
 
@@ -132,4 +155,35 @@ func GetDashboardMetrics(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
+}
+
+func loadLoginCountsFromLog(path string) (map[string]int, error) {
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		absPath = path
+	}
+	f, err := os.Open(absPath)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	counts := make(map[string]int)
+	scanner := bufio.NewScanner(f)
+	lineRegex := regexp.MustCompile(`^\[([0-9]{4}-[0-9]{2}-[0-9]{2}) [0-9]{2}:[0-9]{2}:[0-9]{2}\].*logged in successfully`)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		matches := lineRegex.FindStringSubmatch(line)
+		if len(matches) < 2 {
+			continue
+		}
+		date := matches[1]
+		counts[date]++
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	return counts, nil
 }

@@ -88,6 +88,7 @@ if (!$user) {
 <?php if ($user): ?>
 <script>
     window.currentUserId = <?= json_encode($user['id'] ?? '') ?>;
+    window.currentUserType = <?= json_encode($user['user_type'] ?? '') ?>;
 </script>
 <?php endif; ?>
 

@@ -92,10 +92,13 @@
 
         const editModal = document.getElementById('edit-post-modal');
         const deleteModal = document.getElementById('delete-post-modal');
+        const deleteForumModal = document.getElementById('delete-forum-modal');
         const closeEditBtns = editModal ? editModal.querySelectorAll('.close-edit-modal') : [];
         const closeDeleteBtns = deleteModal ? deleteModal.querySelectorAll('.close-delete-modal') : [];
+        const closeDeleteForumBtns = deleteForumModal ? deleteForumModal.querySelectorAll('.close-delete-forum-modal') : [];
         closeEditBtns.forEach(b=>b.addEventListener('click',()=>{ closeModal(editModal); currentPostId = null; currentPostAuthorId = null; }));
         closeDeleteBtns.forEach(b=>b.addEventListener('click',()=>{ closeModal(deleteModal); currentPostId = null; currentPostAuthorId = null; }));
+        closeDeleteForumBtns.forEach(b=>b.addEventListener('click',()=>{ closeModal(deleteForumModal); }));
 
         let replyTo = null;
         document.addEventListener('click', function(e) {
@@ -141,6 +144,14 @@
                     currentPostAuthorId = postDiv.getAttribute('data-author-id');
                 }
                 openModal(deleteModal);
+                return;
+            }
+
+            const delForumBtn = e.target.closest('#delete-forum-btn');
+            if (delForumBtn) {
+                if (deleteForumModal) {
+                    openModal(deleteForumModal);
+                }
                 return;
             }
         });
@@ -356,6 +367,62 @@
                 });
             });
         }
+
+        const deleteForumBtn = document.getElementById('delete-forum-btn');
+        const deleteForumForm = document.getElementById('delete-forum-form');
+        if (deleteForumForm && deleteForumBtn) {
+            deleteForumForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                if (!forumId) {
+                    alert('Unable to determine which forum to delete');
+                    return;
+                }
+                const submitBtn2 = deleteForumForm.querySelector('button[type="submit"]');
+                const originalText2 = submitBtn2 ? submitBtn2.innerHTML : '';
+                if (submitBtn2) {
+                    submitBtn2.disabled = true;
+                    submitBtn2.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Deleting Forum';
+                }
+
+                fetch(`forums-api?forum_id=${encodeURIComponent(forumId)}&_method=DELETE`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(r => {
+                    if (!r.ok) throw new Error('Server returned ' + r.status);
+                    return r.text();
+                })
+                .then(text => {
+                    if (text) {
+                        try {
+                            const obj = JSON.parse(text);
+                            if (obj.error) {
+                                alert(obj.error);
+                                throw new Error(obj.error);
+                            }
+                        } catch (err) {
+                            // We do nothing here, get back to work you idiot
+                        }
+                    }
+                })
+                .then(() => {
+                    closeModal(deleteForumModal);
+                    window.location.href = 'forums';
+                })
+                .catch(err => {
+                    console.error('Failed to delete forum', err);
+                    alert(err.message || 'Unable to delete forum');
+                })
+                .finally(() => {
+                    if (submitBtn2) {
+                        submitBtn2.disabled = false;
+                        submitBtn2.innerHTML = originalText2;
+                    }
+                });
+            });
+        }
     });
 
     function loadPosts(forumId) {
@@ -509,16 +576,23 @@
         actions.appendChild(btnDelete);
         postEl.appendChild(actions);
 
+        const isAdmin = window.currentUserType && parseInt(window.currentUserType, 10) === 3;
+        const isOwner = post.author_id && window.currentUserId && window.currentUserId === post.author_id;
+
         if (!window.currentUserId) {
             console.log('BO: hiding actions because no user');
             actions.style.display = 'none';
-        } else if (post.author_id && window.currentUserId !== post.author_id) {
-            console.log('BO: hiding edit/delete because currentUserId', window.currentUserId, '!= post.author_id', post.author_id);
-            btnEdit.style.display = 'none';
-            btnDelete.style.display = 'none';
         } else {
-            console.log('BO: showing actions for user', window.currentUserId, 'post author', post.author_id);
+            if (!isOwner && !isAdmin) {
+                btnEdit.style.display = 'none';
+                btnDelete.style.display = 'none';
+            }
+            
+            if (isAdmin) {
+                btnEdit.style.display = 'none';
+            }
         }
+
         container.appendChild(postEl);
 
         contentEl.textContent = post.content || '';

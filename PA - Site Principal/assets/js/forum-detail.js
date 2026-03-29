@@ -190,7 +190,9 @@
                 if (!forumId) return;
                 const content = textarea.value.trim();
                 if (content.length < 5 || content.length > 300) {
-                    alert('Content must be between 5 and 300 characters');
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('Content must be between 5 and 300 characters', 'error');
+                    }
                     return;
                 }
                 const submitBtn = form.querySelector('button[type="submit"]');
@@ -246,11 +248,15 @@
                 console.log('edit form submit triggered');
                 const c = editTextarea.value.trim();
                 if (c.length < 5 || c.length > 300) {
-                    alert('Content must be between 5 and 300 characters');
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('Content must be between 5 and 300 characters', 'error');
+                    }
                     return;
                 }
                 if (!forumId || !currentPostId) {
-                    alert('Unable to determine which post to update');
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('Unable to determine which post to update', 'error');
+                    }
                     return;
                 }
                 const submitBtn = editForm.querySelector('button[type="submit"]');
@@ -309,7 +315,9 @@
                 e.preventDefault();
                 console.log('delete form submit triggered');
                 if (!forumId || !currentPostId) {
-                    alert('Unable to determine which post to delete');
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('Unable to determine which post to delete', 'error');
+                    }
                     return;
                 }
                 const submitBtn = deleteForm.querySelector('button[type="submit"]');
@@ -521,6 +529,10 @@
         if (!window.currentUserId) {
             console.log('hiding actions because no user');
             actions.style.display = 'none';
+        } else if (window.currentUserType === 4) {
+            console.log('moderator access for user type 4');
+            btnEdit.style.display = 'inline-flex';
+            btnDelete.style.display = 'inline-flex';
         } else if (post.author_id && window.currentUserId !== post.author_id) {
             console.log('hiding edit/delete because currentUserId', window.currentUserId, '!= post.author_id', post.author_id);
             btnEdit.style.display = 'none';

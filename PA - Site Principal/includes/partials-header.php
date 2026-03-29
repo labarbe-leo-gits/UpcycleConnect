@@ -66,6 +66,17 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
                 </div>
             </div>
 
+            <div class="nav-dropdown training-dropdown">
+                <a class="btn-wrapper" href="training">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                    <p>Formations</p>
+                </a>
+                <div class="dropdown-menu">
+                    <a href="training"><i class="fa-solid fa-plus-circle"></i>Manage</a>
+                    <a href="../common/planning"><i class="fa-solid fa-calendar-days"></i>Planning</a>
+                </div>
+            </div>
+
             <div class="btn-wrapper" id="dark-toggle" title="Toggle dark mode">
                 <i class="fa-solid fa-moon"></i>
                 <p>Theme</p>

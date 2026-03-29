@@ -28,10 +28,10 @@ func GetPollByIDFromDB(pollID uuid.UUID) (models.Poll, error) {
 
 }
 
-func CreatePollInDB(poll models.Poll) (error) {
+func CreatePollInDB(poll models.Poll) error {
 
-	query := `INSERT INTO polls (id, question, created_at) VALUES (?, ?, ?)`
-	_, err := Db.ExecContext(context.Background(), query, poll.ID, poll.Question, poll.CreatedAt)
+	query := `INSERT INTO polls (id, question, created_by, created_at) VALUES (?, ?, ?, ?)`
+	_, err := Db.ExecContext(context.Background(), query, poll.ID, poll.Question, poll.CreatedBy, poll.CreatedAt)
 
 	if err != nil {
 		return fmt.Errorf("createPollInDB: %s", err.Error())
@@ -67,6 +67,9 @@ func GetPollOptionsFromDB(pollID uuid.UUID) ([]models.PollOption, error) {
 }
 
 func CreatePollOptionInDB(option models.PollOption) error {
+	if option.ID == uuid.Nil {
+		option.ID = uuid.New()
+	}
 
 	query := `INSERT INTO poll_options (id, poll_id, option_text) VALUES (?, ?, ?)`
 	_, err := Db.ExecContext(context.Background(), query, option.ID, option.PollID, option.Text)

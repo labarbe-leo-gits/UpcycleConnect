@@ -44,6 +44,15 @@ if ($method === 'PATCH' && isset($_GET['forum_id'], $_GET['post_id']) && $_GET['
     exit;
 }
 
+if ($method === 'DELETE' && isset($_GET['forum_id']) && $_GET['forum_id'] !== '' && !isset($_GET['post_id'])) {
+    $forumId = rawurldecode($_GET['forum_id']);
+    error_log("forums-api (BO) DELETE forum_id=$forumId");
+    $resp = askAPI('/forums/' . $forumId, 'DELETE');
+    if (ob_get_length()) ob_clean();
+    echo $resp;
+    exit;
+}
+
 if ($method === 'DELETE' && isset($_GET['forum_id'], $_GET['post_id']) && $_GET['forum_id'] !== '' && $_GET['post_id'] !== '') {
     $forumId = rawurldecode($_GET['forum_id']);
     $postId = rawurldecode($_GET['post_id']);

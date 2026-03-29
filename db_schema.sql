@@ -209,6 +209,18 @@ CREATE TABLE IF NOT EXISTS conseils_likes (
     UNIQUE (conseil_id, user_id)
 );
 
+CREATE TABLE IF NOT EXISTS conseils_reactions (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    conseil_id CHAR(36) NOT NULL,
+    user_id CHAR(36) NOT NULL,
+    reaction_type TINYINT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (conseil_id) REFERENCES conseils(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE (conseil_id, user_id)
+);
+
 CREATE TABLE IF NOT EXISTS conseils_reviews (
     id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
     conseil_id CHAR(36) NOT NULL,
