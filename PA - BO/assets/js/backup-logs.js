@@ -60,8 +60,9 @@
                 card.innerHTML = '<div class="backup-card-title">'+escapeHtml(f.file)+'</div>'
                     +'<div class="backup-card-meta"><span><strong>'+sizeKb.toFixed(2)+'</strong> KB</span><span>'+formatDate(f.mtime)+'</span></div>'
                     +'<div class="backup-card-actions">'
-                    +'<button class="btn-secondary preview-btn" data-file="'+escapeHtml(f.file)+'">Preview</button>'
-                    +'<button class="btn-primary download-btn" data-file="'+escapeHtml(f.file)+'">Download</button>'
+                    +'<button class="btn-secondary preview-btn" data-file="'+escapeHtml(f.file)+'" aria-label="Preview '+escapeHtml(f.file)+'"><i class="fa-solid fa-eye"></i></button>'
+                    +'<button class="btn-primary download-btn" data-file="'+escapeHtml(f.file)+'" aria-label="Download '+escapeHtml(f.file)+'"><i class="fa-solid fa-download"></i></button>'
+                    +'<button class="btn-danger delete-btn" data-file="'+escapeHtml(f.file)+'" aria-label="Delete '+escapeHtml(f.file)+'"><i class="fa-solid fa-trash"></i></button>'
                     +'</div>';
                 list.appendChild(card);
             }
@@ -97,6 +98,32 @@
                 showModal('download-confirm-modal');
             };
         });
+
+        document.querySelectorAll('.delete-btn').forEach(function(btn){
+            btn.onclick = function(){
+                selectedDownloadFile = this.dataset.file;
+                document.getElementById('delete-confirm-message').textContent = 'Delete "'+selectedDownloadFile+'" ?';
+                showModal('delete-confirm-modal');
+            };
+        });
+    }
+
+    function showInfoMessage(message) {
+        if (typeof window.showInfoMessage === 'function') {
+            return window.showInfoMessage(message);
+        }
+        var preview = document.createElement('div');
+        preview.textContent = message;
+        preview.style.position = 'fixed';
+        preview.style.bottom = '16px';
+        preview.style.right = '16px';
+        preview.style.padding = '10px 14px';
+        preview.style.background = '#111';
+        preview.style.color = '#fff';
+        preview.style.borderRadius = '8px';
+        preview.style.zIndex = '10000';
+        document.body.appendChild(preview);
+        setTimeout(function(){ preview.remove(); }, 2500);
     }
 
     function isPrivateIp(ip) {
@@ -188,6 +215,29 @@
         if(!selectedDownloadFile){showInfoMessage('No file selected');return;}
         window.location.href = 'backup.php?action=download&file='+encodeURIComponent(selectedDownloadFile);
         hideModal('download-confirm-modal');
+    });
+
+    document.getElementById('delete-confirm-close').addEventListener('click',()=>hideModal('delete-confirm-modal'));
+    document.getElementById('delete-cancel-btn').addEventListener('click',()=>hideModal('delete-confirm-modal'));
+    document.getElementById('delete-confirm-btn').addEventListener('click', function(){
+        if(!selectedDownloadFile){showInfoMessage('No file selected');return;}
+        fetch('backup.php?action=delete&file='+encodeURIComponent(selectedDownloadFile), { method: 'GET' })
+            .then(r => r.json())
+            .then(d => {
+                if (!d.success) {
+                    showInfoMessage(d.message || 'Delete failed');
+                    return;
+                }
+                showInfoMessage('Deleted ' + selectedDownloadFile);
+                window.location.reload();
+            })
+            .catch(e => {
+                showInfoMessage('Unable to delete file.');
+                console.error(e);
+            })
+            .finally(() => {
+                hideModal('delete-confirm-modal');
+            });
     });
 
     renderTable();

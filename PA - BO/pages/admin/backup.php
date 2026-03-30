@@ -62,6 +62,26 @@ if (isset($_GET['action']) && $_GET['action'] === 'download') {
     exit;
 }
 
+if (isset($_GET['action']) && $_GET['action'] === 'delete') {
+    $file = safeBaseName($_GET['file'] ?? '');
+    $path = $backupDir ? realpath($backupDir . '/' . $file) : false;
+    header('Content-Type: application/json');
+    if (!$path || stripos($path, $backupDir) !== 0 || !is_file($path) || pathinfo($path, PATHINFO_EXTENSION) !== 'log') {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'message' => 'File not found']);
+        exit;
+    }
+
+    if (!unlink($path)) {
+        echo json_encode(['success' => false, 'message' => 'Unable to delete file']);
+        exit;
+    }
+
+    logAdminAction("deleted backup log: $file");
+    echo json_encode(['success' => true, 'message' => 'File deleted']);
+    exit;
+}
+
 $title = "Backup logs";
 include_once '../../includes/admin-header.php';
 
@@ -82,41 +102,33 @@ if ($backupDir && is_dir($backupDir)) {
 <script>
     window.backupFiles = <?php echo json_encode($files, JSON_UNESCAPED_UNICODE); ?>;
 </script>
+<link rel="stylesheet" href="../../assets/css/admin-logs.css">
 <link rel="stylesheet" href="../../assets/css/backup-logs.css">
 <script src="../../assets/js/backup-logs.js" defer></script>
 
 <div class="container" id="main-content" style="margin-top:40px;">
-    <h2>Backup logs</h2>
+    <h2 class="center">Backup logs</h2>
 
-    <div class="offers-toolbar admin-logs-toolbar" style="margin-bottom:16px;width:100%;max-width:1200px;">
-        <div class="offers-toolbar-filters" style="width:100%;">
-            <label style="display:inline-flex;align-items:center;gap:6px;">
-                File search
-                <input type="search" id="backup-file-search" placeholder="Filter file names" style="min-width:220px;" />
+    <div class="offers-toolbar admin-logs-toolbar" style="width: fit-content;">
+        <div class="offers-toolbar-filters">
+            <input type="number" id="backup-min-size" min="0" placeholder="Min size (KB)" />
+            <input type="number" id="backup-max-size" min="0" placeholder="Max size (KB)" />
+            <label style="display:inline-flex; align-items:center; gap:6px; margin-left:10px;">
+                <select id="backup-per-page" class="admin-filter-select">
+                    <option value="5">5 / Page</option>
+                    <option value="10" selected>10 / Page</option>
+                    <option value="20">20 / Page</option>
+                    <option value="50">50 / Page</option>
+                </select>
             </label>
-            <label style="display:inline-flex;align-items:center;gap:6px;">
-                Min size (KB)
-                <input type="number" id="backup-min-size" min="0" style="width:90px;" />
-            </label>
-            <label style="display:inline-flex;align-items:center;gap:6px;">
-                Max size (KB)
-                <input type="number" id="backup-max-size" min="0" style="width:90px;" />
-            </label>
-            <button id="backup-reset-filters" class="btn-secondary">Reset filters</button>
+            <button id="backup-reset-filters" class="btn-secondary" type="button">Reset filters</button>
+            <button id="backup-load-more" class="btn-secondary" type="button">Load more</button>
         </div>
-    </div>
-
-    <div class="backup-controls" style="margin-bottom:14px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-        <label>Show
-            <select id="backup-per-page" style="min-width:80px;">
-                <option value="5">5</option>
-                <option value="10" selected>10</option>
-                <option value="20">20</option>
-                <option value="50">50</option>
-            </select>
-            per page
-        </label>
-        <button id="backup-load-more" class="btn-secondary" type="button">Load more</button>
+        <div class="offers-toolbar-search">
+            <div class="toolbar-search-wrap">
+                <input type="search" id="backup-file-search" placeholder="File search" autocomplete="off" style="width:100%;" />
+            </div>
+        </div>
     </div>
 
     <div class="backup-card-list" id="backup-list"></div>
@@ -140,6 +152,18 @@ if ($backupDir && is_dir($backupDir)) {
         <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:12px;">
             <button id="download-cancel-btn" class="btn-secondary" type="button">Cancel</button>
             <button id="download-confirm-btn" class="btn-primary" type="button">Download</button>
+        </div>
+    </div>
+</div>
+
+<div class="add-modal" id="delete-confirm-modal" role="dialog" aria-hidden="true">
+    <div class="add-modal-content" style="max-width:360px;">
+        <span class="close-button" id="delete-confirm-close">&times;</span>
+        <h2>Confirm deletion</h2>
+        <p id="delete-confirm-message">Are you sure you want to delete this backup log?</p>
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:12px;">
+            <button id="delete-cancel-btn" class="btn-secondary" type="button">Cancel</button>
+            <button id="delete-confirm-btn" class="btn-danger" type="button">Delete</button>
         </div>
     </div>
 </div>

@@ -1,7 +1,9 @@
 .backup-card-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(320px, 320px));
   gap: 12px;
+  justify-content: center;
+  margin: 0 auto;
 }
 .backup-card {
   border: 1px solid #d1d5db;
