@@ -4,6 +4,13 @@
     var dates          = [];
     var loginsSeries   = [];
 
+    var allLoginDates    = [];
+    var allLoginSeries   = [];
+    var allRegisterDates = [];
+    var allRegisterSeries= [];
+    var currentRange     = 'weekly';
+    var currentLogFile   = 'login';
+
     var pieChart = null;
     var lineChart = null;
 
@@ -85,6 +92,72 @@
                 }
             });
         }
+    }
+
+    function getWeekKey(date) {
+        var d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+        var day = d.getUTCDay() || 7;
+        d.setUTCDate(d.getUTCDate() + 4 - day);
+        var yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+        var week = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+        return d.getUTCFullYear() + '-W' + String(week).padStart(2, '0');
+    }
+
+    function getChartDataForRange(range, sourceDates, sourceSeries) {
+        if (!sourceDates || !sourceSeries || sourceDates.length !== sourceSeries.length) {
+            return { dates: [], series: [] };
+        }
+
+        if (range === 'daily' || range === 'weekly' || range === 'monthly' || range === 'annually') {
+            var grouped = {};
+
+            for (var i = 0; i < sourceDates.length; i++) {
+                var rawDate = sourceDates[i];
+                var value = Number(sourceSeries[i]) || 0;
+                var d = new Date(rawDate + 'T00:00:00');
+                if (isNaN(d)) continue;
+
+                var key;
+                if (range === 'daily') {
+                    key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+                } else if (range === 'weekly') {
+                    key = getWeekKey(d);
+                } else if (range === 'monthly') {
+                    key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+                } else {
+                    key = String(d.getFullYear());
+                }
+
+                grouped[key] = (grouped[key] || 0) + value;
+            }
+
+            var sortedKeys = Object.keys(grouped).sort();
+            var outDates = sortedKeys;
+            var outSeries = sortedKeys.map(function(k){ return grouped[k]; });
+            return { dates: outDates, series: outSeries };
+        }
+
+        return { dates: sourceDates.slice(), series: sourceSeries.slice() };
+    }
+
+    function getCurrentLogData() {
+        if (currentLogFile === 'register') {
+            return { dates: allRegisterDates, series: allRegisterSeries };
+        }
+        return { dates: allLoginDates, series: allLoginSeries };
+    }
+
+    function updateActivityChart() {
+        var mode = currentRange;
+        var source = getCurrentLogData();
+        var data = getChartDataForRange(mode, source.dates, source.series);
+        dates = data.dates;
+        loginsSeries = data.series;
+        var titleEl = document.getElementById('line-chart-title');
+        if (titleEl) {
+            titleEl.textContent = 'Users activity over time (' + currentLogFile + '.log, ' + mode + ')';
+        }
+        instantiateCharts();
     }
 
     var _pageReady = false;
@@ -230,11 +303,13 @@
                 projSince.textContent = d.projectDelta + ' since yesterday';
             }
 
-            materialLabels = d.materialLabels || [];
-            materialData   = d.materialData || [];
-            dates          = d.loginDates || [];
-            loginsSeries   = d.loginSeries || [];
-            instantiateCharts();
+            materialLabels    = d.materialLabels || [];
+            materialData      = d.materialData || [];
+            allLoginDates     = d.loginDates || [];
+            allLoginSeries    = d.loginSeries || [];
+            allRegisterDates  = d.registerDates || [];
+            allRegisterSeries = d.registerSeries || [];
+            updateActivityChart();
         } catch(e) {
             console.error(e);
         } finally {
@@ -244,6 +319,20 @@
     }
 
     document.addEventListener('DOMContentLoaded', function(){
+        var rangeSelector = document.getElementById('activity-range-select');
+        if (rangeSelector) {
+            rangeSelector.addEventListener('change', function(){
+                currentRange = this.value || 'weekly';
+                updateActivityChart();
+            });
+        }
+        var fileSelector = document.getElementById('activity-file-select');
+        if (fileSelector) {
+            fileSelector.addEventListener('change', function(){
+                currentLogFile = this.value || 'login';
+                updateActivityChart();
+            });
+        }
         instantiateCharts();
         refreshKpis();
     });

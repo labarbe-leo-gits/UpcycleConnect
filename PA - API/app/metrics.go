@@ -56,6 +56,7 @@ func GetDashboardMetrics(w http.ResponseWriter, r *http.Request) {
 	}
 
 	loginCounts := make(map[string]int)
+	registerCounts := make(map[string]int)
 
 	loginLogCandidates := []string{
 		"/files/logs/login.log",
@@ -64,12 +65,26 @@ func GetDashboardMetrics(w http.ResponseWriter, r *http.Request) {
 	}
 	parsedFromLog := false
 	for _, p := range loginLogCandidates {
-		if counts, err := loadLoginCountsFromLog(p); err == nil {
+		if counts, err := loadCountsFromLog(p, `^\[([0-9]{4}-[0-9]{2}-[0-9]{2}) [0-9]{2}:[0-9]{2}:[0-9]{2}\].*logged in successfully`); err == nil {
 			loginCounts = counts
 			parsedFromLog = true
 			break
 		} else {
 			fmt.Println("[WARN] unable to read login log", p, err)
+		}
+	}
+
+	registerLogCandidates := []string{
+		"/files/logs/register.log",
+		"../files/logs/register.log",
+		"../../files/logs/register.log",
+	}
+	for _, p := range registerLogCandidates {
+		if counts, err := loadCountsFromLog(p, `^\[([0-9]{4}-[0-9]{2}-[0-9]{2}) [0-9]{2}:[0-9]{2}:[0-9]{2}\].*registered successfully`); err == nil {
+			registerCounts = counts
+			break
+		} else {
+			fmt.Println("[WARN] unable to read register log", p, err)
 		}
 	}
 
@@ -97,6 +112,16 @@ func GetDashboardMetrics(w http.ResponseWriter, r *http.Request) {
 	loginSeries := []int{}
 	for _, d := range loginDates {
 		loginSeries = append(loginSeries, loginCounts[d])
+	}
+
+	registerDates := []string{}
+	for d := range registerCounts {
+		registerDates = append(registerDates, d)
+	}
+	sort.Strings(registerDates)
+	registerSeries := []int{}
+	for _, d := range registerDates {
+		registerSeries = append(registerSeries, registerCounts[d])
 	}
 
 	containerDelta := containerCount - containerCountYesterday
@@ -149,15 +174,17 @@ func GetDashboardMetrics(w http.ResponseWriter, r *http.Request) {
 		"projectDelta": projectDelta,
 		"projectPct":   projectPct,
 
-		"loginDates":  loginDates,
-		"loginSeries": loginSeries,
+		"loginDates":     loginDates,
+		"loginSeries":    loginSeries,
+		"registerDates":  registerDates,
+		"registerSeries": registerSeries,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
 }
 
-func loadLoginCountsFromLog(path string) (map[string]int, error) {
+func loadCountsFromLog(path string, pattern string) (map[string]int, error) {
 	absPath, err := filepath.Abs(path)
 	if err != nil {
 		absPath = path
@@ -170,7 +197,7 @@ func loadLoginCountsFromLog(path string) (map[string]int, error) {
 
 	counts := make(map[string]int)
 	scanner := bufio.NewScanner(f)
-	lineRegex := regexp.MustCompile(`^\[([0-9]{4}-[0-9]{2}-[0-9]{2}) [0-9]{2}:[0-9]{2}:[0-9]{2}\].*logged in successfully`)
+	lineRegex := regexp.MustCompile(pattern)
 
 	for scanner.Scan() {
 		line := scanner.Text()

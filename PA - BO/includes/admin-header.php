@@ -107,6 +107,7 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
                 </a>
                 <div class="dropdown-menu">
                     <a href="<?= base_url('pages/admin/logs') ?>"><i class="fa-solid fa-clipboard"></i>Logs</a>
+                    <a href="<?= base_url('pages/admin/backup') ?>"><i class="fa-solid fa-hard-drive"></i>Logs Backup</a>
                 </div>
             </div>
             <div class="btn-wrapper" id="dark-toggle" title="Toggle dark mode">

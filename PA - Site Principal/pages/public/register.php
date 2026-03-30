@@ -67,6 +67,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $decoded = json_decode($response, true);
         
         if (isset($decoded['id'])) {
+
+            include_once '../../pages/common/log-utility.php';
+            WriteLog('register', 'INFO', $_SERVER['REMOTE_ADDR'], "New registration: user_id={$decoded['id']}, username={$decoded['username']}, email={$decoded['email']}");
+
             $success_message = 'Registration successful! You can now login.';
         } elseif (isset($decoded['error'])) {
             $error_message = $decoded['error'];

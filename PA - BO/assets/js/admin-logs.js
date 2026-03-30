@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const files = Array.isArray(window.LOG_FILES) ? window.LOG_FILES : [];
     const tableBody = document.querySelector('#logs-table tbody');
     const filterFile = document.getElementById('logs-file-filter');
+    const filterLevel = document.getElementById('logs-level-filter');
     const filterSearch = document.getElementById('logs-search');
     const loadMoreBtn = document.getElementById('logs-load-more');
     const logsCount = document.getElementById('logs-count');
@@ -16,6 +17,62 @@ document.addEventListener('DOMContentLoaded', function () {
     let pageSize = parseInt(localStorage.getItem('adminLogsPageSize') || '40', 10);
     let currentOffset = 0;
     const pageSizeSelector = document.getElementById('logs-page-size');
+    const columnToggles = document.querySelectorAll('.column-toggle');
+
+    const columnDropdownButton = document.getElementById('column-dropdown-button');
+    const columnDropdownMenu = document.getElementById('column-dropdown-menu');
+
+    if (columnToggles.length) {
+        columnToggles.forEach(checkbox => {
+            const col = checkbox.getAttribute('data-col');
+            setColumnVisibility(`col-${col}`, checkbox.checked);
+            checkbox.addEventListener('change', function () {
+                const colInner = this.getAttribute('data-col');
+                setColumnVisibility(`col-${colInner}`, this.checked);
+            });
+        });
+    }
+
+    if (columnDropdownButton && columnDropdownMenu) {
+        columnDropdownButton.addEventListener('click', () => {
+            const isOpen = columnDropdownMenu.style.display === 'block';
+            columnDropdownMenu.style.display = isOpen ? 'none' : 'block';
+        });
+        document.addEventListener('click', (e) => {
+            if (!columnDropdownMenu.contains(e.target) && e.target !== columnDropdownButton) {
+                columnDropdownMenu.style.display = 'none';
+            }
+        });
+    }
+
+    const liveModeHelpText = 'Enable live refresh of the log file. Your performance can be impacted.';
+    const liveModeWrap = document.querySelector('.live-mode-wrap');
+    if (liveModeWrap) {
+        const helpCard = buildHelpCard(liveModeHelpText);
+        const switchElement = liveModeWrap.querySelector('.switch');
+        if (switchElement) {
+            liveModeWrap.insertBefore(helpCard, switchElement);
+        } else {
+            liveModeWrap.appendChild(helpCard);
+        }
+    }
+
+    const resetFiltersBtn = document.getElementById('offers-reset-filters');
+    if (resetFiltersBtn) {
+        resetFiltersBtn.addEventListener('click', () => {
+            filterFile.value = 'all';
+            if (filterLevel) filterLevel.value = 'all';
+            filterSearch.value = '';
+            const checkboxes = document.querySelectorAll('.column-toggle');
+            checkboxes.forEach(ch => {
+                ch.checked = true;
+                setColumnVisibility(`col-${ch.getAttribute('data-col')}`, true);
+            });
+            currentOffset = 0;
+            loadedEntries = [];
+            fetchLogs(false);
+        });
+    }
 
     if (pageSizeSelector) {
         pageSizeSelector.value = String(pageSize);
@@ -36,6 +93,36 @@ document.addEventListener('DOMContentLoaded', function () {
         if (normalized.includes('error') || normalized.includes('err')) return 'error';
         if (normalized.includes('warn')) return 'warn';
         return 'info';
+    }
+
+    function formatTimestamp(timestamp) {
+        if (!timestamp) return '';
+        const d = new Date(timestamp);
+        if (Number.isNaN(d.getTime())) {
+            const match = timestamp.match(/^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})/);
+            if (match) {
+                return `${match[1]} ${match[2]}`;
+            }
+            return timestamp;
+        }
+        return d.toLocaleString([], { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    function buildHelpCard(message) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'help-icon';
+
+        const icon = document.createElement('i');
+        icon.className = 'fa-solid fa-circle-info';
+        icon.setAttribute('aria-hidden', 'true');
+
+        const tooltip = document.createElement('span');
+        tooltip.className = 'help-tooltip';
+        tooltip.textContent = message;
+
+        wrapper.appendChild(icon);
+        wrapper.appendChild(tooltip);
+        return wrapper;
     }
 
     function escapeHtml(text) {
@@ -64,16 +151,32 @@ document.addEventListener('DOMContentLoaded', function () {
 
         entries.forEach(entry => {
             const row = document.createElement('tr');
-            row.innerHTML = `<td>${escapeHtml(entry.timestamp)}</td>
-            <td><span class="log-level ${getLevelClass(entry.level)}">${escapeHtml(entry.level)}</span></td>
-            <td><a class="ip-link" data-ip="${escapeHtml(entry.ip)}" href="javascript:void(0);">${escapeHtml(entry.ip)}</a></td>
-            <td style="max-width:420px; word-wrap:break-word;">${escapeHtml(entry.message)}</td>
-            <td>${escapeHtml(entry.file)}</td>
-            <td><button class="row-delete-btn" data-file="${escapeHtml(entry.file)}" data-line="${entry.line}" title="Delete this entry"><i class="fa-solid fa-trash"></i></button></td>`;
+            row.innerHTML = `<td class="col-timestamp">${escapeHtml(formatTimestamp(entry.timestamp))}</td>
+            <td class="col-level"><span class="log-level ${getLevelClass(entry.level)}">${escapeHtml(entry.level)}</span></td>
+            <td class="col-ip"><a class="ip-link" data-ip="${escapeHtml(entry.ip)}" href="javascript:void(0);">${escapeHtml(entry.ip)}</a></td>
+            <td class="col-message" style="max-width:420px; word-wrap:break-word;">${escapeHtml(entry.message)}</td>
+            <td class="col-file">${escapeHtml(entry.file)}</td>
+            <td>
+                <button class="row-view-btn" data-file="${escapeHtml(entry.file)}" data-line="${entry.line}" data-message="${escapeHtml(entry.message)}" data-timestamp="${escapeHtml(entry.timestamp)}" title="View full message"><i class="fa-solid fa-eye"></i></button>
+                <button class="row-delete-btn" data-file="${escapeHtml(entry.file)}" data-line="${entry.line}" title="Delete this entry"><i class="fa-solid fa-trash"></i></button>
+            </td>`;
 
             const ipLink = row.querySelector('.ip-link');
             if (ipLink) {
                 ipLink.addEventListener('click', () => loadIpLocation(entry.ip, entry.message));
+            }
+
+            const viewBtn = row.querySelector('.row-view-btn');
+            if (viewBtn) {
+                viewBtn.addEventListener('click', () => {
+                    const message = entry.message || '';
+                    const file = entry.file || '';
+                    const timestamp = formatTimestamp(entry.timestamp || '');
+                    document.getElementById('view-message-content').textContent = message;
+                    document.getElementById('view-message-file').textContent = file;
+                    document.getElementById('view-message-timestamp').textContent = timestamp;
+                    showModal('view-message-modal');
+                });
             }
 
             const deleteBtn = row.querySelector('.row-delete-btn');
@@ -108,6 +211,13 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!m) return;
         m.classList.remove('is-open');
         m.setAttribute('aria-hidden', 'true');
+    }
+
+    function setColumnVisibility(column, visible) {
+        const th = document.querySelector(`th.${column}`);
+        const tds = document.querySelectorAll(`td.${column}`);
+        if (th) th.style.display = visible ? '' : 'none';
+        tds.forEach(td => td.style.display = visible ? '' : 'none');
     }
 
     function clearMapPlaceholder() {
@@ -271,9 +381,23 @@ document.addEventListener('DOMContentLoaded', function () {
     let pendingDelete = null;
 
     function askDeleteLogEntry(fileName, lineIndex, message) {
-        pendingDelete = { fileName, lineIndex };
+        pendingDelete = { type: 'entry', fileName, lineIndex };
         deleteConfirmMessage.textContent = `Delete this entry? ${message ?? ''}`;
         showModal('delete-confirm-modal');
+    }
+
+    function askDeleteLogFile(fileName) {
+        pendingDelete = { type: 'file', fileName };
+        deleteConfirmMessage.textContent = `Clear entire log file "${fileName}"? This is irreversible.`;
+        showModal('delete-confirm-modal');
+    }
+
+    function showInfoMessage(message) {
+        const infoModal = document.getElementById('info-modal');
+        const infoMessage = document.getElementById('info-message');
+        if (!infoModal || !infoMessage) return;
+        infoMessage.textContent = message;
+        showModal('info-modal');
     }
 
     async function confirmDeleteLogEntry() {
@@ -284,25 +408,39 @@ document.addEventListener('DOMContentLoaded', function () {
 
         deleteConfirmBtn.disabled = true;
 
-        const formData = new URLSearchParams();
-        formData.append('action', 'delete');
-        formData.append('file', pendingDelete.fileName);
-        formData.append('line', pendingDelete.lineIndex);
-
         try {
-            const response = await fetch(window.location.pathname, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: formData.toString()
-            });
-            const result = await response.json();
-            if (!result.success) {
-                alert('Unable to delete entry: ' + (result.message || 'unknown'));
+            let response, result;
+
+            if (pendingDelete.type === 'entry') {
+                const formData = new URLSearchParams();
+                formData.append('action', 'delete');
+                formData.append('file', pendingDelete.fileName);
+                formData.append('line', pendingDelete.lineIndex);
+
+                response = await fetch(window.location.pathname, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: formData.toString()
+                });
+
+                result = await response.json();
+                if (!result.success) {
+                    showInfoMessage('Unable to delete entry: ' + (result.message || 'unknown'));
+                }
+            } else if (pendingDelete.type === 'file') {
+                response = await fetch(window.location.pathname + '?file=' + encodeURIComponent(pendingDelete.fileName), {
+                    method: 'DELETE'
+                });
+
+                result = await response.json();
+                if (!result.success) {
+                    showInfoMessage('Unable to clear log file: ' + (result.message || 'unknown'));
+                }
             }
         } catch (err) {
-            alert('Unable to delete entry: ' + err.message);
+            showInfoMessage('Unable to delete entry: ' + err.message);
         }
 
         deleteConfirmBtn.disabled = false;
@@ -314,9 +452,33 @@ document.addEventListener('DOMContentLoaded', function () {
         await fetchLogs(false);
     }
 
+    const deleteLogFileBtn = document.getElementById('delete-log-file-btn');
+    async function deleteCurrentLogFile() {
+        if (!filterFile.value || filterFile.value === 'all') {
+            showInfoMessage('Please select a specific log file to clear.');
+            return;
+        }
+
+        askDeleteLogFile(filterFile.value);
+    }
+
+    deleteLogFileBtn?.addEventListener('click', deleteCurrentLogFile);
+
     deleteConfirmClose?.addEventListener('click', () => hideModal('delete-confirm-modal'));
     deleteCancelBtn?.addEventListener('click', () => hideModal('delete-confirm-modal'));
     deleteConfirmBtn?.addEventListener('click', confirmDeleteLogEntry);
+
+    const infoClose = document.getElementById('info-close');
+    const infoCloseBtn = document.getElementById('info-close-btn');
+    infoClose?.addEventListener('click', () => hideModal('info-modal'));
+    infoCloseBtn?.addEventListener('click', () => hideModal('info-modal'));
+
+    const viewMessageModal = document.getElementById('view-message-modal');
+    const viewMessageClose = document.getElementById('view-message-close');
+    const viewMessageClose2 = document.getElementById('view-message-close2');
+
+    viewMessageClose?.addEventListener('click', () => hideModal('view-message-modal'));
+    viewMessageClose2?.addEventListener('click', () => hideModal('view-message-modal'));
 
     async function deleteLogEntry(fileName, lineIndex) {
         if (!fileName || typeof lineIndex !== 'number') {
@@ -337,6 +499,9 @@ document.addEventListener('DOMContentLoaded', function () {
         params.set('limit', String(pageSize));
         if (selectedFile && selectedFile !== 'all') {
             params.set('file', selectedFile);
+        }
+        if (filterLevel && filterLevel.value && filterLevel.value !== 'all') {
+            params.set('level', filterLevel.value);
         }
         if (searchTerm) {
             params.set('search', searchTerm);
@@ -390,6 +555,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     filterFile.addEventListener('change', applyFilters);
+    if (filterLevel) {
+        filterLevel.addEventListener('change', applyFilters);
+    }
     filterSearch.addEventListener('input', () => {
         clearTimeout(window.logsSearchTimeout);
         window.logsSearchTimeout = setTimeout(applyFilters, 350);
@@ -410,6 +578,41 @@ document.addEventListener('DOMContentLoaded', function () {
                 liveModeTimer = null;
             }
         }
+    }
+
+    function buildCard(m) {
+        const card = document.createElement('div');
+        card.className  = 'service-item';
+        card.dataset.id = m.id;
+
+        card.innerHTML = `
+            <div class="service-header">
+                <i class="fa-solid fa-recycle" style="color:#6b7280;font-size:1.1rem;flex-shrink:0;"></i>
+                <h3 style="margin:0 0 0 8px;flex:1;">${escHtml(m.nom)}</h3>
+            </div>
+            <div class="service-meta" style="display:flex;gap:20px;flex-wrap:wrap;font-size:.875rem;color:#6b7280;margin:8px 0 10px;">
+                <span style="display:inline-flex;align-items:center;gap:6px;">
+                    <i class="fa-solid fa-smog" style="color:#6b7280;"></i>
+                    CO₂&nbsp;:&nbsp;<strong style="color:#111827;">${parseFloat(m.facteur_co2).toLocaleString('fr-FR', {maximumFractionDigits: 4})}</strong>&nbsp;kg&nbsp;CO₂&nbsp;eq/kg
+                    <span class="mat-tip">
+                        <i class="fa-solid fa-circle-question" style="color:#9ca3af;font-size:.8rem;"></i>
+                        <span class="mat-tip-box">kg of CO₂ equivalent emitted per kg of this material.<br><br><strong>Upcycling score formula:</strong><br>Score = weight (kg) × CO₂ factor<br><br>A higher value = more CO₂ saved by upcycling this material.</span>
+                    </span>
+                </span>
+            </div>
+            <div class="service-actions" style="display:flex;gap:8px;justify-content:center;">
+                <button class="btn-secondary mat-edit-btn" data-id="${escHtml(m.id)}">
+                    <i class="fa-solid fa-pen"></i> Edit
+                </button>
+                <button class="btn-danger mat-delete-btn" data-id="${escHtml(m.id)}">
+                    <i class="fa-solid fa-trash"></i> Delete
+                </button>
+            </div>`;
+
+        card.querySelector('.mat-edit-btn').addEventListener('click', () => openEditForm(m));
+        card.querySelector('.mat-delete-btn').addEventListener('click', () => confirmDelete(m));
+
+        return card;
     }
 
     if (liveModeCheckbox) {

@@ -48,8 +48,23 @@ if (ob_get_level()) { @ob_flush(); }
             <span style="text-align:center;margin-top:8px;font-weight:600;">Material repartition</span>
         </div>
         <div style="flex:1 1 400px;min-width:300px;height:320px;display:flex;flex-direction:column;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+                <label for="activity-range-select" style="margin:0;font-weight:600;">Activity range:</label>
+                <select id="activity-range-select" style="padding:4px 8px;border:1px solid #ccc;border-radius:4px;">
+                    <option value="daily">Daily</option>
+                    <option value="weekly" selected>Weekly</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="annually">Annually</option>
+                </select>
+
+                <label for="activity-file-select" style="margin:0;font-weight:600;">Activity file:</label>
+                <select id="activity-file-select" style="padding:4px 8px;border:1px solid #ccc;border-radius:4px;">
+                    <option value="login" selected>login.log</option>
+                    <option value="register">register.log</option>
+                </select>
+            </div>
             <canvas id="line-chart"></canvas>
-            <span style="text-align:center;margin-top:8px;font-weight:600;">Users activity over time</span>
+            <span id="line-chart-title" style="text-align:center;margin-top:8px;font-weight:600;">Users activity over time (weekly)</span>
         </div>
     </div>
 </div>

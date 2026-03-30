@@ -1,0 +1,115 @@
+.backup-card-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 12px;
+}
+.backup-card {
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 14px;
+  background: #fff;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.05);
+}
+.backup-card-title {
+  font-weight: 700;
+  margin-bottom: 8px;
+  font-size: 1rem;
+  color: #111827;
+}
+.backup-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: #4b5563;
+  font-size: 0.9rem;
+  margin-bottom: 12px;
+}
+.backup-card-meta span {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+.backup-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.backup-card-actions .btn-secondary,
+.backup-card-actions .btn-primary {
+  min-width: 100px;
+}
+#backup-table {
+  display: none;
+}
+.skeleton-card {
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 14px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.05);
+}
+.skeleton-line {
+  background: #e5e7eb;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+.skeleton-title {
+  width: 70%;
+  height: 18px;
+}
+.skeleton-meta {
+  width: 50%;
+  height: 14px;
+}
+.skeleton-actions {
+  width: 30%;
+  height: 34px;
+}
+
+.preview-log-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+  margin-top: 8px;
+  min-width: 760px;
+}
+
+.preview-log-table th,
+.preview-log-table td {
+  border: 1px solid #d1d5db;
+  padding: 8px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.preview-log-table th {
+  background: #f3f4f6;
+  color: #1f2937;
+  font-weight: 700;
+}
+
+.preview-log-table td {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.preview-log-ip-chip,
+.preview-log-ip-chip a {
+  display: inline-block;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  padding: 2px 9px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.preview-log-ip-chip a:hover {
+  background: #dbeafe;
+  color: #1e40af;
+}

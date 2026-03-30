@@ -77,6 +77,16 @@ function readLogEntries($logDir)
     return $entries;
 }
 
+function clearLogFile($logDir, $fileName)
+{
+    $target = realpath($logDir . '/' . $fileName);
+    if (!$target || strpos($target, realpath($logDir)) !== 0 || !is_file($target)) {
+        return false;
+    }
+    $result = @file_put_contents($target, '');
+    return $result !== false;
+}
+
 function deleteLogEntry($logDir, $fileName, $lineIndex)
 {
     $target = realpath($logDir . '/' . $fileName);
@@ -99,12 +109,19 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == 1) {
     $limit = max(10, min(200, (int)($_GET['limit'] ?? 40)));
     $filter = trim((string)($_GET['file'] ?? ''));
     $search = trim((string)($_GET['search'] ?? ''));
+    $levelFilter = strtolower(trim((string)($_GET['level'] ?? '')));
 
     $entries = readLogEntries($logDir);
 
     if ($filter !== '' && $filter !== 'all') {
         $entries = array_filter($entries, function ($entry) use ($filter) {
             return isset($entry['file']) && $entry['file'] === $filter;
+        });
+    }
+
+    if ($levelFilter !== '' && $levelFilter !== 'all') {
+        $entries = array_filter($entries, function ($entry) use ($levelFilter) {
+            return isset($entry['level']) && strtolower($entry['level']) === $levelFilter;
         });
     }
 
@@ -148,6 +165,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     exit();
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'DELETE' && isset($_GET['file'])) {
+    $fileName = basename(trim((string)$_GET['file']));
+
+    $success = false;
+    $message = '';
+
+    if ($fileName) {
+        $success = clearLogFile($logDir, $fileName);
+        if (!$success) {
+            $message = 'Failed to clear log file.';
+        }
+    } else {
+        $message = 'Invalid request.';
+    }
+
+    header('Content-Type: application/json');
+    echo json_encode(['success' => $success, 'message' => $message]);
+    exit();
+}
+
 include_once '../../includes/admin-header.php';
 
 $logFiles = listLogFiles($logDir);
@@ -160,36 +197,65 @@ window.LOG_FILES = <?php echo json_encode($logFiles, JSON_UNESCAPED_SLASHES | JS
 <div class="container" id="main-content">
     <h2 class="center">Server logs</h2>
 
-    <div class="admin-logs-toolbar">
-        <label for="logs-file-filter">Log file</label>
-        <select id="logs-file-filter"></select>
+    <div class="offers-toolbar admin-logs-toolbar" style="margin-bottom:16px;width:fit-content;">
+        <div class="offers-toolbar-filters">
+            <select id="logs-file-filter" aria-label="Log file filter"></select>
 
-        <label for="logs-search">Search</label>
-        <input type="search" id="logs-search" placeholder="Search timestamps, level, IP, text…" autocomplete="off" />
+            <select id="logs-level-filter" aria-label="Log level filter" style="min-width:145px;">
+                <option value="all">All levels</option>
+                <option value="info">Info</option>
+                <option value="warn">Warn</option>
+                <option value="error">Error</option>
+            </select>
 
-        <label for="logs-page-size">Rows per page</label>
-        <select id="logs-page-size" class="admin-filter-select">
-            <option value="20">20</option>
-            <option value="40" selected>40</option>
-            <option value="80">80</option>
-            <option value="120">120</option>
-        </select>
+            <div class="column-toggle-dropdown" style="position:relative;">
+                <button id="column-dropdown-button" class="btn-secondary" type="button" style="display:flex;align-items:center;gap:6px;">Columns <i class="fa-solid fa-caret-down"></i></button>
+                <div id="column-dropdown-menu" style="display:none;position:absolute;right:0;top:calc(100% + 6px);background:#fff;border:1px solid #d1d5db;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);padding:10px;z-index:20;min-width:180px;">
+                    <label style="display:block; margin-bottom:4px;"><input type="checkbox" class="column-toggle" data-col="timestamp" checked> Timestamp</label>
+                    <label style="display:block; margin-bottom:4px;"><input type="checkbox" class="column-toggle" data-col="level" checked> Level</label>
+                    <label style="display:block; margin-bottom:4px;"><input type="checkbox" class="column-toggle" data-col="ip" checked> IP</label>
+                    <label style="display:block; margin-bottom:4px;"><input type="checkbox" class="column-toggle" data-col="message" checked> Message</label>
+                    <label style="display:block;"><input type="checkbox" class="column-toggle" data-col="file" checked> Source</label>
+                </div>
+            </div>
 
-        <span class="live-mode-wrap" style="margin-left:auto; display:flex; align-items:center; gap:8px;">
-            <label for="logs-live-mode" style="margin:0;">Live mode</label>
-            <input type="checkbox" id="logs-live-mode" />
-        </span>
+            <select id="logs-page-size" class="admin-filter-select">
+                <option value="20" selected>20 / Page</option>
+                <option value="40">40 / Page</option>
+                <option value="80">80 / Page</option>
+                <option value="120">120 / Page</option>
+            </select>
+
+            <button id="offers-reset-filters" class="btn-secondary" type="button" style="display:flex;align-items:center;gap:6px;">Reset filters <i class="fa-solid fa-arrow-rotate-left"></i></button>
+        </div>
+
+        <div class="offers-toolbar-search">
+            <div class="toolbar-search-wrap">
+                <input type="search" id="logs-search" placeholder="Search timestamps, level, IP, text…" style="width:100%" autocomplete="off" />
+            </div>
+        </div>
+
+        <div class="action-wrapper">
+            <span class="live-mode-wrap" style="display:flex; align-items:center; gap:8px;justify-content:center;">
+                <span style="margin:0; font-weight:600;">Live mode</span>
+                <label class="switch">
+                    <input type="checkbox" id="logs-live-mode" />
+                    <span class="slider round"></span>
+                </label>
+            </span>
+            <button id="delete-log-file-btn" class="btn-danger" style="width:fit-content;padding:1àpx 14px;" type="button"><i class="fa-solid fa-trash"></i> Clear current log</button>
+        </div>
     </div>
 
     <div style="overflow-x:auto;">
         <table class="log-table" id="logs-table">
             <thead>
                 <tr>
-                    <th>Timestamp</th>
-                    <th>Level</th>
-                    <th>IP</th>
-                    <th>Message</th>
-                    <th>Source</th>
+                    <th class="col-timestamp">Timestamp</th>
+                    <th class="col-level">Level</th>
+                    <th class="col-ip">IP</th>
+                    <th class="col-message">Message</th>
+                    <th class="col-file">Source</th>
                     <th></th>
                 </tr>
             </thead>
@@ -213,14 +279,40 @@ window.LOG_FILES = <?php echo json_encode($logFiles, JSON_UNESCAPED_SLASHES | JS
     </div>
 </div>
 
+<div class="add-modal" id="view-message-modal" role="dialog" aria-hidden="true">
+    <div class="add-modal-content" style="max-width:500px;">
+        <span class="close-button" id="view-message-close">&times;</span>
+        <h2>Log message details</h2>
+        <div style="margin-bottom:12px;color:#334155;font-size:0.94rem;">
+            <p><strong>Source:</strong> <span id="view-message-file"></span></p>
+            <p><strong>Timestamp:</strong> <span id="view-message-timestamp"></span></p>
+        </div>
+        <pre id="view-message-content" style="white-space:pre-wrap;word-wrap:break-word;padding:12px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;color:#1f2937;"></pre>
+        <div class="modal-actions" style="display:flex;justify-content:center;gap:10px;margin-top:12px;">
+            <button id="view-message-close2" class="btn-secondary" type="button">Close</button>
+        </div>
+    </div>
+</div>
+
 <div class="add-modal" id="delete-confirm-modal" role="dialog" aria-hidden="true">
     <div class="add-modal-content" style="max-width:420px;">
         <span class="close-button" id="delete-confirm-close">&times;</span>
-        <h2>Confirm delete</h2>
-        <p id="delete-confirm-message" style="margin:0 0 14px; color:#334155;">Are you sure you want to delete this log entry? This cannot be undone.</p>
-        <div class="modal-actions" style="display:flex;justify-content:flex-end;gap:10px;margin-top:12px;">
+        <h2>Confirm action</h2>
+        <p id="delete-confirm-message" style="margin:0 0 14px; color:#334155;">Are you sure?</p>
+        <div class="modal-actions" style="display:flex;justify-content:center;gap:10px;margin-top:12px;">
             <button id="delete-cancel-btn" class="btn-secondary" type="button">Cancel</button>
-            <button id="delete-confirm-btn" class="btn-primary" type="button">Delete</button>
+            <button id="delete-confirm-btn" class="btn-primary" type="button">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<div class="add-modal" id="info-modal" role="dialog" aria-hidden="true">
+    <div class="add-modal-content" style="max-width:420px;">
+        <span class="close-button" id="info-close">&times;</span>
+        <h2>Notification</h2>
+        <p id="info-message" style="margin:0 0 14px; color:#334155;"></p>
+        <div class="modal-actions" style="display:flex;justify-content:center;gap:10px;margin-top:12px;">
+            <button id="info-close-btn" class="btn-secondary" type="button">Close</button>
         </div>
     </div>
 </div>
