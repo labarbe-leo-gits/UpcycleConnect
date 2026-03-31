@@ -1,0 +1,85 @@
+version: '3.9'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: upcycleconnect_db_dev
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: example
+      MYSQL_DATABASE: upcycle
+      MYSQL_USER: app
+      MYSQL_PASSWORD: secret
+    volumes:
+      - ./db_schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+      - db_data_dev:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+    networks:
+      - DataNetwork
+
+  api:
+    build:
+      context: ./PA - API
+      dockerfile: Dockerfile
+    image: upcycleconnect-api:latest
+    container_name: upcycleconnect_api_dev
+    ports:
+      - "9999:9999"
+    env_file:
+      - "PA - API/.env"
+    environment:
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_USER: app
+      DB_PASSWORD: secret
+      DB_NAME: upcycle
+      API_HOST: "0.0.0.0"
+      API_PORT: "9999"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - DataNetwork
+      - APIClientNetwork
+
+  bo:
+    build:
+      context: ./PA - BO
+      dockerfile: Dockerfile
+    image: upcycleconnect-bo:dev
+    container_name: upcycleconnect_bo_dev
+    ports:
+      - "8080:80"
+    # Ne pas modifier PA - BO/.env manuellement, on force la config d'API via un fichier dédié
+    env_file:
+      - "PA - BO/.env.docker"
+    environment:
+      API_HOST: api
+      API_PORT: "9999"
+      BASE_URL: "/"
+    volumes:
+      - ./PA - BO:/var/www/html:delegated
+      - ./files:/var/www/html/files:delegated
+      # Remplace .env dans le conteneur par une version contrôlée (clé API_HOST=api)
+      - ./PA - BO/.env.docker:/var/www/html/.env:ro
+    depends_on:
+      - db
+      - api
+    networks:
+      - APIClientNetwork
+
+networks:
+  DataNetwork:
+    driver: bridge
+  APIClientNetwork:
+    driver: bridge
+
+volumes:
+  db_data_dev:
+    driver: local

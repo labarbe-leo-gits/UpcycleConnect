@@ -1,0 +1,80 @@
+version: '3.9'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: upcycleconnect_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: example
+      MYSQL_DATABASE: upcycle
+      MYSQL_USER: app
+      MYSQL_PASSWORD: secret
+    volumes:
+      - ./db_schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - DataNetwork
+
+  api:
+    build:
+      context: ./PA - API
+      dockerfile: Dockerfile
+    image: upcycleconnect-api:latest
+    container_name: upcycleconnect_api
+    ports:
+      - "9999:9999"
+    env_file:
+      - "PA - API/.env"
+    environment:
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_USER: app
+      DB_PASSWORD: secret
+      DB_NAME: upcycle
+      API_HOST: "0.0.0.0"
+      API_PORT: "9999"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: always
+    networks:
+      - DataNetwork
+      - APIClientNetwork
+
+  bo:
+    build:
+      context: ./PA - BO
+      dockerfile: Dockerfile
+    image: upcycleconnect-bo:latest
+    container_name: upcycleconnect_bo
+    ports:
+      - "8080:80"
+    env_file:
+      - "PA - BO/.env"
+    environment:
+      API_HOST: api
+      BASE_URL: "/"
+    volumes:
+      - ./files:/var/www/html/files:ro
+    depends_on:
+      - db
+      - api
+    restart: always
+    networks:
+      - APIClientNetwork
+
+networks:
+  DataNetwork:
+    driver: bridge
+  APIClientNetwork:
+    driver: bridge
+
+volumes:
+  db_data:
+    driver: local

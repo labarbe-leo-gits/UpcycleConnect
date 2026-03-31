@@ -242,9 +242,7 @@ refer to the [Setup Guide](docs/SETUP.md).
 
 ### Running the Application Locally
 
-1. Ensure the `.env` files in both `PA - Site Principal` and `PA - API` have
-   been created from their corresponding `.env.example` templates and
-   populated with valid values.
+1. Ensure the `.env` files in `PA - BO` and `PA - API` are created and valid.
 2. Start the MySQL server (e.g. via XAMPP control panel or system service).
 3. Start the Go API:
    ```bash
@@ -252,6 +250,62 @@ refer to the [Setup Guide](docs/SETUP.md).
    ```
 4. Start or restart Apache (XAMPP or system service).
 5. Open a browser and navigate to the configured frontend URL.
+
+## Docker (Dev + Prod)
+
+### Docker images et Dockerfiles existants
+
+- `PA - API/Dockerfile`: build multi-étapes Go + distroless
+- `PA - BO/Dockerfile`: build multi-étapes Composer + Apache
+- `docker-compose.dev.yml` : mode développement (hot-reload via volumes
+  (PHP), rebuild API à chaque `docker compose ... --build`)
+- `docker-compose.prod.yml` : mode production (restart=always, pas de code
+  monté en volume pour le backoffice, utilisation de la DB sans ports exposés
+  localement sauf API/BO)
+
+### Lancer en mode développement
+
+```bash
+cd c:\xampp\htdocs\PA
+docker compose -f docker-compose.dev.yml up --build -d
+```
+
+Vérifier les logs :
+
+```bash
+docker compose -f docker-compose.dev.yml logs -f api
+docker compose -f docker-compose.dev.yml logs -f bo
+```
+
+### Lancer en mode production
+
+```bash
+cd c:\xampp\htdocs\PA
+docker compose -f docker-compose.prod.yml up --build -d
+```
+
+### Stop / restart
+
+```bash
+docker compose -f docker-compose.prod.yml down
+docker compose -f docker-compose.dev.yml down
+```
+
+### Push vers un registre privé
+
+```bash
+docker login registry.example.com
+
+docker tag upcycleconnect-api:latest registry.example.com/upcycleconnect-api:1.0.0
+docker push registry.example.com/upcycleconnect-api:1.0.0
+
+docker tag upcycleconnect-bo:latest registry.example.com/upcycleconnect-bo:1.0.0
+docker push registry.example.com/upcycleconnect-bo:1.0.0
+```
+
+---
+
+(Notes : `PA - Site Principal` n’est pas dockerisé selon la consigne.)
 
 ### API Endpoints
 
