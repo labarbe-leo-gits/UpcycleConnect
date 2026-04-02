@@ -124,6 +124,13 @@ func GetUsersFromDB(offset, limit int, search, sort string, userTypes ...int) ([
 	return users, total, nil
 }
 
+func GetUserObjectByUsername(username string) (models.User, error) {
+	var user models.User
+	query := "SELECT id, username, email FROM users WHERE username = ?"
+	err := Db.QueryRow(query, username).Scan(&user.ID, &user.Username, &user.Email)
+	return user, err
+}
+
 func GetUserByUsernameFromDB(username string) (bool, error) {
 
 	rows, err := Db.Query("SELECT id, username, email, created_at, last_login FROM users WHERE username = ?", username)

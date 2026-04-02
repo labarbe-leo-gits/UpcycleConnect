@@ -77,7 +77,29 @@ if ($productType === 'offer') {
 
 $maxParticipants = null;
 $currentParticipants = 0;
+$eventAvailabilityId = $_POST['event_availability_id'] ?? null;
+
 if ($productType === 'service') {
+    if (empty($eventAvailabilityId)) {
+        header('Location: order-cancel?product_uuid=' . urlencode($productUuid) . '&reason=' . urlencode('Schedule selection is required.'));
+        exit;
+    }
+
+    $schedule = null;
+    if (!empty($service['schedules']) && is_array($service['schedules'])) {
+        foreach ($service['schedules'] as $slot) {
+            if (isset($slot['id']) && $slot['id'] === $eventAvailabilityId) {
+                $schedule = $slot;
+                break;
+            }
+        }
+    }
+
+    if (!$schedule) {
+        header('Location: order-cancel?product_uuid=' . urlencode($productUuid) . '&reason=' . urlencode('Selected schedule not found.'));
+        exit;
+    }
+
     $maxParticipants = $service['maximum_participants'] ?? null;
     $currentParticipants = $service['current_participants'] ?? 0;
 
@@ -89,9 +111,17 @@ if ($productType === 'service') {
 
 $price = floatval($productType === 'service' ? ($service['price'] ?? 0) : ($offer['price'] ?? 0));
 if ($price > 0) {
-    header('Location: order?product_uuid=' . urlencode($productUuid));
+    $url = 'order?product_uuid=' . urlencode($productUuid);
+    if (!empty($eventAvailabilityId)) {
+        $url .= '&event_availability_id=' . urlencode($eventAvailabilityId);
+    }
+    header($url);
     exit;
 }
 
-header('Location: order-success?product_uuid=' . urlencode($productUuid) . '&order_token=' . urlencode($orderToken));
+$redirect = 'order-success?product_uuid=' . urlencode($productUuid) . '&order_token=' . urlencode($orderToken);
+if (!empty($eventAvailabilityId)) {
+    $redirect .= '&event_availability_id=' . urlencode($eventAvailabilityId);
+}
+header($redirect);
 exit;

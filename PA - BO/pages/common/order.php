@@ -163,9 +163,106 @@ $productIcon = $productType === 'offer' ? 'fa-box-open' : 'fa-briefcase';
 $freeNotice = $productType === 'offer'
     ? 'This is a free offer. Click "Complete Order" to confirm your request.'
     : 'This is a free service. Click "Complete Order" to confirm your registration.';
+
+// Debug schedule data if needed:
+// var_export($serviceSchedules);
 ?>
 
-<div class="container" id="order-page" data-order-token="<?php echo htmlspecialchars($orderToken); ?>" data-product-uuid="<?php echo htmlspecialchars($productUuid); ?>" data-stripe-key="<?php echo htmlspecialchars($stripeConfig['publishable_key'] ?? ''); ?>" data-is-full="<?php echo $isFull ? '1' : '0'; ?>" data-is-free="<?php echo $price == 0 ? '1' : '0'; ?>">
+<style>
+    .schedule-card {
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+        background-color: #ffffff;
+        box-shadow: 0 2px 8px rgba(0,0,0,.08);
+        color: #111827;
+        transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+    }
+    .schedule-card:hover {
+        border-color: #10b981;
+        transform: translateY(-2px);
+    }
+    .schedule-card.selected {
+        border-color: #10b981 !important;
+        background-color: #10b981 !important;
+        color: #ffffff !important;
+    }
+    .schedule-conflict-card {
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0,0,0,.12);
+        overflow: hidden;
+        font-size: 0.95rem;
+    }
+    @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+    .schedule-conflict-skeleton {
+        position: relative;
+        height: 80px;
+        border-radius: 10px;
+        overflow: hidden;
+        background: #f3f4f6;
+    }
+    .schedule-conflict-skeleton::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,.8), transparent);
+        animation: shimmer 1.2s infinite;
+    }
+
+    /* Conflict modal styling */
+    .planning-modal {
+        display: none;
+        position: fixed;
+        z-index: 9999;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.40);
+        opacity: 0;
+        transition: opacity 0.25s ease-in-out;
+    }
+    .planning-modal.open {
+        display: block;
+        opacity: 1;
+    }
+    .planning-modal-content {
+        background-color: #fff;
+        margin: 80px auto;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        width: min(480px, 90%);
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+        position: relative;
+        transform: translateY(-15px);
+        opacity: 0;
+        transition: transform 0.25s ease-in-out, opacity 0.25s ease-in-out;
+    }
+    .planning-modal.open .planning-modal-content {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    .close-button {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        color: #000;
+        font-size: 24px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    .close-button:hover {
+        color: #d00;
+    }
+</style>
+<div class="container" id="order-page" data-order-token="<?php echo htmlspecialchars($orderToken); ?>" data-product-uuid="<?php echo htmlspecialchars($productUuid); ?>" data-stripe-key="<?php echo htmlspecialchars($stripeConfig['publishable_key'] ?? ''); ?>" data-is-full="<?php echo $isFull ? '1' : '0'; ?>" data-is-free="<?php echo $price == 0 ? '1' : '0'; ?>" data-service-date="<?php echo htmlspecialchars($service['service_date'] ?? ''); ?>">
     <div class="checkout-container skeleton-checkout-container">
         <div class="checkout-header">
             <div class="skeleton skeleton-checkout-title"></div>
@@ -268,16 +365,44 @@ $freeNotice = $productType === 'offer'
                         <span>Total<?php echo ($productType === 'offer' && $priceTTC > 0) ? ' (TTC)' : ''; ?></span>
                         <span class="total-price"><?php echo $priceDisplay; ?></span>
                     </div>
+                    <div id="schedule-conflict-message" class="schedule-conflict-message" style="margin-top: 8px; display: none; font-size: 0.95rem;"></div>
+                    <div id="schedule-conflict-card" class="schedule-conflict-card" style="margin-top: 10px; display: none;"></div>
                     <?php if ($productType === 'offer' && $priceTTC > 0): ?>
                     <p class="price-info-note"><i class="fa-solid fa-circle-info"></i> You will be charged <strong><?php echo $priceDisplay; ?></strong>. The seller receives <strong>€ <?php echo number_format($priceHT, 2); ?></strong>. Stripe fees are non-refundable.</p>
                     <?php endif; ?>
                 </div>
             </div>
 
+            <?php
+                $serviceSchedules = [];
+                if ($productType === 'service') {
+                    if (!empty($service['schedules']) && is_array($service['schedules'])) {
+                        $serviceSchedules = $service['schedules'];
+                    } elseif (!empty($service['schedule']) && is_array($service['schedule'])) {
+                        $serviceSchedules = $service['schedule'];
+                    }
+                }
+                $hasSchedule = $productType !== 'service' || count($serviceSchedules) > 0;
+            ?>
+
             <div class="payment-section">
+                <?php if ($productType === 'service' && $hasSchedule): ?>
+                    <div class="form-group">
+                        <label>Choose schedule</label>
+                        <div id="schedule-cards" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+                            <?php foreach ($serviceSchedules as $slot): ?>
+                                <?php $hour = isset($slot['hour']) ? sprintf('%02d:00', intval($slot['hour'])) : 'Unknown'; ?>
+                                <button type="button" class="schedule-card" data-schedule-id="<?php echo htmlspecialchars($slot['id'] ?? ''); ?>" data-schedule-hour="<?php echo htmlspecialchars($hour); ?>" style="border:1px solid #d1d5db;border-radius:10px;padding:12px 16px;background:#ffffff;cursor:pointer;"><?php echo htmlspecialchars($hour); ?></button>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
                 <h2>Payment Information</h2>
-                
-                <?php if ($productType === 'service' && $isFull): ?>
+
+                <?php if ($productType === 'service' && !$hasSchedule): ?>
+                    <div class="error-message">This service is not available for booking because it has no schedules.</div>
+                    <a href="<?php echo htmlspecialchars($backListLink); ?>" class="btn-secondary"><?php echo htmlspecialchars($backListLabel); ?></a>
+                <?php elseif ($productType === 'service' && $isFull): ?>
                     <div class="error-message">
                         This service is fully booked. Please choose another service.
                     </div>
@@ -292,7 +417,9 @@ $freeNotice = $productType === 'offer'
                         <input type="hidden" name="product_uuid" value="<?php echo htmlspecialchars($productUuid); ?>">
                         <input type="hidden" name="amount" value="0">
                         <input type="hidden" name="order_token" value="<?php echo htmlspecialchars($orderToken); ?>">
-                        
+                        <input type="hidden" name="event_availability_id" id="event_availability_id_free" value="">
+
+
                         <button type="submit" class="btn-primary btn-complete" id="submit-free-order">
                             <span id="free-button-text"><i class="fa-solid fa-check"></i> Complete Order</span>
                             <span id="free-spinner" class="spinner" style="display: none;"></span>
@@ -301,7 +428,9 @@ $freeNotice = $productType === 'offer'
                 <?php else: ?>
                     <form id="payment-form">
                         <input type="hidden" name="product_uuid" value="<?php echo htmlspecialchars($productUuid); ?>">
-                        
+                        <input type="hidden" name="event_availability_id" id="event_availability_id_paid" value="">
+                    
+
                         <div class="form-group">
                             <label for="cardholder-name">Cardholder Name</label>
                             <input type="text" id="cardholder-name" name="cardholder_name" required 
@@ -337,6 +466,17 @@ $freeNotice = $productType === 'offer'
                 <?php endif; ?>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- Confirm conflict modal -->
+<div id="conflict-modal" class="planning-modal" style="display: none;">
+    <div class="planning-modal-content">
+        <span class="close-button" id="conflict-close">&times;</span>
+        <h2>Schedule Conflict Detected</h2>
+        <p id="conflict-message">The selected schedule conflicts with another booking. Are you sure you want to continue?</p>
+        <div id="conflict-details" style="margin-top: 15px;"></div>
+        <button id="conflict-ok" class="btn-primary" style="margin-top: 20px;">OK</button>
     </div>
 </div>
 

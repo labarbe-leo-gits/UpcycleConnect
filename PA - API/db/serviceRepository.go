@@ -98,8 +98,72 @@ func GetServicesFromDB(search string, typeUUID string, availableOnly bool, emplo
 		return nil, fmt.Errorf("getServices package db rows : %s", err.Error())
 	}
 
+	if err = attachSchedulesToServices(services); err != nil {
+		return nil, err
+	}
+
 	return services, nil
 
+}
+
+func GetServiceSchedulesFromDB(serviceID uuid.UUID) ([]models.ServiceSchedule, error) {
+	schedules := []models.ServiceSchedule{}
+
+	rows, err := Db.Query("SELECT id, hour, is_available FROM event_availability WHERE event_id = ? ORDER BY hour ASC", serviceID.String())
+	if err != nil {
+		return nil, fmt.Errorf("getServiceSchedules package db : %s", err.Error())
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var sched models.ServiceSchedule
+		var idStr string
+		if err := rows.Scan(&idStr, &sched.Hour, &sched.IsAvailable); err != nil {
+			return nil, fmt.Errorf("getServiceSchedules package db scan : %s", err.Error())
+		}
+		if parsedID, err := uuid.Parse(idStr); err == nil {
+			sched.ID = parsedID
+		}
+		schedules = append(schedules, sched)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("getServiceSchedules package db rows : %s", err.Error())
+	}
+
+	return schedules, nil
+}
+
+func SaveServiceSchedulesInDB(serviceID uuid.UUID, scheduleData []models.ServiceSchedule) error {
+	_, err := Db.Exec("DELETE FROM event_availability WHERE event_id = ?", serviceID.String())
+	if err != nil {
+		return fmt.Errorf("saveServiceSchedules package db delete existing : %s", err.Error())
+	}
+
+	for _, sched := range scheduleData {
+		id := sched.ID
+		if id == uuid.Nil {
+			id = uuid.New()
+		}
+		_, err = Db.Exec("INSERT INTO event_availability (id, event_id, hour, is_available) VALUES (?, ?, ?, ?)",
+			id.String(), serviceID.String(), sched.Hour, sched.IsAvailable)
+		if err != nil {
+			return fmt.Errorf("saveServiceSchedules package db insert : %s", err.Error())
+		}
+	}
+
+	return nil
+}
+
+func attachSchedulesToServices(services []models.Service) error {
+	for i := range services {
+		if schedules, err := GetServiceSchedulesFromDB(services[i].ID); err != nil {
+			return err
+		} else {
+			services[i].Schedules = schedules
+		}
+	}
+	return nil
 }
 
 func GetServicesPageFromDB(limit int, offset int, availableOnly bool, search string, typeUUID string, employeeUUID string) ([]models.Service, error) {
@@ -191,6 +255,10 @@ func GetServicesPageFromDB(limit int, offset int, availableOnly bool, search str
 	err = rows.Err()
 	if err != nil {
 		return nil, fmt.Errorf("getServicesPage package db rows : %s", err.Error())
+	}
+
+	if err = attachSchedulesToServices(services); err != nil {
+		return nil, err
 	}
 
 	return services, nil
@@ -334,6 +402,12 @@ func GetServiceByIDFromDB(serviceID uuid.UUID) (models.Service, error) {
 	}
 	if currentParticipants.Valid {
 		service.CurrentParticipants = int(currentParticipants.Int64)
+	}
+
+	if schedules, err := GetServiceSchedulesFromDB(service.ID); err != nil {
+		return service, err
+	} else {
+		service.Schedules = schedules
 	}
 
 	return service, nil

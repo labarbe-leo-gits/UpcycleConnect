@@ -46,6 +46,12 @@ func ValidateOrderDto(orderDto models.Order) []string {
 		validationErrors = append(validationErrors, "Only one of EventID or ProductID may be supplied")
 	}
 
+	if orderDto.EventID != nil {
+		if orderDto.OrderAvailabilityID == nil || *orderDto.OrderAvailabilityID == uuid.Nil {
+			validationErrors = append(validationErrors, "event_availability_id is required for service orders")
+		}
+	}
+
 	if orderDto.Amount < 0 {
 		validationErrors = append(validationErrors, "Amount must be 0 or greater")
 	}

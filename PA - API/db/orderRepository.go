@@ -99,9 +99,14 @@ func CreateOrderInDB(order models.Order) error {
 
 	eventID := uuidPointerToValue(order.EventID)
 	productID := uuidPointerToValue(order.ProductID)
+	availabilityID := uuidPointerToValue(order.OrderAvailabilityID)
 
 	if eventID == nil && productID == nil {
 		return fmt.Errorf("createOrder package db: missing event_id and product_id")
+	}
+
+	if eventID != nil && availabilityID == nil {
+		return fmt.Errorf("createOrder package db: schedule slot is required")
 	}
 
 	tx, err := Db.Begin()
@@ -116,13 +121,20 @@ func CreateOrderInDB(order models.Order) error {
 	}()
 
 	if order.EventID != nil && *order.EventID != uuid.Nil {
+		if order.OrderAvailabilityID == nil || *order.OrderAvailabilityID == uuid.Nil {
+			return fmt.Errorf("event_availability_id is required for service orders")
+		}
+		err = checkSlotAvailability(tx, *order.EventID, *order.OrderAvailabilityID)
+		if err != nil {
+			return err
+		}
 		err = checkAndIncrementParticipants(tx, *order.EventID)
 		if err != nil {
 			return err
 		}
 	}
 
-	_, err = tx.Exec("INSERT INTO orders (id, user_id, event_id, product_id, transaction_id, amount, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())", newID, order.UserID, eventID, productID, order.TransactionID, order.Amount, order.Status)
+	_, err = tx.Exec("INSERT INTO orders (id, user_id, event_id, product_id, event_availability_id, transaction_id, amount, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())", newID, order.UserID, eventID, productID, availabilityID, order.TransactionID, order.Amount, order.Status)
 	if err != nil {
 
 		fmt.Printf("[ERROR] CreateOrderInDB insert: %s, userID=%s, eventID=%#v, productID=%#v, transactionID=%s, amount=%.2f, status=%d\n",
@@ -238,6 +250,29 @@ func checkAndIncrementParticipants(tx *sql.Tx, eventID uuid.UUID) error {
 	_, err = tx.Exec("UPDATE evenements SET current_participants = ? WHERE id = ?", currentValue+1, eventID)
 	if err != nil {
 		return fmt.Errorf("updateParticipants package db : %s", err.Error())
+	}
+
+	return nil
+}
+
+func checkSlotAvailability(tx *sql.Tx, eventID uuid.UUID, availabilityID uuid.UUID) error {
+	var dbEventID string
+	var isAvailable bool
+
+	err := tx.QueryRow("SELECT event_id, is_available FROM event_availability WHERE id = ? FOR UPDATE", availabilityID.String()).Scan(&dbEventID, &isAvailable)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return fmt.Errorf("event_availability_not_found")
+		}
+		return fmt.Errorf("checkAndReserveSlot package db : %s", err.Error())
+	}
+
+	if dbEventID != eventID.String() {
+		return fmt.Errorf("event_availability_mismatch")
+	}
+
+	if !isAvailable {
+		return fmt.Errorf("event_full")
 	}
 
 	return nil

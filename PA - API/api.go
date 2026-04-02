@@ -489,6 +489,7 @@ func main() {
 
 	registerRoute("GET", "/users", "Get all users", app.GetAllUsers)
 	registerRoute("GET", "/dashboard-metrics", "Get aggregated dashboard metrics (admin only)", app.GetDashboardMetrics, app.JWTAuthMiddleware, RoleMiddleware(3))
+	registerRoute("GET", "/profile/{username}", "Get public profile by username", app.GetPublicUser, app.JWTAuthMiddleware)
 	registerRoute("GET", "/users/{id}", "Get a specific user by his UUID", app.GetUserByID, app.JWTAuthMiddleware)
 	registerRoute("GET", "/users/{id}/contracts", "Get contracts for a specific user by their UUID", app.GetContractsByUserID, app.JWTAuthMiddleware)
 	registerRoute("GET", "/users/{id}/invoices", "Get invoices for a specific user by their UUID", app.GetInvoicesByUserID, app.JWTAuthMiddleware)
@@ -566,6 +567,15 @@ func main() {
 
 	registerRoute("GET", "/users/{id}/discussions", "List all discussions for a specific user by their UUID", app.GetUserDiscussions, app.JWTAuthMiddleware)
 	registerRoute("POST", "/users/{id}/discussions", "Create a new discussion for a specific user by their UUID", app.CreateDiscussion, app.JWTAuthMiddleware)
+
+	registerRoute("GET", "/ws", "WebSocket connection for messaging", app.ServeWs, app.JWTAuthMiddleware)
+	registerRoute("GET", "/global/messages", "Get messages for global chat", app.GetGlobalDiscussionMessages, app.JWTAuthMiddleware)
+	registerRoute("GET", "/discussions/{id}/messages", "Get messages for a 1-to-1 discussion", app.GetDiscussionMessages, app.JWTAuthMiddleware)
+	registerRoute("GET", "/groups/{id}/messages", "Get messages for a group discussion", app.GetGroupDiscussionMessages, app.JWTAuthMiddleware)
+	registerRoute("POST", "/groups", "Create a group discussion", app.CreateGroupDiscussion, app.JWTAuthMiddleware)
+	registerRoute("POST", "/groups/{id}/members", "Add user to group discussion", app.AddMemberToGroup, app.JWTAuthMiddleware)
+	registerRoute("GET", "/groups", "Get groups for user", app.GetUserGroups, app.JWTAuthMiddleware)
+
 	/* registerRoute("GET", "/discussions/{id}/messages", "List all messages in a specific discussion by its UUID", app.GetDiscussionMessages, app.JWTAuthMiddleware)
 	registerRoute("PATCH", "/discussions/{id}/messages/{mID}", "Edit a specific message in a discussion by their UUIDs", app.UpdateMessage, app.JWTAuthMiddleware)
 	registerRoute("DELETE", "/discussions/{id}/messages/{mID}", "Delete a specific message from a discussion by their UUIDs", app.DeleteMessage, app.JWTAuthMiddleware)
@@ -611,6 +621,9 @@ func main() {
 	registerRoute("PATCH", "/forums/{id}", "Update a forum's title or description by its UUID", app.UpdateForum, app.JWTAuthMiddleware)
 	registerRoute("DELETE", "/conteneurs/{id}", "Delete a conteneur by its UUID", app.DeleteConteneur, app.JWTAuthMiddleware)
 	registerRoute("GET", "/orders/{id}", "Get details of a specific order by its UUID", app.GetOrderByID, app.JWTAuthMiddleware)
+	registerRoute("GET", "/refund-requests", "List all refund requests", app.GetRefundRequests, app.JWTAuthMiddleware)
+	registerRoute("GET", "/refund-requests/{id}", "Get a specific refund request by its UUID", app.GetRefundRequestByID, app.JWTAuthMiddleware)
+	registerRoute("PATCH", "/refund-requests/{id}/status", "Update a refund request status", app.UpdateRefundRequestStatus, app.JWTAuthMiddleware)
 	registerRoute("POST", "/refund-requests", "Create a refund request for an order", app.CreateRefundRequest, app.JWTAuthMiddleware)
 	registerRoute("GET", "/users/{id}/refund-requests", "List all refund requests for a specific user by their UUID", app.GetRefundRequestsByUserID, app.JWTAuthMiddleware)
 	registerRoute("GET", "/orders/{id}/refund-requests", "List all refund requests for a specific order by its UUID", app.GetRefundRequestsByOrderID, app.JWTAuthMiddleware)
@@ -677,8 +690,11 @@ func main() {
 	// registerRoute("GET", "/categories/{id}/items", "List all items in a specific category by its UUID", app.GetItemsByCategoryID, app.JWTAuthMiddleware)
 	registerRoute("GET", "/categories/{id}", "Get details of a specific category by its UUID", app.GetCategoryByID, app.JWTAuthMiddleware)
 
+	registerRoute("GET", "/friends", "Get user friends and pending requests", app.GetUserFriends, app.JWTAuthMiddleware)
+	registerRoute("POST", "/friends", "Send friend request by username", app.AddFriend, app.JWTAuthMiddleware)
+	registerRoute("PUT", "/friends/{id}/accept", "Accept a friend request", app.AcceptFriendRequest, app.JWTAuthMiddleware)
+	registerRoute("DELETE", "/friends/{id}", "Remove a friend or decline request", app.RemoveFriendOrRequest, app.JWTAuthMiddleware)
 	http.Handle("/swagger/", httpSwagger.Handler(httpSwagger.URL("/openapi.json")))
-
 	http.HandleFunc("/swagger/doc.json", openapiSpecHandler)
 	http.HandleFunc("/", notFoundHandler)
 
@@ -689,6 +705,9 @@ func main() {
 	rootWithCors := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		corsMiddleware(root)(w, r)
 	})
+
+	go app.WsHub.Run()
+
 	if err := http.ListenAndServe(host+":"+port, rootWithCors); err != nil {
 		fmt.Println("[FATAL] ListenAndServe:", err)
 	}

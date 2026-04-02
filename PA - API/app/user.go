@@ -102,6 +102,35 @@ func GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "%s", jsonResponse)
 }
 
+func GetPublicUser(w http.ResponseWriter, r *http.Request) {
+	username := strings.TrimPrefix(r.URL.Path, "/profile/")
+
+	if username == "" {
+		sendError(w, "Username is required", http.StatusBadRequest)
+		return
+	}
+
+	user, err := db.GetUserByIdentifierFromDB(username)
+	if err != nil {
+		fmt.Println("[ERROR] GetPublicUser DB query:", err)
+		sendError(w, "User not found", http.StatusNotFound)
+		return
+	}
+
+	user.Password = ""
+	user.Email = ""
+	user.Balance = 0
+
+	w.Header().Set("Content-Type", "application/json")
+	jsonResponse, err := json.Marshal(user)
+	if err != nil {
+		fmt.Println("[ERROR] GetPublicUser marshal:", err)
+		sendError(w, "Unable to process response", http.StatusInternalServerError)
+		return
+	}
+	fmt.Fprintf(w, "%s", jsonResponse)
+}
+
 func GetUserByID(w http.ResponseWriter, r *http.Request) {
 	idStr := strings.TrimPrefix(r.URL.Path, "/users/")
 	userID, err := uuid.Parse(idStr)

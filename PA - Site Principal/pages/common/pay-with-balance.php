@@ -82,6 +82,8 @@ if (!isset($deductData['success']) || !$deductData['success']) {
     exit;
 }
 
+$eventAvailabilityId = $payload['event_availability_id'] ?? null;
+
 $orderPayload = [
     'user_id' => $userId,
     'amount' => $price,
@@ -90,6 +92,7 @@ $orderPayload = [
 
     'event_id' => $productType === 'service' ? $productUuid : null,
     'product_id' => $productType === 'offer' ? $productUuid : null,
+    'event_availability_id' => $productType === 'service' ? $eventAvailabilityId : null,
     'status' => 1
 ];
 

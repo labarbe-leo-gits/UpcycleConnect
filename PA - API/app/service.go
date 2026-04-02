@@ -142,6 +142,16 @@ func ValidateServiceDto(serviceDto models.Service) []string {
 		serviceDto.OnlineMeetingLink = ""
 	}
 
+	if len(serviceDto.Schedules) == 0 {
+		validationErrors = append(validationErrors, "At least one schedule slot is required")
+	}
+
+	for idx, schedule := range serviceDto.Schedules {
+		if schedule.Hour < 0 || schedule.Hour > 23 {
+			validationErrors = append(validationErrors, fmt.Sprintf("Schedule[%d].hour must be between 0 and 23", idx))
+		}
+	}
+
 	return validationErrors
 }
 
@@ -178,6 +188,14 @@ func CreateService(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("[ERROR] CreateService DB insert:", err)
 		sendError(w, "Unable to create service", http.StatusInternalServerError)
 		return
+	}
+
+	if len(serviceDto.Schedules) > 0 {
+		if err := db.SaveServiceSchedulesInDB(newID, serviceDto.Schedules); err != nil {
+			fmt.Println("[ERROR] CreateService save schedules:", err)
+			sendError(w, "Unable to save service schedules", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	serviceDto.ID = newID
@@ -292,6 +310,12 @@ func UpdateService(w http.ResponseWriter, r *http.Request) {
 	if updateErr := db.UpdateServiceInDB(serviceID, serviceDto); updateErr != nil {
 		fmt.Println("[ERROR] UpdateService DB:", updateErr)
 		sendError(w, "Unable to update service", http.StatusInternalServerError)
+		return
+	}
+
+	if err := db.SaveServiceSchedulesInDB(serviceID, serviceDto.Schedules); err != nil {
+		fmt.Println("[ERROR] UpdateService save schedules:", err)
+		sendError(w, "Unable to update service schedules", http.StatusInternalServerError)
 		return
 	}
 

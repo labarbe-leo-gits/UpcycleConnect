@@ -286,6 +286,112 @@
         }
     }
 
+    function addScheduleRow(schedule = {}) {
+        const container = document.getElementById('svc-schedules-list');
+        if (!container) return;
+
+        const scheduleId = `schedule-row-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        const row = document.createElement('div');
+        row.className = 'schedule-row';
+        row.id = scheduleId;
+        row.style = 'display:flex;gap:8px;align-items:center;';
+
+        row.innerHTML = `
+            <div style="flex:1;display:flex;gap:8px;align-items:center;">
+                <div class="input-wrapper" style="flex:1;">
+                    <i class="fa-solid fa-clock"></i>
+                    <input type="time" class="schedule-time" value="${schedule.hour != null ? String(schedule.hour).padStart(2, '0') + ':00' : ''}" required />
+                </div>
+            </div>
+            <button type="button" class="btn-danger btn-remove-schedule" style="height:40px;min-width:40px;">&times;</button>
+        `;
+
+        row.querySelector('.btn-remove-schedule').addEventListener('click', () => row.remove());
+
+        container.appendChild(row);
+    }
+
+    function renderSchedules(schedules) {
+        const container = document.getElementById('svc-schedules-list');
+        if (!container) return;
+        container.innerHTML = '';
+        if (Array.isArray(schedules) && schedules.length > 0) {
+            schedules.forEach(sched => addScheduleRow({
+                hour: sched.hour,
+                is_available: typeof sched.is_available === 'undefined' ? true : sched.is_available
+            }));
+        }
+    }
+
+    function readSchedulesFromForm() {
+        const rows = document.querySelectorAll('.schedule-row');
+        const payload = [];
+        rows.forEach(row => {
+            const time = row.querySelector('.schedule-time')?.value;
+            if (!time) return;
+
+            const hour = parseInt(time.split(':')[0], 10);
+            if (Number.isNaN(hour)) return;
+            const scheduleData = {
+                hour: hour,
+                is_available: true
+            };
+            payload.push(scheduleData);
+        });
+        return payload;
+    }
+
+    function clearSchedules() {
+        const container = document.getElementById('svc-schedules-list');
+        if (container) container.innerHTML = '';
+    }
+
+    function openScheduleModal() {
+        const modal = document.getElementById('schedule-modal');
+        if (!modal) return;
+        const error = document.getElementById('schedule-modal-error');
+        if (error) {
+            error.style.display = 'none';
+            error.textContent = '';
+        }
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeScheduleModal() {
+        const modal = document.getElementById('schedule-modal');
+        if (!modal) return;
+        modal.classList.remove('is-open');
+        modal.setAttribute('aria-hidden', 'true');
+        document.getElementById('schedule-time').value = '';
+    }
+
+    document.getElementById('add-schedule-btn')?.addEventListener('click', function () {
+        openScheduleModal();
+    });
+
+    document.getElementById('schedule-modal-close')?.addEventListener('click', closeScheduleModal);
+    document.getElementById('schedule-modal-cancel')?.addEventListener('click', closeScheduleModal);
+
+    document.getElementById('schedule-modal-save')?.addEventListener('click', function () {
+        const timeInput = document.getElementById('schedule-time');
+        const errorEl = document.getElementById('schedule-modal-error');
+
+        if (!timeInput || !timeInput.value) {
+            if (errorEl) { errorEl.style.display = 'block'; errorEl.textContent = 'Please select a time.'; }
+            return;
+        }
+
+        const hour = parseInt(timeInput.value.split(':')[0], 10);
+        if (Number.isNaN(hour) || hour < 0 || hour > 23) {
+            if (errorEl) { errorEl.style.display = 'block'; errorEl.textContent = 'Invalid time slot.'; }
+            return;
+        }
+
+        addScheduleRow({ hour: hour });
+        closeScheduleModal();
+    });
+
     function updateMeetingUI() {
         const wrapper = document.getElementById('svc-meet-switcher');
         if (!wrapper) return;
@@ -491,6 +597,8 @@
                 : `<span style="color:#7c3aed;font-weight:500;"><i class="fa-solid fa-wifi"></i> Online</span>`;
             const maxP      = svc.maximum_participants != null ? svc.maximum_participants : '∞';
             const curP      = svc.current_participants ?? 0;
+            const scheduleCount = Array.isArray(svc.schedules) ? svc.schedules.length : 0;
+            const scheduleMeta = scheduleCount > 0 ? `<span><i class="fa-solid fa-clock"></i> ${scheduleCount} slot${scheduleCount > 1 ? 's' : ''}</span>` : '';
 
             card.innerHTML = `
                 <div class="service-header">
@@ -501,6 +609,7 @@
                 <div class="service-meta" style="display:flex;gap:18px;flex-wrap:wrap;font-size:.85rem;color:#6b7280;margin-bottom:10px;">
                     <span><i class="fa-solid fa-calendar"></i> ${dateStr}</span>
                     ${locationHtml}
+                    ${scheduleMeta}
                     <span><i class="fa-solid fa-users"></i> ${curP} / ${maxP}</span>
                     <span><i class="fa-solid fa-euro-sign"></i> ${price}</span>
                 </div>
@@ -786,6 +895,7 @@
         renderEmployeeChips();
         meetingType = 'none';
         meetingUrl = '';
+        clearSchedules();
         updateMeetingUI();
         showModal('service-form-modal');
     }
@@ -816,6 +926,9 @@
 
         meetingType = svc.meeting_type || 'none';
         meetingUrl  = svc.online_meeting_link || '';
+
+        renderSchedules(svc.schedules || []);
+
         updateMeetingUI();
 
         showModal('service-form-modal');
@@ -837,7 +950,8 @@
             service_city:         this.querySelector('#svc-city').value.trim(),
             service_zip:          this.querySelector('#svc-zip').value.trim(),
             meeting_type:         meetingType,
-            online_meeting_link:  meetingUrl
+            online_meeting_link:  meetingUrl,
+            schedules:            readSchedulesFromForm()
         };
 
         const maxP = this.querySelector('#svc-max-participants').value;

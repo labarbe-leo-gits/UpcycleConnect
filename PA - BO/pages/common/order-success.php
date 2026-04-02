@@ -165,6 +165,8 @@ if ($paymentVerified) {
             }
         }
 
+        $eventAvailabilityId = $_GET['event_availability_id'] ?? null;
+
         if ($alreadySaved) {
             $orderSaved = true;
         } else {
@@ -173,6 +175,7 @@ if ($paymentVerified) {
                 'user_id' => $user['id'] ?? '',
                 'event_id' => $productType === 'service' ? $productUuid : null,
                 'product_id' => $productType === 'offer' ? $productUuid : null,
+                'event_availability_id' => $productType === 'service' ? $eventAvailabilityId : null,
                 'transaction_id' => $transactionId,
                 'amount' => $priceTTC,
                 'status' => 1

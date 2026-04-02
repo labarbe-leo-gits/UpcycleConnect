@@ -39,6 +39,9 @@ CREATE TABLE IF NOT EXISTS users (
     user_zip_code CHAR(5) NULL,
     user_road_number INT NULL,
     siret VARCHAR(14) NULL,
+    newsletter INT NOT NULL DEFAULT 0,
+    private_profile INT NOT NULL DEFAULT 0,
+    friends_requests_settings INT NOT NULL DEFAULT 0, -- 0: everyone, 1: friends of friends, 2: no one
     FOREIGN KEY (manager_id) REFERENCES users(id) ON DELETE SET NULL,
     UNIQUE INDEX idx_oauth (oauth_provider, oauth_id)
 );
@@ -168,6 +171,8 @@ CREATE TABLE IF NOT EXISTS event_availability(
     event_id CHAR(36) NOT NULL,
     hour INT NOT NULL,
     is_available BOOLEAN NOT NULL DEFAULT TRUE,
+    max_participants INT NULL,
+    current_participants INT NOT NULL DEFAULT 0,
     FOREIGN KEY (event_id) REFERENCES evenements(id) ON DELETE CASCADE
 );
 
@@ -250,6 +255,7 @@ CREATE TABLE IF NOT EXISTS orders (
     user_id CHAR(36) NOT NULL,
     event_id CHAR(36),
     product_id CHAR(36),
+    event_availability_id CHAR(36),
     transaction_id VARCHAR(255) NOT NULL,
     amount DECIMAL(10, 2) NOT NULL,
     status INT NOT NULL DEFAULT 0,
@@ -257,7 +263,8 @@ CREATE TABLE IF NOT EXISTS orders (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (event_id) REFERENCES evenements(id) ON DELETE CASCADE,
-    FOREIGN KEY (product_id) REFERENCES annonces(id) ON DELETE CASCADE
+    FOREIGN KEY (product_id) REFERENCES annonces(id) ON DELETE CASCADE,
+    FOREIGN KEY (event_availability_id) REFERENCES event_availability(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS reservations (
@@ -387,6 +394,7 @@ CREATE TABLE IF NOT EXISTS discussions (
 CREATE TABLE IF NOT EXISTS group_discussions (
     id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
     title VARCHAR(255) NOT NULL,
+    image_url VARCHAR(500) DEFAULT NULL,
     created_by CHAR(36) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
@@ -440,6 +448,7 @@ CREATE TABLE IF NOT EXISTS refundsRequests (
     user_id CHAR(36) NOT NULL,
     reason TEXT NOT NULL,
     status INT NOT NULL DEFAULT 0,
+    admin_comment TEXT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     approved_by CHAR(36) NULL,
@@ -730,5 +739,28 @@ INSERT INTO users (first_name, last_name, username, email, password_hash, user_t
 /!\ IL FAUT AUSSI LE FRONTEND
 
  */
+
+CREATE TABLE IF NOT EXISTS friendships (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    user_id CHAR(36) NOT NULL,
+    friend_id CHAR(36) NOT NULL,
+    status INT NOT NULL DEFAULT 0, -- 0: pending, 1: accepted      message TEXT DEFAULT NULL,    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (friend_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE INDEX idx_friendship (user_id, friend_id)
+);
+
+CREATE TABLE IF NOT EXISTS friendship_requests (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    sender_id CHAR(36) NOT NULL,
+    receiver_id CHAR(36) NOT NULL,
+    status INT NOT NULL DEFAULT 0, -- 0: pending, 1: accepted, 2: rejected
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE INDEX idx_friendship_request (sender_id, receiver_id)
+);
 
 SET FOREIGN_KEY_CHECKS = 1;

@@ -264,10 +264,21 @@ $freeNotice = $productType === 'offer'
                 </div>
             </div>
 
+            <?php
+                $serviceSchedules = [];
+                if ($productType === 'service' && !empty($service['schedules']) && is_array($service['schedules'])) {
+                    $serviceSchedules = $service['schedules'];
+                }
+                $hasSchedule = $productType !== 'service' || count($serviceSchedules) > 0;
+            ?>
+
             <div class="payment-section">
                 <h2>Payment Information</h2>
-                
-                <?php if ($productType === 'service' && $isFull): ?>
+
+                <?php if ($productType === 'service' && !$hasSchedule): ?>
+                    <div class="error-message">This service is not available for booking because it has no schedules.</div>
+                    <a href="<?php echo htmlspecialchars($backListLink); ?>" class="btn-secondary"><?php echo htmlspecialchars($backListLabel); ?></a>
+                <?php elseif ($productType === 'service' && $isFull): ?>
                     <div class="error-message">
                         This service is fully booked. Please choose another service.
                     </div>
@@ -282,7 +293,24 @@ $freeNotice = $productType === 'offer'
                         <input type="hidden" name="product_uuid" value="<?php echo htmlspecialchars($productUuid); ?>">
                         <input type="hidden" name="amount" value="0">
                         <input type="hidden" name="order_token" value="<?php echo htmlspecialchars($orderToken); ?>">
-                        
+
+                        <?php if ($productType === 'service' && $hasSchedule): ?>
+                            <div class="form-group">
+                                <label for="event_availability_id">Choose schedule</label>
+                                <select name="event_availability_id" id="event_availability_id" required class="form-control">
+                                    <option value="">-- Select schedule --</option>
+                                    <?php foreach ($serviceSchedules as $slot): ?>
+                                        <?php
+                                            $hour = isset($slot['hour']) ? sprintf('%02d:00', intval($slot['hour'])) : 'Unknown';
+                                            $label = $hour;
+                                            $disabled = '';
+                                        ?>
+                                        <option value="<?php echo htmlspecialchars($slot['id'] ?? ''); ?>" <?php echo $disabled; ?>><?php echo htmlspecialchars($label); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        <?php endif; ?>
+
                         <button type="submit" class="btn-primary btn-complete" id="submit-free-order">
                             <span id="free-button-text"><i class="fa-solid fa-check"></i> Complete Order</span>
                             <span id="free-spinner" class="spinner" style="display: none;"></span>
@@ -291,7 +319,25 @@ $freeNotice = $productType === 'offer'
                 <?php else: ?>
                     <form id="payment-form">
                         <input type="hidden" name="product_uuid" value="<?php echo htmlspecialchars($productUuid); ?>">
-                        
+                        <input type="hidden" name="event_availability_id" id="event_availability_id" value="">
+
+                        <?php if ($productType === 'service' && $hasSchedule): ?>
+                        <div class="form-group">
+                            <label for="schedule-select">Choose schedule</label>
+                            <select id="schedule-select" class="form-control" required>
+                                <option value="">-- Select schedule --</option>
+                                <?php foreach ($serviceSchedules as $slot): ?>
+                                    <?php
+                                        $hour = isset($slot['hour']) ? sprintf('%02d:00', intval($slot['hour'])) : 'Unknown';
+                                        $label = $hour;
+                                        $disabled = '';
+                                    ?>
+                                    <option value="<?php echo htmlspecialchars($slot['id'] ?? ''); ?>" <?php echo $disabled; ?>><?php echo htmlspecialchars($label); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <?php endif; ?>
+
                         <div class="form-group">
                             <label for="cardholder-name">Cardholder Name</label>
                             <input type="text" id="cardholder-name" name="cardholder_name" required 

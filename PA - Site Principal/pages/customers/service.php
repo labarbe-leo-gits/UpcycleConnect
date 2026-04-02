@@ -161,6 +161,24 @@ if (is_array($ordersDecoded)) {
                     </div>
                 </div>
                 <?php endif; ?>
+
+                <?php if (!empty($service['schedules']) && is_array($service['schedules'])): ?>
+                <div class="info-item">
+                    <i class="fa-solid fa-clock"></i>
+                    <div class="info-content">
+                        <span class="label">Schedules</span>
+                        <span class="value">
+                            <?php
+                            $slots = array_map(function($slot) {
+                                $hour = isset($slot['hour']) ? sprintf('%02d:00', intval($slot['hour'])) : '?';
+                                return $hour;
+                            }, $service['schedules']);
+                            echo htmlspecialchars(implode(', ', $slots));
+                            ?>
+                        </span>
+                    </div>
+                </div>
+                <?php endif; ?>
                 
                 <?php if ($creatorName): ?>
                 <div class="info-item">

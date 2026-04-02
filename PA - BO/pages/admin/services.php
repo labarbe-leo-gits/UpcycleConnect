@@ -179,6 +179,13 @@ include_once '../../includes/admin-header.php';
                 </div>
             </div>
 
+            <div class="field" id="svc-schedules-section">
+                <label>Schedules</label>
+                <div id="svc-schedules-list" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;"></div>
+                <button type="button" id="add-schedule-btn" class="btn-secondary" style="margin-top:12px;">Add schedule slot</button>
+                <p style="color:#6b7280;font-size:.85em;margin-top:4px;">Service max participants applies to all slots (slots are availability points, not independent quotas).</p>
+            </div>
+
             <div class="modal-actions">
                 <button type="button" class="btn-secondary" id="service-form-cancel">Cancel</button>
                 <button type="submit" class="add-offer-button" id="service-form-submit">Save</button>
@@ -213,6 +220,21 @@ include_once '../../includes/admin-header.php';
                 <button type="submit" class="add-offer-button" id="type-form-submit">Save</button>
             </div>
         </form>
+    </div>
+</div>
+
+<div class="add-modal" id="schedule-modal" role="dialog" aria-hidden="true">
+    <div class="add-modal-content" style="max-width:400px;">
+        <span class="close-button" id="schedule-modal-close">&times;</span>
+        <h2 id="schedule-modal-title">Add schedule slot</h2>
+        <div class="modal-body" style="display:flex;flex-direction:column;gap:10px;">
+            <div class="field"><label>Time</label><input type="time" id="schedule-time" class="form-control" required /></div>
+            <div class="form-error" id="schedule-modal-error" style="display:none;color:#ef4444;font-size:.9em;"></div>
+        </div>
+        <div class="modal-actions" style="margin-top:12px;">
+            <button type="button" class="btn-secondary" id="schedule-modal-cancel">Cancel</button>
+            <button type="button" class="btn-primary" id="schedule-modal-save">Add slot</button>
+        </div>
     </div>
 </div>
 
