@@ -820,8 +820,13 @@ select[id$="-ampm"] {
 }
 
 .planning-modal.active {
+  display: flex;
   opacity: 1;
   pointer-events: auto;
+}
+
+.planning-modal.active .planning-modal-content {
+  opacity: 1;
 }
 
 .planning-modal-content {
