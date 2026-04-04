@@ -44,20 +44,25 @@ type llmUsageRequestBody struct {
 }
 
 var requestBodyTypes = map[string]reflect.Type{
-	"POST /login":                                     reflect.TypeOf(app.LoginRequest{}),
-	"POST /users":                                     reflect.TypeOf(models.User{}),
-	"POST /moderate":                                  reflect.TypeOf(moderationRequestBody{}),
-	"POST /annonces":                                  reflect.TypeOf(models.Annonce{}),
-	"PATCH /annonces/{id}":                            reflect.TypeOf(models.Annonce{}),
-	"POST /facteurs":                                  reflect.TypeOf(models.FacteurMateriaux{}),
-	"PATCH /facteurs/{id}":                            reflect.TypeOf(models.FacteurMateriaux{}),
-	"POST /users/{id}/badges":                         reflect.TypeOf(models.Badge{}),
-	"POST /products/services":                         reflect.TypeOf(models.Service{}),
-	"PATCH /products/services/{id}":                   reflect.TypeOf(models.Service{}),
-	"POST /orders":                                    reflect.TypeOf(models.Order{}),
-	"POST /annonces/{id}/images":                      reflect.TypeOf(models.Image{}),
-	"POST /notifications":                             reflect.TypeOf(models.Notification{}),
-	"POST /payment-requests":                          reflect.TypeOf(models.PaymentRequest{}),
+	"POST /login":                   reflect.TypeOf(app.LoginRequest{}),
+	"POST /users":                   reflect.TypeOf(models.User{}),
+	"POST /moderate":                reflect.TypeOf(moderationRequestBody{}),
+	"POST /annonces":                reflect.TypeOf(models.Annonce{}),
+	"PATCH /annonces/{id}":          reflect.TypeOf(models.Annonce{}),
+	"POST /facteurs":                reflect.TypeOf(models.FacteurMateriaux{}),
+	"PATCH /facteurs/{id}":          reflect.TypeOf(models.FacteurMateriaux{}),
+	"POST /users/{id}/badges":       reflect.TypeOf(models.Badge{}),
+	"POST /products/services":       reflect.TypeOf(models.Service{}),
+	"PATCH /products/services/{id}": reflect.TypeOf(models.Service{}),
+	"POST /orders":                  reflect.TypeOf(models.Order{}),
+	"POST /annonces/{id}/images":    reflect.TypeOf(models.Image{}),
+	"POST /notifications":           reflect.TypeOf(models.Notification{}),
+	"POST /payment-requests":        reflect.TypeOf(models.PaymentRequest{}),
+	"PATCH /payment-requests/{id}/status": reflect.TypeOf(struct {
+		Status       *int   `json:"status"`
+		ApproverID   string `json:"approver_id,omitempty"`
+		AdminComment string `json:"admin_comment,omitempty"`
+	}{}),
 	"POST /payouts":                                   reflect.TypeOf(models.Payout{}),
 	"POST /banking-details":                           reflect.TypeOf(models.BankingDetails{}),
 	"POST /forums":                                    reflect.TypeOf(models.Forum{}),
@@ -520,10 +525,12 @@ func main() {
 	registerRoute("GET", "/users/{id}/notifications", "List all notifications for a specific user by their UUID", app.GetNotificationsByUserID, app.JWTAuthMiddleware)
 	registerRoute("GET", "/payment-requests", "List all payment requests in the system", app.GetPaymentRequests, app.JWTAuthMiddleware)
 	registerRoute("POST", "/payment-requests", "Create a new payment request", app.CreatePaymentRequest, app.JWTAuthMiddleware)
+	registerRoute("PATCH", "/payment-requests/{id}/status", "Update a payment request status", app.UpdatePaymentRequestStatus, app.JWTAuthMiddleware)
 	registerRoute("GET", "/payouts", "List all payouts in the system", app.GetPayouts, app.JWTAuthMiddleware)
 	registerRoute("POST", "/payouts", "Create a new payout", app.CreatePayout, app.JWTAuthMiddleware)
 	registerRoute("GET", "/users/{id}/payouts", "List use's payout", app.GetPayoutsByUserID, app.JWTAuthMiddleware)
 	registerRoute("GET", "/banking-details", "List all banking details in the system", app.GetBankingDetails, app.JWTAuthMiddleware)
+	registerRoute("GET", "/banking-details/{id}", "Get banking details by UUID", app.GetBankingDetailsByID, app.JWTAuthMiddleware)
 	registerRoute("GET", "/users/{id}/banking-details", "Get banking details for a specific user by their UUID", app.GetBankingDetailsByUserID, app.JWTAuthMiddleware)
 	registerRoute("POST", "/banking-details", "Create banking details for a user", app.CreateBankingDetails, app.JWTAuthMiddleware)
 	registerRoute("GET", "/users/{id}/annonces", "List all annonces for a specific user by their UUID", app.GetAnnoncesByUserID, app.JWTAuthMiddleware)
