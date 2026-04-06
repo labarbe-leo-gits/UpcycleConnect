@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS users (
     user_road_number INT NULL,
     siret VARCHAR(14) NULL,
     newsletter INT NOT NULL DEFAULT 0,
+    updoc_quota INT NOT NULL DEFAULT 15, /* Quota for user_type = 2 only. Having a premium subscription will lift to infinity. Once expiraing, we keep 10 days before deleting newest of them. */
     private_profile INT NOT NULL DEFAULT 0,
     friends_requests_settings INT NOT NULL DEFAULT 0, -- 0: everyone, 1: friends of friends, 2: no one
     FOREIGN KEY (manager_id) REFERENCES users(id) ON DELETE SET NULL,

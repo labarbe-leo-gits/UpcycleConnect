@@ -116,6 +116,8 @@
             var submitButton = document.getElementById('submit-promotion-payment');
             var buttonText = document.getElementById('button-text');
             var spinner = document.getElementById('spinner');
+            var didRedirect = false;
+
             if (submitButton) submitButton.disabled = true;
             if (buttonText) buttonText.style.display = 'none';
             if (spinner) spinner.style.display = 'inline-block';
@@ -126,7 +128,7 @@
                     return;
                 }
 
-                stripe.confirmCardPayment(data.clientSecret, {
+                return stripe.confirmCardPayment(data.clientSecret, {
                     payment_method: {
                         card: cardElement,
                         billing_details: {
@@ -134,33 +136,32 @@
                             email: document.getElementById('billing-email').value
                         }
                     }
-                }).then(function(result) {
-                    if (result.error) {
-                        showResult(false, result.error.message);
-                        return;
-                    }
-                    if (result.paymentIntent && result.paymentIntent.status === 'succeeded') {
-                        verifyPayment(result.paymentIntent.id).then(function(verify) {
-                            if (verify && verify.status === 'succeeded') {
-                                showResult(true, 'Payment received and promotion activated.');
-                            } else {
-                                showResult(false, (verify && verify.error) ? verify.error : 'Payment confirmed, but verification failed.');
-                            }
-                        }).catch(function() {
-                            showResult(false, 'Verification request failed.');
-                        });
-                        return;
-                    }
-                    showResult(false, 'Payment not completed.');
-                }).catch(function(err) {
-                    showResult(false, err.message || 'Payment booking error.');
                 });
-            }).catch(function() {
-                showResult(false, 'Unable to create payment intent.');
+            }).then(function(result) {
+                if (!result) return;
+                if (result.error) {
+                    showResult(false, result.error.message);
+                    return;
+                }
+                if (result.paymentIntent && result.paymentIntent.status === 'succeeded') {
+                    return verifyPayment(result.paymentIntent.id).then(function(verify) {
+                        if (verify && verify.status === 'succeeded') {
+                            didRedirect = true;
+                            window.location.href = 'promote-success?status=success';
+                        } else {
+                            showResult(false, (verify && verify.error) ? verify.error : 'Payment confirmed, but verification failed.');
+                        }
+                    });
+                }
+                showResult(false, 'Payment not completed.');
+            }).catch(function(err) {
+                showResult(false, err && err.message ? err.message : 'Unable to create payment intent.');
             }).finally(function() {
-                if (submitButton) submitButton.disabled = false;
-                if (buttonText) buttonText.style.display = '';
-                if (spinner) spinner.style.display = 'none';
+                if (!didRedirect) {
+                    if (submitButton) submitButton.disabled = false;
+                    if (buttonText) buttonText.style.display = '';
+                    if (spinner) spinner.style.display = 'none';
+                }
             });
         });
     }

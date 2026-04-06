@@ -100,6 +100,15 @@ func GetProjectByID(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(project)
 }
 
+func CountProjectsByUserIDFromDB(userID string) (int, error) {
+	number, err := db.CountProjectsByUserIDFromDB(userID)
+	if err != nil {
+		return 0, err
+	}
+
+	return number, nil
+}
+
 func CreateProject(w http.ResponseWriter, r *http.Request) {
 	var input models.Project
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
@@ -115,6 +124,30 @@ func CreateProject(w http.ResponseWriter, r *http.Request) {
 		sendError(w, "user_id is required", http.StatusBadRequest)
 		return
 	}
+
+	user, err := db.GetUserByIDFromDB(input.UserID)
+	if err != nil {
+		fmt.Println("[ERROR] CreateProject get user:", err)
+		sendError(w, "Unable to fetch user", http.StatusInternalServerError)
+		return
+	}
+
+	if user.UserType == 2 {
+
+		count, err := db.CountProjectsByUserIDFromDB(input.UserID.String())
+		if err != nil {
+			fmt.Println("[ERROR] CreateProject count projects:", err)
+			sendError(w, "Unable to count user's projects", http.StatusInternalServerError)
+			return
+		}
+
+		if count >= user.UpdocQuota && user.UpdocQuota != 0 {
+			sendError(w, fmt.Sprintf("Project quota reached. You can only have %d projects. Upgrade to the premium tier for an unlimited project amount !", user.UpdocQuota), http.StatusForbidden)
+			return
+		}
+
+	}
+
 
 	project, err := db.CreateProjectInDB(input)
 	if err != nil {

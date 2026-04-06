@@ -36,4 +36,5 @@ type User struct {
 	UserXP           int       `json:"user_xp"`
 	UserLevel        int       `json:"user_level"`
 	Badges           []Badge   `json:"badges,omitempty"`
+	UpdocQuota		int       `json:"updoc_quota"`
 }

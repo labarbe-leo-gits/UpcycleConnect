@@ -97,6 +97,12 @@ func GetProjectsFromDB(offset, limit int, search, sort, authorID string, aiGener
 	return projects, total, nil
 }
 
+func CountProjectsByUserIDFromDB(userID string) (int, error) {
+	var count int
+	err := Db.QueryRow("SELECT COUNT(id) FROM projects WHERE user_id = ?", userID).Scan(&count)
+	return count, err
+}
+
 func GetProjectByIDFromDB(id string) (*models.Project, error) {
 	var p models.Project
 	var idStr, userIDStr string
@@ -135,6 +141,7 @@ func IncrementProjectViewsInDB(id string) error {
 }
 
 func CreateProjectInDB(p models.Project) (*models.Project, error) {
+
 	id := uuid.New()
 	_, err := Db.Exec(
 		"INSERT INTO projects (id, user_id, annonce_id, title, description, status, ai_generated, views) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
@@ -143,6 +150,7 @@ func CreateProjectInDB(p models.Project) (*models.Project, error) {
 	if err != nil {
 		return nil, fmt.Errorf("CreateProjectInDB: %w", err)
 	}
+
 	p.ID = id
 	return &p, nil
 }

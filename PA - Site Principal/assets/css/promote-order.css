@@ -1,0 +1,91 @@
+.promotion-checkout-page .form-group {
+  margin-bottom: 20px;
+}
+
+.promotion-checkout-page .form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #064e3b;
+  font-size: 14px;
+}
+
+.promotion-checkout-page .form-control {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  font-size: 15px;
+  background: #ffffff;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+  color: #1f2937;
+}
+
+.promotion-checkout-page .form-control:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
+}
+
+.promotion-checkout-page .stripe-element {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 50px;
+  padding: 10px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  background: #ffffff;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.promotion-checkout-page .stripe-element:focus-within {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
+}
+
+.promotion-checkout-page .stripe-element .StripeElement {
+  width: 100%;
+}
+
+.promotion-checkout-page #card-errors {
+  display: none;
+  margin-top: 10px;
+  color: #dc2626;
+  font-size: 14px;
+}
+
+.promotion-checkout-page #submit-promotion-payment {
+  width: 100%;
+  min-height: 54px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-weight: 700;
+}
+
+.promotion-checkout-page #submit-promotion-payment:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.promotion-checkout-page .spinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 3px solid rgba(255, 255, 255, 0.45);
+  border-radius: 50%;
+  border-top-color: #ffffff;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

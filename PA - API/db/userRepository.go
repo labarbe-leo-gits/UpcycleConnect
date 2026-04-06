@@ -206,9 +206,9 @@ func GetUserByIDFromDB(id uuid.UUID) (models.User, error) {
 	var userRoadNumber, userRoad, userZipCode, userCity sql.NullString
 
 	err := Db.QueryRow(
-		"SELECT id, first_name, last_name, company_name, user_type, username, email, password_hash, balance, upcycling_score, created_at, last_login, oauth_provider, oauth_id, profile_picture, is_premium, stripe_customer_id, manager_id, user_xp, user_level, user_road_number, user_road, user_zip_code, user_city FROM users WHERE id = ?",
+		"SELECT id, first_name, last_name, company_name, user_type, username, email, password_hash, balance, upcycling_score, created_at, last_login, oauth_provider, oauth_id, profile_picture, is_premium, stripe_customer_id, manager_id, user_xp, user_level, user_road_number, user_road, user_zip_code, user_city, updoc_quota FROM users WHERE id = ?",
 		id.String(),
-	).Scan(&idStr, &user.FirstName, &user.LastName, &companyName, &user.UserType, &user.Username, &user.Email, &user.Password, &user.Balance, &user.UpcyclingScore, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture, &user.IsPremium, &stripeCustomerID, &managerID, &userXP, &userLevel, &userRoadNumber, &userRoad, &userZipCode, &userCity)
+	).Scan(&idStr, &user.FirstName, &user.LastName, &companyName, &user.UserType, &user.Username, &user.Email, &user.Password, &user.Balance, &user.UpcyclingScore, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture, &user.IsPremium, &stripeCustomerID, &managerID, &userXP, &userLevel, &userRoadNumber, &userRoad, &userZipCode, &userCity, &user.UpdocQuota)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return user, fmt.Errorf("user not found")
@@ -739,7 +739,7 @@ func UpdateSubscriptionInDB(userID uuid.UUID, isPremium int, stripeCustomerID, s
 }
 
 func RevokePremiumByStripeCustomerID(customerID string) error {
-	_, err := Db.Exec("UPDATE users SET is_premium=0, LLM_quota=15 WHERE stripe_customer_id=?", customerID)
+	_, err := Db.Exec("UPDATE users SET is_premium=0, LLM_quota=15, updoc_quota=15 WHERE stripe_customer_id=?", customerID)
 	if err != nil {
 		return fmt.Errorf("revokePremiumByCustomer: %s", err.Error())
 	}
@@ -747,7 +747,7 @@ func RevokePremiumByStripeCustomerID(customerID string) error {
 }
 
 func RevokePremiumByStripeSubscriptionID(subscID string) error {
-	_, err := Db.Exec("UPDATE users SET is_premium=0, LLM_quota=15 WHERE stripe_subscription_id=?", subscID)
+	_, err := Db.Exec("UPDATE users SET is_premium=0, LLM_quota=15, updoc_quota=15 WHERE stripe_subscription_id=?", subscID)
 	if err != nil {
 		return fmt.Errorf("revokePremiumBySubscription: %s", err.Error())
 	}
@@ -944,6 +944,18 @@ func GetUserDiscussionsFromDB(userID string) ([]models.Discussion, error) {
 	}
 
 	return discussions, nil
+
+}
+
+func UpdateProjectQuotaInDB(userID string, newQuota int) error {
+
+	_, err := Db.Exec("UPDATE users SET updoc_quota = ? WHERE id = ?", newQuota, userID)
+	if err != nil {
+		fmt.Printf("[ERROR] UpdateProjectQuotaInDB: %s\n", err.Error())
+		return fmt.Errorf("database error")
+	}
+
+	return nil
 
 }
 

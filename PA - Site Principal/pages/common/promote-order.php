@@ -47,7 +47,7 @@ if ($amount <= 0) {
 $priceDisplay = sprintf('€ %.2f', $amount / 100);
 
 $title = 'Pay for Promotion';
-$extraCss = ['../../assets/css/subscription.css'];
+$extraCss = ['../../assets/css/subscription.css', '../../assets/css/promote-order.css'];
 $extraJs = ['../../assets/js/promote-order.js'];
 require_once '../../includes/pro-header.php';
 ?>
@@ -90,22 +90,24 @@ require_once '../../includes/pro-header.php';
             <div class="payment-section">
                 <h2>Payment</h2>
                 <form id="promotion-payment-form">
-                    <div class="form-group">
+                        <div class="form-group">
                         <label for="cardholder-name">Name on card</label>
-                        <input id="cardholder-name" type="text" required />
+                        <input id="cardholder-name" type="text" class="form-control" autocomplete="cc-name" required />
                     </div>
                     <div class="form-group">
                         <label for="billing-email">Email</label>
-                        <input id="billing-email" type="email" required value="<?php echo htmlspecialchars($user['email'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" />
+                        <input id="billing-email" type="email" class="form-control" autocomplete="email" required value="<?php echo htmlspecialchars($user['email'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" />
                     </div>
                     <div class="form-group">
                         <label>Card details</label>
-                        <div id="card-element" class="stripe-card-element"></div>
+                        <div class="stripe-element">
+                            <div id="card-element"></div>
+                        </div>
                         <div id="card-errors" class="error-message" style="display:none;"></div>
                     </div>
                     <button id="submit-promotion-payment" type="submit" class="btn btn-primary">
                         <span id="button-text">Pay <?php echo $priceDisplay; ?></span>
-                        <span id="spinner" class="spinner" style="display:none;"></span>
+                        <span id="spinner" class="spinner" style="display:none;" aria-hidden="true"></span>
                     </button>
                 </form>
             </div>
