@@ -123,6 +123,8 @@
     var LIMIT = 6;
     var state = { page: 1, total: 0, loaded: false, loading: false };
     var cache = {};
+    var UPDOC_BASE_PATH = typeof window.UPDOC_BASE_PATH !== 'undefined' ? window.UPDOC_BASE_PATH : '';
+    var UPDOC_API_PATH  = typeof window.UPDOC_API_PATH !== 'undefined' ? window.UPDOC_API_PATH : 'updoc-api';
 
     var tabBtn   = document.querySelector('[data-tab="myupdoc"]');
     var grid     = document.getElementById('updoc-project-grid');
@@ -202,6 +204,8 @@
         var projId = escAttr(item.id || '');
 
         var aiGenerated = parseInt(item.ai_generated ?? 0) === 1;
+        var viewUrl = UPDOC_BASE_PATH + 'updoc-view?id=' + projId;
+        var editUrl = UPDOC_BASE_PATH + 'updoc?id=' + projId;
 
         el.innerHTML =
             '<div class="updoc-proj-card-body">' +
@@ -214,10 +218,10 @@
               '</div>' +
             '</div>' +
             '<div class="updoc-proj-card-actions">' +
-              '<a href="updoc-view?id=' + projId + '" class="updoc-proj-action-btn">' +
+              '<a href="' + viewUrl + '" class="updoc-proj-action-btn">' +
                 '<i class="fa-solid fa-eye"></i> View' +
               '</a>' +
-              '<a href="updoc?id=' + projId + '" class="updoc-proj-action-btn">' +
+              '<a href="' + editUrl + '" class="updoc-proj-action-btn">' +
                 '<i class="fa-solid fa-pen"></i> Edit' +
               '</a>' +
               '<button type="button" class="updoc-proj-action-btn danger" data-delete-id="' + projId + '">' +
@@ -227,7 +231,7 @@
 
         el.querySelector('.danger').addEventListener('click', function () {
             openDeleteModal(item.title, function () {
-                fetch('updoc-api', {
+                fetch(UPDOC_API_PATH, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
                     body: JSON.stringify({ action: 'delete_project', project_id: item.id })

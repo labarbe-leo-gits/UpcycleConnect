@@ -37,7 +37,8 @@
     }
 
     function apiPost(action, body) {
-        return fetch('updoc-api', {
+        var apiPath = typeof UPDOC_API_PATH !== 'undefined' ? UPDOC_API_PATH : 'updoc-api';
+        return fetch(apiPath, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

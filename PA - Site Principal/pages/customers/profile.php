@@ -686,7 +686,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="tab-content" id="myupdoc-tab" style="display:none">
             <div class="updoc-tab-header">
                 <h3><i class="fa-solid fa-book-open"></i> My UpDoc Projects</h3>
-                <a href="updoc" class="updoc-create-btn">
+                <a href="../common/updoc-create" class="updoc-create-btn">
                     <i class="fa-solid fa-plus"></i> New project
                 </a>
             </div>
@@ -703,7 +703,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <p id="updoc-empty-msg" class="updoc-tab-empty" style="display:none;">
                 <i class="fa-solid fa-book-open" style="font-size:1.5rem;color:#ccc;display:block;margin-bottom:.5rem;"></i>
                 You haven't created any projects yet.<br>
-                <a href="updoc" style="color:var(--color-primary,#3d8b5e);font-weight:600;">Create your first UpDoc project</a>
+                <a href="../common/updoc-create" style="color:var(--color-primary,#3d8b5e);font-weight:600;">Create your first UpDoc project</a>
             </p>
 
             <div class="updoc-tab-pagination" id="updoc-pagination" style="display:none;">

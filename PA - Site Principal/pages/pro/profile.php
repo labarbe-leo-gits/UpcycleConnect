@@ -2,7 +2,7 @@
 header('Content-Type: text/html; charset=utf-8');
 
 $title    = 'Dashboard';
-$extraCss = ['../../assets/css/subscription.css','../../assets/css/profile-badges.css'];
+$extraCss = ['../../assets/css/subscription.css','../../assets/css/profile-badges.css','../../assets/css/updoc.css'];
 require_once '../../../vendor/autoload.php';
 $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
 
@@ -337,6 +337,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <hr>
         <div class="profile-tabs">
             <button class="tab-btn active" data-tab="general">General</button>
+            <button class="tab-btn" data-tab="myupdoc">My UpDoc</button>
             <button class="tab-btn" data-tab="business">Business Info</button>
             <button class="tab-btn" data-tab="contracts">Contracts</button>
             <button class="tab-btn" data-tab="billing">Billing history</button>
@@ -346,6 +347,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <button class="tab-btn" data-tab="security">Security</button>
                 <button class="tab-btn" data-tab="mfa">MFA</button>
             <?php endif; ?>
+        </div>
+
+        <div class="tab-content" id="myupdoc-tab" style="display:none">
+            <div class="updoc-tab-header">
+                <h3><i class="fa-solid fa-book-open"></i> My UpDoc Projects</h3>
+                <a href="../common/updoc-create" class="updoc-create-btn">
+                    <i class="fa-solid fa-plus"></i> New project
+                </a>
+            </div>
+
+            <div id="updoc-skel-grid" class="updoc-project-grid" style="display:none;">
+                <div class="updoc-skel-card"></div>
+                <div class="updoc-skel-card"></div>
+                <div class="updoc-skel-card"></div>
+                <div class="updoc-skel-card"></div>
+            </div>
+
+            <div id="updoc-project-grid" class="updoc-project-grid"></div>
+
+            <p id="updoc-empty-msg" class="updoc-tab-empty" style="display:none;">
+                <i class="fa-solid fa-book-open" style="font-size:1.5rem;color:#ccc;display:block;margin-bottom:.5rem;"></i>
+                You haven't created any projects yet.<br>
+                <a href="../common/updoc-create" style="color:var(--color-primary,#3d8b5e);font-weight:600;">Create your first UpDoc project</a>
+            </p>
+
+            <div class="updoc-tab-pagination" id="updoc-pagination" style="display:none;">
+                <button class="btn-secondary" id="updoc-prev-btn" disabled>Previous</button>
+                <span class="page-info" id="updoc-page-info"></span>
+                <button class="btn-secondary" id="updoc-next-btn">Next</button>
+            </div>
+        </div>
+
+        <div class="modal-overlay" id="updoc-delete-modal" aria-hidden="true">
+            <div class="modal" role="dialog" aria-modal="true" aria-labelledby="updoc-delete-title">
+                <div class="modal-header">
+                    <h2 id="updoc-delete-title">Delete project</h2>
+                    <button type="button" class="modal-close" id="updoc-delete-close" aria-label="Close">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete <strong id="updoc-delete-name"></strong>? This action cannot be undone.</p>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="updoc-delete-cancel">Cancel</button>
+                    <button type="button" class="btn-primary" id="updoc-delete-confirm" style="background:#e53e3e;">Delete</button>
+                </div>
+            </div>
         </div>
 
         <div class="tab-content" id="badges-tab" style="display:none">
@@ -781,10 +830,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <script>
     window.currentUserId = <?= json_encode($user['id'] ?? '') ?>;
     window.profileSectionApiPath = '../customers/profile-section-api';
+    window.UPDOC_BASE_PATH = '../common/';
+    window.UPDOC_API_PATH = '../common/updoc-api-create';
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
 <script src="../../assets/js/profile-sections.js"></script>
 <script src="../../assets/js/profile-badges.js" defer></script>
+<script src="../../assets/js/profile-projects.js"></script>
 <script src="../../assets/js/profile.js"></script>
 <script src="../../assets/js/pro-profile.js"></script>
 <?php if (!$isAjax) { include_once '../../includes/footer.php'; } ?>

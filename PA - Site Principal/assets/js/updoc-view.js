@@ -4,6 +4,7 @@
     var PROJECT_ID      = UPDOC_VIEW_DATA.projectId;
     var CURRENT_USER_ID = UPDOC_VIEW_DATA.currentUserId;
     var IS_OWNER        = UPDOC_VIEW_DATA.isOwner;
+    var UPDOC_API_PATH  = typeof window.UPDOC_API_PATH !== 'undefined' ? window.UPDOC_API_PATH : 'updoc-api';
 
     var STEPS_PER_PAGE  = 5;
     var allSteps        = [];
@@ -11,7 +12,7 @@
 
     function postAPI(action, body) {
         body.action = action;
-        return fetch('updoc-api', {
+        return fetch(UPDOC_API_PATH, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
             body: JSON.stringify(body)
