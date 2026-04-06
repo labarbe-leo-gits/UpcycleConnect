@@ -119,6 +119,12 @@ switch ($action) {
             exit;
         }
 
+        if ($user['user_type'] != 2 && $status == 1) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Only pro users can publish projects']);
+            exit;
+        }
+
         if (!$aiGenerated) {
             $fullText = buildDetectionText($title, $description, $stepsText);
             if (isExternalAI($fullText)) {

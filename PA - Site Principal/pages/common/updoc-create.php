@@ -69,7 +69,10 @@ if (!is_array($availableMats)) { $availableMats = []; }
                 <label for="proj-status">Status</label>
                 <select id="proj-status" class="updoc-status-select">
                     <option value="0" <?= ($project['status'] ?? 0) == 0 ? 'selected' : '' ?>>Draft</option>
-                    <option value="1" <?= ($project['status'] ?? 0) == 1 ? 'selected' : '' ?>>Published</option>
+                    
+                    <?php if ($user['user_type'] == 2): ?>
+                        <option value="1" <?= ($project['status'] ?? 0) == 1 ? 'selected' : '' ?>>Published</option>
+                    <?php endif; ?>
                 </select>
             </div>
         </div>
