@@ -13,77 +13,108 @@ function verifyRecaptcha($token) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    
+
     if (isset($_POST['recaptcha_token']) && !empty($_POST['recaptcha_token']) && verifyRecaptcha($_POST['recaptcha_token'])) {
 
-    $first_name_filtered = htmlspecialchars(filter_input(INPUT_POST, 'first_name', FILTER_SANITIZE_STRING));
-    $last_name_filtered = htmlspecialchars(filter_input(INPUT_POST, 'last_name', FILTER_SANITIZE_STRING));
-    $username_filtered = htmlspecialchars(filter_input(INPUT_POST, 'username', FILTER_SANITIZE_STRING));
-    $email_filtered = filter_var($_POST['email'], FILTER_VALIDATE_EMAIL);
-    $password_filtered = htmlspecialchars(filter_input(INPUT_POST, 'password', FILTER_SANITIZE_STRING));
-    $confirm_password_filtered = htmlspecialchars(filter_input(INPUT_POST, 'confirm_password', FILTER_SANITIZE_STRING));
-    $user_type_filtered = filter_input(INPUT_POST, 'user_type', FILTER_VALIDATE_INT);
-    $company_name_filtered = htmlspecialchars(filter_input(INPUT_POST, 'company_name', FILTER_SANITIZE_STRING));
-    $cgu_accepted = isset($_POST['cgu']);
+        $first_name_filtered = htmlspecialchars(filter_input(INPUT_POST, 'first_name', FILTER_SANITIZE_STRING));
+        $last_name_filtered = htmlspecialchars(filter_input(INPUT_POST, 'last_name', FILTER_SANITIZE_STRING));
+        $username_filtered = htmlspecialchars(filter_input(INPUT_POST, 'username', FILTER_SANITIZE_STRING));
+        $email_filtered = filter_var($_POST['email'], FILTER_VALIDATE_EMAIL);
+        $password_filtered = htmlspecialchars(filter_input(INPUT_POST, 'password', FILTER_SANITIZE_STRING));
+        $confirm_password_filtered = htmlspecialchars(filter_input(INPUT_POST, 'confirm_password', FILTER_SANITIZE_STRING));
+        $user_type_filtered = filter_input(INPUT_POST, 'user_type', FILTER_VALIDATE_INT);
+        $company_name_filtered = htmlspecialchars(filter_input(INPUT_POST, 'company_name', FILTER_SANITIZE_STRING));
+        $cgu_accepted = isset($_POST['cgu']);
 
-    $trimed_username = trim($username_filtered);
-    $no_spaces_username = preg_replace('/\s+/', '', $trimed_username);
+        $trimed_username = trim($username_filtered);
+        $no_spaces_username = preg_replace('/\s+/', '', $trimed_username);
 
-    if (!$cgu_accepted) {
-        $error_message = 'You must accept the Terms and Conditions.';
-    } elseif ($password_filtered !== $confirm_password_filtered) {
-        $error_message = 'Passwords do not match';
-    } elseif (!$email_filtered) {
-        $error_message = 'Invalid email address';
-    } elseif (!$user_type_filtered || !in_array($user_type_filtered, [1, 2], true)) {
-        $error_message = 'Please select a valid account type';
-    } else {
+        if (!$cgu_accepted) {
+            $error_message = 'You must accept the Terms and Conditions.';
+        } elseif ($password_filtered !== $confirm_password_filtered) {
+            $error_message = 'Passwords do not match';
+        } elseif (!$email_filtered) {
+            $error_message = 'Invalid email address';
+        } elseif (!$user_type_filtered || !in_array($user_type_filtered, [1, 2], true)) {
+            $error_message = 'Please select a valid account type';
+        } else {
 
-        $llmQuota = 10;
-        if ($user_type_filtered === 2) {
-            $llmQuota = 15;
-        }
+            $llmQuota = 10;
+            if ($user_type_filtered === 2) {
+                $llmQuota = 15;
+            }
 
-        $data_payload = [
-            'first_name' => trim($first_name_filtered),
-            'last_name' => trim($last_name_filtered),
-            'user_type' => $user_type_filtered,
-            'username' => $no_spaces_username,
-            'email' => $email_filtered,
-            'password' => $password_filtered,
-            'llm_quota' => $llmQuota,
-        ];
+            $data_payload = [
+                'first_name' => trim($first_name_filtered),
+                'last_name' => trim($last_name_filtered),
+                'user_type' => $user_type_filtered,
+                'username' => $no_spaces_username,
+                'email' => $email_filtered,
+                'password' => $password_filtered,
+                'llm_quota' => $llmQuota,
+                'company_name' => '',
+            ];
 
-        if ((int) $user_type_filtered === 2) {
-            $company_name = trim((string) $company_name_filtered);
-            if ($company_name !== '') {
+            if ((int) $user_type_filtered === 2) {
+                $company_name = trim((string) $company_name_filtered);
                 $data_payload['company_name'] = $company_name;
             }
-        }
 
-        $data = json_encode($data_payload);
-
-        $response = askAPI('users', 'POST', $data);
-        $decoded = json_decode($response, true);
-        
-        if (isset($decoded['id'])) {
-
-            include_once '../../pages/common/log-utility.php';
-            WriteLog('register', 'INFO', $_SERVER['REMOTE_ADDR'], "New registration: user_id={$decoded['id']}, username={$decoded['username']}, email={$decoded['email']}");
-
-            $success_message = 'Registration successful! You can now login.';
-        } elseif (isset($decoded['error'])) {
-            $error_message = $decoded['error'];
-        } elseif (isset($decoded['errors']) && is_array($decoded['errors'])) {
-            $error_message = '<p>';
-            foreach ($decoded['errors'] as $err) {
-                $error_message .= htmlspecialchars($err) ;
+            $pendingExists = false;
+            $pendingResponse = askAPI('pending-registrations?identifier=' . urlencode($no_spaces_username), 'GET');
+            $pendingDecoded = json_decode($pendingResponse, true);
+            if (is_array($pendingDecoded) && isset($pendingDecoded['exists']) && $pendingDecoded['exists'] === true) {
+                $pendingExists = true;
             }
-            $error_message .= '</p>';
-        } else {
-            $error_message = 'An unexpected error occurred. API Response: ' . htmlspecialchars($response);
+
+            if (!$pendingExists) {
+                $pendingResponse = askAPI('pending-registrations?identifier=' . urlencode($email_filtered), 'GET');
+                $pendingDecoded = json_decode($pendingResponse, true);
+                if (is_array($pendingDecoded) && isset($pendingDecoded['exists']) && $pendingDecoded['exists'] === true) {
+                    $pendingExists = true;
+                }
+            }
+
+            if ($pendingExists) {
+                $error_message = 'A registration is already pending for this username or email. Please verify your account or resend the code.';
+            } else {
+                $emailExists = false;
+                $usernameExists = false;
+
+                if ($no_spaces_username !== '') {
+                    $profileResponse = askAPI('profile/' . urlencode($no_spaces_username), 'GET');
+                    $profileDecoded = json_decode($profileResponse, true);
+                    if (is_array($profileDecoded) && !isset($profileDecoded['error'])) {
+                        $usernameExists = true;
+                    }
+                }
+
+                $emailResponse = askAPI('users/email', 'POST', json_encode(['email' => $email_filtered]));
+                $emailDecoded = json_decode($emailResponse, true);
+                if (is_array($emailDecoded) && !isset($emailDecoded['error'])) {
+                    $emailExists = true;
+                }
+
+                if ($usernameExists) {
+                    $error_message = 'This username is already taken.';
+                } elseif ($emailExists) {
+                    $error_message = 'This email is already registered.';
+                } else {
+                    $pendingResponse = askAPI('pending-registrations', 'POST', json_encode($data_payload));
+                    $pendingDecoded = json_decode($pendingResponse, true);
+
+                    if (isset($pendingDecoded['pending_id'])) {
+                        $_SESSION['pending_registration_id'] = $pendingDecoded['pending_id'];
+                        header('Location: verify.php');
+                        exit();
+                    } elseif (isset($pendingDecoded['error'])) {
+                        $error_message = $pendingDecoded['error'];
+                    } else {
+                        $error_message = 'An unexpected error occurred. API Response: ' . htmlspecialchars($pendingResponse);
+                    }
+                }
+            }
         }
-    }
     } else {
         $error_message = 'Recaptcha validation failed. Please try again.';
     }

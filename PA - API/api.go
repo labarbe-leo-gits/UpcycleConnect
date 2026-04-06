@@ -44,20 +44,23 @@ type llmUsageRequestBody struct {
 }
 
 var requestBodyTypes = map[string]reflect.Type{
-	"POST /login":                   reflect.TypeOf(app.LoginRequest{}),
-	"POST /users":                   reflect.TypeOf(models.User{}),
-	"POST /moderate":                reflect.TypeOf(moderationRequestBody{}),
-	"POST /annonces":                reflect.TypeOf(models.Annonce{}),
-	"PATCH /annonces/{id}":          reflect.TypeOf(models.Annonce{}),
-	"POST /facteurs":                reflect.TypeOf(models.FacteurMateriaux{}),
-	"PATCH /facteurs/{id}":          reflect.TypeOf(models.FacteurMateriaux{}),
-	"POST /users/{id}/badges":       reflect.TypeOf(models.Badge{}),
-	"POST /products/services":       reflect.TypeOf(models.Service{}),
-	"PATCH /products/services/{id}": reflect.TypeOf(models.Service{}),
-	"POST /orders":                  reflect.TypeOf(models.Order{}),
-	"POST /annonces/{id}/images":    reflect.TypeOf(models.Image{}),
-	"POST /notifications":           reflect.TypeOf(models.Notification{}),
-	"POST /payment-requests":        reflect.TypeOf(models.PaymentRequest{}),
+	"POST /login":                        reflect.TypeOf(app.LoginRequest{}),
+	"POST /users":                        reflect.TypeOf(models.User{}),
+	"POST /pending-registrations":        reflect.TypeOf(app.PendingRegistrationRequest{}),
+	"POST /pending-registrations/verify": reflect.TypeOf(app.PendingRegistrationVerifyRequest{}),
+	"POST /pending-registrations/resend": reflect.TypeOf(app.PendingRegistrationResendRequest{}),
+	"POST /moderate":                     reflect.TypeOf(moderationRequestBody{}),
+	"POST /annonces":                     reflect.TypeOf(models.Annonce{}),
+	"PATCH /annonces/{id}":               reflect.TypeOf(models.Annonce{}),
+	"POST /facteurs":                     reflect.TypeOf(models.FacteurMateriaux{}),
+	"PATCH /facteurs/{id}":               reflect.TypeOf(models.FacteurMateriaux{}),
+	"POST /users/{id}/badges":            reflect.TypeOf(models.Badge{}),
+	"POST /products/services":            reflect.TypeOf(models.Service{}),
+	"PATCH /products/services/{id}":      reflect.TypeOf(models.Service{}),
+	"POST /orders":                       reflect.TypeOf(models.Order{}),
+	"POST /annonces/{id}/images":         reflect.TypeOf(models.Image{}),
+	"POST /notifications":                reflect.TypeOf(models.Notification{}),
+	"POST /payment-requests":             reflect.TypeOf(models.PaymentRequest{}),
 	"PATCH /payment-requests/{id}/status": reflect.TypeOf(struct {
 		Status       *int   `json:"status"`
 		ApproverID   string `json:"approver_id,omitempty"`
@@ -489,8 +492,10 @@ func main() {
 	registerRoute("POST", "/moderate", "Moderate arbitrary text using bad‑word list and Gemini AI", app.ModerateContent, app.JWTAuthMiddleware)
 	registerRoute("POST", "/users", "Create a new user", app.CreateUser)
 	registerRoute("POST", "/users/email", "Get user by email - for OAuth lookup", app.GetUserByEmail)
-	registerRoute("GET", "/docs", "Show the API documentation", notFoundHandler)
-	registerRoute("GET", "/openapi.json", "OpenAPI (Swagger) spec for the API", openapiSpecHandler)
+	registerRoute("POST", "/pending-registrations", "Create a new pending registration and send verification code", app.CreatePendingRegistration)
+	registerRoute("GET", "/pending-registrations", "Get details for a pending registration by identifier or ID", app.GetPendingRegistration)
+	registerRoute("POST", "/pending-registrations/verify", "Verify a pending registration and create a user", app.VerifyPendingRegistration)
+	registerRoute("POST", "/pending-registrations/resend", "Resend a pending registration verification code", app.ResendPendingRegistrationCode)
 
 	registerRoute("GET", "/users", "Get all users", app.GetAllUsers)
 	registerRoute("GET", "/dashboard-metrics", "Get aggregated dashboard metrics (admin only)", app.GetDashboardMetrics, app.JWTAuthMiddleware, RoleMiddleware(3))
@@ -701,6 +706,14 @@ func main() {
 	registerRoute("POST", "/friends", "Send friend request by username", app.AddFriend, app.JWTAuthMiddleware)
 	registerRoute("PUT", "/friends/{id}/accept", "Accept a friend request", app.AcceptFriendRequest, app.JWTAuthMiddleware)
 	registerRoute("DELETE", "/friends/{id}", "Remove a friend or decline request", app.RemoveFriendOrRequest, app.JWTAuthMiddleware)
+
+	registerRoute("GET", "/contacts", "List all contact messages", app.GetUserContacts)
+	registerRoute("POST", "/contacts", "Create a new contact message", app.AddContact)
+	registerRoute("DELETE", "/contacts/{id}", "Remove a contact or decline request", app.RemoveContactOrRequest, app.JWTAuthMiddleware)
+	registerRoute("GET", "/contacts/{id}/responses", "List all responses for a specific contact request by its UUID", app.GetContactResponses, app.JWTAuthMiddleware)
+	registerRoute("POST", "/contacts/{id}/responses", "Respond to a specific contact request by its UUID", app.RespondToContactRequest, app.JWTAuthMiddleware)
+	registerRoute("DELETE", "/contacts/{id}/responses/{rID}", "Delete a specific contact response by their UUIDs", app.DeleteContactResponse, app.JWTAuthMiddleware)
+
 	http.Handle("/swagger/", httpSwagger.Handler(httpSwagger.URL("/openapi.json")))
 	http.HandleFunc("/swagger/doc.json", openapiSpecHandler)
 	http.HandleFunc("/", notFoundHandler)

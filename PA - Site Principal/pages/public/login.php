@@ -57,6 +57,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['recaptcha_token']) &&
     if (empty($identifier) || empty($password)) {
         $error_message = 'Please provide username/email and password';
     } else {
+        $pendingResponse = askAPI('pending-registrations?identifier=' . urlencode(trim($identifier)), 'GET');
+        $pendingDecoded = json_decode($pendingResponse, true);
+        if (is_array($pendingDecoded) && isset($pendingDecoded['exists']) && $pendingDecoded['exists'] === true) {
+            $_SESSION['pending_registration_id'] = $pendingDecoded['id'];
+            header('Location: verify.php');
+            exit();
+        }
+
         $data = json_encode([
             'identifier' => trim($identifier),
             'password' => $password

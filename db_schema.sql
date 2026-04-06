@@ -47,6 +47,21 @@ CREATE TABLE IF NOT EXISTS users (
     UNIQUE INDEX idx_oauth (oauth_provider, oauth_id)
 );
 
+CREATE TABLE IF NOT EXISTS pending_registrations (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    first_name VARCHAR(60) NOT NULL,
+    last_name VARCHAR(60) NOT NULL,
+    company_name VARCHAR(255) NULL,
+    user_type INT(11) NOT NULL,
+    username VARCHAR(255) NOT NULL UNIQUE,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    llm_quota INT(11) NOT NULL,
+    token VARCHAR(255) NOT NULL UNIQUE,
+    expires_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS categories (
     id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
     name VARCHAR(255) NOT NULL UNIQUE,
@@ -762,6 +777,24 @@ CREATE TABLE IF NOT EXISTS friendship_requests (
     FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE,
     UNIQUE INDEX idx_friendship_request (sender_id, receiver_id)
+);
+
+CREATE TABLE IF NOT EXISTS contacts (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS contact_responses (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    contact_id CHAR(36) NOT NULL,
+    responder_id CHAR(36) NOT NULL,
+    message TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE,
+    FOREIGN KEY (responder_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 SET FOREIGN_KEY_CHECKS = 1;
