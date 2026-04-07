@@ -25,7 +25,7 @@ if (!$user) {
 
 
 $body  = json_decode(file_get_contents('php://input'), true);
-$allowed = ['username', 'email', 'first_name', 'last_name', 'user_road_number', 'user_road', 'user_zip_code', 'user_city'];
+$allowed = ['username', 'email', 'first_name', 'last_name', 'user_road_number', 'user_road', 'user_zip_code', 'user_city', 'newsletter_subscribed'];
 
 $addressFields = ['user_road_number', 'user_road', 'user_zip_code', 'user_city'];
 $isAddressUpdate = count(array_intersect(array_keys($body), $addressFields)) === count($addressFields);

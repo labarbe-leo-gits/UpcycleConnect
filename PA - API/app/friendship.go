@@ -54,6 +54,36 @@ func GetUserFriends(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(friendships)
 }
 
+func GetFriendshipStatus(w http.ResponseWriter, r *http.Request) {
+	userIDRaw := r.Context().Value("user_id")
+	if userIDRaw == nil {
+		jsonError(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userID := userIDRaw.(string)
+
+	parts := strings.Split(r.URL.Path, "/")
+	if len(parts) < 4 {
+		jsonError(w, "Invalid path", http.StatusBadRequest)
+		return
+	}
+	targetID := parts[3]
+	if targetID == "" {
+		jsonError(w, "Target user ID is required", http.StatusBadRequest)
+		return
+	}
+
+	exists, err := db.FriendshipOrRequestExists(userID, targetID)
+	if err != nil {
+		jsonError(w, "Failed to check friend status", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]bool{"exists": exists})
+}
+
 func AcceptFriendRequest(w http.ResponseWriter, r *http.Request) {
 	userIDRaw := r.Context().Value("user_id")
 	if userIDRaw == nil {

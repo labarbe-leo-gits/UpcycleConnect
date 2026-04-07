@@ -8,7 +8,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"html"
 	"net/http"
+	"net/smtp"
 	"strconv"
 	"strings"
 
@@ -494,6 +496,14 @@ func JWTAuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+type ForgotPasswordRequest struct {
+	Action          string `json:"action"`
+	Email           string `json:"email"`
+	Code            string `json:"code,omitempty"`
+	NewPassword     string `json:"new_password,omitempty"`
+	ConfirmPassword string `json:"confirm_password,omitempty"`
+}
+
 func GetUserByEmail(w http.ResponseWriter, r *http.Request) {
 	var requestData struct {
 		Email string `json:"email"`
@@ -522,6 +532,207 @@ func GetUserByEmail(w http.ResponseWriter, r *http.Request) {
 	user.Password = ""
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(user)
+}
+
+func ForgotPassword(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		sendError(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req ForgotPasswordRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		fmt.Println("[ERROR] ForgotPassword decode:", err)
+		sendError(w, "Invalid JSON format", http.StatusBadRequest)
+		return
+	}
+
+	req.Action = strings.TrimSpace(req.Action)
+	req.Email = strings.TrimSpace(req.Email)
+
+	switch req.Action {
+	case "send_code":
+		handleSendPasswordCode(w, &req)
+	case "verify_code":
+		handleVerifyPasswordCode(w, &req)
+	case "reset_password":
+		handleResetPassword(w, &req)
+	default:
+		sendError(w, "Invalid action specified", http.StatusBadRequest)
+	}
+}
+
+func handleSendPasswordCode(w http.ResponseWriter, req *ForgotPasswordRequest) {
+	if req.Email == "" || !strings.Contains(req.Email, "@") {
+		sendError(w, "Please provide a valid email address.", http.StatusBadRequest)
+		return
+	}
+
+	user, err := db.GetUserByEmailFromDB(req.Email)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "message": "If that email is registered, a reset code has been sent."})
+		return
+	}
+
+	code := fmt.Sprintf("%06d", time.Now().UnixNano()%1000000)
+	expiresAt := time.Now().Add(15 * time.Minute)
+
+	if err := db.CreateOrUpdatePasswordReset(user.Email, user.ID, code, expiresAt); err != nil {
+		fmt.Println("[ERROR] CreateOrUpdatePasswordReset:", err)
+		sendError(w, "Unable to process the password reset request.", http.StatusInternalServerError)
+		return
+	}
+
+	if err := sendPasswordResetEmail(user.Email, user.FirstName, code); err != nil {
+		fmt.Println("[ERROR] sendPasswordResetEmail:", err)
+		sendError(w, "Unable to send the reset code email. Please try again later.", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "message": "If that email is registered, a reset code has been sent."})
+}
+
+func handleVerifyPasswordCode(w http.ResponseWriter, req *ForgotPasswordRequest) {
+	if req.Email == "" || req.Code == "" {
+		sendError(w, "Email and verification code are required.", http.StatusBadRequest)
+		return
+	}
+
+	reset, err := db.GetPasswordResetByEmailAndCode(req.Email, req.Code)
+	if err != nil {
+		sendError(w, "The verification code is invalid or has expired.", http.StatusBadRequest)
+		return
+	}
+	if reset.UsedAt.Valid || reset.ExpiresAt.Before(time.Now()) {
+		sendError(w, "The verification code is invalid or has expired.", http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "message": "Your code is valid. Please enter a new password."})
+}
+
+func handleResetPassword(w http.ResponseWriter, req *ForgotPasswordRequest) {
+	if req.Email == "" || req.Code == "" {
+		sendError(w, "Email and verification code are required.", http.StatusBadRequest)
+		return
+	}
+	if req.NewPassword == "" || req.ConfirmPassword == "" {
+		sendError(w, "Please enter and confirm a new password.", http.StatusBadRequest)
+		return
+	}
+	if req.NewPassword != req.ConfirmPassword {
+		sendError(w, "Passwords do not match.", http.StatusBadRequest)
+		return
+	}
+	if len(req.NewPassword) < 6 {
+		sendError(w, "Password must be at least 6 characters long.", http.StatusBadRequest)
+		return
+	}
+
+	reset, err := db.GetPasswordResetByEmailAndCode(req.Email, req.Code)
+	if err != nil {
+		sendError(w, "The verification code is invalid or has expired.", http.StatusBadRequest)
+		return
+	}
+	if reset.UsedAt.Valid || reset.ExpiresAt.Before(time.Now()) {
+		sendError(w, "The verification code is invalid or has expired.", http.StatusBadRequest)
+		return
+	}
+
+	if err := db.ChangeUserPasswordInDB(reset.UserID, req.NewPassword); err != nil {
+		fmt.Println("[ERROR] ChangeUserPasswordInDB:", err)
+		sendError(w, "Unable to reset your password. Please try again later.", http.StatusInternalServerError)
+		return
+	}
+
+	if err := db.MarkPasswordResetUsed(reset.ID); err != nil {
+		fmt.Println("[ERROR] MarkPasswordResetUsed:", err)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "message": "Your password has been updated successfully. You can now log in with your new password."})
+}
+
+func sendPasswordResetEmail(email, name, code string) error {
+	host := os.Getenv("EMAIL_HOST")
+	port := os.Getenv("EMAIL_PORT")
+	username := os.Getenv("EMAIL_USERNAME")
+	password := os.Getenv("EMAIL_PASSWORD")
+	if host == "" || username == "" || password == "" {
+		return fmt.Errorf("email settings are not configured")
+	}
+
+	from := os.Getenv("EMAIL_FROM")
+	if from == "" {
+		from = username
+	}
+	fromName := os.Getenv("EMAIL_FROM_NAME")
+	if fromName == "" {
+		fromName = "UpcycleConnect"
+	}
+	if port == "" {
+		port = "587"
+	}
+
+	auth := smtp.PlainAuth("", username, password, host)
+	addr := fmt.Sprintf("%s:%s", host, port)
+	subject := "Password reset code"
+
+	htmlBody := fmt.Sprintf(`
+		<!DOCTYPE html>
+		<html lang="en">
+		<head>
+		  <meta charset="UTF-8" />
+		  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		  <title>Password reset code</title>
+		</head>
+		<body style="margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background:#f3f6f8;color:#334155;">
+		  <table width="100%%" cellpadding="0" cellspacing="0" style="background:#f3f6f8;padding:24px 0;">
+		    <tr>
+		      <td align="center">
+		        <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(15,23,42,.08);">
+		          <tr>
+		            <td style="background:#176f3a;padding:28px 32px;text-align:center;color:#ffffff;">
+		              <h1 style="margin:0;font-size:28px;letter-spacing:0.5px;">UpcycleConnect</h1>
+		            </td>
+		          </tr>
+		          <tr>
+		            <td style="padding:32px 40px;">
+		              <p style="margin:0 0 16px;font-size:16px;line-height:1.7;color:#334155;">Hello <strong>%s</strong>,</p>
+		              <p style="margin:0 0 28px;font-size:16px;line-height:1.75;color:#475569;">We received a request to reset your UpcycleConnect password. Use the code below to continue.</p>
+		              <div style="background:#f7f9fb;border:2px dashed #94a3b8;border-radius:16px;padding:26px 0;text-align:center;margin:0 0 28px;">
+		                <span style="display:inline-block;font-size:40px;font-weight:700;letter-spacing:6px;color:#1f2937;">%s</span>
+		              </div>
+		              <p style="margin:0 0 24px;font-size:14px;line-height:1.7;color:#64748b;">This code expires in 15 minutes.</p>
+		              <p style="margin:0;font-size:14px;line-height:1.7;color:#64748b;">If you did not request this reset, you can safely ignore this email.</p>
+		            </td>
+		          </tr>
+		          <tr>
+		            <td style="padding:24px 40px 32px;font-size:14px;line-height:1.7;color:#64748b;background:#f8fafc;">
+		              <p style="margin:0;">Thanks,<br />UpcycleConnect</p>
+		            </td>
+		          </tr>
+		        </table>
+		      </td>
+		    </tr>
+		  </table>
+		</body>
+		</html>`, html.EscapeString(name), html.EscapeString(code))
+
+	message := strings.Join([]string{
+		fmt.Sprintf("From: %s <%s>", fromName, from),
+		fmt.Sprintf("To: %s", email),
+		fmt.Sprintf("Subject: %s", subject),
+		"MIME-Version: 1.0",
+		"Content-Type: text/html; charset=\"UTF-8\"",
+		"",
+		htmlBody,
+	}, "\r\n")
+
+	return smtp.SendMail(addr, auth, from, []string{email}, []byte(message))
 }
 
 func OAuthLogin(w http.ResponseWriter, r *http.Request) {

@@ -6,6 +6,7 @@ import (
 	"API/models"
 	"database/sql"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
@@ -168,8 +169,8 @@ func CreateUserInDB(user models.User) error {
 	}
 
 	_, err := Db.Exec(
-		"INSERT INTO users (id, first_name, last_name, company_name, user_type, username, email, password_hash, oauth_provider, oauth_id, profile_picture, manager_id, LLM_quota) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-		user.ID.String(), user.FirstName, user.LastName, companyName, user.UserType, user.Username, user.Email, user.Password, oauthProvider, oauthID, user.ProfilePicture, managerID, user.LLMQuota,
+		"INSERT INTO users (id, first_name, last_name, company_name, siret, user_type, username, email, password_hash, oauth_provider, oauth_id, profile_picture, manager_id, LLM_quota) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		user.ID.String(), user.FirstName, user.LastName, companyName, sql.NullString{String: strings.TrimSpace(user.Siret), Valid: strings.TrimSpace(user.Siret) != ""}, user.UserType, user.Username, user.Email, user.Password, oauthProvider, oauthID, user.ProfilePicture, managerID, user.LLMQuota,
 	)
 
 	if err != nil {
@@ -204,11 +205,12 @@ func GetUserByIDFromDB(id uuid.UUID) (models.User, error) {
 	var managerID sql.NullString
 	var userXP, userLevel int
 	var userRoadNumber, userRoad, userZipCode, userCity sql.NullString
+	var newsletterSubscribed sql.NullInt64
 
 	err := Db.QueryRow(
-		"SELECT id, first_name, last_name, company_name, user_type, username, email, password_hash, balance, upcycling_score, created_at, last_login, oauth_provider, oauth_id, profile_picture, is_premium, stripe_customer_id, manager_id, user_xp, user_level, user_road_number, user_road, user_zip_code, user_city, updoc_quota FROM users WHERE id = ?",
+		"SELECT id, first_name, last_name, company_name, user_type, username, email, password_hash, balance, upcycling_score, created_at, last_login, oauth_provider, oauth_id, profile_picture, is_premium, stripe_customer_id, manager_id, user_xp, user_level, user_road_number, user_road, user_zip_code, user_city, newsletter_subscribed, updoc_quota FROM users WHERE id = ?",
 		id.String(),
-	).Scan(&idStr, &user.FirstName, &user.LastName, &companyName, &user.UserType, &user.Username, &user.Email, &user.Password, &user.Balance, &user.UpcyclingScore, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture, &user.IsPremium, &stripeCustomerID, &managerID, &userXP, &userLevel, &userRoadNumber, &userRoad, &userZipCode, &userCity, &user.UpdocQuota)
+	).Scan(&idStr, &user.FirstName, &user.LastName, &companyName, &user.UserType, &user.Username, &user.Email, &user.Password, &user.Balance, &user.UpcyclingScore, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture, &user.IsPremium, &stripeCustomerID, &managerID, &userXP, &userLevel, &userRoadNumber, &userRoad, &userZipCode, &userCity, &newsletterSubscribed, &user.UpdocQuota)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return user, fmt.Errorf("user not found")
@@ -240,6 +242,9 @@ func GetUserByIDFromDB(id uuid.UUID) (models.User, error) {
 	}
 	if userCity.Valid {
 		user.UserCity = userCity.String
+	}
+	if newsletterSubscribed.Valid {
+		user.NewsletterSubscribed = int(newsletterSubscribed.Int64)
 	}
 	user.UserXP = userXP
 	user.UserLevel = userLevel
@@ -307,6 +312,24 @@ func UpdateUserInDB(id uuid.UUID, updates map[string]interface{}) error {
 	if v, ok := updates["user_city"].(string); ok {
 		cols = append(cols, "user_city = ?")
 		args = append(args, v)
+	}
+	if v, ok := updates["newsletter_subscribed"]; ok {
+		switch t := v.(type) {
+		case float64:
+			cols = append(cols, "newsletter_subscribed = ?")
+			args = append(args, int(t))
+		case int:
+			cols = append(cols, "newsletter_subscribed = ?")
+			args = append(args, t)
+		case int64:
+			cols = append(cols, "newsletter_subscribed = ?")
+			args = append(args, int(t))
+		case string:
+			if num, err := strconv.Atoi(strings.TrimSpace(t)); err == nil {
+				cols = append(cols, "newsletter_subscribed = ?")
+				args = append(args, num)
+			}
+		}
 	}
 	if v, ok := updates["manager_id"]; ok {
 		if v == nil || v == "" {

@@ -554,6 +554,48 @@ function enableInlineEditing(btn) {
     });
 }
 
+const newsletterToggle = document.getElementById('newsletter-toggle');
+const newsletterStatusText = document.getElementById('newsletter-status-text');
+const newsletterFeedback = document.getElementById('newsletter-feedback');
+
+async function toggleNewsletterSubscription(enabled) {
+    if (!newsletterToggle) return;
+    if (newsletterFeedback) {
+        newsletterFeedback.textContent = '';
+        newsletterFeedback.className = '';
+    }
+    const previousState = !enabled;
+    try {
+        const response = await fetch('update-profile-api', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ field: 'newsletter_subscribed', value: enabled ? '1' : '0' })
+        });
+        const data = await response.json().catch(() => null);
+        if (!response.ok || (data && data.error)) {
+            throw new Error((data && data.error) || 'Unable to update newsletter settings.');
+        }
+        
+    } catch (err) {
+        if (newsletterFeedback) {
+            newsletterFeedback.textContent = err.message || 'Unable to update newsletter subscription.';
+            newsletterFeedback.className = 'error-message';
+        }
+        if (newsletterToggle) {
+            newsletterToggle.checked = previousState;
+        }
+    }
+}
+
+if (newsletterToggle) {
+    newsletterToggle.addEventListener('change', function() {
+        toggleNewsletterSubscription(newsletterToggle.checked);
+    });
+}
+
 document.addEventListener('click', function(e) {
     const editBtn = e.target.closest('.btn-edit-inline');
     if (editBtn) {

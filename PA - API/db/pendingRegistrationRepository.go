@@ -11,13 +11,14 @@ import (
 
 func GetPendingRegistrationByIdentifier(identifier string) (*models.PendingRegistration, error) {
 	row := Db.QueryRow(
-		"SELECT id, first_name, last_name, company_name, user_type, username, email, password_hash, llm_quota, token, expires_at, created_at FROM pending_registrations WHERE username = ? OR email = ? LIMIT 1",
+		"SELECT id, first_name, last_name, company_name, siret, user_type, username, email, password_hash, llm_quota, token, expires_at, created_at FROM pending_registrations WHERE username = ? OR email = ? LIMIT 1",
 		identifier,
 		identifier,
 	)
 
 	var registration models.PendingRegistration
 	var companyName sql.NullString
+	var siret sql.NullString
 	err := row.Scan(
 		&registration.ID,
 		&registration.FirstName,
@@ -42,18 +43,22 @@ func GetPendingRegistrationByIdentifier(identifier string) (*models.PendingRegis
 	if companyName.Valid {
 		registration.CompanyName = companyName.String
 	}
+	if siret.Valid {
+		registration.Siret = siret.String
+	}
 
 	return &registration, nil
 }
 
 func GetPendingRegistrationByID(id string) (*models.PendingRegistration, error) {
 	row := Db.QueryRow(
-		"SELECT id, first_name, last_name, company_name, user_type, username, email, password_hash, llm_quota, token, expires_at, created_at FROM pending_registrations WHERE id = ? LIMIT 1",
+		"SELECT id, first_name, last_name, company_name, siret, user_type, username, email, password_hash, llm_quota, token, expires_at, created_at FROM pending_registrations WHERE id = ? LIMIT 1",
 		id,
 	)
 
 	var registration models.PendingRegistration
 	var companyName sql.NullString
+	var siret sql.NullString
 	err := row.Scan(
 		&registration.ID,
 		&registration.FirstName,
@@ -78,6 +83,9 @@ func GetPendingRegistrationByID(id string) (*models.PendingRegistration, error) 
 	if companyName.Valid {
 		registration.CompanyName = companyName.String
 	}
+	if siret.Valid {
+		registration.Siret = siret.String
+	}
 
 	return &registration, nil
 }
@@ -88,11 +96,12 @@ func CreatePendingRegistration(p models.PendingRegistration) (string, error) {
 	}
 
 	_, err := Db.Exec(
-		"INSERT INTO pending_registrations (id, first_name, last_name, company_name, user_type, username, email, password_hash, llm_quota, token, expires_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())",
+		"INSERT INTO pending_registrations (id, first_name, last_name, company_name, siret, user_type, username, email, password_hash, llm_quota, token, expires_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())",
 		p.ID,
 		p.FirstName,
 		p.LastName,
 		sql.NullString{String: strings.TrimSpace(p.CompanyName), Valid: strings.TrimSpace(p.CompanyName) != ""},
+		sql.NullString{String: strings.TrimSpace(p.Siret), Valid: strings.TrimSpace(p.Siret) != ""},
 		p.UserType,
 		p.Username,
 		p.Email,
@@ -127,13 +136,15 @@ func DeletePendingRegistration(id string) error {
 func CreateUserFromPendingRegistration(p models.PendingRegistration) (string, error) {
 	userID := uuid.New().String()
 	companyName := sql.NullString{String: strings.TrimSpace(p.CompanyName), Valid: strings.TrimSpace(p.CompanyName) != ""}
+	siret := sql.NullString{String: strings.TrimSpace(p.Siret), Valid: strings.TrimSpace(p.Siret) != ""}
 
 	_, err := Db.Exec(
-		"INSERT INTO users (id, first_name, last_name, company_name, user_type, username, email, password_hash, LLM_quota) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		"INSERT INTO users (id, first_name, last_name, company_name, siret, user_type, username, email, password_hash, LLM_quota) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 		userID,
 		p.FirstName,
 		p.LastName,
 		companyName,
+		siret,
 		p.UserType,
 		p.Username,
 		p.Email,

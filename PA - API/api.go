@@ -43,18 +43,31 @@ type llmUsageRequestBody struct {
 	Quota      *int `json:"quota,omitempty"`
 }
 
+type reviewRequestBody struct {
+	Rating  int    `json:"rating"`
+	Comment string `json:"comment,omitempty"`
+}
+
+type reviewUpdateRequestBody struct {
+	Rating  *int    `json:"rating,omitempty"`
+	Comment *string `json:"comment,omitempty"`
+}
+
 var requestBodyTypes = map[string]reflect.Type{
 	"POST /login":                        reflect.TypeOf(app.LoginRequest{}),
 	"POST /users":                        reflect.TypeOf(models.User{}),
 	"POST /pending-registrations":        reflect.TypeOf(app.PendingRegistrationRequest{}),
 	"POST /pending-registrations/verify": reflect.TypeOf(app.PendingRegistrationVerifyRequest{}),
 	"POST /pending-registrations/resend": reflect.TypeOf(app.PendingRegistrationResendRequest{}),
+	"POST /forgot-password":              reflect.TypeOf(app.ForgotPasswordRequest{}),
 	"POST /moderate":                     reflect.TypeOf(moderationRequestBody{}),
 	"POST /annonces":                     reflect.TypeOf(models.Annonce{}),
 	"PATCH /annonces/{id}":               reflect.TypeOf(models.Annonce{}),
 	"POST /facteurs":                     reflect.TypeOf(models.FacteurMateriaux{}),
 	"PATCH /facteurs/{id}":               reflect.TypeOf(models.FacteurMateriaux{}),
 	"POST /users/{id}/badges":            reflect.TypeOf(models.Badge{}),
+	"POST /users/{id}/reviews":           reflect.TypeOf(reviewRequestBody{}),
+	"PATCH /users/{id}/reviews/{rID}":    reflect.TypeOf(reviewUpdateRequestBody{}),
 	"POST /products/services":            reflect.TypeOf(models.Service{}),
 	"PATCH /products/services/{id}":      reflect.TypeOf(models.Service{}),
 	"POST /orders":                       reflect.TypeOf(models.Order{}),
@@ -488,6 +501,7 @@ func main() {
 
 	registerRoute("GET", "/{$}", "Health check - verify API and database connection", healthCheck)
 	registerRoute("POST", "/login", "User login - authenticate and return user data", app.LoginUser)
+	registerRoute("POST", "/forgot-password", "Send or verify password reset codes", app.ForgotPassword)
 	registerRoute("POST", "/oauth/login", "OAuth login - generate JWT for an OAuth-authenticated user", app.OAuthLogin)
 	registerRoute("POST", "/moderate", "Moderate arbitrary text using bad‑word list and Gemini AI", app.ModerateContent, app.JWTAuthMiddleware)
 	registerRoute("POST", "/users", "Create a new user", app.CreateUser)
@@ -499,7 +513,7 @@ func main() {
 
 	registerRoute("GET", "/users", "Get all users", app.GetAllUsers)
 	registerRoute("GET", "/dashboard-metrics", "Get aggregated dashboard metrics (admin only)", app.GetDashboardMetrics, app.JWTAuthMiddleware, RoleMiddleware(3))
-	registerRoute("GET", "/profile/{username}", "Get public profile by username", app.GetPublicUser, app.JWTAuthMiddleware)
+	registerRoute("GET", "/profile/{username}", "Get public profile by username", app.GetPublicUser)
 	registerRoute("GET", "/users/{id}", "Get a specific user by his UUID", app.GetUserByID, app.JWTAuthMiddleware)
 	registerRoute("GET", "/users/{id}/contracts", "Get contracts for a specific user by their UUID", app.GetContractsByUserID, app.JWTAuthMiddleware)
 	registerRoute("GET", "/users/{id}/invoices", "Get invoices for a specific user by their UUID", app.GetInvoicesByUserID, app.JWTAuthMiddleware)
@@ -538,7 +552,7 @@ func main() {
 	registerRoute("GET", "/banking-details/{id}", "Get banking details by UUID", app.GetBankingDetailsByID, app.JWTAuthMiddleware)
 	registerRoute("GET", "/users/{id}/banking-details", "Get banking details for a specific user by their UUID", app.GetBankingDetailsByUserID, app.JWTAuthMiddleware)
 	registerRoute("POST", "/banking-details", "Create banking details for a user", app.CreateBankingDetails, app.JWTAuthMiddleware)
-	registerRoute("GET", "/users/{id}/annonces", "List all annonces for a specific user by their UUID", app.GetAnnoncesByUserID, app.JWTAuthMiddleware)
+	registerRoute("GET", "/users/{id}/annonces", "List all annonces for a specific user by their UUID", app.GetAnnoncesByUserID)
 	registerRoute("PATCH", "/notifications/{id}/read", "Mark a notification as read by its UUID", app.MarkNotificationAsRead, app.JWTAuthMiddleware)
 	registerRoute("PATCH", "/users/{id}/notifications/read", "Mark all users notification as read", app.MarkAllNotificationAsRead, app.JWTAuthMiddleware)
 	registerRoute("DELETE", "/users/{id}/planning/{pID}", "Delete a planning entry for a user", app.DeletePlanning, app.JWTAuthMiddleware)
@@ -703,6 +717,7 @@ func main() {
 	registerRoute("GET", "/categories/{id}", "Get details of a specific category by its UUID", app.GetCategoryByID, app.JWTAuthMiddleware)
 
 	registerRoute("GET", "/friends", "Get user friends and pending requests", app.GetUserFriends, app.JWTAuthMiddleware)
+	registerRoute("GET", "/friends/status/{id}", "Check friend request/friendship status for a specific user", app.GetFriendshipStatus, app.JWTAuthMiddleware)
 	registerRoute("POST", "/friends", "Send friend request by username", app.AddFriend, app.JWTAuthMiddleware)
 	registerRoute("PUT", "/friends/{id}/accept", "Accept a friend request", app.AcceptFriendRequest, app.JWTAuthMiddleware)
 	registerRoute("DELETE", "/friends/{id}", "Remove a friend or decline request", app.RemoveFriendOrRequest, app.JWTAuthMiddleware)
@@ -713,6 +728,11 @@ func main() {
 	registerRoute("GET", "/contacts/{id}/responses", "List all responses for a specific contact request by its UUID", app.GetContactResponses, app.JWTAuthMiddleware)
 	registerRoute("POST", "/contacts/{id}/responses", "Respond to a specific contact request by its UUID", app.RespondToContactRequest, app.JWTAuthMiddleware)
 	registerRoute("DELETE", "/contacts/{id}/responses/{rID}", "Delete a specific contact response by their UUIDs", app.DeleteContactResponse, app.JWTAuthMiddleware)
+
+	registerRoute("GET", "/users/{id}/reviews", "List all reviews for a specific user by their UUID", app.GetUserReviews)
+	registerRoute("POST", "/users/{id}/reviews", "Create a new review for a specific user by their UUID", app.CreateUserReview, app.JWTAuthMiddleware)
+	registerRoute("PATCH", "/users/{id}/reviews/{rID}", "Update a specific review for a user by their UUIDs", app.UpdateUserReview, app.JWTAuthMiddleware)
+	registerRoute("DELETE", "/users/{id}/reviews/{rID}", "Delete a specific review for a user by their UUIDs", app.DeleteUserReview, app.JWTAuthMiddleware)
 
 	http.Handle("/swagger/", httpSwagger.Handler(httpSwagger.URL("/openapi.json")))
 	http.HandleFunc("/swagger/doc.json", openapiSpecHandler)

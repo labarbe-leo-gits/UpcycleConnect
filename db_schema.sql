@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS users (
     user_zip_code CHAR(5) NULL,
     user_road_number INT NULL,
     siret VARCHAR(14) NULL,
+    newsletter_subscribed INT NOT NULL DEFAULT 1,
     newsletter INT NOT NULL DEFAULT 0,
     updoc_quota INT NOT NULL DEFAULT 15, /* Quota for user_type = 2 only. Having a premium subscription will lift to infinity. Once expiraing, we keep 10 days before deleting newest of them. */
     private_profile INT NOT NULL DEFAULT 0,
@@ -52,6 +53,7 @@ CREATE TABLE IF NOT EXISTS pending_registrations (
     first_name VARCHAR(60) NOT NULL,
     last_name VARCHAR(60) NOT NULL,
     company_name VARCHAR(255) NULL,
+    siret VARCHAR(14) NULL,
     user_type INT(11) NOT NULL,
     username VARCHAR(255) NOT NULL UNIQUE,
     email VARCHAR(255) NOT NULL UNIQUE,
@@ -60,6 +62,18 @@ CREATE TABLE IF NOT EXISTS pending_registrations (
     token VARCHAR(255) NOT NULL UNIQUE,
     expires_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS password_resets (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    user_id CHAR(36) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    code VARCHAR(10) NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    used_at TIMESTAMP NULL DEFAULT NULL,
+    UNIQUE KEY idx_password_resets_email (email),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS categories (
@@ -760,7 +774,9 @@ CREATE TABLE IF NOT EXISTS friendships (
     id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
     user_id CHAR(36) NOT NULL,
     friend_id CHAR(36) NOT NULL,
-    status INT NOT NULL DEFAULT 0, -- 0: pending, 1: accepted      message TEXT DEFAULT NULL,    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status INT NOT NULL DEFAULT 0, -- 0: pending, 1: accepted
+    message TEXT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (friend_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -771,6 +787,7 @@ CREATE TABLE IF NOT EXISTS friendship_requests (
     id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
     sender_id CHAR(36) NOT NULL,
     receiver_id CHAR(36) NOT NULL,
+    message TEXT DEFAULT NULL,
     status INT NOT NULL DEFAULT 0, -- 0: pending, 1: accepted, 2: rejected
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -795,6 +812,37 @@ CREATE TABLE IF NOT EXISTS contact_responses (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE,
     FOREIGN KEY (responder_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS userReviews (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    reviewer_id CHAR(36) NOT NULL,
+    reviewed_user_id CHAR(36) NOT NULL,
+    rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    comment TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (reviewer_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (reviewed_user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS newsletter(
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    title VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    status INT NOT NULL DEFAULT 0, -- 0: draft, 1: scheduled, 2: sent
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS newsletter_recipients (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    newsletter_id CHAR(36) NOT NULL,
+    user_id CHAR(36) NOT NULL,
+    sent_at TIMESTAMP NULL DEFAULT NULL,
+    FOREIGN KEY (newsletter_id) REFERENCES newsletter(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE INDEX idx_newsletter_recipient (newsletter_id, user_id)
 );
 
 SET FOREIGN_KEY_CHECKS = 1;

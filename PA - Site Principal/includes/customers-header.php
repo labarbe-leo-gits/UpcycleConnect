@@ -86,6 +86,15 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
                 <p>Theme</p>
             </div>
             <div class="nav-dropdown community-dropdown">
+                <a class="btn-wrapper" href="../common/friends">
+                    <i class="fa-solid fa-comments"></i>
+                    <p>Social</p>
+                </a>
+                <div class="dropdown-menu">
+                    <a href="../common/friends"><i class="fa-solid fa-face-laugh-beam"></i>Friends</a>
+                </div>
+            </div>
+            <div class="nav-dropdown community-dropdown">
                 <a class="btn-wrapper" href="../common/forums">
                     <i class="fa-solid fa-users"></i>
                     <p>Community</p>

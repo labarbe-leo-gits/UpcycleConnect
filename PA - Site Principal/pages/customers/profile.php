@@ -83,6 +83,8 @@ if (empty($user['oauth_provider'])) {
     $twoFAEnabled = isset($twoFAData['enabled']) && $twoFAData['enabled'] === true;
 }
 
+$newsletterSubscribed = isset($userDetails['newsletter_subscribed']) ? (bool)$userDetails['newsletter_subscribed'] : true;
+
 $profileTitles = [
     0 => 'Baby Upcycler',
     1 => 'Novice Recycler',
@@ -392,6 +394,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <span class="profile-label">Email:</span>
                         <span id="email-value"><?= htmlspecialchars($user['email']) ?></span>
                         <button class="btn-copy btn-edit-inline" data-edit="email" title="Edit Email"><i class="fa-solid fa-pen"></i></button>
+                    </div>
+                    <div class="profile-field-row newsletter-settings" style="align-items:center;gap:0.75rem;">
+                        <span class="profile-label">Newsletter</span>
+                        <label class="switch" for="newsletter-toggle">
+                            <input type="checkbox" id="newsletter-toggle" <?= $newsletterSubscribed ? 'checked' : '' ?> />
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="profile-field-row">
+                        <div id="newsletter-feedback" aria-live="polite" style="margin-top:0.25rem; margin-left:1.5rem; width:100%;"></div>
                     </div>
                     <div class="profile-field-row">
                         <span class="profile-label">Total sales value:</span>

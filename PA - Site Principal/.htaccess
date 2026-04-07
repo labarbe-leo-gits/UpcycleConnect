@@ -5,7 +5,7 @@ ErrorDocument 404 /PA/PA%20-%20Site%20Principal/404.php
 RewriteEngine On
 RewriteBase "/PA/PA - Site Principal/"
 RewriteCond %{THE_REQUEST} \s/PA/PA%20-%20Site%20Principal/pages/public/([^.]+)\.php [NC]
-RewriteRule ^ pages/public/%1? [R=301,L,NE]
+RewriteRule ^ pages/public/%1? [R=301,L,NE,QSA]
 
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_FILENAME} !-f

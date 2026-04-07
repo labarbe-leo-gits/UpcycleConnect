@@ -480,17 +480,60 @@
 }
 
 .updoc-tab-header {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
   margin-bottom: 1.25rem;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 1rem;
+}
+
+.updoc-tab-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .updoc-tab-header h3 {
   margin: 0;
   font-size: 1.1rem;
+}
+
+.updoc-quota-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.updoc-quota-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.updoc-quota-pill.quota-status-green {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.updoc-quota-pill.quota-status-yellow {
+  background: #fff7cd;
+  color: #854d0e;
+}
+
+.updoc-quota-pill.quota-status-red {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.updoc-quota-note {
+  background: #f5f7fa;
+  color: #334155;
+  border: 1px solid #e2e8f0;
 }
 
 .updoc-create-btn {
@@ -648,6 +691,17 @@
 .updoc-proj-action-btn.danger:hover {
   background: #fff1f0;
   border-color: #e53e3e;
+}
+.updoc-proj-view-btn {
+  width: 100%;
+  min-height: 2rem;
+  padding: 0.45rem 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
+.updoc-proj-view-btn i {
+  display: inline-flex;
 }
 
 .updoc-tab-pagination {

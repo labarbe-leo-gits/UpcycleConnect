@@ -12,6 +12,37 @@ function verifyRecaptcha($token) {
     return $data->success && $data->score >= 0.5;
 }
 
+function normalizeDigits($value) {
+    return preg_replace('/\D/', '', (string)$value);
+}
+
+function isValidLuhn($number) {
+    $number = strval($number);
+    $sum = 0;
+    $length = strlen($number);
+    $parity = $length % 2;
+    for ($i = 0; $i < $length; $i++) {
+        $digit = (int)$number[$i];
+        if ($i % 2 === $parity) {
+            $digit *= 2;
+            if ($digit > 9) {
+                $digit -= 9;
+            }
+        }
+        $sum += $digit;
+    }
+    return $sum % 10 === 0;
+}
+
+function isValidFrenchSiretOrSiren($value) {
+    $cleaned = normalizeDigits($value);
+    $length = strlen($cleaned);
+    if ($length !== 9 && $length !== 14) {
+        return false;
+    }
+    return isValidLuhn($cleaned);
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (isset($_POST['recaptcha_token']) && !empty($_POST['recaptcha_token']) && verifyRecaptcha($_POST['recaptcha_token'])) {
@@ -24,6 +55,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $confirm_password_filtered = htmlspecialchars(filter_input(INPUT_POST, 'confirm_password', FILTER_SANITIZE_STRING));
         $user_type_filtered = filter_input(INPUT_POST, 'user_type', FILTER_VALIDATE_INT);
         $company_name_filtered = htmlspecialchars(filter_input(INPUT_POST, 'company_name', FILTER_SANITIZE_STRING));
+        $siret_filtered = htmlspecialchars(filter_input(INPUT_POST, 'siret', FILTER_SANITIZE_STRING));
+        $siret_digits = normalizeDigits($siret_filtered);
         $cgu_accepted = isset($_POST['cgu']);
 
         $trimed_username = trim($username_filtered);
@@ -37,6 +70,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error_message = 'Invalid email address';
         } elseif (!$user_type_filtered || !in_array($user_type_filtered, [1, 2], true)) {
             $error_message = 'Please select a valid account type';
+        } elseif ((int) $user_type_filtered === 2 && $siret_digits === '') {
+            $error_message = 'Professional accounts require a valid SIRET or SIREN number.';
+        } elseif ((int) $user_type_filtered === 2 && !isValidFrenchSiretOrSiren($siret_digits)) {
+            $error_message = 'Please enter a valid SIRET or SIREN number for professional registration.';
         } else {
 
             $llmQuota = 10;
@@ -53,11 +90,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'password' => $password_filtered,
                 'llm_quota' => $llmQuota,
                 'company_name' => '',
+                'siret' => '',
             ];
 
             if ((int) $user_type_filtered === 2) {
                 $company_name = trim((string) $company_name_filtered);
                 $data_payload['company_name'] = $company_name;
+                $data_payload['siret'] = $siret_digits;
             }
 
             $pendingExists = false;
@@ -251,11 +290,20 @@ include_once '../../includes/header.php';
         </div>
 
         <div class="field">
-            <label for="company_name_artisan">Company Name (Optionnal)</label>
+            <label for="company_name_artisan">Company Name (Optional)</label>
             <div class="input-wrapper">
                 <i class="fa-solid fa-id-card"></i>
                 <input type="text" id="company_name_artisan" name="company_name" class="iconInput" placeholder="Company Name">
             </div>
+        </div>
+
+        <div class="field">
+            <label for="siret_artisan">SIRET / SIREN</label>
+            <div class="input-wrapper">
+                <i class="fa-solid fa-id-badge"></i>
+                <input type="text" id="siret_artisan" name="siret" class="iconInput" placeholder="123 456 789 00012" required>
+            </div>
+            <small class="field-note">Enter your 14-digit SIRET or 9-digit SIREN number.</small>
         </div>
         
         <div class="field">

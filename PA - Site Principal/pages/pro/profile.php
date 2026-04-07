@@ -24,6 +24,10 @@ $userDetails = json_decode($userDetailsResponse, true);
 if (!is_array($userDetails)) {
     $userDetails = [];
 }
+$updocQuota = array_key_exists('updoc_quota', $userDetails) ? (int) $userDetails['updoc_quota'] : null;
+$updocProjectsResponse = askAPI("/users/{$user['id']}/projects", 'GET');
+$updocProjectsData     = json_decode($updocProjectsResponse, true);
+$updocProjectCount     = is_array($updocProjectsData) && !isset($updocProjectsData['error']) ? count($updocProjectsData) : 0;
 $balance        = $userDetails['balance']      ?? 0;
 $companyName    = $userDetails['company_name'] ?? '';
 $firstName      = $userDetails['first_name']   ?? '';
@@ -351,11 +355,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <div class="tab-content" id="myupdoc-tab" style="display:none">
             <div class="updoc-tab-header">
+            <div class="updoc-tab-title-group">
                 <h3><i class="fa-solid fa-book-open"></i> My UpDoc Projects</h3>
-                <a href="../common/updoc-create" class="updoc-create-btn">
-                    <i class="fa-solid fa-plus"></i> New project
-                </a>
+                <?php if ($updocQuota !== null):
+                    $usagePercent = $updocQuota === 0 ? 0 : min(100, (int) floor($updocProjectCount * 100 / max(1, $updocQuota)));
+                    if ($updocQuota === 0) {
+                        $usageClass = 'quota-status-green';
+                    } elseif ($usagePercent >= 90) {
+                        $usageClass = 'quota-status-red';
+                    } elseif ($usagePercent >= 70) {
+                        $usageClass = 'quota-status-yellow';
+                    } else {
+                        $usageClass = 'quota-status-green';
+                    }
+                ?>
+                <div class="updoc-quota-info">
+                    <span class="updoc-quota-pill <?= htmlspecialchars($usageClass) ?>">
+                        <?php if ($updocQuota === 0): ?>
+                            Unlimited projects
+                        <?php else: ?>
+                            <?= htmlspecialchars($updocProjectCount . ' / ' . $updocQuota . ' projects used') ?>
+                        <?php endif; ?>
+                    </span>
+                    <?php if ($updocQuota === 0): ?>
+                        <span class="updoc-quota-pill updoc-quota-note">Current use: <?= htmlspecialchars($updocProjectCount) ?> project<?= $updocProjectCount === 1 ? '' : 's' ?></span>
+                    <?php endif; ?>
+                </div>
+                <?php endif; ?>
             </div>
+            <a href="../common/updoc-create" class="updoc-create-btn">
+                <i class="fa-solid fa-plus"></i> New project
+            </a>
+        </div>
 
             <div id="updoc-skel-grid" class="updoc-project-grid" style="display:none;">
                 <div class="updoc-skel-card"></div>

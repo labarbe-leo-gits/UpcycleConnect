@@ -250,6 +250,8 @@ $freeNotice = $productType === 'offer'
         <div class="checkout-content">
             <div class="order-summary">
                 <h2>Order Summary</h2>
+
+                <div class="error-message">Make sure to contact the seller before any purchase! UpcycleConnect will decline any refund if no contact was made.</div>
                 
                 <div class="product-item">
                     <div class="product-header">

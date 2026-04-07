@@ -23,6 +23,12 @@ func SendFriendRequest(userID, friendUsername string, message string) error {
 	if err != nil {
 		return err
 	}
+	if count == 0 {
+		err = Db.QueryRow("SELECT COUNT(*) FROM friendship_requests WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)", userID, friendIDStr, friendIDStr, userID).Scan(&count)
+		if err != nil {
+			return err
+		}
+	}
 	if count > 0 {
 		return errors.New("friendship or request already exists")
 	}
@@ -31,31 +37,80 @@ func SendFriendRequest(userID, friendUsername string, message string) error {
 	if message != "" {
 		msgPtr = &message
 	}
-	_, err = Db.Exec("INSERT INTO friendships (id, user_id, friend_id, status, message) VALUES (UUID(), ?, ?, 0, ?)", userID, friendIDStr, msgPtr)
+	_, err = Db.Exec("INSERT INTO friendship_requests (id, sender_id, receiver_id, message) VALUES (UUID(), ?, ?, ?)", userID, friendIDStr, msgPtr)
 	return err
 }
 
+func FriendshipOrRequestExists(userID, targetUserID string) (bool, error) {
+	var count int
+	err := Db.QueryRow(
+		"SELECT COUNT(*) FROM friendships WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)",
+		userID, targetUserID, targetUserID, userID,
+	).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+	if count > 0 {
+		return true, nil
+	}
+	err = Db.QueryRow(
+		"SELECT COUNT(*) FROM friendship_requests WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)",
+		userID, targetUserID, targetUserID, userID,
+	).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
 func AcceptFriendRequest(userID, friendshipID string) error {
-	res, err := Db.Exec("UPDATE friendships SET status = 1 WHERE id = ? AND friend_id = ? AND status = 0", friendshipID, userID)
-	if err != nil {
-		return err
-	}
-	affected, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if affected == 0 {
+	var senderID string
+	var receiverID string
+	var msg sql.NullString
+	err := Db.QueryRow("SELECT sender_id, receiver_id, message FROM friendship_requests WHERE id = ? AND receiver_id = ?", friendshipID, userID).Scan(&senderID, &receiverID, &msg)
+	if err == sql.ErrNoRows {
 		return errors.New("request not found or you are not the receiver")
 	}
-	return nil
+	if err != nil {
+		return err
+	}
+
+	var msgPtr *string
+	if msg.Valid {
+		msgPtr = &msg.String
+	}
+
+	_, err = Db.Exec("INSERT INTO friendships (id, user_id, friend_id, status, message) VALUES (UUID(), ?, ?, 1, ?)", senderID, receiverID, msgPtr)
+	if err != nil {
+		return err
+	}
+
+	res, err := Db.Exec("DELETE FROM friendship_requests WHERE id = ?", friendshipID)
+	if err != nil {
+		return err
+	}
+	_, err = res.RowsAffected()
+	return err
 }
 
 func RemoveFriendOrRequest(userID, friendshipID string) error {
-	res, err := Db.Exec("DELETE FROM friendships WHERE id = ? AND (user_id = ? OR friend_id = ?)", friendshipID, userID, userID)
+	res, err := Db.Exec("DELETE FROM friendship_requests WHERE id = ? AND (sender_id = ? OR receiver_id = ?)", friendshipID, userID, userID)
 	if err != nil {
 		return err
 	}
 	affected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affected > 0 {
+		return nil
+	}
+
+	res, err = Db.Exec("DELETE FROM friendships WHERE id = ? AND (user_id = ? OR friend_id = ?)", friendshipID, userID, userID)
+	if err != nil {
+		return err
+	}
+	affected, err = res.RowsAffected()
 	if err != nil {
 		return err
 	}
@@ -71,7 +126,13 @@ func GetUserFriends(userID string) ([]models.FriendshipWithUser, error) {
 		FROM friendships f
 		JOIN users u ON (f.user_id = u.id AND f.user_id != ?) OR (f.friend_id = u.id AND f.friend_id != ?)
 		WHERE (f.user_id = ? OR f.friend_id = ?)
-	`, userID, userID, userID, userID)
+		UNION ALL
+		SELECT fr.id, fr.sender_id AS user_id, fr.receiver_id AS friend_id, 0 AS status, fr.message, u.username, u.first_name, u.last_name
+		FROM friendship_requests fr
+		JOIN users u ON (fr.sender_id = u.id AND fr.receiver_id = ?) OR (fr.receiver_id = u.id AND fr.sender_id = ?)
+		WHERE (fr.sender_id = ? OR fr.receiver_id = ?)
+		ORDER BY status DESC
+	`, userID, userID, userID, userID, userID, userID, userID, userID)
 	if err != nil {
 		return nil, err
 	}

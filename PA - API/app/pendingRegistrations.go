@@ -21,6 +21,7 @@ type PendingRegistrationRequest struct {
 	FirstName   string `json:"first_name"`
 	LastName    string `json:"last_name"`
 	CompanyName string `json:"company_name,omitempty"`
+	Siret       string `json:"siret,omitempty"`
 	UserType    int    `json:"user_type"`
 	Username    string `json:"username"`
 	Email       string `json:"email"`
@@ -31,6 +32,42 @@ type PendingRegistrationRequest struct {
 type PendingRegistrationVerifyRequest struct {
 	ID   string `json:"id"`
 	Code string `json:"code"`
+}
+
+func normalizeDigits(value string) string {
+	var result strings.Builder
+	for _, r := range value {
+		if r >= '0' && r <= '9' {
+			result.WriteRune(r)
+		}
+	}
+	return result.String()
+}
+
+func isValidLuhn(number string) bool {
+	sum := 0
+	length := len(number)
+	parity := length % 2
+	for i, r := range number {
+		digit := int(r - '0')
+		if i%2 == parity {
+			digit *= 2
+			if digit > 9 {
+				digit -= 9
+			}
+		}
+		sum += digit
+	}
+	return sum%10 == 0
+}
+
+func isValidFrenchSiretOrSiren(value string) bool {
+	cleaned := normalizeDigits(value)
+	length := len(cleaned)
+	if length != 9 && length != 14 {
+		return false
+	}
+	return isValidLuhn(cleaned)
 }
 
 type PendingRegistrationResendRequest struct {
@@ -51,6 +88,7 @@ func CreatePendingRegistration(w http.ResponseWriter, r *http.Request) {
 	req.FirstName = strings.TrimSpace(req.FirstName)
 	req.LastName = strings.TrimSpace(req.LastName)
 	req.CompanyName = strings.TrimSpace(req.CompanyName)
+	req.Siret = normalizeDigits(req.Siret)
 
 	if req.FirstName == "" || req.LastName == "" || req.Username == "" || req.Email == "" || req.Password == "" {
 		sendError(w, "All required fields must be provided", http.StatusBadRequest)
@@ -66,6 +104,17 @@ func CreatePendingRegistration(w http.ResponseWriter, r *http.Request) {
 	if req.UserType != 1 && req.UserType != 2 {
 		sendError(w, "Please select a valid account type", http.StatusBadRequest)
 		return
+	}
+
+	if req.UserType == 2 {
+		if req.Siret == "" {
+			sendError(w, "Professional accounts require a valid SIRET or SIREN", http.StatusBadRequest)
+			return
+		}
+		if !isValidFrenchSiretOrSiren(req.Siret) {
+			sendError(w, "Please provide a valid SIRET or SIREN number", http.StatusBadRequest)
+			return
+		}
 	}
 
 	if req.LLMQuota <= 0 {

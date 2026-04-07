@@ -45,9 +45,19 @@ function askAPI($endpoint, $method, $data = null){
         $headers[] = 'Content-Type: application/json';
         $headers[] = 'Content-Length: ' . strlen($data);
     }
-    if (!preg_match('/login|register/i', $endpoint) && isset($_SESSION['jwt_token'])) {
-        $headers[] = 'Authorization: Bearer ' . $_SESSION['jwt_token'];
-        error_log('askAPI: attaching JWT token to request');
+    if (!preg_match('/login|register/i', $endpoint)) {
+        $token = null;
+        if (isset($_SESSION['jwt_token'])) {
+            $token = $_SESSION['jwt_token'];
+        } elseif (isset($_SESSION['token'])) {
+            $token = $_SESSION['token'];
+        }
+        if ($token) {
+            $headers[] = 'Authorization: Bearer ' . $token;
+            error_log('askAPI: attaching JWT token to request');
+        } else {
+            error_log('askAPI: no JWT token present or endpoint is login/register');
+        }
     } else {
         error_log('askAPI: no JWT token present or endpoint is login/register');
     }
