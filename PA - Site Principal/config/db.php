@@ -2,15 +2,34 @@
 // API Connection - GO API
 // Date : 05/02/2026
 
-$ENV_FILE = __DIR__ . '/../.env';
-if (file_exists($ENV_FILE)) {
+function findEnvFile() {
+    $candidates = [
+        __DIR__ . '/../.env',
+        __DIR__ . '/../../.env',
+        __DIR__ . '/../../../.env',
+    ];
+
+    foreach ($candidates as $candidate) {
+        if (file_exists($candidate)) {
+            return $candidate;
+        }
+    }
+
+    return null;
+}
+
+$ENV_FILE = findEnvFile();
+if ($ENV_FILE !== null) {
     $env = parse_ini_file($ENV_FILE);
-    foreach ($env as $key => $value) {
-        putenv("$key=$value");
+    if (is_array($env)) {
+        foreach ($env as $key => $value) {
+            putenv("$key=$value");
+            $_ENV[$key] = $value;
+            $_SERVER[$key] = $value;
+        }
     }
 } else {
-    error_log("Warning: .env file not found. Using system environment variables."); // do not send echo to response body
-
+    error_log("Warning: .env file not found in config or parent directories. Using system environment variables.");
 }
 
 $API_HOST = getenv('API_HOST');
