@@ -817,6 +817,169 @@ body.modal-open {
   overflow: hidden;
 }
 
+.tutorial-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.25s ease,
+    visibility 0.25s ease;
+  z-index: 4500;
+}
+
+.tutorial-overlay.visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.tutorial-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.28);
+  backdrop-filter: none;
+}
+
+.tutorial-focus-ring {
+  position: absolute;
+  display: none;
+  border-radius: 18px;
+  box-shadow:
+    0 0 0 2px rgba(59, 130, 246, 0.95),
+    0 0 0 12px rgba(59, 130, 246, 0.18);
+  transition:
+    top 0.3s ease,
+    left 0.3s ease,
+    width 0.3s ease,
+    height 0.3s ease;
+  z-index: 4505;
+}
+
+.tutorial-tooltip {
+  position: fixed;
+  top: 10%;
+  left: 50%;
+  width: min(320px, calc(100vw - 32px));
+  max-width: 320px;
+  transform: translateX(-50%) scale(0.96);
+  opacity: 0;
+  visibility: hidden;
+  display: block !important;
+  transition:
+    opacity 0.22s ease,
+    transform 0.22s ease;
+  pointer-events: auto;
+  z-index: 4510;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 24px 40px rgba(15, 23, 42, 0.16);
+  padding: 16px;
+}
+
+.tutorial-tooltip.tooltip-visible {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translateX(-50%) scale(1);
+}
+
+.tutorial-tooltip::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 18px;
+  height: 18px;
+  background: rgba(255, 255, 255, 0.98);
+  transform-origin: center;
+  top: -9px;
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+}
+
+.tutorial-tooltip[data-arrow="bottom"]::before {
+  top: auto;
+  bottom: -12px;
+  transform: translateX(-50%) rotate(180deg);
+}
+
+.tooltip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.tooltip-header h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.tooltip-close {
+  border: none;
+  background: #f3f4f6;
+  color: #111827;
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.tooltip-body h3 {
+  margin: 0 0 0.35rem;
+  font-size: 0.98rem;
+  color: #111827;
+}
+
+.tooltip-body p {
+  margin: 0;
+  color: #4b5563;
+  line-height: 1.6;
+}
+
+.tutorial-step-counter {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin-bottom: 12px;
+}
+
+.tooltip-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: space-between;
+  margin-top: 16px;
+}
+
+.tooltip-actions .btn-secondary,
+.tooltip-actions .btn-primary {
+  min-width: 90px;
+  padding: 10px 12px;
+  font-size: 0.95rem;
+}
+
+.tooltip-actions .btn-secondary {
+  min-width: 86px;
+}
+
+.tutorial-highlight {
+  position: relative;
+  z-index: 4505;
+  border-radius: 18px;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.35);
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.tutorial-highlight:hover {
+  transform: scale(1.01);
+}
+
 .badge {
   display: inline-block;
   padding: 5px 10px;

@@ -155,7 +155,7 @@ $freeNotice = $productType === 'offer'
     : 'This is a free service. Click "Complete Order" to confirm your registration.';
 ?>
 
-<div class="container" id="order-page" data-order-token="<?php echo htmlspecialchars($orderToken); ?>" data-product-uuid="<?php echo htmlspecialchars($productUuid); ?>" data-stripe-key="<?php echo htmlspecialchars($stripeConfig['publishable_key'] ?? ''); ?>" data-is-full="<?php echo $isFull ? '1' : '0'; ?>" data-is-free="<?php echo $price == 0 ? '1' : '0'; ?>">
+<div class="container" id="order-page" data-order-token="<?php echo htmlspecialchars($orderToken); ?>" data-product-uuid="<?php echo htmlspecialchars($productUuid); ?>" data-product-type="<?php echo htmlspecialchars($productType); ?>" data-service-type="<?php echo htmlspecialchars($service['type'] ?? '0'); ?>" data-type-label="<?php echo htmlspecialchars($typeLabel); ?>" data-stripe-key="<?php echo htmlspecialchars($stripeConfig['publishable_key'] ?? ''); ?>" data-user-id="<?php echo htmlspecialchars($user['id'] ?? ''); ?>" data-service-date="<?php echo htmlspecialchars($service['service_date'] ?? ''); ?>" data-is-full="<?php echo $isFull ? '1' : '0'; ?>" data-is-free="<?php echo $price == 0 ? '1' : '0'; ?>">
     <div class="checkout-container skeleton-checkout-container">
         <div class="checkout-header">
             <div class="skeleton skeleton-checkout-title"></div>

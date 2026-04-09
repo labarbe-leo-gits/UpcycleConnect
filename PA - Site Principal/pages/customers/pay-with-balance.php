@@ -2,12 +2,19 @@
 require_once '../../config/db.php';
 require_once '../../includes/auth.php';
 
-requireLogin();
+requireUserType(1);
+
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['error' => 'Method not allowed']);
+    exit;
+}
+
+if (!isset($_SERVER['HTTP_X_REQUESTED_WITH']) || strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) !== 'xmlhttprequest') {
+    http_response_code(400);
+    echo json_encode(['error' => 'Invalid request']);
     exit;
 }
 
@@ -27,7 +34,6 @@ if (!isset($_SESSION['order_token'][$productUuid]) || $_SESSION['order_token'][$
     exit;
 }
 
-$offer = null;
 $serviceData = askAPI('/products/services/' . $productUuid, 'GET');
 $service = json_decode($serviceData, true);
 $productType = 'service';
@@ -90,7 +96,6 @@ $orderPayload = [
     'amount' => $price,
     'payment_method' => 'balance',
     'transaction_id' => 'balance-' . $orderToken,
-
     'event_id' => $productType === 'service' ? $productUuid : null,
     'product_id' => $productType === 'offer' ? $productUuid : null,
     'event_availability_id' => $productType === 'service' ? $eventAvailabilityId : null,
@@ -112,7 +117,7 @@ if (!isset($orderData['id'])) {
     exit;
 }
 
-function buildAgendaFields($productType, $service, $offer, $eventAvailabilityId, $scheduleDate = '', $scheduleHour = '') {
+function buildAgendaFields($productType, $service, $offer, $scheduleDate = '', $scheduleHour = '') {
     $title = $productType === 'service' ? ($service['name'] ?? 'Booked service slot') : ($offer['title'] ?? 'Booked item');
     $descriptionParts = [];
 
@@ -141,7 +146,9 @@ function buildAgendaFields($productType, $service, $offer, $eventAvailabilityId,
             if ($address !== '') {
                 $descriptionParts[] = 'Presential session at: ' . $address;
                 $encodedAddress = urlencode($address);
-                
+                $descriptionParts[] = 'Google Maps: https://www.google.com/maps/search/?api=1&query=' . $encodedAddress;
+                $descriptionParts[] = 'OpenStreetMap quick view: https://www.openstreetmap.org/search?query=' . $encodedAddress;
+                $descriptionParts[] = 'Bing Maps: https://www.bing.com/maps?q=' . $encodedAddress;
             } else {
                 $descriptionParts[] = 'Presential session';
             }

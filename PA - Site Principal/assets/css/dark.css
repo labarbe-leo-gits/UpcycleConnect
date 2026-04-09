@@ -1,6 +1,5 @@
 .payment-method-tabs {
   gap: 10px;
-
 }
 .payment-method-tabs .tab-btn {
   background: #f3f4f6;
@@ -10,7 +9,9 @@
   font-weight: 600;
   color: #374151;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s;
   flex: 1;
   text-align: center;
 }
@@ -30,7 +31,9 @@ body.dark-mode .payment-method-tabs .tab-btn {
   font-weight: 600;
   color: #34d399;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s;
   flex: 1;
   text-align: center;
 }
@@ -965,6 +968,26 @@ body.dark-mode .delete-confirmation-content p {
 
 body.dark-mode #view-planning-description {
   color: #9ca3af;
+}
+body.dark-mode .view-planning-modal-content #view-planning-links ul {
+  padding-left: 18px;
+  margin: 8px 0 0;
+}
+body.dark-mode .view-planning-modal-content #view-planning-links a {
+  color: #93c5fd;
+}
+body.dark-mode .view-planning-modal-content .view-planning-map-preview {
+  margin-top: 16px;
+  border: 1px solid #374151;
+  border-radius: 12px;
+  overflow: hidden;
+}
+body.dark-mode .view-planning-modal-content .view-planning-map-caption {
+  font-size: 0.9rem;
+  color: #9ca3af;
+  padding: 10px 12px;
+  margin: 0;
+  background: #111827;
 }
 
 body.dark-mode .form-group input,

@@ -5,8 +5,27 @@
 
     var orderToken = page.getAttribute('data-order-token') || '';
     var productUuid = page.getAttribute('data-product-uuid') || '';
+    var productType = page.getAttribute('data-product-type') || '';
+    var serviceType = parseInt(page.getAttribute('data-service-type') || '0', 10) || 0;
+    var typeLabel = page.getAttribute('data-type-label') || '';
     var stripeKey = page.getAttribute('data-stripe-key') || '';
     var userId = page.getAttribute('data-user-id') || '';
+
+    function isOffer() {
+        return productType === 'offer';
+    }
+
+    function isFormation() {
+        return productType === 'service' && serviceType === 1;
+    }
+
+    function isEvent() {
+        return productType === 'service' && serviceType === 2;
+    }
+
+    function isConsulting() {
+        return productType === 'service' && serviceType === 3;
+    }
 
     function getSelectedScheduleId() {
         var scheduleId = '';
@@ -78,6 +97,22 @@
         return dateChunks[2] + '/' + dateChunks[1] + '/' + dateChunks[0] + (timePart ? ' ' + timePart : '');
     }
 
+    function toastError(message) {
+        if (typeof window.showToast === 'function') {
+            window.showToast(message);
+        } else {
+            alert(message);
+        }
+    }
+
+    function buildUrl(path) {
+        if (!path || path.charAt(0) === '/') {
+            return path;
+        }
+        var basePath = window.location.pathname.replace(/\/[^\/]+$/, '/');
+        return basePath + path;
+    }
+
     async function checkScheduleConflict() {
         var conflictEl = document.getElementById('schedule-conflict-message');
         var conflictCard = document.getElementById('schedule-conflict-card');
@@ -101,7 +136,7 @@
         try {
             var startParam = serviceDate + ' 00:00:00';
             var endParam = serviceDate + ' 23:59:59';
-            var url = 'planning-api?start=' + encodeURIComponent(startParam) + '&end=' + encodeURIComponent(endParam);
+            var url = buildUrl('planning-api?start=' + encodeURIComponent(startParam) + '&end=' + encodeURIComponent(endParam));
             var response = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
             if (!response.ok) throw new Error('Unable to fetch planning');
             var data = await response.json();
@@ -192,7 +227,7 @@
     function fetchUserBalance() {
         var balanceSpan = document.getElementById('user-balance');
         if (!balanceSpan) return;
-        fetch('users-api?id=' + encodeURIComponent(userId), {
+        fetch(buildUrl('users-api?id=' + encodeURIComponent(userId)), {
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
         .then(function(res) { return res.json(); })
@@ -423,7 +458,7 @@
             var scheduleId = getSelectedScheduleId();
 
             try {
-                var resp = await fetch('pay-with-balance', {
+                var resp = await fetch(buildUrl('pay-with-balance'), {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -439,23 +474,23 @@
                 var respData = null;
                 try { respData = JSON.parse(respText); } catch { respData = null; }
                 if (resp.ok && respData && respData.status === 'succeeded') {
-                    window.location.href = 'order-success?product_uuid=' + encodeURIComponent(productUuid) + '&order_token=' + encodeURIComponent(orderToken) + '&payment_method=balance' + (scheduleId ? '&event_availability_id=' + encodeURIComponent(scheduleId) : '');
+                    window.location.href = buildUrl('order-success?product_uuid=' + encodeURIComponent(productUuid) + '&order_token=' + encodeURIComponent(orderToken) + '&payment_method=balance' + (scheduleId ? '&event_availability_id=' + encodeURIComponent(scheduleId) : ''));
                     return;
                 }
                 var reason = (respData && respData.error) ? respData.error : (respText || 'balance_payment_failed');
-                window.location.href = 'order-cancel?product_uuid=' + encodeURIComponent(productUuid) + '&order_token=' + encodeURIComponent(orderToken) + '&reason=' + encodeURIComponent(reason);
+                window.location.href = buildUrl('order-cancel?product_uuid=' + encodeURIComponent(productUuid) + '&order_token=' + encodeURIComponent(orderToken) + '&reason=' + encodeURIComponent(reason));
             } catch (err) {
-                window.location.href = 'order-cancel?product_uuid=' + encodeURIComponent(productUuid) + '&order_token=' + encodeURIComponent(orderToken) + '&reason=' + encodeURIComponent(err.message || 'balance_payment_failed');
+                window.location.href = buildUrl('order-cancel?product_uuid=' + encodeURIComponent(productUuid) + '&order_token=' + encodeURIComponent(orderToken) + '&reason=' + encodeURIComponent(err.message || 'balance_payment_failed'));
             }
             return;
         }
 
         if (!stripe || !cardElement) {
-            window.location.href = 'order-cancel?product_uuid=' + encodeURIComponent(productUuid) + '&order_token=' + encodeURIComponent(orderToken) + '&reason=' + encodeURIComponent('stripe_not_available');
+            window.location.href = buildUrl('order-cancel?product_uuid=' + encodeURIComponent(productUuid) + '&order_token=' + encodeURIComponent(orderToken) + '&reason=' + encodeURIComponent('stripe_not_available'));
             return;
         }
         try {
-            var response = await fetch('create-payment-intent', {
+            var response = await fetch(buildUrl('create-payment-intent'), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -470,20 +505,20 @@
             try { data = JSON.parse(responseText); } catch { data = null; }
             if (!data) {
                 var reason = responseText ? responseText.slice(0, 200) : 'invalid_response';
-                window.location.href = 'order-cancel?product_uuid=' + encodeURIComponent(productUuid) + '&order_token=' + encodeURIComponent(orderToken) + '&reason=' + encodeURIComponent(reason);
+                window.location.href = buildUrl('order-cancel?product_uuid=' + encodeURIComponent(productUuid) + '&order_token=' + encodeURIComponent(orderToken) + '&reason=' + encodeURIComponent(reason));
                 return;
             }
             if (!response.ok) {
                 var errorReason = data && data.error ? data.error : (responseText || 'payment_intent_failed');
-                window.location.href = 'order-cancel?product_uuid=' + encodeURIComponent(productUuid) + '&order_token=' + encodeURIComponent(orderToken) + '&reason=' + encodeURIComponent(errorReason);
+                window.location.href = buildUrl('order-cancel?product_uuid=' + encodeURIComponent(productUuid) + '&order_token=' + encodeURIComponent(orderToken) + '&reason=' + encodeURIComponent(errorReason));
                 return;
             }
             if (data && data.error) {
-                window.location.href = 'order-cancel?product_uuid=' + encodeURIComponent(productUuid) + '&order_token=' + encodeURIComponent(orderToken) + '&reason=' + encodeURIComponent(data.error);
+                window.location.href = buildUrl('order-cancel?product_uuid=' + encodeURIComponent(productUuid) + '&order_token=' + encodeURIComponent(orderToken) + '&reason=' + encodeURIComponent(data.error));
                 return;
             }
             if (!data || !data.clientSecret) {
-                window.location.href = 'order-cancel?product_uuid=' + encodeURIComponent(productUuid) + '&order_token=' + encodeURIComponent(orderToken) + '&reason=' + encodeURIComponent('missing_client_secret');
+                window.location.href = buildUrl('order-cancel?product_uuid=' + encodeURIComponent(productUuid) + '&order_token=' + encodeURIComponent(orderToken) + '&reason=' + encodeURIComponent('missing_client_secret'));
                 return;
             }
             var result = await stripe.confirmCardPayment(data.clientSecret, {
@@ -496,13 +531,13 @@
                 }
             });
             if (result.error) {
-                window.location.href = 'order-cancel?product_uuid=' + encodeURIComponent(productUuid) + '&order_token=' + encodeURIComponent(orderToken) + '&reason=' + encodeURIComponent(result.error.message || 'payment_failed');
+                window.location.href = buildUrl('order-cancel?product_uuid=' + encodeURIComponent(productUuid) + '&order_token=' + encodeURIComponent(orderToken) + '&reason=' + encodeURIComponent(result.error.message || 'payment_failed'));
                 return;
             }
             if (result.paymentIntent && result.paymentIntent.status === 'succeeded') {
                 var scheduleId = getSelectedScheduleId();
-                alert('Card payment complete; selected scheduleId=' + (scheduleId || '<none>')); // debug
-                if (!scheduleId) {
+                //alert('Card payment complete; selected scheduleId=' + (scheduleId || '<none>')); // debug
+                if (!scheduleId && !isOffer()) {
                     alert('Please select a schedule before completing your card payment.');
                     if (submitButton) submitButton.disabled = false;
                     if (buttonText) buttonText.style.display = '';
@@ -510,7 +545,7 @@
                     return;
                 }
 
-                var verifyResponse = await fetch('verify-payment', {
+                var verifyResponse = await fetch(buildUrl('verify-payment'), {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -527,19 +562,47 @@
                 if (verifyResponse.ok && verifyData && verifyData.status === 'succeeded') {
                     var scheduleId = getSelectedScheduleId();
                     console.log('stripe redirect scheduling, selected scheduleId:', scheduleId);
-                    if (!scheduleId) {
-                        console.warn('Stripe flow: scheduleId missing at redirect');
+
+                    if (!scheduleId && !isOffer()) {
+                        toastError('Please select a schedule before completing your card payment.');
+                        if (submitButton) submitButton.disabled = false;
+                        if (buttonText) buttonText.style.display = '';
+                        if (spinner) spinner.style.display = 'none';
+                        return;
                     }
-                    window.location.href = 'order-success?payment_intent=' + encodeURIComponent(result.paymentIntent.id) + '&product_uuid=' + encodeURIComponent(productUuid) + '&order_token=' + encodeURIComponent(orderToken) + (scheduleId ? '&event_availability_id=' + encodeURIComponent(scheduleId) : '');
+
+                    if (scheduleId && !isOffer()) {
+                        var scheduleDate = page.getAttribute('data-service-date') || '';
+                        var scheduleHour = getSelectedScheduleHour();
+                        try {
+                            await fetch(buildUrl('add-to-agenda'), {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-Requested-With': 'XMLHttpRequest'
+                                },
+                                body: JSON.stringify({
+                                    product_uuid: productUuid,
+                                    event_availability_id: scheduleId,
+                                    schedule_date: scheduleDate,
+                                    schedule_hour: scheduleHour
+                                })
+                            });
+                        } catch (e) {
+                            toastError('Unable to add this booking to your agenda. Please check your planning page later.');
+                        }
+                    }
+
+                    window.location.href = buildUrl('order-success?payment_intent=' + encodeURIComponent(result.paymentIntent.id) + '&product_uuid=' + encodeURIComponent(productUuid) + '&order_token=' + encodeURIComponent(orderToken) + (scheduleId ? '&event_availability_id=' + encodeURIComponent(scheduleId) : ''));
                     return;
                 }
                 var verifyReason = verifyData && verifyData.error ? verifyData.error : (verifyText || 'payment_verification_failed');
-                window.location.href = 'order-cancel?product_uuid=' + encodeURIComponent(productUuid) + '&order_token=' + encodeURIComponent(orderToken) + '&reason=' + encodeURIComponent(verifyReason);
+                window.location.href = buildUrl('order-cancel?product_uuid=' + encodeURIComponent(productUuid) + '&order_token=' + encodeURIComponent(orderToken) + '&reason=' + encodeURIComponent(verifyReason));
                 return;
             }
-            window.location.href = 'order-cancel?product_uuid=' + encodeURIComponent(productUuid) + '&order_token=' + encodeURIComponent(orderToken) + '&reason=' + encodeURIComponent(result.paymentIntent ? result.paymentIntent.status : 'payment_failed');
+            window.location.href = buildUrl('order-cancel?product_uuid=' + encodeURIComponent(productUuid) + '&order_token=' + encodeURIComponent(orderToken) + '&reason=' + encodeURIComponent(result.paymentIntent ? result.paymentIntent.status : 'payment_failed'));
         } catch (error) {
-            window.location.href = 'order-cancel?product_uuid=' + encodeURIComponent(productUuid) + '&order_token=' + encodeURIComponent(orderToken) + '&reason=' + encodeURIComponent(error.message || 'payment_failed');
+            window.location.href = buildUrl('order-cancel?product_uuid=' + encodeURIComponent(productUuid) + '&order_token=' + encodeURIComponent(orderToken) + '&reason=' + encodeURIComponent(error.message || 'payment_failed'));
         }
     });
 })();

@@ -18,17 +18,68 @@ import (
 	"API/models"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"reflect"
 	"regexp"
 	"runtime"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	httpSwagger "github.com/swaggo/http-swagger"
+	"golang.org/x/time/rate"
 )
+
+var (
+	limiterMu    sync.Mutex
+	rateLimiters = make(map[string]*rate.Limiter)
+)
+
+func getClientIP(r *http.Request) string {
+	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+		parts := strings.Split(xff, ",")
+		return strings.TrimSpace(parts[0])
+	}
+	ip, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return r.RemoteAddr
+	}
+	return ip
+}
+
+func getRateLimiter(key string) *rate.Limiter {
+	limiterMu.Lock()
+	defer limiterMu.Unlock()
+
+	limiter, exists := rateLimiters[key]
+	if !exists {
+		limiter = rate.NewLimiter(rate.Every(time.Minute/10), 20)
+		rateLimiters[key] = limiter
+	}
+	return limiter
+}
+
+func rateLimiterMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		key := getClientIP(r)
+		limiter := getRateLimiter(key)
+
+		if !limiter.Allow() {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusTooManyRequests)
+			json.NewEncoder(w).Encode(map[string]string{
+				"error": "too many requests",
+			})
+			return
+		}
+
+		next(w, r)
+	}
+}
 
 var registeredEndpoints []models.Endpoint
 
@@ -500,7 +551,7 @@ func main() {
 	db.Db = db.NewDB()
 
 	registerRoute("GET", "/{$}", "Health check - verify API and database connection", healthCheck)
-	registerRoute("POST", "/login", "User login - authenticate and return user data", app.LoginUser)
+	registerRoute("POST", "/login", "User login - authenticate and return user data", app.LoginUser, rateLimiterMiddleware)
 	registerRoute("POST", "/forgot-password", "Send or verify password reset codes", app.ForgotPassword)
 	registerRoute("POST", "/oauth/login", "OAuth login - generate JWT for an OAuth-authenticated user", app.OAuthLogin)
 	registerRoute("POST", "/moderate", "Moderate arbitrary text using bad‑word list and Gemini AI", app.ModerateContent, app.JWTAuthMiddleware)
@@ -742,9 +793,7 @@ func main() {
 	root := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.DefaultServeMux.ServeHTTP(w, r)
 	})
-	rootWithCors := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		corsMiddleware(root)(w, r)
-	})
+	rootWithCors := corsMiddleware(root)
 
 	go app.WsHub.Run()
 

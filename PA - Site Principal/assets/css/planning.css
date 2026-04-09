@@ -300,6 +300,52 @@
 .btn-secondary:hover {
   opacity: 0.95;
 }
+#view-planning-description {
+  background: #f8fafc;
+  border: 1px solid #dbeafe;
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin: 0 0 16px 0;
+  color: #0f172a;
+  line-height: 1.75;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+#view-planning-description a {
+  color: #0f766e;
+  text-decoration: underline;
+}
+#view-planning-map-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+#view-planning-map-links a.planning-map-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  border-radius: 14px;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #0f172a;
+  text-decoration: none;
+  font-weight: 600;
+  justify-content: center;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.07);
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease;
+}
+#view-planning-map-links a.planning-map-link i {
+  font-size: 0.95rem;
+}
+#view-planning-map-links a.planning-map-link:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 18px 32px rgba(15, 23, 42, 0.12);
+  background: #f8fafc;
+}
 .timetable-wrapper {
   position: relative;
 }
@@ -600,6 +646,8 @@ select[id$="-ampm"] {
 .view-planning-modal-content {
   position: relative;
   width: min(520px, 92vw);
+  max-height: 90vh;
+  overflow-y: auto;
   background: #ffffff;
   border-radius: 12px;
   padding: 26px;
@@ -616,6 +664,30 @@ select[id$="-ampm"] {
 .view-planning-modal-content #view-planning-description {
   color: #475569;
   white-space: pre-wrap;
+}
+.view-planning-modal-content #view-planning-links {
+  margin-top: 16px;
+}
+.view-planning-modal-content #view-planning-links ul {
+  padding-left: 18px;
+  margin: 8px 0 0;
+}
+.view-planning-modal-content #view-planning-links a {
+  color: #0f4669;
+  text-decoration: underline;
+}
+.view-planning-modal-content .view-planning-map-preview {
+  margin-top: 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.view-planning-modal-content .view-planning-map-caption {
+  font-size: 0.9rem;
+  color: #475569;
+  padding: 10px 12px;
+  margin: 0;
+  background: #f8fafc;
 }
 .view-planning-modal .close-button {
   position: absolute;

@@ -40,6 +40,11 @@
 .backup-card-actions .btn-primary {
   min-width: 100px;
 }
+.admin-logs-toolbar .btn-primary,
+.admin-logs-toolbar .btn-secondary {
+  width: auto;
+  min-width: 150px;
+}
 #backup-table {
   display: none;
 }

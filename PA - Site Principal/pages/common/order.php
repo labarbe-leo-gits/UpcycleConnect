@@ -112,6 +112,27 @@ if ($productType === 'offer') {
     }
 }
 
+if ($productType === 'service') {
+    $ordersResponse = askAPI('/users/' . ($user['id'] ?? '') . '/orders', 'GET');
+    $ordersData = json_decode($ordersResponse, true);
+    $hasExistingOrder = false;
+    if (is_array($ordersData) && !isset($ordersData['error'])) {
+        foreach ($ordersData as $orderItem) {
+            if (!is_array($orderItem)) {
+                continue;
+            }
+            if (($orderItem['event_id'] ?? '') === $productUuid && intval($orderItem['status'] ?? 0) > 0) {
+                $hasExistingOrder = true;
+                break;
+            }
+        }
+    }
+    if ($hasExistingOrder) {
+        header('Location: ../customers/service?uuid=' . urlencode($productUuid));
+        exit;
+    }
+}
+
 $productName = $service ? ($service['name'] ?? 'Unnamed Service') : ($offer['title'] ?? 'Untitled offer');
 $productDescription = $service ? ($service['description'] ?? '') : ($offer['description'] ?? '');
 $priceHT = floatval($service ? ($service['price'] ?? 0) : ($offer['price'] ?? 0));
@@ -198,7 +219,7 @@ $freeNotice = $productType === 'offer'
     : 'This is a free service. Click "Complete Order" to confirm your registration.';
 ?>
 
-<div class="container" id="order-page" data-order-token="<?php echo htmlspecialchars($orderToken); ?>" data-product-uuid="<?php echo htmlspecialchars($productUuid); ?>" data-stripe-key="<?php echo htmlspecialchars($stripeConfig['publishable_key'] ?? ''); ?>" data-is-full="<?php echo $isFull ? '1' : '0'; ?>" data-is-free="<?php echo $price == 0 ? '1' : '0'; ?>" data-user-id="<?php echo htmlspecialchars($user['id'] ?? ''); ?>" data-service-date="<?php echo htmlspecialchars($service['service_date'] ?? ''); ?>">
+<div class="container" id="order-page" data-order-token="<?php echo htmlspecialchars($orderToken); ?>" data-product-uuid="<?php echo htmlspecialchars($productUuid); ?>" data-product-type="<?php echo htmlspecialchars($productType); ?>" data-service-type="<?php echo htmlspecialchars($service['type'] ?? ''); ?>" data-type-label="<?php echo htmlspecialchars($typeLabel); ?>" data-stripe-key="<?php echo htmlspecialchars($stripeConfig['publishable_key'] ?? ''); ?>" data-is-full="<?php echo $isFull ? '1' : '0'; ?>" data-is-free="<?php echo $price == 0 ? '1' : '0'; ?>" data-user-id="<?php echo htmlspecialchars($user['id'] ?? ''); ?>" data-service-date="<?php echo htmlspecialchars($service['service_date'] ?? ''); ?>">
     <div class="checkout-container skeleton-checkout-container">
         <div class="checkout-header">
             <div class="skeleton skeleton-checkout-title"></div>

@@ -13,6 +13,12 @@
 
     var pieChart = null;
     var lineChart = null;
+    var barChart = null;
+    var dbTableLabels = [];
+    var dbTableCounts = [];
+    var serverInfo = {};
+    var graphsLive = false;
+    var chartsRenderedOnce = false;
 
     if (typeof Chart !== 'undefined' && typeof ChartDataLabels !== 'undefined') {
         Chart.register(ChartDataLabels);
@@ -27,6 +33,10 @@
         if (lineChart) {
             lineChart.destroy();
             lineChart = null;
+        }
+        if (barChart) {
+            barChart.destroy();
+            barChart = null;
         }
 
         var pieCtx = document.getElementById('pie-chart');
@@ -83,6 +93,41 @@
                     },
                     plugins: {
                         datalabels: {
+                            align: 'top',
+                            color: '#000',
+                            font: { size: 10 },
+                            formatter: function(value) { return value; }
+                        }
+                    }
+                }
+            });
+        }
+
+        var barCtx = document.getElementById('db-table-chart');
+        if (barCtx) {
+            barCtx = barCtx.getContext('2d');
+            barChart = new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: dbTableLabels,
+                    datasets: [{
+                        label: 'Rows',
+                        data: dbTableCounts.map(function(value){ return Number(value) || 0; }),
+                        backgroundColor: dbTableLabels.map((_,i)=>['#60a5fa','#10b981','#f59e0b','#a78bfa','#f87171','#34d399','#fb923c','#38bdf8','#fbbf24','#818cf8','#f472b6'][i%11]),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive:true,
+                    maintainAspectRatio:false,
+                    scales:{
+                        x:{title:{display:true,text:'Table'}},
+                        y:{beginAtZero:true,title:{display:true,text:'Count'}}
+                    },
+                    plugins: {
+                        legend:{display:false},
+                        datalabels: {
+                            anchor: 'end',
                             align: 'top',
                             color: '#000',
                             font: { size: 10 },
@@ -158,6 +203,70 @@
             titleEl.textContent = 'Users activity over time (' + currentLogFile + '.log, ' + mode + ')';
         }
         instantiateCharts();
+    }
+
+    function formatBytes(bytes) {
+        if (bytes === undefined || bytes === null) return 'N/A';
+        var units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        var value = Number(bytes) || 0;
+        var unitIndex = 0;
+        while (value >= 1024 && unitIndex < units.length - 1) {
+            value /= 1024;
+            unitIndex += 1;
+        }
+        return value.toFixed(1) + ' ' + units[unitIndex];
+    }
+
+    function formatDuration(seconds) {
+        if (!seconds || seconds <= 0) return '0s';
+        var minutes = Math.floor(seconds / 60);
+        var hours = Math.floor(minutes / 60);
+        var days = Math.floor(hours / 24);
+        seconds = Math.floor(seconds % 60);
+        minutes = minutes % 60;
+        var parts = [];
+        if (days) parts.push(days + 'd');
+        if (hours % 24) parts.push((hours % 24) + 'h');
+        if (minutes) parts.push(minutes + 'm');
+        if (seconds) parts.push(seconds + 's');
+        return parts.join(' ');
+    }
+
+    function formatPercent(value) {
+        if (value === undefined || value === null || Number.isNaN(Number(value))) return 'N/A';
+        return Number(value).toFixed(1) + '%';
+    }
+
+    function renderServerSummary(info) {
+        var summary = document.getElementById('server-summary');
+        if (!summary) return;
+        if (!info || Object.keys(info).length === 0) {
+            summary.textContent = 'Server metrics unavailable.';
+            return;
+        }
+        summary.innerHTML = '';
+        var cards = [
+            { icon: 'fa-desktop', title: 'OS', value: info.os || 'N/A', subtitle: info.arch || '' },
+            { icon: 'fa-microchip', title: 'CPU cores', value: info.numCpu || 'N/A', subtitle: 'Goroutines: ' + (info.numGoroutine || 'N/A') },
+            { icon: 'fa-clock', title: 'Uptime', value: formatDuration(info.uptimeSeconds), subtitle: '' },
+            { icon: 'fa-memory', title: 'RAM used', value: formatBytes(info.ramUsed), subtitle: 'of ' + formatBytes(info.ramTotal) + ' (' + formatPercent(info.ramUsedPct) + ')' },
+            { icon: 'fa-hdd', title: 'Disk used', value: formatBytes(info.diskUsed), subtitle: 'of ' + formatBytes(info.diskTotal) + ' (' + formatPercent(info.diskUsedPct) + ')' },
+            { icon: 'fa-code', title: 'Go version', value: info.goVersion || 'N/A', subtitle: '' },
+            { icon: 'fa-memory', title: 'Memory alloc', value: formatBytes(info.memoryAlloc), subtitle: 'Total alloc: ' + formatBytes(info.memoryTotalAlloc) },
+            { icon: 'fa-recycle', title: 'GC cycles', value: info.numGC || 'N/A', subtitle: '' }
+        ];
+        cards.forEach(function(card) {
+            var cardEl = document.createElement('div');
+            cardEl.className = 'server-stat-card';
+            cardEl.innerHTML =
+                '<span class="stat-icon"><i class="fa-solid ' + card.icon + '"></i></span>' +
+                '<div>' +
+                '<h4>' + card.title + '</h4>' +
+                '<p>' + card.value + '</p>' +
+                (card.subtitle ? '<small>' + card.subtitle + '</small>' : '') +
+                '</div>';
+            summary.appendChild(cardEl);
+        });
     }
 
     var _pageReady = false;
@@ -303,13 +412,112 @@
                 projSince.textContent = d.projectDelta + ' since yesterday';
             }
 
+            document.getElementById('annonce-count').textContent = d.annonceCount || 0;
+            var annonceNewEl = document.querySelector('#annonce-count + .dashboard-small');
+            if (annonceNewEl) {
+                annonceNewEl.classList.add('detail');
+                annonceNewEl.innerHTML = '<i class="fa-solid fa-list"></i> Total listings in catalog: <strong>' + (d.annonceCount || 0) + '</strong>';
+            }
+            var annonceDelta = document.querySelector('#annonce-count + .dashboard-small + .dashboard-small');
+            if (annonceDelta) {
+                annonceDelta.classList.add('detail');
+                annonceDelta.innerHTML = '<i class="fa-solid fa-check"></i> Listings are live';
+            }
+            var annonceCard = document.querySelector('.portal-card.purple');
+            if (annonceCard) {
+                var existing = annonceCard.querySelector('.pct-chip-wrapper');
+                if (existing) existing.remove();
+                var wrapper = document.createElement('span');
+                wrapper.className = 'pct-chip-wrapper';
+                wrapper.innerHTML = pctChip(d.annoncePct, 'since yesterday');
+                annonceCard.appendChild(wrapper);
+            }
+
+            document.getElementById('deposit-count').textContent = d.pendingDeposits || 0;
+            var depositEl = document.querySelector('#deposit-count + .dashboard-small');
+            if (depositEl) {
+                depositEl.classList.add('detail');
+                depositEl.innerHTML = '<i class="fa-solid fa-hourglass-half"></i> Pending requests: <strong>' + (d.pendingDeposits || 0) + '</strong>';
+            }
+            var depositDelta = document.querySelector('#deposit-count + .dashboard-small + .dashboard-small');
+            if (depositDelta) {
+                depositDelta.classList.add('detail');
+                depositDelta.innerHTML = '<i class="fa-solid fa-user-clock"></i> Awaiting review';
+            }
+            var depositCard = document.querySelector('.portal-card.teal');
+            if (depositCard) {
+                var existing = depositCard.querySelector('.pct-chip-wrapper');
+                if (existing) existing.remove();
+                var wrapper = document.createElement('span');
+                wrapper.className = 'pct-chip-wrapper';
+                wrapper.innerHTML = pctChip(d.pendingDepositsPct, 'since yesterday');
+                depositCard.appendChild(wrapper);
+            }
+
+            document.getElementById('event-count').textContent = d.eventCount || 0;
+            var eventEl = document.querySelector('#event-count + .dashboard-small');
+            if (eventEl) {
+                eventEl.classList.add('detail');
+                eventEl.innerHTML = '<i class="fa-solid fa-calendar-plus"></i> Upcoming events: <strong>' + (d.upcomingEvents || 0) + '</strong>';
+            }
+            var eventDelta = document.querySelector('#event-count + .dashboard-small + .dashboard-small');
+            if (eventDelta) {
+                eventDelta.classList.add('detail');
+                eventDelta.innerHTML = '<i class="fa-solid fa-calendar-check"></i> Total events';
+            }
+            var eventCard = document.querySelector('.portal-card.orange');
+            if (eventCard) {
+                var existing = eventCard.querySelector('.pct-chip-wrapper');
+                if (existing) existing.remove();
+                var wrapper = document.createElement('span');
+                wrapper.className = 'pct-chip-wrapper';
+                wrapper.innerHTML = pctChip(d.eventPct, 'since yesterday');
+                eventCard.appendChild(wrapper);
+            }
+
+            document.getElementById('pending-count').textContent = d.pendingRegistrations || 0;
+            var pendingEl = document.querySelector('#pending-count + .dashboard-small');
+            if (pendingEl) {
+                pendingEl.classList.add('detail');
+                pendingEl.innerHTML = '<i class="fa-solid fa-user-clock"></i> Awaiting validation';
+            }
+            var pendingDelta = document.querySelector('#pending-count + .dashboard-small + .dashboard-small');
+            if (pendingDelta) {
+                pendingDelta.classList.add('detail');
+                pendingDelta.innerHTML = '<i class="fa-solid fa-circle-info"></i> Review queue';
+            }
+            var pendingCard = document.querySelector('.portal-card.pink');
+            if (pendingCard) {
+                var existing = pendingCard.querySelector('.pct-chip-wrapper');
+                if (existing) existing.remove();
+                var wrapper = document.createElement('span');
+                wrapper.className = 'pct-chip-wrapper';
+                wrapper.innerHTML = pctChip(d.pendingRegistrationsPct, 'since yesterday');
+                pendingCard.appendChild(wrapper);
+            }
+
+            dbTableLabels = d.dbTableLabels || [];
+            dbTableCounts = d.dbTableCounts || [];
+            serverInfo = d.serverInfo || {};
+            renderServerSummary(serverInfo);
+
             materialLabels    = d.materialLabels || [];
             materialData      = d.materialData || [];
+            dbTableLabels     = d.dbTableLabels || [];
+            dbTableCounts     = d.dbTableCounts || [];
             allLoginDates     = d.loginDates || [];
             allLoginSeries    = d.loginSeries || [];
             allRegisterDates  = d.registerDates || [];
             allRegisterSeries = d.registerSeries || [];
-            updateActivityChart();
+            if (!chartsRenderedOnce || graphsLive) {
+                updateActivityChart();
+                chartsRenderedOnce = true;
+            } else {
+                var titleEl = document.getElementById('line-chart-title');
+                if (titleEl) {
+                    titleEl.textContent = 'Users activity over time (' + currentLogFile + '.log, ' + currentRange + ') - paused';
+                }
+            }
         } catch(e) {
             console.error(e);
         } finally {
@@ -323,17 +531,32 @@
         if (rangeSelector) {
             rangeSelector.addEventListener('change', function(){
                 currentRange = this.value || 'weekly';
-                updateActivityChart();
+                if (graphsLive) updateActivityChart();
             });
         }
         var fileSelector = document.getElementById('activity-file-select');
         if (fileSelector) {
             fileSelector.addEventListener('change', function(){
                 currentLogFile = this.value || 'login';
-                updateActivityChart();
+                if (graphsLive) updateActivityChart();
+            });
+        }
+        var liveToggle = document.getElementById('graph-live-toggle');
+        if (liveToggle) {
+            liveToggle.addEventListener('change', function(){
+                graphsLive = this.checked;
+                if (graphsLive) {
+                    updateActivityChart();
+                } else {
+                    var titleEl = document.getElementById('line-chart-title');
+                    if (titleEl) {
+                        titleEl.textContent = 'Users activity over time (' + currentLogFile + '.log, ' + currentRange + ') - paused';
+                    }
+                }
             });
         }
         instantiateCharts();
         refreshKpis();
+        setInterval(refreshKpis, 5000);
     });
 })();

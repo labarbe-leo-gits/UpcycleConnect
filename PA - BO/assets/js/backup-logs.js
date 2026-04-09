@@ -206,6 +206,23 @@
         renderTable();
     });
 
+    document.getElementById('create-backup-btn').addEventListener('click', function(){
+        fetch('backup.php?ajax=1&action=create_manual')
+            .then(r => r.json())
+            .then(d => {
+                if (!d.success) {
+                    showInfoMessage(d.message || 'Unable to create backup');
+                    return;
+                }
+                showInfoMessage('Backup created: ' + d.file);
+                window.location.reload();
+            })
+            .catch(e => {
+                showInfoMessage('Unable to create backup');
+                console.error(e);
+            });
+    });
+
     document.getElementById('backup-load-more').addEventListener('click', function(){renderTable();});
 
     document.getElementById('preview-close').addEventListener('click',()=>hideModal('preview-modal'));

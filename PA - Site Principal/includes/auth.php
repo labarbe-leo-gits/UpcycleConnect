@@ -23,7 +23,7 @@ function getUserHomePath($userType) {
     if ((int) $userType === 2) {
         return '../pro/profile';
     } elseif ((int) $userType === 3) {
-        return $boUrl !== '' ? ($boUrl . '/pages/admin/dashboard') : '../public/login.php';
+        return $boUrl !== '' ? ($boUrl . '/pages/admin/dashboard') : '../public/login';
     } elseif ((int) $userType === 4) {
         return '../partials/profile';
     } else {
@@ -35,7 +35,7 @@ function requireLogin() {
     if (!isLoggedIn()) {
         $current_page = basename($_SERVER['PHP_SELF'], '.php');
         $_SESSION['page_after_login'] = $current_page;
-        header('Location: ../../pages/public/login.php');
+        header('Location: ../../pages/public/login');
         exit();
     }
 }
@@ -45,7 +45,7 @@ function requireUserType($expectedType) {
 
     $userType = getLoggedInUserType();
     if ($userType === null) {
-        header('Location: ../../pages/public/login.php');
+        header('Location: ../../pages/public/login');
         exit();
     }
 
@@ -128,7 +128,7 @@ function logout() {
     session_start();
     session_unset();
     session_destroy();
-    header('Location: ../../pages/public/login.php');
+    header('Location: ../../pages/public/login');
     exit();
 }
 ?>

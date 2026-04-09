@@ -83,6 +83,12 @@ if (empty($user['oauth_provider'])) {
     $twoFAEnabled = isset($twoFAData['enabled']) && $twoFAData['enabled'] === true;
 }
 
+$showFirstLoginTutorial = false;
+if (isset($_SESSION['show_first_login_tutorial']) && $_SESSION['show_first_login_tutorial'] === true && (int) ($_SESSION['user_type'] ?? 0) === 1) {
+    $showFirstLoginTutorial = true;
+    unset($_SESSION['show_first_login_tutorial']);
+}
+
 $newsletterSubscribed = isset($userDetails['newsletter_subscribed']) ? (bool)$userDetails['newsletter_subscribed'] : true;
 
 $profileTitles = [
@@ -430,6 +436,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="profile-actions">
                     <button type="button" class="btn-primary btn-inline" id="open-payment-modal">
                         <i class="fa-solid fa-money-check-dollar"></i> Request Payment of Balance
+                    </button>
+                    <button type="button" class="btn-secondary btn-inline" id="replay-tutorial-btn">
+                        <i class="fa-solid fa-arrow-rotate-right"></i> Replay Tutorial
                     </button>
                     <button onclick="document.getElementById('logout-form').submit()" class="btn-logout">
                         <i class="fa-solid fa-right-from-bracket"></i> Logout
@@ -1170,6 +1179,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 </div>
 
+<div class="tutorial-overlay" id="first-login-tour-overlay" aria-hidden="true">
+    <div class="tutorial-backdrop"></div>
+    <div class="tutorial-focus-ring" id="tutorial-focus-ring"></div>
+    <div class="tutorial-tooltip" id="first-login-tutorial-tooltip" role="dialog" aria-modal="true" aria-labelledby="tutorial-title" aria-describedby="tutorial-body">
+        <div class="tooltip-header">
+            <h2 id="tutorial-title">Welcome to your dashboard</h2>
+            <button type="button" class="tooltip-close" id="tutorial-close-btn" aria-label="Close tutorial">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="tooltip-body">
+            <div id="tutorial-step-counter" class="tutorial-step-counter"></div>
+            <h3 id="tutorial-step-heading"></h3>
+            <p id="tutorial-step-body"></p>
+        </div>
+        <div class="tooltip-actions">
+            <button type="button" class="btn-secondary" id="tutorial-prev-btn"><i class="fa-solid fa-chevron-left"></i> Back</button>
+            <button type="button" class="btn-secondary" id="tutorial-skip-btn">Skip</button>
+            <button type="button" class="btn-primary" id="tutorial-next-btn">Next <i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+    </div>
+</div>
+
 <div id="planning-preloader" class="planning-preloader" style="display:none;z-index:10000;">
     <div class="recycle-spinner">
         <div class="rec-arc a"></div>
@@ -1179,6 +1211,168 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </div>
 <script>
     window.currentUserId = <?= json_encode($user['id'] ?? '') ?>;
+    window.showFirstLoginTutorial = <?= json_encode($showFirstLoginTutorial) ?>;
+    window.firstLoginTutorialSteps = [
+        {
+            title: 'Welcome to UpcycleConnect',
+            body: 'This quick tutorial helps you get started with your customer dashboard and shows where to manage profile details, payments, and your sustainability progress.',
+            selector: '.profile-card'
+        },
+        {
+            title: 'Update your profile',
+            body: 'Use the profile section to verify your name, email, and contact details. You can also manage newsletter preferences from here.',
+            selector: '.profile-info-section'
+        },
+        {
+            title: 'Request payments',
+            body: 'When you have balance available, request payment directly from this dashboard. Your current balance is displayed near the top.',
+            selector: '#balance-total'
+        },
+        {
+            title: 'Track your progress',
+            body: 'Your upcycling level and badges let you follow your environmental impact and unlock achievements over time.',
+            selector: '.profile-tabs'
+        }
+    ];
+
+    (function () {
+        var tourOverlay = document.getElementById('first-login-tour-overlay');
+        var backdrop = tourOverlay ? tourOverlay.querySelector('.tutorial-backdrop') : null;
+        var focusRing = document.getElementById('tutorial-focus-ring');
+        var tooltip = document.getElementById('first-login-tutorial-tooltip');
+        var tutorialCloseBtn = document.getElementById('tutorial-close-btn');
+        var prevBtn = document.getElementById('tutorial-prev-btn');
+        var skipBtn = document.getElementById('tutorial-skip-btn');
+        var nextBtn = document.getElementById('tutorial-next-btn');
+        var replayBtn = document.getElementById('replay-tutorial-btn');
+        var stepHeading = document.getElementById('tutorial-step-heading');
+        var stepBody = document.getElementById('tutorial-step-body');
+        var stepCounter = document.getElementById('tutorial-step-counter');
+        var currentStep = 0;
+        var activeTarget = null;
+
+        function getStep() {
+            return window.firstLoginTutorialSteps[currentStep] || null;
+        }
+
+        function updateTooltipPosition(target) {
+            if (!tooltip) return;
+            tooltip.style.top = '16%';
+            tooltip.style.left = '50%';
+            tooltip.dataset.arrow = 'top';
+        }
+
+        function highlightTarget(selector) {
+            if (!focusRing) return;
+            var target = selector ? document.querySelector(selector) : null;
+            if (!target) {
+                focusRing.style.display = 'none';
+                activeTarget = null;
+                return;
+            }
+            var rect = target.getBoundingClientRect();
+            focusRing.style.display = 'block';
+            focusRing.style.top = window.scrollY + rect.top - 10 + 'px';
+            focusRing.style.left = window.scrollX + rect.left - 10 + 'px';
+            focusRing.style.width = rect.width + 20 + 'px';
+            focusRing.style.height = rect.height + 20 + 'px';
+            activeTarget = target;
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function showStep() {
+            var step = getStep();
+            if (!step) {
+                closeTour();
+                return;
+            }
+            stepHeading.textContent = step.title;
+            stepBody.textContent = step.body;
+            stepCounter.textContent = 'Step ' + (currentStep + 1) + ' / ' + window.firstLoginTutorialSteps.length;
+            prevBtn.style.display = currentStep === 0 ? 'none' : '';
+            nextBtn.innerHTML = currentStep === window.firstLoginTutorialSteps.length - 1 ? 'Finish <i class="fa-solid fa-check"></i>' : 'Next <i class="fa-solid fa-chevron-right"></i>';
+            highlightTarget(step.selector);
+            if (tooltip) {
+                tooltip.style.display = 'block';
+                tooltip.style.visibility = 'visible';
+            }
+            requestAnimationFrame(function () {
+                updateTooltipPosition(null);
+                if (tooltip) {
+                    tooltip.classList.add('tooltip-visible');
+                }
+            });
+        }
+
+        function openTour() {
+            if (!tourOverlay) return;
+            tourOverlay.classList.add('visible');
+            document.body.classList.add('modal-open');
+            if (tooltip) {
+                tooltip.style.display = 'block';
+                tooltip.style.visibility = 'visible';
+                tooltip.classList.remove('tooltip-hidden');
+            }
+            currentStep = 0;
+            showStep();
+        }
+
+        function closeTour() {
+            if (!tourOverlay) return;
+            tourOverlay.classList.remove('visible');
+            document.body.classList.remove('modal-open');
+            if (focusRing) focusRing.style.display = 'none';
+            if (tooltip) tooltip.classList.remove('tooltip-visible');
+        }
+
+        if (tutorialCloseBtn) {
+            tutorialCloseBtn.addEventListener('click', closeTour);
+        }
+        if (skipBtn) {
+            skipBtn.addEventListener('click', closeTour);
+        }
+        if (prevBtn) {
+            prevBtn.addEventListener('click', function () {
+                if (currentStep === 0) return;
+                currentStep -= 1;
+                showStep();
+            });
+        }
+        if (nextBtn) {
+            nextBtn.addEventListener('click', function () {
+                if (currentStep < window.firstLoginTutorialSteps.length - 1) {
+                    currentStep += 1;
+                    showStep();
+                } else {
+                    closeTour();
+                }
+            });
+        }
+        if (replayBtn) {
+            replayBtn.addEventListener('click', openTour);
+        }
+        if (backdrop) {
+            backdrop.addEventListener('click', closeTour);
+        }
+
+        window.addEventListener('resize', function () {
+            if (tourOverlay && tourOverlay.classList.contains('visible')) {
+                showStep();
+            }
+        });
+
+        function initTour() {
+            if (window.showFirstLoginTutorial === true) {
+                openTour();
+            }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initTour);
+        } else {
+            initTour();
+        }
+    })();
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
 <script src="../../assets/js/profile.js"></script>

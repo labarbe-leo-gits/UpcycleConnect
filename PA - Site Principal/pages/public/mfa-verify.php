@@ -54,6 +54,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['email']      = $user['email'];
             $_SESSION['user_type']  = isset($user['user_type']) ? (int) $user['user_type'] : 1;
 
+            $lastLogin = $user['last_login'] ?? null;
+            $_SESSION['show_first_login_tutorial'] =
+                ((int) $_SESSION['user_type'] === 1) &&
+                ($lastLogin === null || $lastLogin === '');
+
             if (isset($_SESSION['page_after_login']) && (int) $_SESSION['user_type'] === 1) {
                 $page = $_SESSION['page_after_login'];
                 unset($_SESSION['page_after_login']);

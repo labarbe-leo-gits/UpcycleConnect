@@ -9,9 +9,15 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"sort"
 	"time"
+
+	"github.com/shirou/gopsutil/v3/disk"
+	"github.com/shirou/gopsutil/v3/mem"
 )
+
+var serverStartTime = time.Now()
 
 func GetDashboardMetrics(w http.ResponseWriter, r *http.Request) {
 
@@ -124,12 +130,122 @@ func GetDashboardMetrics(w http.ResponseWriter, r *http.Request) {
 		registerSeries = append(registerSeries, registerCounts[d])
 	}
 
+	var annonceCount, annonceCountYesterday, pendingDeposits, pendingDepositsYesterday, eventCount, eventCountYesterday, upcomingEvents, pendingRegistrations, pendingRegistrationsYesterday, adviceCount, badgeCount, categoryCount, orderCount int
+	var categoryLabels []string
+	var categoryCounts []int
+
+	db.Db.QueryRow("SELECT COUNT(id) FROM annonces").Scan(&annonceCount)
+	db.Db.QueryRow("SELECT COUNT(id) FROM annonces WHERE DATE(created_at) = ?", yesterday).Scan(&annonceCountYesterday)
+	db.Db.QueryRow("SELECT COUNT(id) FROM demandes_depot WHERE status = 0").Scan(&pendingDeposits)
+	db.Db.QueryRow("SELECT COUNT(id) FROM demandes_depot WHERE status = 0 AND DATE(created_at) = ?", yesterday).Scan(&pendingDepositsYesterday)
+	db.Db.QueryRow("SELECT COUNT(id) FROM evenements").Scan(&eventCount)
+	db.Db.QueryRow("SELECT COUNT(id) FROM evenements WHERE DATE(created_at) = ?", yesterday).Scan(&eventCountYesterday)
+	db.Db.QueryRow("SELECT COUNT(id) FROM evenements WHERE event_date >= ?", today).Scan(&upcomingEvents)
+	db.Db.QueryRow("SELECT COUNT(id) FROM pending_registrations").Scan(&pendingRegistrations)
+	db.Db.QueryRow("SELECT COUNT(id) FROM pending_registrations WHERE DATE(created_at) = ?", yesterday).Scan(&pendingRegistrationsYesterday)
+	db.Db.QueryRow("SELECT COUNT(id) FROM conseils").Scan(&adviceCount)
+	db.Db.QueryRow("SELECT COUNT(id) FROM badges").Scan(&badgeCount)
+	db.Db.QueryRow("SELECT COUNT(id) FROM categories").Scan(&categoryCount)
+	db.Db.QueryRow("SELECT COUNT(id) FROM orders").Scan(&orderCount)
+
+	topCategoryRows, err := db.Db.Query("SELECT COALESCE(c.name,'Unknown'), COUNT(a.id) FROM annonces a LEFT JOIN categories c ON a.category_id = c.id GROUP BY COALESCE(c.name,'Unknown') ORDER BY COUNT(a.id) DESC LIMIT 10")
+	if err == nil {
+		defer topCategoryRows.Close()
+		var categoryName string
+		var categoryTotal int
+		for topCategoryRows.Next() {
+			if err := topCategoryRows.Scan(&categoryName, &categoryTotal); err == nil {
+				categoryLabels = append(categoryLabels, categoryName)
+				categoryCounts = append(categoryCounts, categoryTotal)
+			}
+		}
+	} else {
+		fmt.Println("[WARN] unable to load top categories:", err)
+	}
+
+	var serverMem runtime.MemStats
+	runtime.ReadMemStats(&serverMem)
+
+	var vmStat *mem.VirtualMemoryStat
+	var memErr error
+	vmStat, memErr = mem.VirtualMemory()
+
+	cwd, _ := os.Getwd()
+	diskStat, _ := disk.Usage(cwd)
+
+	serverInfo := map[string]interface{}{
+		"os":               runtime.GOOS,
+		"arch":             runtime.GOARCH,
+		"goVersion":        runtime.Version(),
+		"numCpu":           runtime.NumCPU(),
+		"numGoroutine":     runtime.NumGoroutine(),
+		"uptimeSeconds":    time.Since(serverStartTime).Seconds(),
+		"memoryAlloc":      serverMem.Alloc,
+		"memoryTotalAlloc": serverMem.TotalAlloc,
+		"memorySys":        serverMem.Sys,
+		"heapAlloc":        serverMem.HeapAlloc,
+		"heapSys":          serverMem.HeapSys,
+		"mallocs":          serverMem.Mallocs,
+		"frees":            serverMem.Frees,
+		"numGC":            serverMem.NumGC,
+		"ramTotal":         0,
+		"ramUsed":          0,
+		"ramUsedPct":       0.0,
+		"diskTotal":        0,
+		"diskUsed":         0,
+		"diskUsedPct":      0.0,
+		"diskPath":         cwd,
+	}
+
+	if memErr == nil && vmStat != nil {
+		serverInfo["ramTotal"] = vmStat.Total
+		serverInfo["ramUsed"] = vmStat.Used
+		serverInfo["ramUsedPct"] = vmStat.UsedPercent
+	}
+	if diskStat != nil {
+		serverInfo["diskTotal"] = diskStat.Total
+		serverInfo["diskUsed"] = diskStat.Used
+		serverInfo["diskUsedPct"] = diskStat.UsedPercent
+	}
+
 	containerDelta := containerCount - containerCountYesterday
 	containerPct := 0.0
 	if containerCountYesterday > 0 {
 		containerPct = float64(containerDelta) * 100.0 / float64(containerCountYesterday)
 	} else if containerCount > 0 {
 		containerPct = 100.0
+	}
+
+	annonceDelta := annonceCount - annonceCountYesterday
+	annoncePct := 0.0
+	if annonceCountYesterday > 0 {
+		annoncePct = float64(annonceDelta) * 100.0 / float64(annonceCountYesterday)
+	} else if annonceCount > 0 {
+		annoncePct = 100.0
+	}
+
+	pendingDepositsDelta := pendingDeposits - pendingDepositsYesterday
+	pendingDepositsPct := 0.0
+	if pendingDepositsYesterday > 0 {
+		pendingDepositsPct = float64(pendingDepositsDelta) * 100.0 / float64(pendingDepositsYesterday)
+	} else if pendingDeposits > 0 {
+		pendingDepositsPct = 100.0
+	}
+
+	eventDelta := eventCount - eventCountYesterday
+	eventPct := 0.0
+	if eventCountYesterday > 0 {
+		eventPct = float64(eventDelta) * 100.0 / float64(eventCountYesterday)
+	} else if eventCount > 0 {
+		eventPct = 100.0
+	}
+
+	pendingRegistrationsDelta := pendingRegistrations - pendingRegistrationsYesterday
+	pendingRegistrationsPct := 0.0
+	if pendingRegistrationsYesterday > 0 {
+		pendingRegistrationsPct = float64(pendingRegistrationsDelta) * 100.0 / float64(pendingRegistrationsYesterday)
+	} else if pendingRegistrations > 0 {
+		pendingRegistrationsPct = 100.0
 	}
 
 	incomeDelta := todayIncome - yesterdayIncome
@@ -173,6 +289,29 @@ func GetDashboardMetrics(w http.ResponseWriter, r *http.Request) {
 		"aiPct":        aiPct,
 		"projectDelta": projectDelta,
 		"projectPct":   projectPct,
+
+		"annonceCount":              annonceCount,
+		"pendingDeposits":           pendingDeposits,
+		"eventCount":                eventCount,
+		"eventDelta":                eventDelta,
+		"eventPct":                  eventPct,
+		"upcomingEvents":            upcomingEvents,
+		"pendingRegistrations":      pendingRegistrations,
+		"pendingRegistrationsDelta": pendingRegistrationsDelta,
+		"pendingRegistrationsPct":   pendingRegistrationsPct,
+		"adviceCount":               adviceCount,
+		"badgeCount":                badgeCount,
+		"categoryCount":             categoryCount,
+		"annonceDelta":              annonceDelta,
+		"annoncePct":                annoncePct,
+		"pendingDepositsDelta":      pendingDepositsDelta,
+		"pendingDepositsPct":        pendingDepositsPct,
+		"orderCount":                orderCount,
+		"dbTableLabels":             []string{"Users", "Annonces", "Conteneurs", "Pending deposits", "Projects", "Orders", "Events", "Pending regs", "Advice", "Badges", "Categories"},
+		"dbTableCounts":             []int{userCount, annonceCount, containerCount, pendingDeposits, projectCount, orderCount, eventCount, pendingRegistrations, adviceCount, badgeCount, categoryCount},
+		"categoryLabels":            categoryLabels,
+		"categoryCounts":            categoryCounts,
+		"serverInfo":                serverInfo,
 
 		"loginDates":     loginDates,
 		"loginSeries":    loginSeries,

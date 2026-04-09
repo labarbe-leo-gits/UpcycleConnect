@@ -26,6 +26,7 @@
     var currentWeekStart = getMonday(new Date());
     var pendingDeleteIndex = null;
     var pendingEditIndex = null;
+    var viewPlanningMapInstance = null;
 
     function getMonday(date) {
         var d = new Date(date);
@@ -215,7 +216,7 @@
                     <div class="planning-item-info">
                         <div class="planning-item-time">${escapeHtml(dateStr)} <span class="dot">·</span> ${escapeHtml(timePeriod)}</div>
                         <div class="planning-item-type">${escapeHtml(title)}</div>
-                        ${descHtml}
+                        
                     </div>
                     <div class="planning-item-actions">
                         <button class="icon-button" onclick="viewPlanning(${globalIndex})" title="View">
@@ -417,6 +418,139 @@
         });
     }
 
+    function makeLinksClickable(text) {
+        if (!text) return '';
+        var escaped = escapeHtml(text);
+        var linked = escaped.replace(/(https?:\/\/[^\s<]+)/gi, function(url){
+            var safeUrl = url.replace(/&amp;/g, '&');
+            return '<a href="' + safeUrl + '" target="_blank" rel="noopener noreferrer">' + url + '</a>';
+        });
+        return linked.replace(/\n/g, '<br>');
+    }
+
+    function extractAddress(text) {
+        if (!text) return '';
+        var match = text.match(/Presential session at:\s*([^\n]+)/i);
+        return match ? match[1].trim() : '';
+    }
+
+    function extractMapUrls(text) {
+        if (!text) return [];
+        var urls = [];
+        var regex = /(https?:\/\/[^\s<]+)/gi;
+        var match;
+        while ((match = regex.exec(text)) !== null) {
+            urls.push(match[1]);
+        }
+        return urls;
+    }
+
+    function getMapLinkLabel(url) {
+        var host = '';
+        try {
+            host = new URL(url).hostname.toLowerCase();
+        } catch (e) {
+            host = url;
+        }
+        if (host.indexOf('google.com') >= 0) return 'Google Maps';
+        if (host.indexOf('openstreetmap.org') >= 0) return 'OpenStreetMap';
+        return host.replace(/^www\./, '');
+    }
+
+    function getMapLinkIcon(url) {
+        try {
+            var host = new URL(url).hostname.toLowerCase();
+            if (host.indexOf('google.com') >= 0) return 'fa-brands fa-google';
+            if (host.indexOf('openstreetmap.org') >= 0) return 'fa-solid fa-map-location-dot';
+        } catch (e) {}
+        return 'fa-solid fa-globe';
+    }
+
+    function makeDefaultMapUrls(address) {
+        if (!address) return [];
+        var query = encodeURIComponent(address);
+        return [
+            'https://www.google.com/maps/search/?api=1&query=' + query,
+            'https://www.openstreetmap.org/search?query=' + query
+        ];
+    }
+
+    function renderPlanningMap(address, urls) {
+        var container = document.getElementById('view-planning-map-container');
+        var mapEl = document.getElementById('view-planning-map');
+        var linksEl = document.getElementById('view-planning-map-links');
+        if (!container || !mapEl || !linksEl) return;
+
+        if (!address && urls.length === 0) {
+            container.style.display = 'none';
+            mapEl.style.display = 'none';
+            linksEl.style.display = 'none';
+            linksEl.innerHTML = '';
+            return;
+        }
+
+        container.style.display = '';
+        linksEl.innerHTML = '';
+
+        var linkTargets = urls.length > 0 ? urls : makeDefaultMapUrls(address);
+        if (linkTargets.length > 0) {
+            linkTargets.forEach(function(url) {
+                var linkBtn = document.createElement('a');
+                linkBtn.className = 'btn-secondary planning-map-link';
+                linkBtn.href = url;
+                linkBtn.target = '_blank';
+                linkBtn.rel = 'noopener noreferrer';
+                linkBtn.innerHTML = '<i class="' + getMapLinkIcon(url) + '"></i>' + getMapLinkLabel(url);
+                linksEl.appendChild(linkBtn);
+            });
+            linksEl.style.display = 'flex';
+            linksEl.style.flexWrap = 'wrap';
+        } else {
+            linksEl.style.display = 'none';
+        }
+
+        if (address && typeof window.L !== 'undefined') {
+            mapEl.style.display = 'block';
+            mapEl.textContent = 'Loading map…';
+            if (viewPlanningMapInstance) {
+                try { viewPlanningMapInstance.remove(); } catch (ignore) {}
+                viewPlanningMapInstance = null;
+            }
+            fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(address))
+                .then(function(response){ return response.json(); })
+                .then(function(data) {
+                    if (!data || !data.length) {
+                        mapEl.textContent = 'Map unavailable for this address.';
+                        return;
+                    }
+                    mapEl.textContent = '';
+                    var lat = parseFloat(data[0].lat);
+                    var lon = parseFloat(data[0].lon);
+                    if (isNaN(lat) || isNaN(lon)) {
+                        mapEl.textContent = 'Map unavailable for this address.';
+                        return;
+                    }
+                    mapEl.innerHTML = '';
+                    viewPlanningMapInstance = window.L.map(mapEl, { scrollWheelZoom: false }).setView([lat, lon], 15);
+                    window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '&copy; OpenStreetMap contributors'
+                    }).addTo(viewPlanningMapInstance);
+                    window.L.marker([lat, lon]).addTo(viewPlanningMapInstance);
+                })
+                .catch(function(err) {
+                    mapEl.textContent = 'Unable to load map.';
+                    console.warn('Planning map geocode failed', err);
+                });
+        } else {
+            if (viewPlanningMapInstance) {
+                try { viewPlanningMapInstance.remove(); } catch (ignore) {}
+                viewPlanningMapInstance = null;
+            }
+            mapEl.style.display = 'none';
+            mapEl.innerHTML = '';
+        }
+    }
+
     window.viewPlanning = function(index) {
         var planning = plannings[index];
         if (!planning) return;
@@ -428,7 +562,12 @@
         if (viewTitle) viewTitle.textContent = planning.title || 'Slot Details';
         if (viewDate) viewDate.textContent = formatDisplayDate(planning.date || '') || '';
         if (viewTime) viewTime.textContent = formatDisplayTime(planning.start_time) + ' - ' + formatDisplayTime(planning.end_time);
-        if (viewDesc) viewDesc.textContent = planning.description || 'No description available.';
+        if (viewDesc) viewDesc.innerHTML = makeLinksClickable(planning.description || 'No description available.');
+
+        var address = extractAddress(planning.description || '');
+        var urls = extractMapUrls(planning.description || '');
+        renderPlanningMap(address, urls);
+
         if (viewModal) viewModal.classList.add('active');
     };
 

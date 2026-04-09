@@ -827,6 +827,26 @@ body.modal-open {
   background: #ef4444;
   color: #fff;
 }
+.portal-card.purple .pct-chip {
+  background: #8b5cf6;
+  color: #fff;
+}
+.portal-card.teal .pct-chip {
+  background: #14b8a6;
+  color: #fff;
+}
+.portal-card.orange .pct-chip {
+  background: #fb923c;
+  color: #fff;
+}
+.portal-card.pink .pct-chip {
+  background: #ec4899;
+  color: #fff;
+}
+.portal-card.gray .pct-chip {
+  background: #475569;
+  color: #fff;
+}
 
 .portal-card:hover {
   transform: translateY(-4px);
@@ -849,7 +869,11 @@ body.modal-open {
 .portal-card p#user-count,
 .portal-card p#container-count,
 .portal-card p#income-total,
-.portal-card p#project-count {
+.portal-card p#project-count,
+.portal-card p#annonce-count,
+.portal-card p#deposit-count,
+.portal-card p#event-count,
+.portal-card p#pending-count {
   font-size: 1.6rem;
   font-weight: 700;
   font-style: italic;
@@ -937,6 +961,71 @@ body.modal-open {
 
 .portal-card.red a {
   color: #ef4444;
+}
+
+.portal-card.purple {
+  background: #fff;
+  border-color: #e5e7eb;
+}
+
+.portal-card.purple h3 {
+  color: #8b5cf6;
+}
+
+.portal-card.purple a {
+  color: #8b5cf6;
+}
+
+.portal-card.teal {
+  background: #fff;
+  border-color: #e5e7eb;
+}
+
+.portal-card.teal h3 {
+  color: #14b8a6;
+}
+
+.portal-card.teal a {
+  color: #14b8a6;
+}
+
+.portal-card.orange {
+  background: #fff;
+  border-color: #e5e7eb;
+}
+
+.portal-card.orange h3 {
+  color: #fb923c;
+}
+
+.portal-card.orange a {
+  color: #fb923c;
+}
+
+.portal-card.pink {
+  background: #fff;
+  border-color: #e5e7eb;
+}
+
+.portal-card.pink h3 {
+  color: #ec4899;
+}
+
+.portal-card.pink a {
+  color: #ec4899;
+}
+
+.portal-card.gray {
+  background: #fff;
+  border-color: #e5e7eb;
+}
+
+.portal-card.gray h3 {
+  color: #0f172a;
+}
+
+.portal-card.gray a {
+  color: #0f172a;
 }
 
 @media (max-width: 768px) {

@@ -76,6 +76,11 @@ if (isset($_GET['code'])) {
             $_SESSION['first_name'] = $user['first_name'] ?? '';
             $_SESSION['last_name'] = $user['last_name'] ?? '';
 
+            $lastLogin = $user['last_login'] ?? null;
+            $_SESSION['show_first_login_tutorial'] =
+                ((int) $_SESSION['user_type'] === 1) &&
+                ($lastLogin === null || $lastLogin === '');
+
             $tokenData = json_encode(['oauth_provider' => 'google', 'oauth_id' => $googleId]);
             $tokenResponse = askAPI('oauth/login', 'POST', $tokenData);
             $tokenDecoded = json_decode($tokenResponse, true);

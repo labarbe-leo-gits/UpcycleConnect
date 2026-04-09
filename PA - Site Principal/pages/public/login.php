@@ -91,6 +91,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['recaptcha_token']) &&
             $_SESSION['email'] = $user['email'];
             $_SESSION['user_type'] = isset($user['user_type']) ? (int) $user['user_type'] : 1;
 
+            $lastLogin = $user['last_login'] ?? null;
+            $_SESSION['show_first_login_tutorial'] =
+                ((int) $_SESSION['user_type'] === 1) &&
+                ($lastLogin === null || $lastLogin === '');
+
             // Log the login
             include_once __DIR__ . '/../common/log-utility.php';
             WriteLog("login", "INFO", $_SERVER['REMOTE_ADDR'], "User {$_SESSION['username']} (ID: {$_SESSION['user_id']}) logged in successfully.");

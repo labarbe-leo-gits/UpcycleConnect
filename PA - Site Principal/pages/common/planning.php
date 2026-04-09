@@ -174,7 +174,11 @@ switch ($user['user_type']) {
 		<p><strong>Time:</strong> <span id="view-planning-time"></span></p>
 		<p><strong>Description:</strong></p>
 		<p id="view-planning-description"></p>
-	</div>
+        <div id="view-planning-map-container" style="display:none;margin-top:16px;">
+            <div id="view-planning-map" style="width:100%;height:260px;border-radius:10px;overflow:hidden;background:#f3f4f6;display:none;margin-bottom:12px;"></div>
+            <div id="view-planning-map-links" style="display:none;gap:10px;flex-wrap:wrap;justify-content:center;"></div>
+        </div>
+    </div>
 </div>
 
 <div class="edit-planning-modal">

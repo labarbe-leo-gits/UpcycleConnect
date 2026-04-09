@@ -12,6 +12,11 @@ function safeBaseName($file) {
     return $name;
 }
 
+function safeFileName($file) {
+    $safe = preg_replace('/[^a-zA-Z0-9_-]/', '_', $file);
+    return trim($safe, '_-');
+}
+
 function logAdminAction($message) {
     global $adminActionLog;
     if (!$adminActionLog) return;
@@ -42,6 +47,52 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
         echo json_encode(['file' => $file, 'content' => $content]);
         exit;
     }
+
+    if ($action === 'create_manual') {
+        header('Content-Type: application/json');
+        if (!$backupDir || !is_dir($backupDir)) {
+            echo json_encode(['success' => false, 'message' => 'Backup directory unavailable']);
+            exit;
+        }
+
+        $loginLogPath = realpath(__DIR__ . '/../../../files/logs/login.log');
+        if (!$loginLogPath || !is_file($loginLogPath) || stripos($loginLogPath, realpath(__DIR__ . '/../../../files/logs')) !== 0) {
+            echo json_encode(['success' => false, 'message' => 'Source login log unavailable']);
+            exit;
+        }
+
+        $user = getLoggedInUser();
+        $login = $user['username'] ?? 'unknown';
+        $login = safeFileName($login);
+        if ($login === '') {
+            $login = 'unknown';
+        }
+
+        $timestamp = time();
+        $filename = sprintf('%s-MAN-%s-%s.log', $login, date('m-Y'), $timestamp);
+        $filePath = $backupDir . DIRECTORY_SEPARATOR . $filename;
+
+        if (file_exists($filePath)) {
+            echo json_encode(['success' => false, 'message' => 'Backup file already exists']);
+            exit;
+        }
+
+        if (!copy($loginLogPath, $filePath)) {
+            echo json_encode(['success' => false, 'message' => 'Unable to copy login log to backup file']);
+            exit;
+        }
+
+        if (file_put_contents($loginLogPath, '', LOCK_EX) === false) {
+            unlink($filePath);
+            echo json_encode(['success' => false, 'message' => 'Unable to clear login log after backup']);
+            exit;
+        }
+
+        logAdminAction("created manual backup log: $filename");
+        echo json_encode(['success' => true, 'file' => $filename, 'message' => 'Manual backup created']);
+        exit;
+    }
+
     header('Content-Type: application/json');
     echo json_encode(['error' => 'Unknown action']);
     exit;
@@ -111,6 +162,7 @@ if ($backupDir && is_dir($backupDir)) {
 
     <div class="offers-toolbar admin-logs-toolbar" style="width: fit-content;">
         <div class="offers-toolbar-filters">
+            <button id="create-backup-btn" class="btn-secondary" type="button">Create manual backup</button>
             <input type="number" id="backup-min-size" min="0" placeholder="Min size (KB)" />
             <input type="number" id="backup-max-size" min="0" placeholder="Max size (KB)" />
             <label style="display:inline-flex; align-items:center; gap:6px; margin-left:10px;">

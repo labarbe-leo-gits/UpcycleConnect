@@ -74,6 +74,12 @@ if (isset($_GET['code'])) {
             $_SESSION['oauth_provider'] = $user['oauth_provider'] ?? 'facebook';
             $_SESSION['first_name'] = $user['first_name'] ?? '';
             $_SESSION['last_name'] = $user['last_name'] ?? '';
+
+            $lastLogin = $user['last_login'] ?? null;
+            $_SESSION['show_first_login_tutorial'] =
+                ((int) $_SESSION['user_type'] === 1) &&
+                ($lastLogin === null || $lastLogin === '');
+
             header('Location: ' . getUserHomePath($_SESSION['user_type']));
             exit();
         }

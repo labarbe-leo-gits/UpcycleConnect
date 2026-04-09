@@ -155,7 +155,6 @@
                     conflictCard.innerHTML = '<div style="border:1px solid #d1d5db;border-radius:8px;padding:10px;background:#ffffff;box-shadow:0 2px 8px rgba(0,0,0,.1);">'
                         + '<strong>' + (conflictEntry.title || 'Untitled') + '</strong><br>'
                         + '<span>' + (startFormatted || '') + ' - ' + (endFormatted || '') + '</span><br>'
-                        + '<span>' + (conflictEntry.description || 'No description available.') + '</span>'
                         + '</div>';
                 } else {
                     conflictCard.style.display = 'none';
