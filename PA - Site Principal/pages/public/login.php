@@ -168,7 +168,7 @@ if (isLoggedIn()) {
         
         <input type="hidden" name="recaptcha_token" id="recaptcha_token">
         
-        <button type="submit">Login</button>
+        <button type="submit" id="login-submit-btn">Login</button>
         
         <div class="divider">
             <span>or continue with</span>

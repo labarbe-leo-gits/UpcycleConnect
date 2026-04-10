@@ -274,6 +274,14 @@
             });
         }
 
+        const loginForm = document.querySelector('.container.form form');
+        const loginSubmitButton = document.getElementById('login-submit-btn') || (loginForm ? loginForm.querySelector('button[type="submit"]') : null);
+        if (loginForm && loginSubmitButton) {
+            loginForm.addEventListener('submit', function() {
+                setButtonLoading(loginSubmitButton, true, 'Logging in...');
+            });
+        }
+
         showForgotStep(1, forgotStep1, forgotStep2, forgotMessage);
     });
 })();

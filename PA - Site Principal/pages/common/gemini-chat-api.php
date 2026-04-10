@@ -128,6 +128,15 @@ function fetchOrderDetail($orderId) {
     return $decoded;
 }
 
+function fetchOfferDetail($offerId) {
+    $payload = askAPI('/annonces/' . urlencode($offerId), 'GET');
+    $decoded = json_decode($payload, true);
+    if (!is_array($decoded) || !isset($decoded['id']) || $decoded['id'] !== $offerId) {
+        return null;
+    }
+    return $decoded;
+}
+
 function getStatusLabel($status, $type = 'generic') {
     $status = (int) $status;
     if ($type === 'refund') {
@@ -138,6 +147,9 @@ function getStatusLabel($status, $type = 'generic') {
     }
     if ($type === 'order') {
         return [0 => 'Pending', 1 => 'Completed', 2 => 'Cancelled'][$status] ?? 'Unknown';
+    }
+    if ($type === 'offer') {
+        return [0 => 'Active', 1 => 'Pending', 2 => 'Rejected'][$status] ?? 'Unknown';
     }
     return (string) $status;
 }
@@ -150,9 +162,14 @@ $depositsCount = 0;
 $pendingDepositsCount = 0;
 $refundDetail = null;
 $depositDetail = null;
+$offerDetail = null;
+$offersSummary = '';
 
 if ($loggedIn) {
-    $offersCount = countList(askAPI("/users/{$userId}/annonces", 'GET'));
+    $offersPayload = askAPI("/users/{$userId}/annonces", 'GET');
+    $offersList = normalizeList($offersPayload);
+    $offersCount = count($offersList);
+
     $refundRequestsPayload = askAPI("/users/{$userId}/refund-requests", 'GET');
     $refundRequestsCount = countList($refundRequestsPayload);
     $pendingRefundRequestsCount = countByStatus($refundRequestsPayload, 0);
@@ -160,6 +177,28 @@ if ($loggedIn) {
     $depositsPayload = askAPI("/users/{$userId}/deposits", 'GET');
     $depositsCount = countList($depositsPayload);
     $pendingDepositsCount = countByStatus($depositsPayload, 0);
+
+    if (is_array($offersList) && !empty($offersList)) {
+        $previewOffers = array_slice($offersList, 0, 3);
+        $offersSummary = "\nActive offers details:";
+        foreach ($previewOffers as $offer) {
+            if (!is_array($offer)) {
+                continue;
+            }
+            $price = isset($offer['price']) ? number_format(floatval($offer['price']), 2) : 'unknown';
+            $status = isset($offer['status']) ? getStatusLabel($offer['status'], 'offer') : 'Unknown';
+            $offersSummary .= "\n- ID: " . ($offer['id'] ?? 'unknown');
+            $offersSummary .= "\n  Title: " . trim((string) ($offer['title'] ?? 'Untitled')); 
+            $offersSummary .= "\n  Price: " . ($price === 'unknown' ? 'unknown' : '€ ' . $price);
+            $offersSummary .= "\n  Status: " . $status;
+            if (!empty($offer['category_name'])) {
+                $offersSummary .= "\n  Category: " . trim((string) $offer['category_name']);
+            }
+            if (!empty($offer['created_at'])) {
+                $offersSummary .= "\n  Created at: " . $offer['created_at'];
+            }
+        }
+    }
 }
 
 $userMessageText = '';
@@ -173,11 +212,13 @@ $userMessageText = trim($userMessageText);
 $refundDetail = null;
 $depositDetail = null;
 $orderDetail = null;
+$offerDetail = null;
 $resourceIds = extractUuidCandidates($userMessageText);
 if ($loggedIn && !empty($resourceIds)) {
     $isRefundQuery = stripos($userMessageText, 'refund') !== false;
     $isDepositQuery = stripos($userMessageText, 'deposit') !== false || stripos($userMessageText, 'dépôt') !== false;
-    $isOrderQuery = stripos($userMessageText, 'order') !== false || stripos($userMessageText, 'commande') !== false || stripos($userMessageText, 'commande') !== false;
+    $isOrderQuery = stripos($userMessageText, 'order') !== false || stripos($userMessageText, 'commande') !== false;
+    $isOfferQuery = stripos($userMessageText, 'offer') !== false || stripos($userMessageText, 'annonce') !== false || stripos($userMessageText, 'listing') !== false;
 
     foreach ($resourceIds as $resourceId) {
         if ($refundDetail === null && $isRefundQuery) {
@@ -189,12 +230,15 @@ if ($loggedIn && !empty($resourceIds)) {
         if ($orderDetail === null && $isOrderQuery) {
             $orderDetail = fetchOrderDetail($resourceId);
         }
-        if ($refundDetail && $depositDetail && $orderDetail) {
+        if ($offerDetail === null && $isOfferQuery) {
+            $offerDetail = fetchOfferDetail($resourceId);
+        }
+        if ($refundDetail && $depositDetail && $orderDetail && $offerDetail) {
             break;
         }
     }
 
-    if (!$refundDetail && !$depositDetail && !$orderDetail) {
+    if (!$refundDetail && !$depositDetail && !$orderDetail && !$offerDetail) {
         foreach ($resourceIds as $resourceId) {
             if ($refundDetail === null) {
                 $refundDetail = fetchRefundRequestDetail($userId, $resourceId);
@@ -205,7 +249,10 @@ if ($loggedIn && !empty($resourceIds)) {
             if ($orderDetail === null) {
                 $orderDetail = fetchOrderDetail($resourceId);
             }
-            if ($refundDetail && $depositDetail && $orderDetail) {
+            if ($offerDetail === null) {
+                $offerDetail = fetchOfferDetail($resourceId);
+            }
+            if ($refundDetail && $depositDetail && $orderDetail && $offerDetail) {
                 break;
             }
         }
@@ -255,6 +302,22 @@ if (is_array($orderDetail)) {
     }
 }
 
+$offerSummary = '';
+if (is_array($offerDetail)) {
+    $offerPrice = isset($offerDetail['price']) ? number_format(floatval($offerDetail['price']), 2) : 'unknown';
+    $offerSummary = "\nOffer detail:\n" .
+        "- ID: " . ($offerDetail['id'] ?? '') . "\n" .
+        "- Title: " . trim((string) ($offerDetail['title'] ?? 'Untitled')) . "\n" .
+        "- Description: " . trim((string) ($offerDetail['description'] ?? 'None')) . "\n" .
+        "- Price: " . ($offerPrice === 'unknown' ? 'unknown' : '€ ' . $offerPrice) . "\n" .
+        "- Status: " . getStatusLabel($offerDetail['status'] ?? 0, 'offer') . "\n" .
+        "- Created at: " . ($offerDetail['created_at'] ?? 'unknown') . "\n" .
+        "- Updated at: " . ($offerDetail['updated_at'] ?? 'unknown') . "\n";
+    if (!empty($offerDetail['category_name'])) {
+        $offerSummary .= "- Category: " . trim((string) $offerDetail['category_name']) . "\n";
+    }
+}
+
 $userTypeLabel = 'Customer';
 if (isset($user['user_type']) && (int) $user['user_type'] === 2) {
     $userTypeLabel = 'Professional';
@@ -291,6 +354,9 @@ User account summary:
 - Total refund requests: {$refundRequestsCount}
 - Pending refund requests: {$pendingRefundRequestsCount}
 - Total orders: {$ordersCount}
+
+You cannot reply to any unrelated content such as jokes, personal questions, or non-support inquiries. Politely decline to answer if the user's message is not related to support for the UpcycleConnect platform.
+Also, please do not give any data about the platform tech stack and don't answer any code related questions by politely declining to answer and suggesting the user to contact support directly for such inquiries.
 SYSTEM;
 } else {
     $systemPrompt = <<<SYSTEM
@@ -301,6 +367,8 @@ Format your response using markdown when appropriate for emphasis, lists, links,
 The user is not logged in, so answer using only general support information about the platform.
 Do not reference private account data.
 Use a friendly, concise, and professional tone.
+You cannot reply to any unrelated content such as jokes, personal questions, or non-support inquiries. Politely decline to answer if the user's message is not related to support for the UpcycleConnect platform.
+Also, please do not give any data about the platform tech stack and don't answer any code related questions by politely declining to answer and suggesting the user to contact support directly for such inquiries.
 SYSTEM;
 }
 
@@ -312,6 +380,12 @@ if ($depositSummary !== '') {
 }
 if ($orderSummary !== '') {
     $systemPrompt .= "\n" . trim($orderSummary) . "\n";
+}
+if ($offersSummary !== '') {
+    $systemPrompt .= "\n" . trim($offersSummary) . "\n";
+}
+if ($offerSummary !== '') {
+    $systemPrompt .= "\n" . trim($offerSummary) . "\n";
 }
 
 $prompt = $systemPrompt . "\n\n";
