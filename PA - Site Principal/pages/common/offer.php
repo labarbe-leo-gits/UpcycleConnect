@@ -331,11 +331,19 @@ if (!empty($offer['created_at'])) {
 						Your Offer
 					</button>
 				<?php else: ?>
-					<button class="btn-primary" onclick="handlePurchase()">
+					<button class="btn-primary offer-btns" onclick="handlePurchase()">
 						<?php echo $price > 0 ? 'Buy Now' : 'Get Now'; ?>
 					</button>
 				<?php endif; ?>
-				<a href="offers" class="btn-secondary">Back to Offers</a>
+				<a href="offers" class="btn-secondary offer-btns">Back to Offers</a>
+				<?php
+				if ($isOwnOffer) {
+					echo '<a href="../pro/edit-offer?uuid=' . urlencode($offerUuid) . '" class="btn-secondary offer-btns">Edit Offer</a>';
+				}
+				if ($offer){
+					echo "<a href='user?username=". $creatorName ."' class='btn-secondary offer-btns'>Contact the seller</a>";
+				}
+				?>
 			</div>
 		</div>
 	</div>

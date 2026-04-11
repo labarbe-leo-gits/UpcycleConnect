@@ -62,12 +62,14 @@
     var state = parseQuery();
     var loading = false;
 
-    var grid       = document.getElementById('updoc-grid');
-    var emptyMsg   = document.getElementById('updoc-empty-msg');
-    var pagination = document.getElementById('updoc-pagination');
-    var prevBtn    = document.getElementById('updoc-prev-btn');
-    var nextBtn    = document.getElementById('updoc-next-btn');
-    var pageInfo   = document.getElementById('updoc-page-info');
+    var grid              = document.getElementById('updoc-grid');
+    var selectionSection  = document.getElementById('updoc-selection-section');
+    var selectionGrid     = document.getElementById('updoc-selection-grid');
+    var emptyMsg          = document.getElementById('updoc-empty-msg');
+    var pagination        = document.getElementById('updoc-pagination');
+    var prevBtn           = document.getElementById('updoc-prev-btn');
+    var nextBtn           = document.getElementById('updoc-next-btn');
+    var pageInfo          = document.getElementById('updoc-page-info');
 
     var searchInput       = document.getElementById('updoc-search');
     var sortSelect        = document.getElementById('updoc-sort');
@@ -131,7 +133,7 @@
             '</div>' +
             '<div class="service-date" style="justify-content:center;"><i class="fa-regular fa-calendar"></i> ' + escHtml(date) + '</div>' +
             '<div class="service-actions">' +
-              '<a href="updoc-view?id=' + projId + '" class="btn-secondary">' +
+              '<a href="updoc-view?id=' + projId + '" class="btn-secondary offer-btns">' +
                 '<i class="fa-solid fa-eye"></i> View' +
               '</a>' +
             '</div>';
@@ -165,6 +167,38 @@
         });
 
         setPagination(total);
+    }
+
+    function renderSelection(items) {
+        if (!selectionSection || !selectionGrid) return;
+        if (!items || items.length === 0) {
+            hide(selectionSection);
+            return;
+        }
+
+        selectionGrid.innerHTML = '';
+        items.forEach(function (item) {
+            selectionGrid.appendChild(buildProjectCard(item));
+        });
+        show(selectionSection, 'grid');
+    }
+
+    function fetchLatestSelection() {
+        if (!selectionSection || !selectionGrid) return;
+
+        selectionGrid.innerHTML = '';
+        selectionSection.style.display = 'grid';
+
+        var url = 'updoc-api?page=1&limit=3&sort=newest';
+        fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                var items = Array.isArray(data.items) ? data.items : [];
+                renderSelection(items);
+            })
+            .catch(function () {
+                hide(selectionSection);
+            });
     }
 
     function updateUrl() {
@@ -389,5 +423,6 @@
     initControls();
     buildSkeletons(state.limit);
     loadAuthors();
+    fetchLatestSelection();
     fetchProjects(state.page);
 })();

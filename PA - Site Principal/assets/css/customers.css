@@ -287,6 +287,11 @@
   border-radius: 10px;
   min-height: 42px;
 }
+
+.offer-btns {
+  min-height: 0px;
+}
+
 .btn-add-option {
   display: inline-flex;
   align-items: center;
@@ -1202,6 +1207,25 @@ body.modal-open {
   gap: 26px;
   margin-top: 16px;
   justify-content: center;
+  width: 100%;
+}
+
+#updoc-selection-section {
+  grid-template-columns: 1fr;
+}
+
+#updoc-selection-section .services-list {
+  grid-column: 1 / -1;
+  width: 100%;
+  justify-content: center;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 420px));
+  gap: 26px;
+}
+
+#updoc-selection-section .service-item {
+  min-height: auto;
+  max-width: 480px;
+  margin: 0 auto;
 }
 
 .featured-offers-row .service-item {

@@ -60,6 +60,20 @@ $userType = getLoggedInUserType();
         </div>
     </div>
 
+    <section class="featured-offers-row" id="updoc-selection-section" style="display:none;">
+        <div style="grid-column: 1 / -1; display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:16px;text-align:center;">
+            <div style="box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+  padding: 12px 24px;
+  border-radius: 8px;">
+                <h2 style="margin:0 0 8px;">Latest UpDocs</h2>
+                <p style="margin:0;color:#6b7280;font-size:0.95rem;">A curated selection of the 3 most recent UpDocs, always pinned at the top while you browse the rest.</p>
+            </div>
+        </div>
+        <div class="services-list" id="updoc-selection-grid"></div>
+    </section>
+
+    
+
     <div class="services-list" id="updoc-grid"></div>
 
     <p class="offers-empty" id="updoc-empty-msg" style="display:none;">No UpDocs found.</p>
