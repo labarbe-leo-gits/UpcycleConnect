@@ -23,6 +23,16 @@
     var likeCount = document.getElementById('like-count');
     var liked     = false;
 
+    function setLikeLoading(isLoading) {
+        likeBtn.disabled = isLoading;
+        likeBtn.classList.toggle('loading', isLoading);
+        if (isLoading) {
+            likeBtn.setAttribute('aria-busy', 'true');
+        } else {
+            likeBtn.removeAttribute('aria-busy');
+        }
+    }
+
     postAPI('get_like_status', { project_id: PROJECT_ID })
     .then(function (data) {
         liked = !!data.liked;
@@ -32,12 +42,20 @@
 
     likeBtn.addEventListener('click', function () {
         var action = liked ? 'unlike_project' : 'like_project';
+        setLikeLoading(true);
+
         postAPI(action, { project_id: PROJECT_ID })
         .then(function () {
             liked = !liked;
             likeBtn.classList.toggle('liked', liked);
             var n = parseInt(likeCount.textContent, 10) || 0;
             likeCount.textContent = liked ? n + 1 : Math.max(0, n - 1);
+        })
+        .catch(function () {
+            
+        })
+        .finally(function () {
+            setLikeLoading(false);
         });
     });
 

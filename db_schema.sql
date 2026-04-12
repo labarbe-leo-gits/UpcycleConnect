@@ -48,6 +48,14 @@ CREATE TABLE IF NOT EXISTS users (
     UNIQUE INDEX idx_oauth (oauth_provider, oauth_id)
 );
 
+CREATE TABLE IF NOT EXISTS user_profile_picture_history (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    user_id CHAR(36) NOT NULL,
+    picture VARCHAR(500) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS pending_registrations (
     id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
     first_name VARCHAR(60) NOT NULL,

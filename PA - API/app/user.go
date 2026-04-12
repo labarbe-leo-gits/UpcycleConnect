@@ -9,8 +9,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"html"
+	"io"
 	"net/http"
 	"net/smtp"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -864,6 +866,288 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 }
 
+func UploadProfilePicture(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		sendError(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	userID := r.PathValue("id")
+	if _, err := uuid.Parse(userID); err != nil {
+		sendError(w, "Invalid user ID format", http.StatusBadRequest)
+		return
+	}
+
+	callerID, _ := r.Context().Value("user_id").(string)
+	if callerID == "" || callerID != userID {
+		sendError(w, "Unauthorized", http.StatusForbidden)
+		return
+	}
+
+	if err := r.ParseMultipartForm(10 << 20); err != nil {
+		sendError(w, "Invalid form data or file too large", http.StatusBadRequest)
+		return
+	}
+
+	file, header, err := r.FormFile("profile_picture")
+	if err != nil {
+		sendError(w, "Profile picture is required", http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	ext := strings.ToLower(filepath.Ext(header.Filename))
+	allowed := map[string]bool{".jpg": true, ".jpeg": true, ".png": true, ".webp": true, ".gif": true}
+	if !allowed[ext] {
+		sendError(w, "Unsupported file type. Allowed types: jpg, jpeg, png, webp, gif.", http.StatusBadRequest)
+		return
+	}
+
+	user, err := db.GetUserByIDFromDB(uuid.MustParse(userID))
+	if err != nil {
+		fmt.Println("[ERROR] UploadProfilePicture get user:", err)
+		sendError(w, "Unable to find user", http.StatusInternalServerError)
+		return
+	}
+
+	storageDir := filepath.Join("..", "files", "uploads", "user")
+	if err := os.MkdirAll(storageDir, 0755); err != nil {
+		fmt.Println("[ERROR] UploadProfilePicture mkdir:", err)
+		sendError(w, "Unable to store profile picture", http.StatusInternalServerError)
+		return
+	}
+
+	newFilename := uuid.New().String() + ext
+	newFilePath := filepath.Join(storageDir, newFilename)
+	out, err := os.Create(newFilePath)
+	if err != nil {
+		fmt.Println("[ERROR] UploadProfilePicture create file:", err)
+		sendError(w, "Unable to save profile picture", http.StatusInternalServerError)
+		return
+	}
+	defer out.Close()
+
+	if _, err := io.Copy(out, file); err != nil {
+		fmt.Println("[ERROR] UploadProfilePicture save file:", err)
+		sendError(w, "Unable to save profile picture", http.StatusInternalServerError)
+		return
+	}
+
+	currentPicture := strings.TrimSpace(user.ProfilePicture)
+	if currentPicture != "" {
+		if err := db.CreateUserProfilePictureHistoryInDB(user.ID, currentPicture); err != nil {
+			fmt.Println("[WARN] UploadProfilePicture history insert:", err)
+		}
+		removed, err := db.PruneUserProfilePictureHistoryFromDB(user.ID.String(), 5)
+		if err != nil {
+			fmt.Println("[WARN] UploadProfilePicture history prune:", err)
+		} else {
+			for _, pic := range removed {
+				if pic == "" || strings.HasPrefix(pic, "http") || strings.HasPrefix(pic, "/") {
+					continue
+				}
+				oldPath := filepath.Join(storageDir, pic)
+				if err := os.Remove(oldPath); err != nil && !os.IsNotExist(err) {
+					fmt.Println("[WARN] UploadProfilePicture remove old file:", err)
+				}
+			}
+		}
+	}
+
+	if err := db.UpdateUserProfilePictureInDB(user.ID, newFilename); err != nil {
+		fmt.Println("[ERROR] UploadProfilePicture update user:", err)
+		sendError(w, "Unable to update user profile picture", http.StatusInternalServerError)
+		return
+	}
+
+	historyItems, err := db.GetUserProfilePictureHistoryFromDB(user.ID.String(), 5)
+	if err != nil {
+		fmt.Println("[WARN] UploadProfilePicture history fetch:", err)
+	}
+
+	historyResponse := make([]map[string]string, 0, len(historyItems))
+	for _, item := range historyItems {
+		itemURL := "/PA/files/uploads/user/" + item.Picture
+		historyResponse = append(historyResponse, map[string]string{
+			"id":          item.ID.String(),
+			"user_id":     item.UserID.String(),
+			"picture":     item.Picture,
+			"picture_url": itemURL,
+			"created_at":  item.CreatedAt,
+		})
+	}
+
+	profilePictureURL := "/PA/files/uploads/user/" + newFilename
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success":             true,
+		"profile_picture":     newFilename,
+		"profile_picture_url": profilePictureURL,
+		"history":             historyResponse,
+	})
+}
+
+func GetProfilePictureHistory(w http.ResponseWriter, r *http.Request) {
+	userID := r.PathValue("id")
+	if _, err := uuid.Parse(userID); err != nil {
+		sendError(w, "Invalid user ID format", http.StatusBadRequest)
+		return
+	}
+
+	history, err := db.GetUserProfilePictureHistoryFromDB(userID, 5)
+	if err != nil {
+		fmt.Println("[ERROR] GetProfilePictureHistory:", err)
+		sendError(w, "Unable to fetch profile picture history", http.StatusInternalServerError)
+		return
+	}
+
+	historyResponse := make([]map[string]string, 0, len(history))
+	for _, item := range history {
+		itemURL := "/PA/files/uploads/user/" + item.Picture
+		historyResponse = append(historyResponse, map[string]string{
+			"id":          item.ID.String(),
+			"user_id":     item.UserID.String(),
+			"picture":     item.Picture,
+			"picture_url": itemURL,
+			"created_at":  item.CreatedAt,
+		})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{"history": historyResponse})
+}
+
+func RestoreProfilePictureFromHistory(w http.ResponseWriter, r *http.Request) {
+	userID := r.PathValue("id")
+	historyID := r.PathValue("historyID")
+	if _, err := uuid.Parse(userID); err != nil {
+		sendError(w, "Invalid user ID format", http.StatusBadRequest)
+		return
+	}
+	if _, err := uuid.Parse(historyID); err != nil {
+		sendError(w, "Invalid history item ID format", http.StatusBadRequest)
+		return
+	}
+
+	callerID, _ := r.Context().Value("user_id").(string)
+	if callerID == "" || callerID != userID {
+		sendError(w, "Unauthorized", http.StatusForbidden)
+		return
+	}
+
+	historyItem, err := db.GetUserProfilePictureHistoryItemByID(userID, historyID)
+	if err != nil {
+		fmt.Println("[ERROR] RestoreProfilePictureFromHistory:", err)
+		sendError(w, "Unable to find profile picture history item", http.StatusNotFound)
+		return
+	}
+
+	user, err := db.GetUserByIDFromDB(uuid.MustParse(userID))
+	if err != nil {
+		fmt.Println("[ERROR] RestoreProfilePictureFromHistory get user:", err)
+		sendError(w, "Unable to fetch user", http.StatusInternalServerError)
+		return
+	}
+
+	if user.ProfilePicture != "" && user.ProfilePicture != historyItem.Picture {
+		if err := db.CreateUserProfilePictureHistoryInDB(user.ID, user.ProfilePicture); err != nil {
+			fmt.Println("[WARN] RestoreProfilePictureFromHistory history insert:", err)
+		}
+	}
+
+	if err := db.UpdateUserProfilePictureInDB(user.ID, historyItem.Picture); err != nil {
+		fmt.Println("[ERROR] RestoreProfilePictureFromHistory update user:", err)
+		sendError(w, "Unable to restore profile picture", http.StatusInternalServerError)
+		return
+	}
+
+	history, err := db.GetUserProfilePictureHistoryFromDB(userID, 5)
+	if err != nil {
+		fmt.Println("[WARN] RestoreProfilePictureFromHistory history fetch:", err)
+	}
+
+	historyResponse := make([]map[string]string, 0, len(history))
+	for _, item := range history {
+		itemURL := "/PA/files/uploads/user/" + item.Picture
+		historyResponse = append(historyResponse, map[string]string{
+			"id":          item.ID.String(),
+			"user_id":     item.UserID.String(),
+			"picture":     item.Picture,
+			"picture_url": itemURL,
+			"created_at":  item.CreatedAt,
+		})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success":             true,
+		"profile_picture":     historyItem.Picture,
+		"profile_picture_url": "/PA/files/uploads/user/" + historyItem.Picture,
+		"history":             historyResponse,
+	})
+}
+
+func DeleteProfilePictureHistoryItem(w http.ResponseWriter, r *http.Request) {
+	userID := r.PathValue("id")
+	historyID := r.PathValue("historyID")
+	if _, err := uuid.Parse(userID); err != nil {
+		sendError(w, "Invalid user ID format", http.StatusBadRequest)
+		return
+	}
+	if _, err := uuid.Parse(historyID); err != nil {
+		sendError(w, "Invalid history item ID format", http.StatusBadRequest)
+		return
+	}
+
+	callerID, _ := r.Context().Value("user_id").(string)
+	if callerID == "" || callerID != userID {
+		sendError(w, "Unauthorized", http.StatusForbidden)
+		return
+	}
+
+	historyItem, err := db.GetUserProfilePictureHistoryItemByID(userID, historyID)
+	if err != nil {
+		fmt.Println("[ERROR] DeleteProfilePictureHistoryItem:", err)
+		sendError(w, "Unable to find profile picture history item", http.StatusNotFound)
+		return
+	}
+
+	if err := db.DeleteUserProfilePictureHistoryItemFromDB(userID, historyID); err != nil {
+		fmt.Println("[ERROR] DeleteProfilePictureHistoryItem delete:", err)
+		sendError(w, "Unable to delete history item", http.StatusInternalServerError)
+		return
+	}
+
+	user, _ := db.GetUserByIDFromDB(uuid.MustParse(userID))
+	if user.ProfilePicture != "" && user.ProfilePicture != historyItem.Picture {
+		storageDir := filepath.Join("..", "files", "uploads", "user")
+		oldPath := filepath.Join(storageDir, filepath.Base(historyItem.Picture))
+		if err := os.Remove(oldPath); err != nil && !os.IsNotExist(err) {
+			fmt.Println("[WARN] DeleteProfilePictureHistoryItem remove old file:", err)
+		}
+	}
+
+	history, err := db.GetUserProfilePictureHistoryFromDB(userID, 5)
+	if err != nil {
+		fmt.Println("[WARN] DeleteProfilePictureHistoryItem history fetch:", err)
+	}
+
+	historyResponse := make([]map[string]string, 0, len(history))
+	for _, item := range history {
+		itemURL := "/PA/files/uploads/user/" + item.Picture
+		historyResponse = append(historyResponse, map[string]string{
+			"id":          item.ID.String(),
+			"user_id":     item.UserID.String(),
+			"picture":     item.Picture,
+			"picture_url": itemURL,
+			"created_at":  item.CreatedAt,
+		})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "history": historyResponse})
+}
+
 func GetDepositsByUserID(w http.ResponseWriter, r *http.Request) {
 	idStr := strings.TrimPrefix(r.URL.Path, "/users/")
 	idStr = strings.TrimSuffix(idStr, "/deposits")
@@ -1158,6 +1442,9 @@ func GetProfilePicture(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("[ERROR] GetProfilePicture:", err)
 		sendError(w, "Unable to fetch profile picture URL for user", http.StatusInternalServerError)
 		return
+	}
+	if profilePictureURL != "" && !strings.HasPrefix(profilePictureURL, "http") && !strings.HasPrefix(profilePictureURL, "/") {
+		profilePictureURL = "/PA/files/uploads/user/" + profilePictureURL
 	}
 
 	w.Header().Set("Content-Type", "application/json")

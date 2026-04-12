@@ -40,3 +40,10 @@ type User struct {
 	Badges               []Badge   `json:"badges,omitempty"`
 	UpdocQuota           int       `json:"updoc_quota"`
 }
+
+type ProfilePictureHistoryItem struct {
+	ID        uuid.UUID `json:"id"`
+	UserID    uuid.UUID `json:"user_id"`
+	Picture   string    `json:"picture"`
+	CreatedAt string    `json:"created_at"`
+}

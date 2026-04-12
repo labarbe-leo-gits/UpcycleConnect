@@ -6,6 +6,7 @@ import (
 	"API/models"
 	"database/sql"
 	"fmt"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -243,6 +244,9 @@ func GetUserByIDFromDB(id uuid.UUID) (models.User, error) {
 	if userCity.Valid {
 		user.UserCity = userCity.String
 	}
+	if profilePicture.Valid {
+		user.ProfilePicture = profilePicture.String
+	}
 	if newsletterSubscribed.Valid {
 		user.NewsletterSubscribed = int(newsletterSubscribed.Int64)
 	}
@@ -349,6 +353,144 @@ func UpdateUserInDB(id uuid.UUID, updates map[string]interface{}) error {
 		return fmt.Errorf("updateUser package db : %s", err.Error())
 	}
 	return nil
+}
+
+func UpdateUserProfilePictureInDB(userID uuid.UUID, picture string) error {
+	_, err := Db.Exec("UPDATE users SET profile_picture = ? WHERE id = ?", picture, userID.String())
+	if err != nil {
+		return fmt.Errorf("updateUserProfilePicture package db : %s", err.Error())
+	}
+	return nil
+}
+
+func CreateUserProfilePictureHistoryInDB(userID uuid.UUID, picture string) error {
+	if picture == "" {
+		return nil
+	}
+	picture = filepath.Base(picture)
+	if picture == "" || picture == "." || picture == "/" {
+		return nil
+	}
+	_, err := Db.Exec("INSERT INTO user_profile_picture_history (id, user_id, picture) VALUES (UUID(), ?, ?)", userID.String(), picture)
+	if err != nil {
+		return fmt.Errorf("createUserProfilePictureHistory package db : %s", err.Error())
+	}
+	return nil
+}
+
+func GetUserProfilePictureHistoryFromDB(userID string, limit int) ([]models.ProfilePictureHistoryItem, error) {
+	if limit <= 0 {
+		limit = 5
+	}
+	rows, err := Db.Query("SELECT id, user_id, picture, created_at FROM user_profile_picture_history WHERE user_id = ? ORDER BY created_at DESC LIMIT ?", userID, limit)
+	if err != nil {
+		return nil, fmt.Errorf("getUserProfilePictureHistoryFromDB query : %s", err.Error())
+	}
+	defer rows.Close()
+
+	history := []models.ProfilePictureHistoryItem{}
+	for rows.Next() {
+		var item models.ProfilePictureHistoryItem
+		var idStr, userIDStr, picture, createdAt sql.NullString
+		if err := rows.Scan(&idStr, &userIDStr, &picture, &createdAt); err != nil {
+			return nil, fmt.Errorf("getUserProfilePictureHistoryFromDB scan : %s", err.Error())
+		}
+		if idStr.Valid {
+			item.ID, _ = uuid.Parse(idStr.String)
+		}
+		if userIDStr.Valid {
+			item.UserID, _ = uuid.Parse(userIDStr.String)
+		}
+		if picture.Valid {
+			item.Picture = picture.String
+		}
+		if createdAt.Valid {
+			item.CreatedAt = createdAt.String
+		}
+		history = append(history, item)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("getUserProfilePictureHistoryFromDB rows : %s", err.Error())
+	}
+
+	return history, nil
+}
+
+func GetUserProfilePictureHistoryItemByID(userID, historyID string) (models.ProfilePictureHistoryItem, error) {
+	var item models.ProfilePictureHistoryItem
+	var idStr, userIDStr, picture, createdAt sql.NullString
+	err := Db.QueryRow("SELECT id, user_id, picture, created_at FROM user_profile_picture_history WHERE id = ? AND user_id = ?", historyID, userID).Scan(&idStr, &userIDStr, &picture, &createdAt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return item, fmt.Errorf("history item not found")
+		}
+		return item, fmt.Errorf("getUserProfilePictureHistoryItemByID query : %s", err.Error())
+	}
+	if idStr.Valid {
+		item.ID, _ = uuid.Parse(idStr.String)
+	}
+	if userIDStr.Valid {
+		item.UserID, _ = uuid.Parse(userIDStr.String)
+	}
+	if picture.Valid {
+		item.Picture = picture.String
+	}
+	if createdAt.Valid {
+		item.CreatedAt = createdAt.String
+	}
+	return item, nil
+}
+
+func DeleteUserProfilePictureHistoryItemFromDB(userID, historyID string) error {
+	_, err := Db.Exec("DELETE FROM user_profile_picture_history WHERE id = ? AND user_id = ?", historyID, userID)
+	if err != nil {
+		return fmt.Errorf("deleteUserProfilePictureHistoryItem package db : %s", err.Error())
+	}
+	return nil
+}
+
+func PruneUserProfilePictureHistoryFromDB(userID string, keep int) ([]string, error) {
+	if keep < 0 {
+		keep = 5
+	}
+	rows, err := Db.Query("SELECT id, picture FROM user_profile_picture_history WHERE user_id = ? ORDER BY created_at DESC LIMIT 18446744073709551615 OFFSET ?", userID, keep)
+	if err != nil {
+		return nil, fmt.Errorf("pruneUserProfilePictureHistoryFromDB query : %s", err.Error())
+	}
+	defer rows.Close()
+
+	ids := []string{}
+	removed := []string{}
+	for rows.Next() {
+		var idStr, picture sql.NullString
+		if err := rows.Scan(&idStr, &picture); err != nil {
+			return nil, fmt.Errorf("pruneUserProfilePictureHistoryFromDB scan : %s", err.Error())
+		}
+		if idStr.Valid {
+			ids = append(ids, idStr.String)
+		}
+		if picture.Valid {
+			removed = append(removed, picture.String)
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("pruneUserProfilePictureHistoryFromDB rows : %s", err.Error())
+	}
+	if len(ids) == 0 {
+		return removed, nil
+	}
+	placeholders := strings.Repeat("?,", len(ids))
+	placeholders = strings.TrimSuffix(placeholders, ",")
+	query := fmt.Sprintf("DELETE FROM user_profile_picture_history WHERE id IN (%s)", placeholders)
+	args := make([]interface{}, len(ids))
+	for i, id := range ids {
+		args[i] = id
+	}
+	_, err = Db.Exec(query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("pruneUserProfilePictureHistoryFromDB delete : %s", err.Error())
+	}
+	return removed, nil
 }
 
 func UpdateLastLoginInDB(userID uuid.UUID) error {

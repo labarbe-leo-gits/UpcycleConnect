@@ -785,6 +785,22 @@
   color: #fff;
 }
 
+.updoc-like-btn.loading {
+  cursor: wait;
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.updoc-like-btn.loading i {
+  animation: updoc-btn-spin 0.8s linear infinite;
+}
+
+@keyframes updoc-btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .updoc-back-btn {
   display: inline-flex;
   align-items: center;

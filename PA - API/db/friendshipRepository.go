@@ -4,6 +4,7 @@ import (
 	"API/models"
 	"database/sql"
 	"errors"
+	"fmt"
 )
 
 func SendFriendRequest(userID, friendUsername string, message string) error {
@@ -121,24 +122,20 @@ func RemoveFriendOrRequest(userID, friendshipID string) error {
 }
 
 func GetUserFriends(userID string) ([]models.FriendshipWithUser, error) {
+	var friendships []models.FriendshipWithUser
+
 	rows, err := Db.Query(`
-		SELECT f.id, f.user_id, f.friend_id, f.status, f.message, u.username, u.first_name, u.last_name
+		SELECT f.id, f.user_id, f.friend_id, f.status, NULL AS message, u.username, u.first_name, u.last_name
 		FROM friendships f
-		JOIN users u ON (f.user_id = u.id AND f.user_id != ?) OR (f.friend_id = u.id AND f.friend_id != ?)
-		WHERE (f.user_id = ? OR f.friend_id = ?)
-		UNION ALL
-		SELECT fr.id, fr.sender_id AS user_id, fr.receiver_id AS friend_id, 0 AS status, fr.message, u.username, u.first_name, u.last_name
-		FROM friendship_requests fr
-		JOIN users u ON (fr.sender_id = u.id AND fr.receiver_id = ?) OR (fr.receiver_id = u.id AND fr.sender_id = ?)
-		WHERE (fr.sender_id = ? OR fr.receiver_id = ?)
-		ORDER BY status DESC
-	`, userID, userID, userID, userID, userID, userID, userID, userID)
+		JOIN users u ON f.friend_id = u.id
+		WHERE f.user_id = ?
+	`, userID)
 	if err != nil {
+		fmt.Println("[GetUserFriends] query1 error:", err)
 		return nil, err
 	}
 	defer rows.Close()
 
-	var friendships []models.FriendshipWithUser
 	for rows.Next() {
 		var f models.FriendshipWithUser
 		var msg sql.NullString
@@ -150,6 +147,79 @@ func GetUserFriends(userID string) ([]models.FriendshipWithUser, error) {
 		}
 		friendships = append(friendships, f)
 	}
+
+	rows2, err := Db.Query(`
+		SELECT f.id, f.user_id, f.friend_id, f.status, NULL AS message, u.username, u.first_name, u.last_name
+		FROM friendships f
+		JOIN users u ON f.user_id = u.id
+		WHERE f.friend_id = ?
+	`, userID)
+	if err != nil {
+		fmt.Println("[GetUserFriends] query2 error:", err)
+		return nil, err
+	}
+	defer rows2.Close()
+
+	for rows2.Next() {
+		var f models.FriendshipWithUser
+		var msg sql.NullString
+		if err := rows2.Scan(&f.ID, &f.UserID, &f.FriendID, &f.Status, &msg, &f.Username, &f.FirstName, &f.LastName); err != nil {
+			return nil, err
+		}
+		if msg.Valid {
+			f.Message = msg.String
+		}
+		friendships = append(friendships, f)
+	}
+
+	rows3, err := Db.Query(`
+		SELECT fr.id, fr.sender_id AS user_id, fr.receiver_id AS friend_id, 0 AS status, fr.message, u.username, u.first_name, u.last_name
+		FROM friendship_requests fr
+		JOIN users u ON fr.sender_id = u.id
+		WHERE fr.receiver_id = ?
+	`, userID)
+	if err != nil {
+		fmt.Println("[GetUserFriends] query3 error:", err)
+		return nil, err
+	}
+	defer rows3.Close()
+
+	for rows3.Next() {
+		var f models.FriendshipWithUser
+		var msg sql.NullString
+		if err := rows3.Scan(&f.ID, &f.UserID, &f.FriendID, &f.Status, &msg, &f.Username, &f.FirstName, &f.LastName); err != nil {
+			return nil, err
+		}
+		if msg.Valid {
+			f.Message = msg.String
+		}
+		friendships = append(friendships, f)
+	}
+
+	rows4, err := Db.Query(`
+		SELECT fr.id, fr.sender_id AS user_id, fr.receiver_id AS friend_id, 0 AS status, fr.message, u.username, u.first_name, u.last_name
+		FROM friendship_requests fr
+		JOIN users u ON fr.receiver_id = u.id
+		WHERE fr.sender_id = ?
+	`, userID)
+	if err != nil {
+		fmt.Println("[GetUserFriends] query4 error:", err)
+		return nil, err
+	}
+	defer rows4.Close()
+
+	for rows4.Next() {
+		var f models.FriendshipWithUser
+		var msg sql.NullString
+		if err := rows4.Scan(&f.ID, &f.UserID, &f.FriendID, &f.Status, &msg, &f.Username, &f.FirstName, &f.LastName); err != nil {
+			return nil, err
+		}
+		if msg.Valid {
+			f.Message = msg.String
+		}
+		friendships = append(friendships, f)
+	}
+
 	if friendships == nil {
 		return []models.FriendshipWithUser{}, nil
 	}

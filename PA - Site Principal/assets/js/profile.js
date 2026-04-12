@@ -17,6 +17,324 @@ const paymentModal = document.getElementById('payment-modal');
     const balanceAvailable = document.getElementById('balance-available');
     const amountInput = document.getElementById('amount');
 
+    const profilePictureInput = document.getElementById('profile-picture-input');
+    const uploadProfilePictureBtn = document.getElementById('upload-profile-picture-btn');
+    const profilePictureFeedback = document.getElementById('profile-picture-feedback');
+    const profilePictureHistory = document.getElementById('profile-picture-history');
+    const profilePicPreview = document.getElementById('profile-pic-preview');
+
+    console.log('profile.js loaded');
+    console.log('profile picture controls:', {
+        uploadProfilePictureBtn,
+        profilePictureInput,
+        profilePictureFeedback,
+        profilePictureHistory,
+        profilePicPreview
+    });
+
+    function getProfileImageUrl(picture) {
+        if (!picture) return '';
+        if (/^(https?:)?\/\//.test(picture) || picture.startsWith('/')) {
+            return picture;
+        }
+        if (profilePicPreview && profilePicPreview.dataset && profilePicPreview.dataset.blobSrc) {
+            var base = profilePicPreview.dataset.blobSrc;
+            if (base.indexOf('/') !== -1) {
+                base = base.replace(/[^/]*$/, '');
+                return base + encodeURIComponent(picture);
+            }
+        }
+        return new URL('../../files/uploads/user/' + encodeURIComponent(picture), window.location.href).href;
+    }
+
+    function renderProfilePictureHistory(history) {
+        if (!profilePictureHistory) return;
+        if (!Array.isArray(history) || history.length === 0) {
+            var currentAvatarHtml = '';
+            if (profilePicPreview && profilePicPreview.src && !profilePicPreview.src.includes('defaultUser.png')) {
+                currentAvatarHtml = '<div style="margin-bottom:.75rem;color:#444;font-size:.95rem;">Current avatar</div>' +
+                    '<div class="history-grid" style="display:flex;flex-wrap:wrap;gap:.75rem;align-items:center;">' +
+                    '<div class="history-thumb" style="text-align:center;max-width:80px;position:relative;overflow:hidden;">' +
+                    '<img src="' + profilePicPreview.src + '" alt="Current avatar" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:1px solid #ddd;">' +
+                    '<div style="font-size:.75rem;color:#444;margin-top:.35rem;">Current</div>' +
+                    '</div>' +
+                    '</div>';
+            }
+            profilePictureHistory.innerHTML = currentAvatarHtml + '<p class="history-empty" style="color:#666;font-size:.95rem;">No previous profile pictures yet.</p>';
+            return;
+        }
+
+        profilePictureHistory.innerHTML = '<div class="history-grid" style="display:flex;flex-wrap:wrap;gap:.75rem;align-items:center;">' + history.map(function(item) {
+            var url = item.picture_url ? item.picture_url : getProfileImageUrl(item.picture);
+            var label = item.created_at ? item.created_at.split(' ')[0] : '';
+            return '<div class="history-thumb" data-history-id="' + (item.id || '') + '" style="text-align:center;max-width:80px;position:relative;overflow:hidden;cursor:pointer;">' +
+                '<img src="' + url + '" alt="Previous avatar" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:1px solid #ddd;">' +
+                '<button type="button" class="history-delete-btn" title="Delete this avatar" style="position:absolute;top:6px;right:6px;opacity:0;transition:opacity .18s ease;display:flex;align-items:center;justify-content:center;width:26px;height:26px;border:none;border-radius:50%;background:rgba(255,255,255,0.95);color:#c00;box-shadow:0 1px 4px rgba(0,0,0,0.18);">' +
+                '<i class="fa-solid fa-trash" aria-hidden="true"></i>' +
+                '</button>' +
+                (label ? '<div style="font-size:.75rem;color:#444;margin-top:.35rem;">' + label + '</div>' : '') +
+                '</div>';
+        }).join('') + '</div>';
+    }
+
+    function setupProfilePictureHistoryActions() {
+        if (!profilePictureHistory) return;
+        profilePictureHistory.addEventListener('click', async function(event) {
+            var deleteBtn = event.target.closest('.history-delete-btn');
+            var thumb = event.target.closest('.history-thumb');
+            if (!thumb || !thumb.dataset || !thumb.dataset.historyId) return;
+            var historyId = thumb.dataset.historyId;
+            if (deleteBtn) {
+                event.stopPropagation();
+                var confirmed = await showConfirmModal('Delete this previous avatar from history?', 'Delete avatar');
+                if (!confirmed) return;
+                await deleteProfilePictureHistoryItem(historyId);
+                return;
+            }
+            await restoreProfilePictureFromHistory(historyId);
+        });
+        profilePictureHistory.addEventListener('mouseover', function(event) {
+            var thumb = event.target.closest('.history-thumb');
+            if (!thumb) return;
+            var btn = thumb.querySelector('.history-delete-btn');
+            if (btn) btn.style.opacity = '1';
+        });
+        profilePictureHistory.addEventListener('mouseout', function(event) {
+            var thumb = event.target.closest('.history-thumb');
+            if (!thumb) return;
+            var btn = thumb.querySelector('.history-delete-btn');
+            if (btn) btn.style.opacity = '0';
+        });
+    }
+
+    function showConfirmModal(message, title = 'Confirm action') {
+        return new Promise(function(resolve) {
+            var modalId = 'profile-history-confirm-modal';
+            var modal = document.getElementById(modalId);
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = modalId;
+                modal.className = 'modal-overlay';
+                modal.innerHTML = '<div class="modal" role="dialog" aria-modal="true" aria-labelledby="' + modalId + '-title">' +
+                    '<div class="modal-header">' +
+                    '<h2 id="' + modalId + '-title" style="font-size:1.1rem;margin:0;">' + title + '</h2>' +
+                    '<button type="button" class="modal-close" aria-label="Close">&times;</button>' +
+                    '</div>' +
+                    '<div class="modal-body" style="padding:0 0 10px;">' +
+                    '<p style="margin:0;color:#333;">' + message + '</p>' +
+                    '</div>' +
+                    '<div class="modal-actions" style="display:flex;justify-content:flex-end;gap:.75rem;margin-top:1rem;">' +
+                    '<button type="button" class="btn-secondary" id="' + modalId + '-cancel">Cancel</button>' +
+                    '<button type="button" class="btn-primary" id="' + modalId + '-confirm">Confirm</button>' +
+                    '</div>' +
+                    '</div>';
+                document.body.appendChild(modal);
+            }
+            var closeBtn = modal.querySelector('.modal-close');
+            var cancelBtn = modal.querySelector('#' + modalId + '-cancel');
+            var confirmBtn = modal.querySelector('#' + modalId + '-confirm');
+            var titleEl = modal.querySelector('h2');
+            var bodyEl = modal.querySelector('.modal-body p');
+            if (titleEl) titleEl.textContent = title;
+            if (bodyEl) bodyEl.textContent = message;
+
+            function close(result) {
+                modal.classList.remove('is-visible');
+                document.body.classList.remove('modal-open');
+                cleanup();
+                resolve(result);
+            }
+            function cleanup() {
+                closeBtn?.removeEventListener('click', onClose);
+                cancelBtn?.removeEventListener('click', onClose);
+                confirmBtn?.removeEventListener('click', onConfirm);
+                modal.removeEventListener('click', onBackdrop);
+            }
+            function onClose(event) {
+                event.stopPropagation();
+                close(false);
+            }
+            function onConfirm(event) {
+                event.stopPropagation();
+                close(true);
+            }
+            function onBackdrop(event) {
+                if (event.target === modal) {
+                    close(false);
+                }
+            }
+            closeBtn?.addEventListener('click', onClose);
+            cancelBtn?.addEventListener('click', onClose);
+            confirmBtn?.addEventListener('click', onConfirm);
+            modal.addEventListener('click', onBackdrop);
+            modal.classList.add('is-visible');
+            document.body.classList.add('modal-open');
+        });
+    }
+
+    async function restoreProfilePictureFromHistory(historyId) {
+        if (!window.currentUserId || !profilePicPreview) return;
+        try {
+            const response = await authedFetch('/users/' + encodeURIComponent(window.currentUserId) + '/profile-picture/history/' + encodeURIComponent(historyId) + '/restore', {
+                method: 'PATCH'
+            });
+            const data = await response.json().catch(() => null);
+            if (!response.ok || !data || !data.success) {
+                throw new Error((data && (data.error || data.message)) || 'Unable to restore profile picture.');
+            }
+            if (profilePicPreview) {
+                profilePicPreview.src = getProfileImageUrl(data.profile_picture_url || data.profile_picture);
+            }
+            if (Array.isArray(data.history)) {
+                renderProfilePictureHistory(data.history);
+            } else {
+                await loadProfilePictureHistory();
+            }
+            if (profilePictureFeedback) {
+                profilePictureFeedback.textContent = 'Profile picture restored successfully.';
+                profilePictureFeedback.className = 'success-message';
+            }
+        } catch (err) {
+            console.warn(err);
+            if (profilePictureFeedback) {
+                profilePictureFeedback.textContent = err.message || 'Unable to restore profile picture.';
+                profilePictureFeedback.className = 'error-message';
+            }
+        }
+    }
+
+    async function deleteProfilePictureHistoryItem(historyId) {
+        if (!window.currentUserId) return;
+        try {
+            const response = await authedFetch('/users/' + encodeURIComponent(window.currentUserId) + '/profile-picture/history/' + encodeURIComponent(historyId), {
+                method: 'DELETE'
+            });
+            const data = await response.json().catch(() => null);
+            if (!response.ok || !data || !data.success) {
+                throw new Error((data && (data.error || data.message)) || 'Unable to delete profile picture history item.');
+            }
+            if (Array.isArray(data.history)) {
+                renderProfilePictureHistory(data.history);
+            } else {
+                await loadProfilePictureHistory();
+            }
+            if (profilePictureFeedback) {
+                profilePictureFeedback.textContent = 'Previous avatar deleted.';
+                profilePictureFeedback.className = 'success-message';
+            }
+        } catch (err) {
+            console.warn(err);
+            if (profilePictureFeedback) {
+                profilePictureFeedback.textContent = err.message || 'Unable to delete profile picture history item.';
+                profilePictureFeedback.className = 'error-message';
+            }
+        }
+    }
+
+    async function loadProfilePictureHistory() {
+        if (!window.currentUserId || !profilePictureHistory) return;
+        try {
+            const response = await authedFetch('/users/' + encodeURIComponent(window.currentUserId) + '/profile-picture/history');
+            const data = await response.json().catch(() => null);
+            if (response.ok && data && Array.isArray(data.history)) {
+                renderProfilePictureHistory(data.history);
+            }
+        } catch (err) {
+            console.warn('Unable to load profile picture history', err);
+        }
+    }
+
+    async function restoreProfilePictureFromApi() {
+        if (!window.currentUserId || !profilePicPreview) return;
+        try {
+            console.log('restoreProfilePictureFromApi: calling API for user', window.currentUserId);
+            const response = await authedFetch('/users/' + encodeURIComponent(window.currentUserId) + '/profile-picture');
+            console.log('restoreProfilePictureFromApi: response status', response.status);
+            const data = await response.json().catch(() => null);
+            console.log('restoreProfilePictureFromApi: response data', data);
+            if (response.ok && data && typeof data.profile_picture_url === 'string' && data.profile_picture_url.trim() !== '') {
+                const profileUrl = getProfileImageUrl(data.profile_picture_url);
+                console.log('restoreProfilePictureFromApi: resolved profileUrl', profileUrl);
+                profilePicPreview.src = profileUrl;
+            }
+        } catch (err) {
+            console.warn('Could not restore profile picture from API', err);
+        }
+    }
+
+    async function handleProfilePictureUpload(file) {
+        if (!file) return;
+        if (!/^image\//.test(file.type)) {
+            if (profilePictureFeedback) {
+                profilePictureFeedback.textContent = 'Please upload a valid image file.';
+                profilePictureFeedback.className = 'error-message';
+            }
+            return;
+        }
+        if (file.size > 6 * 1024 * 1024) {
+            if (profilePictureFeedback) {
+                profilePictureFeedback.textContent = 'Please choose an image smaller than 6 MB.';
+                profilePictureFeedback.className = 'error-message';
+            }
+            return;
+        }
+
+        if (profilePictureFeedback) {
+            profilePictureFeedback.textContent = 'Uploading...';
+            profilePictureFeedback.className = '';
+        }
+
+        try {
+            const formData = new FormData();
+            formData.append('profile_picture', file);
+            const response = await authedFetch('/users/' + encodeURIComponent(window.currentUserId) + '/profile-picture', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json().catch(() => null);
+            if (!response.ok || !data || !data.success) {
+                throw new Error((data && (data.error || data.message)) || 'Upload failed');
+            }
+
+            if (profilePicPreview) {
+                profilePicPreview.src = getProfileImageUrl(data.profile_picture_url || data.profile_picture);
+            }
+            if (profilePictureFeedback) {
+                profilePictureFeedback.textContent = 'Profile picture uploaded successfully.';
+                profilePictureFeedback.className = 'success-message';
+            }
+            if (Array.isArray(data.history)) {
+                renderProfilePictureHistory(data.history);
+            } else {
+                await loadProfilePictureHistory();
+            }
+        } catch (err) {
+            if (profilePictureFeedback) {
+                profilePictureFeedback.textContent = err.message || 'Unable to upload profile picture.';
+                profilePictureFeedback.className = 'error-message';
+            }
+            console.warn(err);
+        }
+    }
+
+    if (uploadProfilePictureBtn && profilePictureInput) {
+        console.log('profile picture input and button found');
+        uploadProfilePictureBtn.addEventListener('click', function () {
+            console.log('profile picture change button clicked');
+            profilePictureInput.click();
+        });
+        profilePictureInput.addEventListener('change', function () {
+            console.log('profile picture input changed', profilePictureInput.files);
+            if (profilePictureInput.files && profilePictureInput.files[0]) {
+                const file = profilePictureInput.files[0];
+                console.log('Selected profile picture file:', file);
+                handleProfilePictureUpload(file);
+            }
+        });
+    } else {
+        console.warn('profile picture upload controls not found', { uploadProfilePictureBtn, profilePictureInput });
+    }
+
     function toggleBankingSections() {
         const useSaved = !!(savedRadio && savedRadio.checked);
         if (savedSection) savedSection.style.display = useSaved ? 'block' : 'none';
@@ -146,6 +464,13 @@ const paymentModal = document.getElementById('payment-modal');
 
     document.addEventListener('DOMContentLoaded', function() {
         hideLoader(true);
+        loadProfilePictureHistory();
+        setupProfilePictureHistoryActions();
+        if (profilePicPreview && profilePicPreview.dataset && profilePicPreview.dataset.blobSrc) {
+            console.log('Restoring profile picture from data-blob-src on page load', profilePicPreview.dataset.blobSrc);
+            profilePicPreview.src = profilePicPreview.dataset.blobSrc;
+        }
+        restoreProfilePictureFromApi();
         var initial = document.getElementById('upcycling-score-value');
         if (initial) {
             var m = initial.textContent.match(/^(\d+)/);

@@ -379,9 +379,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         echo '<div class="no-avatar"><i class="fa-solid fa-user fa-3x"></i></div>';
                     }
                 } else {
-                    echo '<img data-blob-src="../../../files/uploads/user/' . htmlspecialchars($user['profile_picture'] ?? 'defaultUser.png') . '" src="data:image/gif;base64,R0lGODlhAQABAPAAAP///wAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==" alt="Profile Picture" class="profile-pic-large" id="profile-pic-preview">';
+                    $profilePicture = $userDetails['profile_picture'] ?? $user['profile_picture'] ?? 'defaultUser.png';
+                    $profilePictureUrl = '../../../files/uploads/user/' . htmlspecialchars($profilePicture);
+                    echo '<img data-blob-src="' . $profilePictureUrl . '" src="' . $profilePictureUrl . '" alt="Profile Picture" class="profile-pic-large" id="profile-pic-preview">';
                 }
                 ?>
+                <input type="file" id="profile-picture-input" accept="image/*" style="display:none">
+                <button type="button" id="upload-profile-picture-btn" class="btn-secondary" style="margin-top:1rem;">
+                    <i class="fa-solid fa-camera"></i> Change avatar
+                </button>
+                <div id="profile-picture-feedback" class="profile-picture-feedback" aria-live="polite" style="margin-top:.75rem;"></div>
+                <div id="profile-picture-history" class="profile-picture-history" style="margin-top:1rem;"></div>
             </div>
             <div class="profile-info-section">
                 <h2>Your Profile</h2>
@@ -1375,6 +1383,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     })();
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+<script src="../../assets/js/user_profile.js"></script>
 <script src="../../assets/js/profile.js"></script>
 <script src="../../assets/js/profile-sections.js"></script>
 <script src="../../assets/js/profile-projects.js"></script>
