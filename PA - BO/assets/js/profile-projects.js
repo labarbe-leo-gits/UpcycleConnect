@@ -145,32 +145,76 @@
         });
     }
 
-    var disableBtn = document.getElementById('mfa-disable-btn');
-    if (disableBtn) {
-        disableBtn.addEventListener('click', function () {
-            if (!confirm('Are you sure you want to disable 2FA? This will make your account less secure.')) return;
-            disableBtn.disabled = true;
-            disableBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Disabling...';
-            postMFA('mfa_disable').then(function (data) {
-                disableBtn.disabled = false;
-                disableBtn.innerHTML = '<i class="fa-solid fa-lock-open"></i> Disable 2FA';
-                if (data.success) {
-                    setFeedback(document.getElementById('mfa-feedback'), '2FA disabled. Reloading...', false);
-                    setTimeout(function () { window.location.reload(); }, 1500);
-                } else {
-                    setFeedback(document.getElementById('mfa-feedback'), data.message || 'Unable to disable 2FA.', true);
+    var resetRequestBtn = document.getElementById('mfa-reset-request-btn');
+    var resetPanel = document.getElementById('mfa-reset-panel');
+    var resetSendCodeBtn = document.getElementById('mfa-reset-send-code-btn');
+    var resetVerifyBtn = document.getElementById('mfa-reset-verify-btn');
+    var resetCodeInput = document.getElementById('mfa-reset-code');
+
+    function showResetPanel() {
+        if (resetPanel) {
+            resetPanel.style.display = 'block';
+        }
+    }
+
+    if (resetRequestBtn) {
+        resetRequestBtn.addEventListener('click', function () {
+            showResetPanel();
+            setFeedback(document.getElementById('mfa-reset-feedback'), 'Request a verification code by email to reset your 2FA configuration.', false);
+        });
+    }
+
+    if (resetSendCodeBtn) {
+        resetSendCodeBtn.addEventListener('click', function () {
+            resetSendCodeBtn.disabled = true;
+            resetSendCodeBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
+            postMFA('mfa_reset_request').then(function (data) {
+                resetSendCodeBtn.disabled = false;
+                resetSendCodeBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send code';
+                if (!data.success) {
+                    setFeedback(document.getElementById('mfa-reset-feedback'), data.message || 'Unable to send the code. Please try again.', true);
+                    return;
                 }
+                showResetPanel();
+                setFeedback(document.getElementById('mfa-reset-feedback'), data.message || 'Verification code sent to your email.', false);
             }).catch(function (err) {
-                disableBtn.disabled = false;
-                disableBtn.innerHTML = '<i class="fa-solid fa-lock-open"></i> Disable 2FA';
-                setFeedback(document.getElementById('mfa-feedback'), err && err.message ? err.message : 'Network error. Please try again.', true);
+                resetSendCodeBtn.disabled = false;
+                resetSendCodeBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send code';
+                setFeedback(document.getElementById('mfa-reset-feedback'), err && err.message ? err.message : 'Network error. Please try again.', true);
             });
         });
     }
 
-    var otpInput = document.getElementById('mfa-verify-code');
-    if (otpInput) {
-        otpInput.addEventListener('input', function () {
+    if (resetVerifyBtn) {
+        resetVerifyBtn.addEventListener('click', function () {
+            var code = resetCodeInput ? (resetCodeInput.value || '').trim() : '';
+            if (!code || code.length !== 6 || !/^[0-9]{6}$/.test(code)) {
+                setFeedback(document.getElementById('mfa-reset-feedback'), 'Please enter a valid 6-digit code.', true);
+                return;
+            }
+            resetVerifyBtn.disabled = true;
+            resetVerifyBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying...';
+            postMFA('mfa_reset_verify', { code: code }).then(function (data) {
+                resetVerifyBtn.disabled = false;
+                resetVerifyBtn.innerHTML = '<i class="fa-solid fa-check"></i> Confirm code';
+                if (data.success) {
+                    setFeedback(document.getElementById('mfa-reset-feedback'), data.message || '2FA reset successful. Reloading...', false);
+                    if (data.reload) {
+                        setTimeout(function () { window.location.reload(); }, 1200);
+                    }
+                    return;
+                }
+                setFeedback(document.getElementById('mfa-reset-feedback'), data.message || 'Unable to verify the code.', true);
+            }).catch(function (err) {
+                resetVerifyBtn.disabled = false;
+                resetVerifyBtn.innerHTML = '<i class="fa-solid fa-check"></i> Confirm code';
+                setFeedback(document.getElementById('mfa-reset-feedback'), err && err.message ? err.message : 'Network error. Please try again.', true);
+            });
+        });
+    }
+
+    if (resetCodeInput) {
+        resetCodeInput.addEventListener('input', function () {
             this.value = this.value.replace(/\D/g, '').slice(0, 6);
         });
     }

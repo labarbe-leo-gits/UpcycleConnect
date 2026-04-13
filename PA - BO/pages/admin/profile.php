@@ -43,6 +43,162 @@ function sendJsonResponse(array $payload) {
     exit;
 }
 
+function getEnvValue(string $key, string $default = ''): string {
+    $value = getenv($key);
+    return $value !== false ? $value : $default;
+}
+
+function sendMFAResetCodeEmail(string $email, string $name, string $code): void {
+    $smtpHost = getEnvValue('EMAIL_HOST');
+    $smtpPort = getEnvValue('EMAIL_PORT', '587');
+    $smtpUser = getEnvValue('EMAIL_USERNAME');
+    $smtpPass = getEnvValue('EMAIL_PASSWORD');
+    $fromEmail = getEnvValue('EMAIL_FROM', $smtpUser);
+    $fromName = getEnvValue('EMAIL_FROM_NAME', 'UpcycleConnect');
+
+    if ($smtpHost === '' || $smtpUser === '' || $smtpPass === '' || $fromEmail === '' || $email === '') {
+        throw new RuntimeException('SMTP email settings are missing.');
+    }
+
+    $mail = new PHPMailer\PHPMailer\PHPMailer(true);
+    try {
+        $mail->isSMTP();
+        $mail->Host = $smtpHost;
+        $mail->SMTPAuth = true;
+        $mail->Username = $smtpUser;
+        $mail->Password = $smtpPass;
+        $mail->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port = (int) $smtpPort;
+        $mail->CharSet = 'UTF-8';
+
+        $mail->setFrom($fromEmail, $fromName);
+        $mail->addAddress($email, $name ?: $email);
+
+        $mail->Subject = 'Your MFA reset code';
+        $mail->isHTML(true);
+        $fullName = htmlspecialchars($name ?: 'there', ENT_QUOTES, 'UTF-8');
+        $safeCode = htmlspecialchars($code, ENT_QUOTES, 'UTF-8');
+        $mail->Body = '<!DOCTYPE html>' .
+            '<html lang="en">' .
+            '<head>' .
+            '<meta charset="UTF-8" />' .
+            '<meta name="viewport" content="width=device-width, initial-scale=1.0" />' .
+            '<title>Your MFA reset code</title>' .
+            '</head>' .
+            '<body style="margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background:#f3f6f8;color:#334155;">' .
+            '<table width="100%" cellpadding="0" cellspacing="0" style="background:#f3f6f8;padding:24px 0;">' .
+            '<tr><td align="center">' .
+            '<table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(15,23,42,.08);">' .
+            '<tr><td style="background:#176f3a;padding:28px 32px;text-align:center;color:#ffffff;">' .
+            '<h1 style="margin:0;font-size:28px;letter-spacing:0.5px;">UpcycleConnect</h1>' .
+            '</td></tr>' .
+            '<tr><td style="padding:32px 40px;">' .
+            '<p style="margin:0 0 16px;font-size:16px;line-height:1.7;color:#334155;">Hello <strong>' . $fullName . '</strong>,</p>' .
+            '<p style="margin:0 0 28px;font-size:16px;line-height:1.75;color:#475569;">We received a request to reset two-factor authentication (2FA) for your administrator account. Use the verification code below to continue.</p>' .
+            '<div style="background:#f7f9fb;border:2px dashed #94a3b8;border-radius:16px;padding:24px 32px;margin:0 0 28px;">' .
+            '<p style="margin:0 0 12px;font-size:16px;line-height:1.7;color:#1f2937;"><strong>Your verification code</strong></p>' .
+            '<p style="margin:0;font-size:32px;letter-spacing:3px;font-weight:700;color:#176f3a;">' . $safeCode . '</p>' .
+            '</div>' .
+            '<p style="margin:0 0 24px;font-size:14px;line-height:1.7;color:#64748b;">This code expires in 15 minutes.</p>' .
+            '<p style="margin:0 0 24px;font-size:14px;line-height:1.7;color:#64748b;">If you did not request this reset, please contact support immediately.</p>' .
+            '<p style="margin:0;font-size:14px;line-height:1.7;color:#64748b;">Thank you,<br />UpcycleConnect</p>' .
+            '</td></tr>' .
+            '<tr><td style="padding:24px 40px 32px;font-size:14px;line-height:1.7;color:#64748b;background:#f8fafc;">' .
+            '<p style="margin:0;">Need help? Visit your profile and set up MFA again after verification.</p>' .
+            '</td></tr>' .
+            '</table>' .
+            '</td></tr>' .
+            '</table>' .
+            '</body>' .
+            '</html>';
+        $mail->AltBody = "Hello " . ($name ?: 'there') . ",\n\n" .
+            "We received a request to reset two-factor authentication (2FA) for your administrator account.\n\n" .
+            "Your verification code: " . $code . "\n\n" .
+            "This code expires in 15 minutes.\n\n" .
+            "If you did not request this reset, please contact support immediately.\n\n" .
+            "Thank you,\nUpcycleConnect";
+
+        $mail->send();
+    } catch (PHPMailer\PHPMailer\Exception $e) {
+        error_log('sendMFAResetCodeEmail failed: ' . $e->getMessage());
+        throw new RuntimeException('Unable to send the verification code email.');
+    }
+}
+
+function sendMFAResetSuccessEmail(string $email, string $name): void {
+    $smtpHost = getEnvValue('EMAIL_HOST');
+    $smtpPort = getEnvValue('EMAIL_PORT', '587');
+    $smtpUser = getEnvValue('EMAIL_USERNAME');
+    $smtpPass = getEnvValue('EMAIL_PASSWORD');
+    $fromEmail = getEnvValue('EMAIL_FROM', $smtpUser);
+    $fromName = getEnvValue('EMAIL_FROM_NAME', 'UpcycleConnect');
+
+    if ($smtpHost === '' || $smtpUser === '' || $smtpPass === '' || $fromEmail === '' || $email === '') {
+        throw new RuntimeException('SMTP email settings are missing.');
+    }
+
+    $mail = new PHPMailer\PHPMailer\PHPMailer(true);
+    try {
+        $mail->isSMTP();
+        $mail->Host = $smtpHost;
+        $mail->SMTPAuth = true;
+        $mail->Username = $smtpUser;
+        $mail->Password = $smtpPass;
+        $mail->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port = (int) $smtpPort;
+        $mail->CharSet = 'UTF-8';
+
+        $mail->setFrom($fromEmail, $fromName);
+        $mail->addAddress($email, $name ?: $email);
+        $mail->Subject = 'Your MFA has been reset';
+        $mail->isHTML(true);
+        $fullName = htmlspecialchars($name ?: 'there', ENT_QUOTES, 'UTF-8');
+
+        $mail->Body = '<!DOCTYPE html>' .
+            '<html lang="en">' .
+            '<head>' .
+            '<meta charset="UTF-8" />' .
+            '<meta name="viewport" content="width=device-width, initial-scale=1.0" />' .
+            '<title>Your MFA Has Been Reset</title>' .
+            '</head>' .
+            '<body style="margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background:#f3f6f8;color:#334155;">' .
+            '<table width="100%" cellpadding="0" cellspacing="0" style="background:#f3f6f8;padding:24px 0;">' .
+            '<tr><td align="center">' .
+            '<table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(15,23,42,.08);">' .
+            '<tr><td style="background:#176f3a;padding:28px 32px;text-align:center;color:#ffffff;">' .
+            '<h1 style="margin:0;font-size:28px;letter-spacing:0.5px;">UpcycleConnect</h1>' .
+            '</td></tr>' .
+            '<tr><td style="padding:32px 40px;">' .
+            '<p style="margin:0 0 16px;font-size:16px;line-height:1.7;color:#334155;">Hello <strong>' . $fullName . '</strong>,</p>' .
+            '<p style="margin:0 0 28px;font-size:16px;line-height:1.75;color:#475569;">Your two-factor authentication (2FA) setup has been successfully reset.</p>' .
+            '<div style="background:#f7f9fb;border:2px dashed #94a3b8;border-radius:16px;padding:24px 32px;margin:0 0 28px;">' .
+            '<p style="margin:0 0 12px;font-size:16px;line-height:1.7;color:#1f2937;"><strong>Next step</strong></p>' .
+            '<p style="margin:8px 0 0;font-size:15px;line-height:1.7;color:#475569;">Please go to <strong>Profile &gt; MFA</strong> and set up two-factor authentication again to secure your account.</p>' .
+            '</div>' .
+            '<p style="margin:0 0 24px;font-size:14px;line-height:1.7;color:#64748b;">If you did not request this reset, please contact support immediately.</p>' .
+            '<p style="margin:0;font-size:14px;line-height:1.7;color:#64748b;">Thank you,<br />UpcycleConnect</p>' .
+            '</td></tr>' .
+            '<tr><td style="padding:24px 40px 32px;font-size:14px;line-height:1.7;color:#64748b;background:#f8fafc;">' .
+            '<p style="margin:0;">You can return to your profile anytime to confirm your MFA status.</p>' .
+            '</td></tr>' .
+            '</table>' .
+            '</td></tr>' .
+            '</table>' .
+            '</body>' .
+            '</html>';
+        $mail->AltBody = "Hello " . ($name ?: 'there') . ",\n\n" .
+            "Your two-factor authentication (2FA) setup has been successfully reset.\n\n" .
+            "Please configure MFA again from your profile settings to secure your account.\n\n" .
+            "If you did not request this reset, contact support immediately.\n\n" .
+            "Thank you,\nUpcycleConnect";
+
+        $mail->send();
+    } catch (PHPMailer\PHPMailer\Exception $e) {
+        error_log('sendMFAResetSuccessEmail failed: ' . $e->getMessage());
+        throw new RuntimeException('Unable to send the reset confirmation email.');
+    }
+}
+
 $user = getLoggedInUser();
 
 if (!empty($user['id'])) {
@@ -305,6 +461,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             sendJsonResponse(['success' => true]);
         }
         sendJsonResponse(['success' => false, 'message' => $data['error'] ?? 'Invalid OTP code. Please try again.']);
+    }
+
+    if ($formType === 'mfa_reset_request') {
+        $email = trim($user['email'] ?? '');
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            sendJsonResponse(['success' => false, 'message' => 'Unable to determine your email address.']);
+        }
+
+        $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $_SESSION['mfa_reset_code'] = $code;
+        $_SESSION['mfa_reset_expires_at'] = time() + 900;
+        $_SESSION['mfa_reset_user_id'] = $user['id'];
+
+        try {
+            sendMFAResetCodeEmail($email, $user['first_name'] ?? '', $code);
+        } catch (RuntimeException $ex) {
+            sendJsonResponse(['success' => false, 'message' => $ex->getMessage()]);
+        }
+
+        sendJsonResponse(['success' => true, 'message' => 'A verification code has been sent to your email.']);
+    }
+
+    if ($formType === 'mfa_reset_verify') {
+        $code = trim($_POST['code'] ?? '');
+        if ($code === '') {
+            sendJsonResponse(['success' => false, 'message' => 'Please enter the verification code.']);
+        }
+        if (empty($_SESSION['mfa_reset_code']) || empty($_SESSION['mfa_reset_expires_at']) || time() > $_SESSION['mfa_reset_expires_at']) {
+            sendJsonResponse(['success' => false, 'message' => 'The verification code has expired. Please resend the code.']);
+        }
+        if ($code !== $_SESSION['mfa_reset_code']) {
+            sendJsonResponse(['success' => false, 'message' => 'The verification code is invalid.']);
+        }
+
+        $resp = askAPI("/users/{$user['id']}/2fa/disable", 'POST');
+        $data = json_decode($resp, true);
+        if (is_array($data) && isset($data['error'])) {
+            sendJsonResponse(['success' => false, 'message' => $data['error']]);
+        }
+
+        unset($_SESSION['mfa_reset_code'], $_SESSION['mfa_reset_expires_at'], $_SESSION['mfa_reset_user_id']);
+        $_SESSION['force_mfa_setup'] = true;
+
+        try {
+            sendMFAResetSuccessEmail($user['email'] ?? '', $user['first_name'] ?? '');
+        } catch (RuntimeException $ex) {
+            error_log('MFA reset confirmation email failed: ' . $ex->getMessage());
+        }
+
+        sendJsonResponse(['success' => true, 'message' => 'Your 2FA configuration has been reset. Please set it up again.', 'reload' => true]);
     }
 
     if ($formType === 'mfa_disable') {
@@ -774,10 +980,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
 
             <?php if ($twoFAEnabled): ?>
-                <p>You can disable Two-Factor Authentication below. This will make your account less secure.</p>
-                <button type="button" class="btn-danger" id="mfa-disable-btn">
-                    <i class="fa-solid fa-lock-open"></i> Disable 2FA
+                <p>Your administrator account currently has 2FA enabled. To reset it, we will send a verification code to your registered email address.</p>
+                <button type="button" class="btn-danger" id="mfa-reset-request-btn">
+                    <i class="fa-solid fa-envelope"></i> Reset 2FA
                 </button>
+
+                <div id="mfa-reset-panel" style="display:none;margin-top:1.5rem;">
+                    <div id="mfa-reset-feedback"></div>
+                    <p style="margin:0.75rem 0 0;font-size:.95rem;color:#374151;max-width:560px;">
+                        The code is valid for 15 minutes. After verification, your current 2FA configuration will be disabled and you will be prompted to set it up again.
+                    </p>
+                    <div class="field" style="margin-top:1rem;max-width:320px;">
+                        <label for="mfa-reset-code">Verification code</label>
+                        <div class="input-wrapper">
+                            <i class="fa-solid fa-key"></i>
+                            <input type="text" id="mfa-reset-code" class="iconInput" maxlength="6" inputmode="numeric" placeholder="123456">
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-top:1rem;">
+                        <button type="button" class="btn-secondary" id="mfa-reset-send-code-btn">
+                            <i class="fa-solid fa-paper-plane"></i> Send code
+                        </button>
+                        <button type="button" class="btn-primary" id="mfa-reset-verify-btn">
+                            <i class="fa-solid fa-check"></i> Confirm code
+                        </button>
+                    </div>
+                </div>
             <?php else: ?>
                 <p>Add an extra layer of security by linking an authenticator app (Google Authenticator, Authy, etc.).</p>
                 <button type="button" class="btn-primary" id="mfa-setup-btn">

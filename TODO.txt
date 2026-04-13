@@ -1,0 +1,9 @@
+crons :
+- ban lift
+- backup
+- Email de rappel de connexion
+- Reset Quotas LLM
+
+MAILS :
+- mfa activé / désactivé users non admin
+- reset mfa avec code vérif par mail pour autres user que admin

@@ -11,6 +11,15 @@
     let sortFilter = 'newest';
     let bannedFilter = false;
 
+    const adminUserSpinnerStyle = document.createElement('style');
+    adminUserSpinnerStyle.textContent = `
+        @keyframes adminUserSpinner {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    `;
+    document.head.appendChild(adminUserSpinnerStyle);
+
     document.addEventListener('DOMContentLoaded', function() {
         bindToolbar();
         const params = new URLSearchParams(window.location.search);
@@ -1063,8 +1072,21 @@
         }
         params.set('llm_quota', quota + '');
 
+        const submitButton = form.querySelector('button[type="submit"]');
+        const originalButtonHtml = submitButton ? submitButton.innerHTML : '';
+        function setButtonLoading(isLoading) {
+            if (!submitButton) return;
+            submitButton.disabled = isLoading;
+            if (isLoading) {
+                submitButton.innerHTML = '<span style="display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;width:16px;height:16px;vertical-align:middle;margin-right:8px;animation:adminUserSpinner 0.8s linear infinite;"></span>Creating...';
+            } else {
+                submitButton.innerHTML = originalButtonHtml;
+            }
+        }
+
         const url = 'create-user-api';
         console.log('posting create user to', url);
+        setButtonLoading(true);
 
         fetch(url, {
             method: 'POST',
@@ -1077,6 +1099,7 @@
             return r.text();
         })
           .then(t => {
+              setButtonLoading(false);
               const trimmed = t ? t.trim() : '';
               console.log('create-user response raw', trimmed);
               let res;
@@ -1103,6 +1126,7 @@
               limit = initialSize;
               requestChunk(false);
           }).catch(err => {
+              setButtonLoading(false);
               if (errorBox) {
                   errorBox.textContent = 'Create failed: ' + err.message;
                   errorBox.style.display = 'block';

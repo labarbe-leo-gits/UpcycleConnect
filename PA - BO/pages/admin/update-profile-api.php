@@ -42,6 +42,15 @@ if ($field === '' || !in_array($field, $allowedFields, true)) {
     exit;
 }
 
+if ($field === 'email') {
+    $value = trim((string)$value);
+    if ($value === '' || !filter_var($value, FILTER_VALIDATE_EMAIL)) {
+        http_response_code(422);
+        echo json_encode(['error' => 'Please provide a valid email address']);
+        exit;
+    }
+}
+
 if ($field === 'newsletter_subscribed') {
     if ($value === '' || $value === null) {
         $value = false;
@@ -65,9 +74,23 @@ if ($decoded === null) {
 
 if (isset($decoded['first_name'])) {
     $_SESSION['first_name'] = $decoded['first_name'];
+} elseif ($field === 'first_name') {
+    $_SESSION['first_name'] = (string)$value;
 }
 if (isset($decoded['last_name'])) {
     $_SESSION['last_name'] = $decoded['last_name'];
+} elseif ($field === 'last_name') {
+    $_SESSION['last_name'] = (string)$value;
+}
+if (isset($decoded['email'])) {
+    $_SESSION['email'] = $decoded['email'];
+} elseif ($field === 'email') {
+    $_SESSION['email'] = (string)$value;
+}
+if (isset($decoded['username'])) {
+    $_SESSION['username'] = $decoded['username'];
+} elseif ($field === 'username') {
+    $_SESSION['username'] = (string)$value;
 }
 
 echo json_encode($decoded);
