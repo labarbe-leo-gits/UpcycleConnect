@@ -449,6 +449,35 @@ func DeleteUserProfilePictureHistoryItemFromDB(userID, historyID string) error {
 	return nil
 }
 
+func DeleteAllUserProfilePictureHistoryFromDB(userID string) ([]string, error) {
+	rows, err := Db.Query("SELECT picture FROM user_profile_picture_history WHERE user_id = ?", userID)
+	if err != nil {
+		return nil, fmt.Errorf("deleteAllUserProfilePictureHistoryFromDB select : %s", err.Error())
+	}
+	defer rows.Close()
+
+	pictures := []string{}
+	for rows.Next() {
+		var picture sql.NullString
+		if err := rows.Scan(&picture); err != nil {
+			return nil, fmt.Errorf("deleteAllUserProfilePictureHistoryFromDB scan : %s", err.Error())
+		}
+		if picture.Valid {
+			pictures = append(pictures, picture.String)
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("deleteAllUserProfilePictureHistoryFromDB rows : %s", err.Error())
+	}
+
+	_, err = Db.Exec("DELETE FROM user_profile_picture_history WHERE user_id = ?", userID)
+	if err != nil {
+		return nil, fmt.Errorf("deleteAllUserProfilePictureHistoryFromDB delete : %s", err.Error())
+	}
+
+	return pictures, nil
+}
+
 func PruneUserProfilePictureHistoryFromDB(userID string, keep int) ([]string, error) {
 	if keep < 0 {
 		keep = 5

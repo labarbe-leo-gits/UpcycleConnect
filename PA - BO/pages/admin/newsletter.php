@@ -1,0 +1,1 @@
+<!-- TODO : Newsletter editor (html/md) and send by email. Status like draft, etc.. see db schema. -->

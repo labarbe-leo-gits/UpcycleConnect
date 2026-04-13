@@ -1,0 +1,2 @@
+<!-- TODO : Newsletter editor (html/md) and send by email. Status like draft, etc.. see db schema. -->
+ <!-- If user have manager, manager HAVE to review the newsletter and approve it before sending -->

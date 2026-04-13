@@ -84,6 +84,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['email'] = $user['email'] ?? '';
                 $_SESSION['user_type'] = $userType;
 
+                $twoFAEnabled = false;
+                $twoFAInfoResponse = askAPI("/users/{$user['id']}/2fa-info", 'GET');
+                $twoFAInfo = json_decode($twoFAInfoResponse, true);
+                if (is_array($twoFAInfo) && isset($twoFAInfo['enabled']) && $twoFAInfo['enabled'] === true) {
+                    $twoFAEnabled = true;
+                }
+
+                if (!$twoFAEnabled) {
+                    $_SESSION['force_mfa_setup'] = true;
+                    header('Location: ../admin/profile');
+                    exit();
+                }
+
                 header('Location: ../admin/dashboard');
                 exit();
             }

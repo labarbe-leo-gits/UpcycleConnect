@@ -714,6 +714,7 @@ func main() {
 	registerRoute("GET", "/users/{id}/profile-picture/history", "Get the user's previous profile pictures", app.GetProfilePictureHistory, app.JWTAuthMiddleware)
 	registerRoute("PATCH", "/users/{id}/profile-picture/history/{historyID}/restore", "Restore a previous profile picture", app.RestoreProfilePictureFromHistory, app.JWTAuthMiddleware)
 	registerRoute("DELETE", "/users/{id}/profile-picture/history/{historyID}", "Delete a previous profile picture history item", app.DeleteProfilePictureHistoryItem, app.JWTAuthMiddleware)
+	registerRoute("DELETE", "/users/{id}/profile-picture/history", "Delete all profile picture history records for a user", app.DeleteAllProfilePictureHistory, app.JWTAuthMiddleware)
 	registerRoute("GET", "/projects", "List all published projects", app.GetProjects, app.JWTAuthMiddleware)
 	registerRoute("GET", "/projects/{id}", "Get a specific project with steps, images and materials", app.GetProjectByID, app.JWTAuthMiddleware)
 	registerRoute("POST", "/projects", "Create a new project", app.CreateProject, app.JWTAuthMiddleware)

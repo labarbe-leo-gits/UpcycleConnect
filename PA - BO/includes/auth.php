@@ -34,8 +34,19 @@ function getUserHomePath($userType) {
     }
 }
 
+function isAjaxRequest() {
+    return !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+}
+
 function requireLogin() {
     if (!isLoggedIn()) {
+        if (isAjaxRequest()) {
+            http_response_code(401);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Unauthorized']);
+            exit();
+        }
+
         $current_page = basename($_SERVER['PHP_SELF'], '.php');
         $_SESSION['page_after_login'] = $current_page;
         header('Location: /PA/PA%20-%20BO/pages/public/login');
@@ -48,11 +59,23 @@ function requireUserType($expectedType) {
 
     $userType = getLoggedInUserType();
     if ($userType === null) {
+        if (isAjaxRequest()) {
+            http_response_code(401);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Unauthorized']);
+            exit();
+        }
         header('Location: /PA/PA%20-%20BO/pages/public/login');
         exit();
     }
 
     if ((int) $userType !== (int) $expectedType) {
+        if (isAjaxRequest()) {
+            http_response_code(403);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Forbidden']);
+            exit();
+        }
         header('Location: ' . getUserHomePath($userType));
         exit();
     }

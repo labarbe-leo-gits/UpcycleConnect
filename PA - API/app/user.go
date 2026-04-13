@@ -1148,6 +1148,42 @@ func DeleteProfilePictureHistoryItem(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "history": historyResponse})
 }
 
+func DeleteAllProfilePictureHistory(w http.ResponseWriter, r *http.Request) {
+	userID := r.PathValue("id")
+	if _, err := uuid.Parse(userID); err != nil {
+		sendError(w, "Invalid user ID format", http.StatusBadRequest)
+		return
+	}
+
+	callerID, _ := r.Context().Value("user_id").(string)
+	if callerID == "" || callerID != userID {
+		sendError(w, "Unauthorized", http.StatusForbidden)
+		return
+	}
+
+	pictures, err := db.DeleteAllUserProfilePictureHistoryFromDB(userID)
+	if err != nil {
+		fmt.Println("[ERROR] DeleteAllProfilePictureHistory:", err)
+		sendError(w, "Unable to clear history", http.StatusInternalServerError)
+		return
+	}
+
+	user, _ := db.GetUserByIDFromDB(uuid.MustParse(userID))
+	storageDir := filepath.Join("..", "files", "uploads", "user")
+	for _, pic := range pictures {
+		if pic == "" || pic == user.ProfilePicture {
+			continue
+		}
+		oldPath := filepath.Join(storageDir, filepath.Base(pic))
+		if err := os.Remove(oldPath); err != nil && !os.IsNotExist(err) {
+			fmt.Println("[WARN] DeleteAllProfilePictureHistory remove old file:", err)
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "history": []interface{}{}})
+}
+
 func GetDepositsByUserID(w http.ResponseWriter, r *http.Request) {
 	idStr := strings.TrimPrefix(r.URL.Path, "/users/")
 	idStr = strings.TrimSuffix(idStr, "/deposits")

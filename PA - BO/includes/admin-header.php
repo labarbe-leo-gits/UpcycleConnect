@@ -3,6 +3,19 @@ require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/auth.php';
 
 requireUserType(3);
+$user = getLoggedInUser();
+if (!empty($user['id']) && basename($_SERVER['PHP_SELF']) !== 'profile.php') {
+    $twoFAResp = askAPI("/users/{$user['id']}/2fa-info", 'GET');
+    $twoFAData = json_decode($twoFAResp, true);
+    $twoFAEnabled = isset($twoFAData['enabled']) && $twoFAData['enabled'] === true;
+    if (!$twoFAEnabled) {
+        if (empty($_SESSION['force_mfa_setup'])) {
+            $_SESSION['force_mfa_setup'] = true;
+        }
+        header('Location: ../admin/profile');
+        exit();
+    }
+}
 trackLastPage();
 
 $user = getLoggedInUser();
