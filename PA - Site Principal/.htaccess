@@ -3,6 +3,8 @@ ErrorDocument 403 /PA/PA%20-%20Site%20Principal/403.php
 ErrorDocument 404 /PA/PA%20-%20Site%20Principal/404.php
 
 RewriteEngine On
+RewriteCond %{REQUEST_URI} \.env [NC]
+RewriteRule .* - [R=404,L]
 RewriteBase "/PA/PA - Site Principal/"
 RewriteCond %{THE_REQUEST} \s/PA/PA%20-%20Site%20Principal/pages/public/([^.]+)\.php [NC]
 RewriteRule ^ pages/public/%1? [R=301,L,NE,QSA]
