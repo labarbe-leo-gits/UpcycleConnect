@@ -10,14 +10,19 @@ function WriteLog($filename, $level, $ipAddr, $message){
     }
 
     if (!is_dir($logDir)) {
-        mkdir($logDir, 0755, true);
+        @mkdir($logDir, 0755, true);
+    }
+
+    if (!is_dir($logDir) || !is_writable($logDir)) {
+        error_log(sprintf('WriteLog: unable to write to log directory %s', $logDir));
+        return;
     }
 
     $logFile = rtrim($logDir, '/\\') . DIRECTORY_SEPARATOR . $filename . '.log';
     $timestamp = date('Y-m-d H:i:s');
     $logEntry = "[$timestamp] [$level] [$ipAddr] $message" . PHP_EOL;
 
-    file_put_contents($logFile, $logEntry, FILE_APPEND);
+    @file_put_contents($logFile, $logEntry, FILE_APPEND);
 
 }
 

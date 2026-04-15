@@ -24,7 +24,7 @@ if (!is_array($files) || isset($files['error'])) {
     exit;
 }
 
-$uploadDir = rtrim(dirname(dirname(dirname(dirname(__FILE__)))), '/\\') . DIRECTORY_SEPARATOR . 'files' . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'deposit' . DIRECTORY_SEPARATOR;
+$uploadDir = rtrim(dirname(dirname(dirname(__FILE__))), '/\\') . DIRECTORY_SEPARATOR . 'files' . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'deposit' . DIRECTORY_SEPARATOR;
 
 $zipName = "deposit_{$depositId}_files.zip";
 $zipPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $zipName;

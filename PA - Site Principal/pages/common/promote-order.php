@@ -1,7 +1,7 @@
 <?php
 // Promotion checkout page (one-shot payment with Stripe Elements)
 
-require_once '../../../vendor/autoload.php';
+require_once __DIR__ . '/../../vendor/autoload.php';
 require_once '../../config/db.php';
 require_once '../../includes/auth.php';
 

@@ -7,7 +7,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit();
 }
 
-$autoloadPath = __DIR__ . '/../../../vendor/autoload.php';
+$autoloadPath = __DIR__ . '/../../vendor/autoload.php';
 $envPath = __DIR__ . '/../../.env';
 
 function loadEnvFile(string $path): void
@@ -68,11 +68,11 @@ function getDbConnection(): PDO
 
 function sendPasswordResetEmail(string $email, string $name, string $code): void
 {
-    if (!file_exists(__DIR__ . '/../../../vendor/autoload.php')) {
+    if (!file_exists(__DIR__ . '/../../vendor/autoload.php')) {
         jsonError('Email library is not installed.', 500);
     }
 
-    require_once __DIR__ . '/../../../vendor/autoload.php';
+    require_once __DIR__ . '/../../vendor/autoload.php';
 
     $smtpHost = getEnvValue('EMAIL_HOST');
     $smtpPort = getEnvValue('EMAIL_PORT', '587');

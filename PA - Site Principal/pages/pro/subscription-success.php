@@ -2,7 +2,7 @@
 $title    = 'Subscription activated!';
 $extraCss = ['../../assets/css/subscription.css'];
 $extraJs  = ['../../assets/js/subscription-success.js'];
-require_once '../../../vendor/autoload.php';
+require_once __DIR__ . '/../../vendor/autoload.php';
 
 $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH'])
     && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';

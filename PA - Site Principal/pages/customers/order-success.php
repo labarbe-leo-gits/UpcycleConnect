@@ -94,7 +94,7 @@ if ($priceTTC > 0) {
         $paymentError = 'Missing payment confirmation.';
     } else {
         $stripeConfig = require '../../config/stripe.php';
-        $autoloadPath = __DIR__ . '/../../../vendor/autoload.php';
+        $autoloadPath = __DIR__ . '/../../vendor/autoload.php';
 
         if (empty($stripeConfig['secret_key']) || !file_exists($autoloadPath)) {
             $paymentError = 'Stripe is not available.';

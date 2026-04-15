@@ -1,9 +1,20 @@
 <?php
 // Session authentication helper
 
-if (session_status() === PHP_SESSION_NONE) {
+function auth_start_session(): void {
+    if (session_status() !== PHP_SESSION_NONE) {
+        return;
+    }
+
+    if (headers_sent($file, $line)) {
+        error_log(sprintf('Warning: session_start skipped because headers already sent in %s on line %d', $file, $line));
+        return;
+    }
+
     session_start();
 }
+
+auth_start_session();
 
 function isLoggedIn() {
     return isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);

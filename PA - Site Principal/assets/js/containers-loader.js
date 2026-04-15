@@ -469,7 +469,7 @@
             if (files.length) {
                 filesList.innerHTML = '';
                 files.forEach(file => {
-                    const fileUrl = '/PA/files/uploads/deposit/' + encodeURIComponent(file.filename || '');
+                    const fileUrl = '/files/uploads/deposit/' + encodeURIComponent(file.filename || '');
 
                     const card = document.createElement('div');
                     card.style.display = 'grid';

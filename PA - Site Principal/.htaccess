@@ -1,14 +1,18 @@
 Options -Indexes
-ErrorDocument 403 /PA/PA%20-%20Site%20Principal/403.php
-ErrorDocument 404 /PA/PA%20-%20Site%20Principal/404.php
+ErrorDocument 403 /403.php
+ErrorDocument 404 /404.php
+DirectoryIndex pages/public/index.php
 
 RewriteEngine On
+RewriteBase /
 RewriteCond %{REQUEST_URI} \.env [NC]
 RewriteRule .* - [R=404,L]
-RewriteBase "/PA/PA - Site Principal/"
-RewriteCond %{THE_REQUEST} \s/PA/PA%20-%20Site%20Principal/pages/public/([^.]+)\.php [NC]
-RewriteRule ^ pages/public/%1? [R=301,L,NE,QSA]
 
+# Rewrite legacy encoded site root prefixes to the real root
+RewriteRule ^PA/PA%20-%20Site%20Principal/(.*)$ $1 [L,NC]
+RewriteRule ^PA\ -\ Site\ Principal/(.*)$ $1 [L,NC]
+
+# Rewrite pretty page URLs to their PHP files
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_FILENAME} !-f
-RewriteRule ^pages/public/([^/.]+)$ pages/public/$1.php [L,QSA]
+RewriteRule ^(pages/.*)$ $1.php [L,QSA]

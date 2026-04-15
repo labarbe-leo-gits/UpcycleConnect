@@ -15,7 +15,7 @@ func generateDepositBarcode() string {
 
 func GetAllDepositsFromDB() ([]models.Deposit, error) {
 
-	rows, err := Db.Query("SELECT id, user_id, conteneur_id, object_name, object_description, status, barcode, created_at, updated_at FROM demandes_depot")
+	rows, err := Db.Query("SELECT id, user_id, conteneur_id, object_name, object_description, object_state, status, barcode, created_at, updated_at FROM demandes_depot")
 	if err != nil {
 		return nil, fmt.Errorf("failed to query deposits: %v", err)
 	}
@@ -27,7 +27,7 @@ func GetAllDepositsFromDB() ([]models.Deposit, error) {
 	for rows.Next() {
 		var deposit models.Deposit
 		var barcode sql.NullString
-		err := rows.Scan(&deposit.ID, &deposit.UserID, &deposit.ConteneurID, &deposit.ObjectName, &deposit.ObjectDescription, &deposit.Status, &barcode, &deposit.CreatedAt, &deposit.UpdatedAt)
+		err := rows.Scan(&deposit.ID, &deposit.UserID, &deposit.ConteneurID, &deposit.ObjectName, &deposit.ObjectDescription, &deposit.ObjectState, &deposit.Status, &barcode, &deposit.CreatedAt, &deposit.UpdatedAt)
 
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan deposit: %v", err)
@@ -56,9 +56,15 @@ func CreateDepositInDB(deposit models.Deposit) (uuid.UUID, error) {
 		barcodeValue = deposit.Barcode
 	}
 
+	objectState := deposit.ObjectState
+
+	if objectState == 0 {
+		objectState = 0
+	}
+
 	_, err := Db.Exec(
-		"INSERT INTO demandes_depot (id, user_id, conteneur_id, object_name, object_description, status, barcode, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-		newID, deposit.UserID, deposit.ConteneurID, deposit.ObjectName, deposit.ObjectDescription, 1, barcodeValue, currentTime, currentTime,
+		"INSERT INTO demandes_depot (id, user_id, conteneur_id, object_name, object_description, object_state, status, barcode, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		newID, deposit.UserID, deposit.ConteneurID, deposit.ObjectName, deposit.ObjectDescription, objectState, 1, barcodeValue, currentTime, currentTime,
 	)
 
 	if err != nil {
@@ -96,7 +102,7 @@ func UpdateDepositStatusInDB(depositIDStr string, status int) error {
 	return nil
 }
 
-func UpdateDepositInDB(depositIDStr string, conteneurIDStr string, objectName string, objectDescription string) error {
+func UpdateDepositInDB(depositIDStr string, conteneurIDStr string, objectName string, objectDescription string, objectState int) error {
 	depositID, err := uuid.Parse(depositIDStr)
 	if err != nil {
 		return fmt.Errorf("invalid deposit ID format: %v", err)
@@ -124,7 +130,7 @@ func UpdateDepositInDB(depositIDStr string, conteneurIDStr string, objectName st
 	}
 
 	currentTime := getCurrentTime()
-	_, err = Db.Exec("UPDATE demandes_depot SET conteneur_id = ?, object_name = ?, object_description = ?, updated_at = ? WHERE id = ?", conteneurID, objectName, objectDescription, currentTime, depositID)
+	_, err = Db.Exec("UPDATE demandes_depot SET conteneur_id = ?, object_name = ?, object_description = ?, object_state = ?, updated_at = ? WHERE id = ?", conteneurID, objectName, objectDescription, objectState, currentTime, depositID)
 	if err != nil {
 		return fmt.Errorf("failed to update deposit: %v", err)
 	}
@@ -153,9 +159,9 @@ func GetDepositByIDFromDB(depositIDStr string) (models.Deposit, error) {
 
 	var deposit models.Deposit
 
-	row := Db.QueryRow("SELECT id, user_id, conteneur_id, object_name, object_description, status, barcode, created_at, updated_at FROM demandes_depot WHERE id = ?", depositIDStr)
+	row := Db.QueryRow("SELECT id, user_id, conteneur_id, object_name, object_description, object_state, status, barcode, created_at, updated_at FROM demandes_depot WHERE id = ?", depositIDStr)
 	var barcode sql.NullString
-	err := row.Scan(&deposit.ID, &deposit.UserID, &deposit.ConteneurID, &deposit.ObjectName, &deposit.ObjectDescription, &deposit.Status, &barcode, &deposit.CreatedAt, &deposit.UpdatedAt)
+	err := row.Scan(&deposit.ID, &deposit.UserID, &deposit.ConteneurID, &deposit.ObjectName, &deposit.ObjectDescription, &deposit.ObjectState, &deposit.Status, &barcode, &deposit.CreatedAt, &deposit.UpdatedAt)
 	if err == nil && barcode.Valid {
 		deposit.Barcode = barcode.String
 	}
@@ -178,7 +184,7 @@ func GetDepositByIDFromDB(depositIDStr string) (models.Deposit, error) {
 
 func GetDepositsByConteneurIDFromDB(conteneurIDStr string) ([]models.Deposit, error) {
 	rows, err := Db.Query(
-		"SELECT id, user_id, conteneur_id, object_name, object_description, status, barcode, created_at, updated_at FROM demandes_depot WHERE conteneur_id = ?",
+		"SELECT id, user_id, conteneur_id, object_name, object_description, object_state, status, barcode, created_at, updated_at FROM demandes_depot WHERE conteneur_id = ?",
 		conteneurIDStr,
 	)
 	if err != nil {
@@ -190,7 +196,7 @@ func GetDepositsByConteneurIDFromDB(conteneurIDStr string) ([]models.Deposit, er
 	for rows.Next() {
 		var d models.Deposit
 		var barcode sql.NullString
-		if err := rows.Scan(&d.ID, &d.UserID, &d.ConteneurID, &d.ObjectName, &d.ObjectDescription, &d.Status, &barcode, &d.CreatedAt, &d.UpdatedAt); err != nil {
+		if err := rows.Scan(&d.ID, &d.UserID, &d.ConteneurID, &d.ObjectName, &d.ObjectDescription, &d.ObjectState, &d.Status, &barcode, &d.CreatedAt, &d.UpdatedAt); err != nil {
 			return nil, fmt.Errorf("getDepositsByConteneurIDFromDB scan error: %v", err)
 		}
 		if barcode.Valid {

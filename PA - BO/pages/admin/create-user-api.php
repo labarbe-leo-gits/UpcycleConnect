@@ -2,7 +2,7 @@
 
 ob_start();
 require_once '../../config/db.php';
-$autoloadPath = __DIR__ . '/../../../vendor/autoload.php';
+$autoloadPath = __DIR__ . '/../../vendor/autoload.php';
 if (!file_exists($autoloadPath)) {
     http_response_code(500);
     header('Content-Type: application/json');

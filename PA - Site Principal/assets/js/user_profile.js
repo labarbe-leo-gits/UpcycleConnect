@@ -46,7 +46,18 @@ function getCurrentUserId() {
     return parsed.user_id || parsed.sub || null;
 }
 
-async function authedFetch(url, options = {}) {
+function getApiBase() {
+    if (typeof window.API_BASE === 'string' && window.API_BASE.trim() !== '') {
+        return window.API_BASE.replace(/\/$/, '');
+    }
+    var headerApiBase = document.querySelector('header')?.dataset.apiBase;
+    if (typeof headerApiBase === 'string' && headerApiBase.trim() !== '') {
+        return headerApiBase.replace(/\/$/, '');
+    }
+    return 'http://' + window.location.hostname + ':9999';
+}
+
+function authedFetch(url, options = {}) {
     let token = getAuthToken();
     if (!token) {
         throw new Error("You must be logged in.");
@@ -56,7 +67,8 @@ async function authedFetch(url, options = {}) {
         headers['Content-Type'] = 'application/json';
     }
     options.headers = { ...headers, ...(options.headers || {}) };
-    return fetch(`http://${window.location.hostname}:9999${url}`, options);
+    const base = getApiBase();
+    return fetch(base + url, options);
 }
 
 function drawGaugeCanvas(score) {

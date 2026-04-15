@@ -14,7 +14,7 @@ if (!headers_sent()) {
 }
 
 $title = "Dashboard";
-require_once '../../../vendor/autoload.php';
+require_once __DIR__ . '/../../vendor/autoload.php';
 $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
 
 if ($isAjax) {

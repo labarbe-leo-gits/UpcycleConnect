@@ -5,7 +5,7 @@ $feedbackClass = '';
 $oldName = '';
 $oldEmail = '';
 $oldMessage = '';
-$autoloadPath = __DIR__ . '/../../../vendor/autoload.php';
+$autoloadPath = __DIR__ . '/../../vendor/autoload.php';
 $envPath = __DIR__ . '/../../.env';
 
 function loadEnvFile(string $path): void

@@ -195,6 +195,7 @@ func UpdateDeposit(w http.ResponseWriter, r *http.Request) {
 		ConteneurID       string `json:"conteneur_id"`
 		ObjectName        string `json:"object_name"`
 		ObjectDescription string `json:"object_description"`
+		ObjectState       int    `json:"object_state"`
 	}
 
 	err := json.NewDecoder(r.Body).Decode(&requestData)
@@ -220,7 +221,7 @@ func UpdateDeposit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := db.UpdateDepositInDB(idStr, requestData.ConteneurID, requestData.ObjectName, requestData.ObjectDescription); err != nil {
+	if err := db.UpdateDepositInDB(idStr, requestData.ConteneurID, requestData.ObjectName, requestData.ObjectDescription, requestData.ObjectState); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}

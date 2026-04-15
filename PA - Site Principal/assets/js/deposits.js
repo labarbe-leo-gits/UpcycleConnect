@@ -456,6 +456,10 @@
 
         document.getElementById('deposit-id').value = item.id || '';
         document.getElementById('deposit-conteneur').value = item.conteneur_id || item.conteneur?.id || '';
+        const objectStateSelect = document.getElementById('deposit-object-state');
+        if (objectStateSelect) {
+            objectStateSelect.value = typeof item.object_state !== 'undefined' ? String(item.object_state) : '0';
+        }
         document.getElementById('deposit-object-name').value = item.object_name || '';
         document.getElementById('deposit-object-description').value = item.object_description || '';
 
@@ -466,6 +470,12 @@
         .then(r => r.json())
         .then(data => {
             existingDepositFiles = Array.isArray(data.files) ? data.files : [];
+            if (data && typeof data.object_state !== 'undefined') {
+                const objectStateSelect = document.getElementById('deposit-object-state');
+                if (objectStateSelect) {
+                    objectStateSelect.value = String(data.object_state);
+                }
+            }
             renderExistingFiles();
         })
         .catch(err => {
@@ -585,6 +595,7 @@
 
             depositInfoEl.innerHTML = `
                 <p><strong>Object:</strong> ${escapeHtml(deposit.object_name || '-')}</p>
+                <p><strong>Condition:</strong> ${escapeHtml(mapObjectStateLabel(deposit.object_state || 0))}</p>
                 <p><strong>Description:</strong> ${escapeHtml(deposit.object_description || '-')}</p>
                 <p><strong>Status:</strong> ${escapeHtml(mapStatusLabel(deposit.status || 0))}</p>
                 <p><strong>Created:</strong> ${formatDate(deposit.created_at)}</p>
@@ -608,7 +619,7 @@
                         window.location.href = 'deposit-download-files?deposit_id=' + encodeURIComponent(deposit.id);
                     };
                     files.forEach(function(f) {
-                        const imgUrl = '/PA/files/uploads/deposit/' + encodeURIComponent(f.filename);
+                        const imgUrl = '/files/uploads/deposit/' + encodeURIComponent(f.filename);
                         const thumb = document.createElement('img');
                         thumb.src = imgUrl;
                         thumb.alt = escapeHtml(f.original_name || f.filename);
@@ -1377,10 +1388,13 @@
             const isEdit = editMode && editingDepositId;
             const apiEndpoint = isEdit ? 'update-deposit' : 'create-deposit';
             readFilesAsBase64(filesPayload_files).then(function(filesPayload) {
+                const objectStateInput = document.getElementById('deposit-object-state');
+                const objectStateValue = objectStateInput ? parseInt(objectStateInput.value, 10) : 0;
                 const body = {
                     conteneur_id: conteneurId,
                     object_name: name,
                     object_description: desc,
+                    object_state: Number.isInteger(objectStateValue) ? objectStateValue : 0,
                     files: filesPayload
                 };
                 if (isEdit) {
@@ -1483,6 +1497,17 @@
             case 3: return 'Rejected';
             case 4: return 'Deposited';
             case 5: return 'Completed';
+            default: return 'Unknown';
+        }
+    }
+
+    function mapObjectStateLabel(state) {
+        switch (parseInt(state || 0, 10)) {
+            case 0: return 'New';
+            case 1: return 'Like new';
+            case 2: return 'Good';
+            case 3: return 'Fair';
+            case 4: return 'Poor';
             default: return 'Unknown';
         }
     }

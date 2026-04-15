@@ -20,6 +20,9 @@ services:
       - DataNetwork
 
   api:
+    build:
+      context: ./PA - API
+      dockerfile: Dockerfile
     image: llabarbe/upcycleconnect-api
     container_name: upcycleconnect_api
     ports:
@@ -43,13 +46,16 @@ services:
       - APIClientNetwork
 
   bo:
+    build:
+      context: ./PA - BO
+      dockerfile: Dockerfile
     image: llabarbe/upcycleconnect-bo
     container_name: upcycleconnect_bo
     env_file:
       - "PA - BO/.env"
     environment:
-      - API_HOST=api
-      - BASE_URL=/
+      API_HOST: api
+      BASE_URL: /
     volumes:
       - ./files:/var/www/html/files
     ports:
@@ -59,7 +65,29 @@ services:
       - api
     networks:
       - APIClientNetwork
-    
+
+  site_principal:
+    build:
+      context: ./PA - Site Principal
+      dockerfile: Dockerfile
+    image: llabarbe/upcycleconnect-fo
+    container_name: upcycleconnect-fo
+    env_file:
+      - "PA - Site Principal/.env"
+    environment:
+      API_HOST: api
+      API_PORT: "9999"
+      BO_PUBLIC_URL: http://localhost:8080
+      GOOGLE_REDIRECT_URI: http://localhost:8081/pages/public/oauth-callback-google
+      FACEBOOK_REDIRECT_URI: http://localhost:8081/pages/public/oauth-callback-facebook.php
+    volumes:
+      - ./files:/var/www/html/files
+    ports:
+      - "8081:80"
+    depends_on:
+      - api
+    networks:
+      - APIClientNetwork
 
 networks:
   DataNetwork:

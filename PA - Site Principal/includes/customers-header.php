@@ -1,4 +1,3 @@
-
 <?php
 require_once '../../config/db.php';
 require_once '../../includes/auth.php';
@@ -49,6 +48,19 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
     <script src="../../assets/js/dark.js" defer></script>
     <script src="../../assets/js/toast.js" defer></script>
     <script>window.basePath = '<?= urldecode(dirname($_SERVER["REQUEST_URI"])) ?>';</script>
+    <script>
+        window.API_BASE = <?= json_encode($API_URL ?? 'http://127.0.0.1:9999') ?>;
+        window.API_TOKEN = <?= json_encode($_SESSION['jwt_token'] ?? $_SESSION['token'] ?? '') ?>;
+        window.currentUserId = <?= json_encode($user['id'] ?? '') ?>;
+        if (window.API_TOKEN) {
+            try {
+                localStorage.setItem('jwt_token', window.API_TOKEN);
+                localStorage.setItem('token', window.API_TOKEN);
+            } catch (e) {
+                console.warn('Unable to persist API token to localStorage', e);
+            }
+        }
+    </script>
     <?php
     if (!empty(
         isset($extraCss) ? $extraCss : null

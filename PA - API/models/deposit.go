@@ -8,6 +8,7 @@ type Deposit struct {
 	ConteneurID       uuid.UUID `json:"conteneur_id" db:"conteneur_id"`
 	ObjectName        string    `json:"object_name" db:"object_name"`
 	ObjectDescription string    `json:"object_description" db:"object_description"`
+	ObjectState       int       `json:"object_state,omitempty" db:"object_state"`
 	Status            int       `json:"status" db:"status"`
 	Barcode           string    `json:"barcode,omitempty" db:"barcode"`
 	CreatedAt         string    `json:"created_at" db:"created_at"`

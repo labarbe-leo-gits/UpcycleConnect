@@ -32,6 +32,16 @@ const paymentModal = document.getElementById('payment-modal');
         profilePicPreview
     });
 
+    function getLoggedInUserId() {
+        if (window.currentUserId) {
+            return window.currentUserId;
+        }
+        if (typeof getCurrentUserId === 'function') {
+            return getCurrentUserId();
+        }
+        return null;
+    }
+
     function getProfileImageUrl(picture) {
         if (!picture) return '';
         if (/^(https?:)?\/\//.test(picture) || picture.startsWith('/')) {
@@ -185,9 +195,10 @@ const paymentModal = document.getElementById('payment-modal');
     }
 
     async function restoreProfilePictureFromHistory(historyId) {
-        if (!window.currentUserId || !profilePicPreview) return;
+        const userId = getLoggedInUserId();
+        if (!userId || !profilePicPreview) return;
         try {
-            const response = await authedFetch('/users/' + encodeURIComponent(window.currentUserId) + '/profile-picture/history/' + encodeURIComponent(historyId) + '/restore', {
+            const response = await authedFetch('/users/' + encodeURIComponent(userId) + '/profile-picture/history/' + encodeURIComponent(historyId) + '/restore', {
                 method: 'PATCH'
             });
             const data = await response.json().catch(() => null);
@@ -216,9 +227,10 @@ const paymentModal = document.getElementById('payment-modal');
     }
 
     async function deleteProfilePictureHistoryItem(historyId) {
-        if (!window.currentUserId) return;
+        const userId = getLoggedInUserId();
+        if (!userId) return;
         try {
-            const response = await authedFetch('/users/' + encodeURIComponent(window.currentUserId) + '/profile-picture/history/' + encodeURIComponent(historyId), {
+            const response = await authedFetch('/users/' + encodeURIComponent(userId) + '/profile-picture/history/' + encodeURIComponent(historyId), {
                 method: 'DELETE'
             });
             const data = await response.json().catch(() => null);
@@ -244,9 +256,10 @@ const paymentModal = document.getElementById('payment-modal');
     }
 
     async function deleteAllProfilePictureHistory() {
-        if (!window.currentUserId) return;
+        const userId = getLoggedInUserId();
+        if (!userId) return;
         try {
-            const response = await authedFetch('/users/' + encodeURIComponent(window.currentUserId) + '/profile-picture/history', {
+            const response = await authedFetch('/users/' + encodeURIComponent(userId) + '/profile-picture/history', {
                 method: 'DELETE'
             });
             const data = await response.json().catch(() => null);
@@ -268,9 +281,10 @@ const paymentModal = document.getElementById('payment-modal');
     }
 
     async function loadProfilePictureHistory() {
-        if (!window.currentUserId || !profilePictureHistory) return;
+        const userId = getLoggedInUserId();
+        if (!userId || !profilePictureHistory) return;
         try {
-            const response = await authedFetch('/users/' + encodeURIComponent(window.currentUserId) + '/profile-picture/history');
+            const response = await authedFetch('/users/' + encodeURIComponent(userId) + '/profile-picture/history');
             const data = await response.json().catch(() => null);
             if (response.ok && data && Array.isArray(data.history)) {
                 renderProfilePictureHistory(data.history);
@@ -281,10 +295,11 @@ const paymentModal = document.getElementById('payment-modal');
     }
 
     async function restoreProfilePictureFromApi() {
-        if (!window.currentUserId || !profilePicPreview) return;
+        const userId = getLoggedInUserId();
+        if (!userId || !profilePicPreview) return;
         try {
-            console.log('restoreProfilePictureFromApi: calling API for user', window.currentUserId);
-            const response = await authedFetch('/users/' + encodeURIComponent(window.currentUserId) + '/profile-picture');
+            console.log('restoreProfilePictureFromApi: calling API for user', userId);
+            const response = await authedFetch('/users/' + encodeURIComponent(userId) + '/profile-picture');
             console.log('restoreProfilePictureFromApi: response status', response.status);
             const data = await response.json().catch(() => null);
             console.log('restoreProfilePictureFromApi: response data', data);
@@ -321,9 +336,13 @@ const paymentModal = document.getElementById('payment-modal');
         }
 
         try {
+            const userId = getLoggedInUserId();
+            if (!userId) {
+                throw new Error('Unable to identify current user.');
+            }
             const formData = new FormData();
             formData.append('profile_picture', file);
-            const response = await authedFetch('/users/' + encodeURIComponent(window.currentUserId) + '/profile-picture', {
+            const response = await authedFetch('/users/' + encodeURIComponent(userId) + '/profile-picture', {
                 method: 'POST',
                 body: formData
             });

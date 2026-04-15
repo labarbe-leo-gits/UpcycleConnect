@@ -62,9 +62,8 @@ if ($amountCents <= 0) {
     exit;
 }
 
-$autoloadPath = __DIR__ . '/../../../vendor/autoload.php';
+$autoloadPath = __DIR__ . '/../../vendor/autoload.php';
 if (!file_exists($autoloadPath)) {
-    http_response_code(500);
     echo json_encode(['error' => 'Stripe SDK not found']);
     exit;
 }

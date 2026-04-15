@@ -32,7 +32,7 @@ if (!$paymentIntentId || !$offerId) {
 }
 
 $stripeConfig = require '../../config/stripe.php';
-$autoloadPath = __DIR__ . '/../../../vendor/autoload.php';
+$autoloadPath = __DIR__ . '/../../vendor/autoload.php';
 
 if (empty($stripeConfig['secret_key']) || !file_exists($autoloadPath)) {
     http_response_code(500);

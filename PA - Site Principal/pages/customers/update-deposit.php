@@ -54,6 +54,7 @@ $payload = [
     'conteneur_id' => $input['conteneur_id'] ?? '',
     'object_name' => $input['object_name'] ?? '',
     'object_description' => $input['object_description'] ?? '',
+    'object_state' => isset($input['object_state']) ? (int) $input['object_state'] : 0,
 ];
 
 $apiResp = askAPI('deposits/' . urlencode($depositId), 'PATCH', json_encode($payload));
@@ -72,7 +73,7 @@ foreach ($deletedFileIds as $fileId) {
 $files = is_array($input['files']) ? $input['files'] : [];
 if (count($files) > 0) {
     $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-    $uploadDir = rtrim(dirname(dirname(dirname(dirname(__FILE__)))), '/\\') . DIRECTORY_SEPARATOR
+    $uploadDir = rtrim(dirname(dirname(dirname(__FILE__))), '/\\') . DIRECTORY_SEPARATOR
         . 'files' . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'deposit' . DIRECTORY_SEPARATOR;
 
     if (!is_dir($uploadDir)) {

@@ -69,7 +69,7 @@ try {
         exit;
     }
 
-    $uploadDir = rtrim(dirname(dirname(dirname(dirname(__FILE__)))), '/\\') . DIRECTORY_SEPARATOR . 'files' . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'annonce' . DIRECTORY_SEPARATOR;
+    $uploadDir = rtrim(dirname(dirname(dirname(__FILE__))), '/\\') . DIRECTORY_SEPARATOR . 'files' . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'annonce' . DIRECTORY_SEPARATOR;
     
     if (!is_dir($uploadDir)) {
         mkdir($uploadDir, 0755, true);

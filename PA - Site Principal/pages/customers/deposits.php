@@ -86,6 +86,16 @@ try {
                 <input type="text" id="deposit-object-name" name="deposit-object-name" maxlength="60" required />
             </div>
             <div class="form-group">
+                <label for="deposit-object-state">Condition</label>
+                <select id="deposit-object-state" name="deposit-object-state" required>
+                    <option value="0">New</option>
+                    <option value="1">Like new</option>
+                    <option value="2">Good</option>
+                    <option value="3">Fair</option>
+                    <option value="4">Poor</option>
+                </select>
+            </div>
+            <div class="form-group">
                 <label for="deposit-object-description">Description</label>
                 <textarea id="deposit-object-description" name="deposit-object-description" maxlength="1000" rows="4" required></textarea>
             </div>

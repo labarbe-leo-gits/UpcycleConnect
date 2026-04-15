@@ -47,15 +47,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (isset($_POST['recaptcha_token']) && !empty($_POST['recaptcha_token']) && verifyRecaptcha($_POST['recaptcha_token'])) {
 
-        $first_name_filtered = htmlspecialchars(filter_input(INPUT_POST, 'first_name', FILTER_SANITIZE_STRING));
-        $last_name_filtered = htmlspecialchars(filter_input(INPUT_POST, 'last_name', FILTER_SANITIZE_STRING));
-        $username_filtered = htmlspecialchars(filter_input(INPUT_POST, 'username', FILTER_SANITIZE_STRING));
+        $first_name_filtered = htmlspecialchars((string) filter_input(INPUT_POST, 'first_name', FILTER_UNSAFE_RAW));
+        $last_name_filtered = htmlspecialchars((string) filter_input(INPUT_POST, 'last_name', FILTER_UNSAFE_RAW));
+        $username_filtered = htmlspecialchars((string) filter_input(INPUT_POST, 'username', FILTER_UNSAFE_RAW));
         $email_filtered = filter_var($_POST['email'], FILTER_VALIDATE_EMAIL);
-        $password_filtered = htmlspecialchars(filter_input(INPUT_POST, 'password', FILTER_SANITIZE_STRING));
-        $confirm_password_filtered = htmlspecialchars(filter_input(INPUT_POST, 'confirm_password', FILTER_SANITIZE_STRING));
+        $password_filtered = htmlspecialchars((string) filter_input(INPUT_POST, 'password', FILTER_UNSAFE_RAW));
+        $confirm_password_filtered = htmlspecialchars((string) filter_input(INPUT_POST, 'confirm_password', FILTER_UNSAFE_RAW));
         $user_type_filtered = filter_input(INPUT_POST, 'user_type', FILTER_VALIDATE_INT);
-        $company_name_filtered = htmlspecialchars(filter_input(INPUT_POST, 'company_name', FILTER_SANITIZE_STRING));
-        $siret_filtered = htmlspecialchars(filter_input(INPUT_POST, 'siret', FILTER_SANITIZE_STRING));
+        $company_name_filtered = htmlspecialchars((string) filter_input(INPUT_POST, 'company_name', FILTER_UNSAFE_RAW));
+        $siret_filtered = htmlspecialchars((string) filter_input(INPUT_POST, 'siret', FILTER_UNSAFE_RAW));
         $siret_digits = normalizeDigits($siret_filtered);
         $cgu_accepted = isset($_POST['cgu']);
 

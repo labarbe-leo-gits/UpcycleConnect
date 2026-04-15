@@ -6,7 +6,7 @@ if (!isset($_SERVER['HTTP_X_REQUESTED_WITH']) || strtolower($_SERVER['HTTP_X_REQ
     exit;
 }
 
-require_once '../../../vendor/autoload.php';
+require_once __DIR__ . '/../../vendor/autoload.php';
 require_once '../../config/db.php';
 require_once '../../includes/auth.php';
 

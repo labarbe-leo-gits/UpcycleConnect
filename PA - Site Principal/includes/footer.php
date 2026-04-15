@@ -9,11 +9,11 @@
 			<div class="footer-col links">
 				<h4>Quick Links</h4>
 				<ul>
-					<li><a href="/PA/PA%20-%20Site%20Principal/pages/public/index">Home</a></li>
-					<li><a href="/PA/PA%20-%20Site%20Principal/pages/public/about">About</a></li>
-					<li><a href="/PA/PA%20-%20Site%20Principal/pages/public/contact">Contact</a></li>
-					<li><a href="/PA/PA%20-%20Site%20Principal/pages/customers/index">Portal</a></li>
-					<li><a href="/PA/PA%20-%20Site%20Principal/pages/public/cgu">Terms & Conditions</a></li>
+				<li><a href="/pages/public/index">Home</a></li>
+				<li><a href="/pages/public/about">About</a></li>
+				<li><a href="/pages/public/contact">Contact</a></li>
+				<li><a href="/pages/customers/index">Portal</a></li>
+				<li><a href="/pages/public/cgu">Terms & Conditions</a></li>
 				</ul>
 			</div>
 
@@ -64,7 +64,7 @@
 		</div>
 	</div>
 
-	<link rel="stylesheet" href="/PA/PA%20-%20Site%20Principal/assets/css/bot.css">
-	<script src="/PA/PA%20-%20Site%20Principal/assets/js/bot.js"></script>
+	<link rel="stylesheet" href="/assets/css/bot.css">
+	<script src="/assets/js/bot.js"></script>
 </body>
 </html>

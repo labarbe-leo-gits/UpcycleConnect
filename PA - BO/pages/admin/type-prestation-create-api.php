@@ -20,7 +20,7 @@ if ($data === null) {
     exit;
 }
 if (isset($data['name'])) {
-    $data['name'] = trim(filter_var($data['name'], FILTER_SANITIZE_STRING));
+    $data['name'] = trim(filter_var($data['name'], FILTER_UNSAFE_RAW));
 }
 
 $jsonBody = json_encode($data);

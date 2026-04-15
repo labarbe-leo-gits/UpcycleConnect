@@ -28,8 +28,8 @@ function verifyRecaptcha($token) {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['recaptcha_token']) && verifyRecaptcha($_POST['recaptcha_token'])) {
 
-    $identifier = htmlspecialchars(filter_input(INPUT_POST, 'identifier', FILTER_SANITIZE_STRING));
-    $password = htmlspecialchars(filter_input(INPUT_POST, 'password', FILTER_SANITIZE_STRING));
+    $identifier = trim((string) filter_input(INPUT_POST, 'identifier', FILTER_UNSAFE_RAW));
+    $password = trim((string) filter_input(INPUT_POST, 'password', FILTER_UNSAFE_RAW));
 
     if (empty($identifier) || empty($password)) {
         $error_message = 'Please provide username/email and password';
@@ -117,13 +117,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['recaptcha_token']) &&
 }
 
 $title = "Login";
-include_once '../../includes/header.php';
-
 if (isLoggedIn()) {
     $userType = getLoggedInUserType() ?? 1;
     header('Location: ' . getUserHomePath($userType));
     exit();
 }
+
+include_once '../../includes/header.php';
 
 ?>
 
