@@ -11,3 +11,5 @@ MAILS :
 DOCKERIZED :
 - Fix pfp upload
 - Fix deposit image render
+- Fix the logouts
+- Fix Google OAUTH
