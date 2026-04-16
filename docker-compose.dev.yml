@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
   db:
     image: mysql:8.0
@@ -24,10 +22,7 @@ services:
       - DataNetwork
 
   api:
-    build:
-      context: ./PA - API
-      dockerfile: Dockerfile
-    image: upcycleconnect-api:latest
+    image: golang:1.25
     container_name: upcycleconnect_api_dev
     ports:
       - "9999:9999"
@@ -42,7 +37,11 @@ services:
       API_HOST: "0.0.0.0"
       API_PORT: "9999"
     volumes:
+      - ./PA - API:/workspace:delegated
       - ./files:/files:ro
+    working_dir: /workspace
+    command: >
+      sh -c "go mod download && go run api.go"
     depends_on:
       db:
         condition: service_healthy
@@ -53,14 +52,10 @@ services:
   bo:
     build:
       context: ./PA - BO
-      dockerfile: Dockerfile
-    image: upcycleconnect-bo:dev
+      dockerfile: Dockerfile.dev
     container_name: upcycleconnect_bo_dev
     ports:
       - "8080:80"
-    # Ne pas modifier PA - BO/.env manuellement, on force la config d'API via un fichier dédié
-    env_file:
-      - "PA - BO/.env.docker"
     environment:
       API_HOST: api
       API_PORT: "9999"
@@ -68,8 +63,30 @@ services:
     volumes:
       - ./PA - BO:/var/www/html:delegated
       - ./files:/var/www/html/files:delegated
-      # Remplace .env dans le conteneur par une version contrôlée (clé API_HOST=api)
       - ./PA - BO/.env.docker:/var/www/html/.env:ro
+      - ./vendor:/var/www/html/vendor:ro
+    depends_on:
+      - db
+      - api
+    networks:
+      - APIClientNetwork
+
+  fo:
+    build:
+      context: ./PA - Site Principal
+      dockerfile: Dockerfile.dev
+    container_name: upcycleconnect_fo_dev
+    ports:
+      - "8081:80"
+    environment:
+      API_HOST: api
+      API_PORT: "9999"
+      BASE_URL: "/"
+      APP_ENV: development
+    volumes:
+      - ./PA - Site Principal:/var/www/html:delegated
+      - ./files:/var/www/html/files:delegated
+      - ./vendor:/var/www/html/vendor:ro
     depends_on:
       - db
       - api

@@ -26,7 +26,12 @@ function verifyRecaptcha($token) {
     return $data->success && $data->score >= 0.5;
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['recaptcha_token']) && verifyRecaptcha($_POST['recaptcha_token'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // In development, skip recaptcha; in production, require it
+    $isDev = getenv('APP_ENV') === 'development' || getenv('APP_ENV') === 'dev' || !getenv('RECAPTCHA_SECRET_KEY');
+    $recaptchaValid = $isDev || (isset($_POST['recaptcha_token']) && verifyRecaptcha($_POST['recaptcha_token']));
+    
+    if ($recaptchaValid) {
 
     $identifier = trim((string) filter_input(INPUT_POST, 'identifier', FILTER_UNSAFE_RAW));
     $password = trim((string) filter_input(INPUT_POST, 'password', FILTER_UNSAFE_RAW));
@@ -113,6 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['recaptcha_token']) &&
         } else {
             $error_message = 'An unexpected error occurred';
         }
+    }
     }
 }
 

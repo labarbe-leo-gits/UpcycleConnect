@@ -2,34 +2,43 @@
 // API Connection - GO API
 // Date : 05/02/2026
 
-function findEnvFile() {
-    $candidates = [
-        __DIR__ . '/../.env',
-        __DIR__ . '/../../.env',
-        __DIR__ . '/../../../.env',
-    ];
+// First, try to get from system environment (docker-compose sets these)
+$API_HOST = getenv('API_HOST');
+$API_PORT = getenv('API_PORT');
 
-    foreach ($candidates as $candidate) {
-        if (file_exists($candidate)) {
-            return $candidate;
+// If not set, look for .env file
+if (!$API_HOST || !$API_PORT) {
+    function findEnvFile() {
+        $candidates = [
+            __DIR__ . '/../.env',
+            __DIR__ . '/../../.env',
+            __DIR__ . '/../../../.env',
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (file_exists($candidate)) {
+                return $candidate;
+            }
         }
+
+        return null;
     }
 
-    return null;
-}
-
-$ENV_FILE = findEnvFile();
-if ($ENV_FILE !== null) {
-    $env = parse_ini_file($ENV_FILE);
-    if (is_array($env)) {
-        foreach ($env as $key => $value) {
-            putenv("$key=$value");
-            $_ENV[$key] = $value;
-            $_SERVER[$key] = $value;
+    $ENV_FILE = findEnvFile();
+    if ($ENV_FILE !== null) {
+        $env = parse_ini_file($ENV_FILE);
+        if (is_array($env)) {
+            foreach ($env as $key => $value) {
+                if (!getenv($key)) {  // Only set if not already set
+                    putenv("$key=$value");
+                    $_ENV[$key] = $value;
+                    $_SERVER[$key] = $value;
+                }
+            }
         }
+    } else {
+        error_log("Warning: .env file not found in config or parent directories. Using system environment variables.");
     }
-} else {
-    error_log("Warning: .env file not found in config or parent directories. Using system environment variables.");
 }
 
 $API_HOST = getenv('API_HOST');
@@ -88,7 +97,7 @@ function askAPI($endpoint, $method, $data = null){
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $errno = curl_errno($ch);
     $error = curl_error($ch);
-    curl_close($ch);
+    @curl_close($ch);
 
     if ($errno) {
         error_log("askAPI: curl error ($errno) $error calling $url");

@@ -1,0 +1,6 @@
+FROM php:apache
+
+RUN a2enmod rewrite && \
+    echo 'error_reporting = E_ALL & ~E_DEPRECATED & ~E_NOTICE' >> /usr/local/etc/php/php.ini-production && \
+    echo 'error_reporting = E_ALL & ~E_DEPRECATED & ~E_NOTICE' >> /usr/local/etc/php/php.ini-development && \
+    cp /usr/local/etc/php/php.ini-production /usr/local/etc/php/php.ini

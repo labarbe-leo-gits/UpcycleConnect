@@ -2,15 +2,23 @@
 // API Connection - GO API
 // Date : 05/02/2026
 
-$ENV_FILE = __DIR__ . '/../.env';
-if (file_exists($ENV_FILE)) {
-    $env = parse_ini_file($ENV_FILE);
-    foreach ($env as $key => $value) {
-        putenv("$key=$value");
-    }
-} else {
-    error_log("Warning: .env file not found. Using system environment variables."); // do not send echo to response body
+// First, try to get from docker-compose environment variables
+$API_HOST = getenv('API_HOST');
+$API_PORT = getenv('API_PORT');
 
+// If not set, load from .env file
+if (!$API_HOST || !$API_PORT) {
+    $ENV_FILE = __DIR__ . '/../.env';
+    if (file_exists($ENV_FILE)) {
+        $env = parse_ini_file($ENV_FILE);
+        foreach ($env as $key => $value) {
+            if (!getenv($key)) {  // Only set if not already set
+                putenv("$key=$value");
+            }
+        }
+    } else {
+        error_log("Warning: .env file not found. Using system environment variables.");
+    }
 }
 
 $API_HOST = getenv('API_HOST');
@@ -65,7 +73,7 @@ function askAPI($endpoint, $method, $data = null){
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $errno = curl_errno($ch);
     $error = curl_error($ch);
-    curl_close($ch);
+    @curl_close($ch);
 
     if ($errno) {
         error_log("askAPI: curl error ($errno) $error calling $url");
