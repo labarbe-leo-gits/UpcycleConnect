@@ -46,8 +46,12 @@
                 fetch('gemini-material-api?material=' + encodeURIComponent(name), {
                     headers: { 'X-Requested-With': 'XMLHttpRequest' }
                 })
-                .then(r => r.json())
+                .then(r => {
+                    console.log('API Response Status:', r.status);
+                    return r.json();
+                })
                 .then(data => {
+                    console.log('API Response Data:', data);
                     if (data.error) throw new Error(data.error);
                     document.getElementById('mat-co2').value = data.facteur_co2;
                     status.className     = 'gemini-ok';
@@ -56,6 +60,7 @@
                     status.style.justifyContent = 'center';
                 })
                 .catch(err => {
+                    console.error('API Error:', err);
                     status.className     = 'gemini-error';
                     status.innerHTML     = '<i class="fa-solid fa-circle-exclamation"></i> Gemini error: ' + (err.message || 'Unable to determine CO₂ factor.');
                     status.style.display = 'inline-flex';

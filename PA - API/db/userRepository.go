@@ -1112,9 +1112,15 @@ func UpdateUserBalanceInDB(userID string, amount float64, operation int) error {
 
 func GetUserDiscussionsFromDB(userID string) ([]models.Discussion, error) {
 
-	// Get all Discussions objects where user is either User1 or User2
-
-	rows, err := Db.Query("SELECT id, user1_id, user2_id, created_at FROM discussions WHERE user1_id = ? OR user2_id = ?", userID, userID)
+	rows, err := Db.Query(`
+		SELECT 
+			d.id, d.user1_id, d.user2_id, d.created_at,
+			COALESCE(u1.username, ''), COALESCE(u2.username, '')
+		FROM discussions d
+		LEFT JOIN users u1 ON d.user1_id = u1.id
+		LEFT JOIN users u2 ON d.user2_id = u2.id
+		WHERE d.user1_id = ? OR d.user2_id = ?
+	`, userID, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query discussions: %v", err)
 	}
@@ -1124,7 +1130,7 @@ func GetUserDiscussionsFromDB(userID string) ([]models.Discussion, error) {
 	var discussions []models.Discussion
 	for rows.Next() {
 		var discussion models.Discussion
-		err := rows.Scan(&discussion.ID, &discussion.User1ID, &discussion.User2ID, &discussion.CreatedAt)
+		err := rows.Scan(&discussion.ID, &discussion.User1ID, &discussion.User2ID, &discussion.CreatedAt, &discussion.User1Username, &discussion.User2Username)
 
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan discussion: %v", err)

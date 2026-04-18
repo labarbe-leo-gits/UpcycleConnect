@@ -388,7 +388,9 @@ if ($offerSummary !== '') {
     $systemPrompt .= "\n" . trim($offerSummary) . "\n";
 }
 
-$prompt = $systemPrompt . "\n\n";
+
+$contents = [];
+
 foreach ($messages as $message) {
     if (!is_array($message) || !isset($message['role'], $message['content'])) {
         continue;
@@ -400,19 +402,29 @@ foreach ($messages as $message) {
         continue;
     }
 
-    switch ($role) {
-        case 'assistant':
-            $prompt .= "Assistant: {$content}\n";
-            break;
-        case 'system':
-            $prompt .= "System: {$content}\n";
-            break;
-        default:
-            $prompt .= "User: {$content}\n";
-            break;
+
+    if ($role === 'user') {
+        $apiRole = 'user';
+    } elseif ($role === 'assistant') {
+        $apiRole = 'model';
+    } else {
+        continue;
     }
+
+    $contents[] = [
+        'role' => $apiRole,
+        'parts' => [['text' => $content]]
+    ];
 }
-$prompt .= "Assistant:";
+
+if (!empty($contents)) {
+    $lastMessage = &$contents[count($contents) - 1];
+    if ($lastMessage['role'] === 'user') {
+        $lastMessage['parts'][0]['text'] = $systemPrompt . "\n\n" . $lastMessage['parts'][0]['text'];
+    }
+} else {
+
+}
 
 $apiKey = $_ENV['GEMINI_API_KEY'] ?? $_SERVER['GEMINI_API_KEY'] ?? getenv('GEMINI_API_KEY');
 if (!$apiKey) {
@@ -422,9 +434,7 @@ if (!$apiKey) {
 }
 
 $requestBody = json_encode([
-    'contents' => [[
-        'parts' => [[ 'text' => $prompt ]],
-    ]],
+    'contents' => $contents,
     'generationConfig' => [
         'temperature' => 0.6,
         'maxOutputTokens' => 300,
@@ -448,16 +458,35 @@ $curlErr = curl_error($ch);
 curl_close($ch);
 
 if ($curlErr || !$response) {
+    error_log("[gemini-chat-api] curl error: $curlErr");
     http_response_code(502);
-    echo json_encode(['error' => 'Failed to reach Gemini API', 'detail' => $curlErr]);
+    echo json_encode(['error' => 'Failed to reach Gemini API', 'detail' => $curlErr, 'debug' => true]);
     exit;
 }
 
+error_log("[gemini-chat-api] Response ($httpCode): " . substr($response, 0, 2000));
+
 $data = json_decode($response, true);
-if ($httpCode !== 200 || !is_array($data) || !isset($data['candidates'][0]['content']['parts'][0]['text'])) {
-    $errMsg = $data['error']['message'] ?? 'Gemini API returned an unexpected response';
+
+if ($httpCode !== 200) {
+    error_log("[gemini-chat-api] Non-200 response ($httpCode): " . substr($response, 0, 500));
+    $errMsg = ($data && isset($data['error']['message'])) ? $data['error']['message'] : 'Gemini API error';
     http_response_code(502);
-    echo json_encode(['error' => $errMsg, 'raw' => $response]);
+    echo json_encode(['error' => $errMsg, 'http_code' => $httpCode, 'response' => substr($response, 0, 500), 'debug' => true]);
+    exit;
+}
+
+if (!is_array($data)) {
+    error_log("[gemini-chat-api] Invalid JSON response: " . json_last_error_msg());
+    http_response_code(502);
+    echo json_encode(['error' => 'Invalid response from Gemini', 'json_error' => json_last_error_msg(), 'debug' => true]);
+    exit;
+}
+
+if (!isset($data['candidates'][0]['content']['parts'][0]['text'])) {
+    error_log("[gemini-chat-api] Unexpected response structure: " . json_encode($data));
+    http_response_code(502);
+    echo json_encode(['error' => 'Unexpected response structure from Gemini', 'received' => $data, 'debug' => true]);
     exit;
 }
 

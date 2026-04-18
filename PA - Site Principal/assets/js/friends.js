@@ -288,7 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <p class="request-message">${escapeHtml(item.message || 'No message provided.')}</p>
             <div class="request-actions">
                 <a href="user?username=${encodeURIComponent(item.username)}" class="btn btn-secondary btn-sm request-action-btn"><i class="fa-solid fa-user"></i> Public profile</a>
-                ${item.direction === 'inbound' ? `<button type="button" class="btn btn-primary btn-sm btn-accept request-action-btn" data-id="${escapeHtml(item.id)}"><i class="fa-solid fa-user-check"></i> Accept</button><button type="button" class="btn btn-danger btn-sm btn-decline request-action-btn" data-id="${escapeHtml(item.id)}"><i class="fa-solid fa-times"></i> Decline</button>` : `<button type="button" class="btn btn-danger btn-sm btn-cancel request-action-btn" data-id="${escapeHtml(item.id)}"><i class="fa-solid fa-times"></i> Cancel</button>`}
+                ${item.direction === 'inbound' ? `<button type="button" class="btn btn-primary btn-sm btn-accept request-action-btn" data-id="${escapeHtml(item.id)}" data-user-id="${escapeHtml(user?.id || '')}"><i class="fa-solid fa-user-check"></i> Accept</button><button type="button" class="btn btn-danger btn-sm btn-decline request-action-btn" data-id="${escapeHtml(item.id)}"><i class="fa-solid fa-times"></i> Decline</button>` : `<button type="button" class="btn btn-danger btn-sm btn-cancel request-action-btn" data-id="${escapeHtml(item.id)}"><i class="fa-solid fa-times"></i> Cancel</button>`}
             </div>
         `;
 
@@ -314,7 +314,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="friend-type-badge ${getUserTypeClass(user?.user_type)}">${getUserTypeLabel(user?.user_type)}</span>
                 </div>
                 <div class="friend-actions">
-                    <a href="user?username=${encodeURIComponent(item.username)}" class="btn btn-secondary btn-sm">Public profile</a>
+                    <a href="user?username=${encodeURIComponent(item.username)}" class="btn btn-secondary btn-height-limited btn-sm">Public profile</a>
                     <button type="button" class="btn btn-danger btn-sm btn-remove-friend" data-id="${escapeHtml(item.id)}">Remove</button>
                 </div>
             </div>
@@ -329,15 +329,34 @@ document.addEventListener('DOMContentLoaded', () => {
             if (user.profile_picture.startsWith('http') || user.profile_picture.startsWith('/')) {
                 return user.profile_picture;
             }
-            return '/PA/files/uploads/user/' + user.profile_picture;
+            return '/files/uploads/user/' + user.profile_picture;
         }
-        return '/PA/files/uploads/user/defaultUser.png';
+        return '/files/uploads/user/defaultUser.png';
     }
 
     async function handleAcceptRequest(event) {
         const id = event.currentTarget.getAttribute('data-id');
+        const otherUserId = event.currentTarget.getAttribute('data-user-id');
         if (!id) return;
+        
         await runFriendAction(`/friends/${encodeURIComponent(id)}/accept`, { method: 'PUT' });
+        
+        if (otherUserId && currentUserId) {
+            try {
+                console.log('[Friends] Creating discussion with:', otherUserId);
+                const res = await authFetch(`/users/${encodeURIComponent(currentUserId)}/discussions`, {
+                    method: 'POST',
+                    body: JSON.stringify({ user1_id: currentUserId, user2_id: otherUserId })
+                });
+                if (res.ok) {
+                    console.log('[Friends] Discussion created successfully');
+                } else {
+                    console.error('[Friends] Failed to create discussion:', res.status);
+                }
+            } catch (e) {
+                console.error('[Friends] Error creating discussion:', e);
+            }
+        }
     }
 
     async function handleDeclineRequest(event) {

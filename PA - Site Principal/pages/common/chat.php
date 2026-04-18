@@ -29,6 +29,16 @@ if ($user['user_type'] == 1) {
     }
 </script>
 
+<header class="chat-top-header" id="chat-top-header" style="display: none; padding: 18px 24px; border-bottom: 1px solid #e5e7eb; background: linear-gradient(135deg, #ffffff 0%, #f8f9fb 100%); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <img id="top-chat-image" src="" alt="" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; display: none;">
+            <h3 id="top-chat-title" style="margin: 0; color: #1f2937; font-weight: 700;">Discussion</h3>
+        </div>
+        <button id="btn-add-member-top" class="btn btn-secondary btn-sm" style="display: none;"><i class="fas fa-user-plus"></i> Invite</button>
+    </div>
+</header>
+
 <div class="chat-container">
 
     <aside class="chat-sidebar">
@@ -36,6 +46,9 @@ if ($user['user_type'] == 1) {
             <h2 style="flex-basis: 100%;">Messages</h2>
             <button id="btn-create-group" class="btn btn-primary btn-sm" aria-label="Create group" style="flex: 1;"><i class="fas fa-plus"></i> Group</button>
             <button id="btn-open-friends" class="btn btn-secondary btn-sm" aria-label="Friends list" style="flex: 1;"><i class="fas fa-user-friends"></i> Friends</button>
+        </div>
+        <div class="chat-search-wrapper" style="padding: 12px;">
+            <input type="text" id="chat-search" placeholder="Search conversations..." style="width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.9em; transition: border-color 0.2s; outline: none; box-sizing: border-box;" onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#d1d5db'">
         </div>
         <div class="chat-list" id="chat-list">
 
@@ -49,7 +62,7 @@ if ($user['user_type'] == 1) {
         </div>
         
         <div class="chat-active-view d-none" id="chat-active-view">
-            <header class="chat-header">
+            <header class="chat-header" style="display: none;">
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <img id="active-chat-image" src="" alt="" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; display: none;">
                     <h3 id="active-chat-title">Discussion</h3>
@@ -62,10 +75,20 @@ if ($user['user_type'] == 1) {
             </div>
             
             <footer class="chat-input-area">
-                <form id="chat-form">
-                    <input type="text" id="chat-input" placeholder="Type a message..." autocomplete="off" required>
-                    <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Send</button>
+                <form id="chat-form" class="chat-form-layout">
+                    <div class="chat-textarea-wrapper">
+                        <textarea id="chat-input" placeholder="Type a message..." autocomplete="off" rows="1"></textarea>
+                    </div>
+                    <div class="chat-actions-wrapper">
+                        <button type="button" id="btn-file-upload" class="btn btn-icon" title="Upload File" aria-label="Upload File"><i class="fas fa-paperclip"></i></button>
+                        <input type="file" id="file-input" style="display: none;" accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.mp4,.webm,.mp3,.wav,.zip">
+                        <button type="submit" class="btn btn-primary btn-send" title="Send message" aria-label="Send message"><i class="fas fa-paper-plane"></i></button>
+                    </div>
                 </form>
+                <div id="file-preview" class="file-preview" style="display: none;">
+                    <div id="file-preview-item" class="file-preview-item"></div>
+                    <button type="button" id="file-preview-remove" class="btn btn-icon btn-danger" title="Remove file" aria-label="Remove file"><i class="fas fa-trash"></i></button>
+                </div>
             </footer>
         </div>
     </main>
@@ -123,21 +146,32 @@ if ($user['user_type'] == 1) {
             <h3><i class="fas fa-user-friends"></i> Friends List</h3>
             <button class="modal-close" aria-label="Close"><i class="fas fa-times"></i></button>
         </div>
-        <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
-            <div class="form-group" style="display: flex; gap: 10px; margin-bottom: 15px;">
+        <div class="modal-body">
+            <div class="form-group" style="display: flex; gap: 10px; margin-bottom: 15px; flex-direction:column;">
                 <input type="text" id="friend-username-input" class="form-control" placeholder="Friend's Username..." style="flex: 1;">
                 <button class="btn btn-primary" id="btn-send-friend-request">Send Request</button>
             </div>
             <div id="friend-action-msg" style="margin-bottom: 15px; display: none;"></div>
 
-            <div id="pending-friends-section" style="margin-bottom: 20px; display: none;">
-                <h4 style="font-size: 1.1em; border-bottom: 1px solid #ddd; padding-bottom: 5px;">Pending Requests</h4>
-                <div id="pending-friends-list" style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px;"></div>
-            </div>
+            <div class="friends-modal-content" style="max-height: 60vh; overflow-y: auto;">
+                <div id="pending-friends-section" style="margin-bottom: 20px; display: none;">
+                    <h4 style="font-size: 1.1em; border-bottom: 1px solid #ddd; padding-bottom: 5px;">Pending Requests</h4>
+                    <div id="pending-friends-list" style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px;"></div>
+                </div>
 
-            <div id="accepted-friends-section">
-                <h4 style="font-size: 1.1em; border-bottom: 1px solid #ddd; padding-bottom: 5px;">My Friends</h4>
-                <div id="accepted-friends-list" style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px;"></div>
+                <div id="accepted-friends-section">
+                    <h4 style="font-size: 1.1em; border-bottom: 1px solid #ddd; padding-bottom: 5px;">My Friends</h4>
+                    <div style="margin-bottom: 10px;">
+                        <input type="text" id="friend-search-input" class="form-control" placeholder="Search friends..." style="width: 100%; padding: 8px; border-radius: 6px;">
+                    </div>
+                    <div id="accepted-friends-list" style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px;"></div>
+                    <div id="no-friends-msg" style="text-align: center; color: #9ca3af; padding: 20px; display: none;">
+                        <i class="fas fa-user-slash"></i> <p>No friends found</p>
+                    </div>
+                    <div id="load-more-friends" style="margin-top: 15px; text-align: center; display: none;">
+                        <button class="btn btn-secondary" id="btn-load-more-friends">Load More</button>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="modal-actions">

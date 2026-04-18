@@ -6,21 +6,20 @@
 $API_HOST = getenv('API_HOST');
 $API_PORT = getenv('API_PORT');
 
-// If not set, load from .env file
-if (!$API_HOST || !$API_PORT) {
-    $ENV_FILE = __DIR__ . '/../.env';
-    if (file_exists($ENV_FILE)) {
-        $env = parse_ini_file($ENV_FILE);
-        foreach ($env as $key => $value) {
-            if (!getenv($key)) {  // Only set if not already set
-                putenv("$key=$value");
-            }
+
+$ENV_FILE = __DIR__ . '/../.env';
+if (file_exists($ENV_FILE)) {
+    $env = parse_ini_file($ENV_FILE);
+    foreach ($env as $key => $value) {
+        if (!getenv($key)) {
+            putenv("$key=$value");
         }
-    } else {
-        error_log("Warning: .env file not found. Using system environment variables.");
     }
+} else {
+    error_log("Warning: .env file not found at $ENV_FILE. Using system environment variables.");
 }
 
+// Override with any explicitly set environment variables
 $API_HOST = getenv('API_HOST');
 $API_PORT = getenv('API_PORT');
 if (!$API_HOST) {
@@ -31,6 +30,13 @@ if (!$API_PORT) {
 }
 $API_URL = "http://$API_HOST:$API_PORT";
 error_log("askAPI configured with API_URL=$API_URL");
+
+$API_URL_BROWSER = $API_URL;
+if ($API_HOST === 'api' || $API_HOST === 'localhost:9999' || strpos($API_HOST, 'api') === 0) {
+    
+    $API_URL_BROWSER = "http://localhost:" . $API_PORT;
+    error_log("Browser API URL adjusted for Docker: $API_URL_BROWSER");
+}
 
 function askAPI($endpoint, $method, $data = null){
     global $API_URL;

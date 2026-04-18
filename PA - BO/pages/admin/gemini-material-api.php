@@ -97,9 +97,11 @@ curl_close($ch);
 if ($curlError || !$response) {
     error_log("[gemini-material-api] curl error for '{$material}': {$curlError}");
     http_response_code(502);
-    echo json_encode(['error' => 'AI service unavailable', 'detail' => $curlError]);
+    echo json_encode(['error' => 'AI service unavailable', 'detail' => $curlError, 'debug' => true]);
     exit;
 }
+
+error_log("[gemini-material-api] Raw response ({$httpCode}) for '{$material}': " . substr($response, 0, 2000));
 
 $decoded = json_decode($response, true);
 
@@ -109,10 +111,24 @@ if ($httpCode === 429) {
     exit;
 }
 
-if ($httpCode !== 200 || !isset($decoded['candidates'][0]['content']['parts'][0]['text'])) {
-    error_log("[gemini-material-api] bad response ({$httpCode}) for '{$material}': " . substr($response, 0, 500));
+if ($httpCode !== 200) {
+    error_log("[gemini-material-api] Non-200 response ({$httpCode}) for '{$material}': " . substr($response, 0, 500));
     http_response_code(502);
-    echo json_encode(['error' => 'AI service returned an unexpected response']);
+    echo json_encode(['error' => 'AI service returned an error', 'http_code' => $httpCode, 'response' => substr($response, 0, 1000), 'debug' => true]);
+    exit;
+}
+
+if (!$decoded) {
+    error_log("[gemini-material-api] json_decode failed for '{$material}': " . json_last_error_msg());
+    http_response_code(502);
+    echo json_encode(['error' => 'Failed to parse AI response', 'json_error' => json_last_error_msg(), 'raw_response' => substr($response, 0, 500), 'debug' => true]);
+    exit;
+}
+
+if (!isset($decoded['candidates'][0]['content']['parts'][0]['text'])) {
+    error_log("[gemini-material-api] Unexpected response structure for '{$material}': " . json_encode($decoded));
+    http_response_code(502);
+    echo json_encode(['error' => 'AI service returned an unexpected response structure', 'received_structure' => $decoded, 'debug' => true]);
     exit;
 }
 

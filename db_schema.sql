@@ -468,11 +468,22 @@ CREATE TABLE IF NOT EXISTS messages (
     discussion_id CHAR(36),
     group_discussion_id CHAR(36),
     sender_id CHAR(36) NOT NULL,
-    content TEXT NOT NULL,
+    content TEXT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (discussion_id) REFERENCES discussions(id) ON DELETE CASCADE,
     FOREIGN KEY (group_discussion_id) REFERENCES group_discussions(id) ON DELETE CASCADE,
     FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS message_attachments (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    message_id CHAR(36) NOT NULL,
+    file_name VARCHAR(255) NOT NULL,
+    file_size INT NOT NULL,
+    file_type VARCHAR(100) NOT NULL,
+    file_path VARCHAR(500) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS tips (

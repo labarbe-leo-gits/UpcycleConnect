@@ -48,13 +48,17 @@ function getCurrentUserId() {
 
 function getApiBase() {
     if (typeof window.API_BASE === 'string' && window.API_BASE.trim() !== '') {
+        console.log('[getApiBase] Using window.API_BASE:', window.API_BASE);
         return window.API_BASE.replace(/\/$/, '');
     }
     var headerApiBase = document.querySelector('header')?.dataset.apiBase;
     if (typeof headerApiBase === 'string' && headerApiBase.trim() !== '') {
+        console.log('[getApiBase] Using header data-api-base:', headerApiBase);
         return headerApiBase.replace(/\/$/, '');
     }
-    return 'http://' + window.location.hostname + ':9999';
+    var fallback = 'http://' + window.location.hostname + ':9999';
+    console.log('[getApiBase] Using fallback:', fallback);
+    return fallback;
 }
 
 function authedFetch(url, options = {}) {
@@ -68,7 +72,14 @@ function authedFetch(url, options = {}) {
     }
     options.headers = { ...headers, ...(options.headers || {}) };
     const base = getApiBase();
-    return fetch(base + url, options);
+    const fullUrl = base + url;
+    
+    console.log('[authedFetch] URL:', fullUrl, 'Method:', options.method || 'GET');
+    
+    return fetch(fullUrl, options).catch(error => {
+        console.error('[authedFetch] Network error:', error, 'URL was:', fullUrl);
+        throw new Error(`Network error: ${error.message}. Could not reach API at ${base}`);
+    });
 }
 
 function drawGaugeCanvas(score) {
@@ -392,6 +403,18 @@ function closeModal(m) {
     m.classList.remove('visible');
     m.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('modal-open');
+    
+    if (m && m.id === 'modal-friend-request') {
+        const formState = document.getElementById('friend-request-form-state');
+        const successState = document.getElementById('friend-request-success-state');
+        const formActions = document.getElementById('friend-request-form-actions');
+        const successActions = document.getElementById('friend-request-success-actions');
+        
+        if (formState) formState.classList.remove('d-none');
+        if (successState) successState.classList.add('d-none');
+        if (formActions) formActions.classList.remove('d-none');
+        if (successActions) successActions.classList.add('d-none');
+    }
 }
 
 if (btnAddFriend) {
@@ -403,6 +426,17 @@ if (btnAddFriend) {
         if (friendReqError) {
             friendReqError.classList.add('d-none');
         }
+        
+        const formState = document.getElementById('friend-request-form-state');
+        const successState = document.getElementById('friend-request-success-state');
+        const formActions = document.getElementById('friend-request-form-actions');
+        const successActions = document.getElementById('friend-request-success-actions');
+        
+        if (formState) formState.classList.remove('d-none');
+        if (successState) successState.classList.add('d-none');
+        if (formActions) formActions.classList.remove('d-none');
+        if (successActions) successActions.classList.add('d-none');
+        
         openModal(modalFriendReq);
     };
 }
@@ -411,31 +445,81 @@ document.querySelectorAll('.modal-close, .modal-close-btn').forEach(btn => {
     btn.onclick = (e) => closeModal(e.target.closest('.modal-overlay'));
 });
 
+const btnStartDiscussion = document.getElementById('btn-start-discussion');
+if (btnStartDiscussion) {
+    btnStartDiscussion.onclick = async () => {
+        try {
+            const currentUserId = getCurrentUserId();
+            console.log('[Start Discussion] Creating discussion with user:', window.publicUserId);
+            const res = await authedFetch('/users/' + encodeURIComponent(currentUserId) + '/discussions', {
+                method: 'POST',
+                body: JSON.stringify({ user1_id: currentUserId, user2_id: window.publicUserId })
+            });
+            
+            if (res.ok) {
+                const data = await res.json();
+                console.log('[Start Discussion] Created discussion:', data);
+
+                if (data.id) {
+                    window.location.href = '../common/chat.php';
+                }
+            } else {
+                const errorData = await res.json();
+                throw new Error(errorData.error || 'Failed to create discussion');
+            }
+        } catch (e) {
+            console.error('[Start Discussion] Error:', e);
+            alert('Error starting discussion: ' + e.message);
+        }
+    };
+}
+
 const btnConfirmFriendRequest = document.getElementById('btn-confirm-friend-request');
 if (btnConfirmFriendRequest) {
     btnConfirmFriendRequest.onclick = async () => {
         const messageField = document.getElementById('friend-request-message');
         const message = messageField ? messageField.value.trim() : '';
         try {
+            console.log('[Friend Request] Sending request to:', window.targetUsername, 'Message:', message);
             const res = await authedFetch('/friends', {
                 method: 'POST',
                 body: JSON.stringify({ username: window.targetUsername, message: message })
             });
             
+            console.log('[Friend Request] Response status:', res.status, res.statusText);
+            
             if (res.ok) {
-                closeModal(modalFriendReq);
-                alert('Friend request sent!');
+
+                const formState = document.getElementById('friend-request-form-state');
+                const successState = document.getElementById('friend-request-success-state');
+                const formActions = document.getElementById('friend-request-form-actions');
+                const successActions = document.getElementById('friend-request-success-actions');
+                
+                if (formState) formState.classList.add('d-none');
+                if (successState) successState.classList.remove('d-none');
+                if (formActions) formActions.classList.add('d-none');
+                if (successActions) successActions.classList.remove('d-none');
+                
                 if (btnAddFriend) {
                     btnAddFriend.disabled = true;
                     btnAddFriend.innerHTML = '<i class="fas fa-check"></i> Request Sent';
                 }
             } else {
-                const data = await res.json();
-                throw new Error(data.error || 'Failed to send request.');
+                let errorMsg = 'Failed to send request.';
+                try {
+                    const data = await res.json();
+                    if (data.error) {
+                        errorMsg = data.error;
+                    }
+                } catch (e) {
+                    errorMsg = `HTTP ${res.status}: ${res.statusText}`;
+                }
+                throw new Error(errorMsg);
             }
         } catch (e) {
+            console.error('[Friend Request] Error:', e);
             if (friendReqError) {
-                friendReqError.textContent = e.message;
+                friendReqError.textContent = e.message || 'An error occurred while sending the friend request.';
                 friendReqError.classList.remove('d-none');
             }
         }
@@ -523,7 +607,13 @@ async function hideFriendButtonIfAlreadyRequested() {
         if (!res.ok) return;
         const data = await res.json();
         if (data.exists) {
+
             btnAddFriend.style.display = 'none';
+        } else {
+            
+            btnAddFriend.style.display = 'inline-flex';
+            btnAddFriend.disabled = false;
+            btnAddFriend.innerHTML = '<i class="fas fa-user-plus"></i> Become Friend';
         }
     } catch (e) {
         console.error('Could not verify friendship status', e);

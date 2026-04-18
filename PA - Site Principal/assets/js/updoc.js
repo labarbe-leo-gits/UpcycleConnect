@@ -522,14 +522,20 @@
         aiGenBtn.disabled    = true;
         aiGenBtn.innerHTML   = '<i class="fa-solid fa-spinner spinner-icon"></i> Generating…';
 
+        console.log('Calling gemini-api with type: generate_all');
         fetch('gemini-api', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
             body: JSON.stringify({ type: 'generate_all', context: context })
         })
-        .then(function (r) { return r.json(); })
+        .then(function (r) {
+            console.log('gemini-api Response Status:', r.status);
+            return r.json();
+        })
         .then(function (data) {
+            console.log('gemini-api Response Data:', data);
             if (data.error) {
+                console.error('gemini-api Error:', data.error);
                 feedback(data.error, 'error');
                 throw new Error(data.error);
             }
@@ -553,6 +559,7 @@
             feedback('AI suggestions applied! Review and save.', 'success');
         })
         .catch(function (err) {
+            console.error('gemini-api Error:', err);
             aiGenBtn.disabled  = false;
             aiGenBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Generate';
             if (!document.querySelector('.updoc-feedback.error')) {

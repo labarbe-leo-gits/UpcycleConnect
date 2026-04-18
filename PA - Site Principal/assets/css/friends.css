@@ -324,3 +324,8 @@
     min-height: 260px;
   }
 }
+
+.btn-height-limited{
+  min-height: 0px;
+  text-decoration: none;
+}

@@ -367,13 +367,19 @@
             }
 
             function fetchGeminiEstimation(materialName) {
+                console.log('Fetching Gemini estimation for:', materialName);
                 fetch('gemini-material-api?material=' + encodeURIComponent(materialName), {
                     headers: { 'X-Requested-With': 'XMLHttpRequest' }
                 })
-                .then(function(r) { return r.json(); })
+                .then(function(r) {
+                    console.log('Gemini API Response Status:', r.status);
+                    return r.json();
+                })
                 .then(function(data) {
+                    console.log('Gemini API Response Data:', data);
                     setSubmitBlocked(false);
                     if (data.error || !(data.facteur_co2 > 0)) {
+                        console.error('Gemini error or invalid CO2 factor:', data.error || 'Invalid CO2');
                         clearGeminiSuggestion();
                         return;
                     }
@@ -385,7 +391,11 @@
                         displayEstimation(Math.round(w * geminiCO2Factor * 100) / 100);
                     }
                 })
-                .catch(function() { setSubmitBlocked(false); clearGeminiSuggestion(); });
+                .catch(function(err) {
+                    console.error('Gemini API Error:', err);
+                    setSubmitBlocked(false);
+                    clearGeminiSuggestion();
+                });
             }
 
             function showGeminiLoading() {

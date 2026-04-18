@@ -171,7 +171,13 @@ func (c *Client) readPump() {
 				continue
 			}
 
-			log.Printf("Inserted message %s from %s", msgID, c.ID)
+			if len(msg.Attachments) > 0 {
+				if err := db.InsertAttachments(msgID.String(), msg.Attachments); err != nil {
+					log.Printf("Failed to insert attachments: %v\n", err)
+				}
+			}
+
+			log.Printf("Inserted message %s from %s with %d attachments", msgID, c.ID, len(msg.Attachments))
 
 			c.Hub.Broadcast <- msg
 		}

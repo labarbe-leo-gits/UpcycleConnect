@@ -68,6 +68,11 @@ func GetMessagesByDiscussionID(discussionID string) ([]models.Message, error) {
 			msg.GroupDiscussionID = uuid.MustParse(gID.String)
 		}
 
+		attachments, err := GetAttachmentsByMessageID(msg.ID.String())
+		if err == nil {
+			msg.Attachments = attachments
+		}
+
 		messages = append(messages, msg)
 	}
 
@@ -101,6 +106,11 @@ func GetMessagesByGroupDiscussionID(groupID string) ([]models.Message, error) {
 		}
 		if gID.Valid {
 			msg.GroupDiscussionID = uuid.MustParse(gID.String)
+		}
+
+		attachments, err := GetAttachmentsByMessageID(msg.ID.String())
+		if err == nil {
+			msg.Attachments = attachments
 		}
 
 		messages = append(messages, msg)
@@ -145,6 +155,12 @@ func GetGlobalMessages() ([]models.Message, error) {
 		if err := rows.Scan(&msg.ID, &dID, &gID, &msg.SenderID, &msg.Content, &msg.CreatedAt); err != nil {
 			return nil, err
 		}
+
+		attachments, err := GetAttachmentsByMessageID(msg.ID.String())
+		if err == nil {
+			msg.Attachments = attachments
+		}
+
 		messages = append(messages, msg)
 	}
 	return messages, nil

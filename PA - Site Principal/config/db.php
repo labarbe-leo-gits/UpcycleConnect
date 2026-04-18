@@ -6,41 +6,40 @@
 $API_HOST = getenv('API_HOST');
 $API_PORT = getenv('API_PORT');
 
-// If not set, look for .env file
-if (!$API_HOST || !$API_PORT) {
-    function findEnvFile() {
-        $candidates = [
-            __DIR__ . '/../.env',
-            __DIR__ . '/../../.env',
-            __DIR__ . '/../../../.env',
-        ];
 
-        foreach ($candidates as $candidate) {
-            if (file_exists($candidate)) {
-                return $candidate;
-            }
+function findEnvFile() {
+    $candidates = [
+        __DIR__ . '/../.env',
+        __DIR__ . '/../../.env',
+        __DIR__ . '/../../../.env',
+    ];
+
+    foreach ($candidates as $candidate) {
+        if (file_exists($candidate)) {
+            return $candidate;
         }
-
-        return null;
     }
 
-    $ENV_FILE = findEnvFile();
-    if ($ENV_FILE !== null) {
-        $env = parse_ini_file($ENV_FILE);
-        if (is_array($env)) {
-            foreach ($env as $key => $value) {
-                if (!getenv($key)) {  // Only set if not already set
-                    putenv("$key=$value");
-                    $_ENV[$key] = $value;
-                    $_SERVER[$key] = $value;
-                }
-            }
-        }
-    } else {
-        error_log("Warning: .env file not found in config or parent directories. Using system environment variables.");
-    }
+    return null;
 }
 
+$ENV_FILE = findEnvFile();
+if ($ENV_FILE !== null) {
+    $env = parse_ini_file($ENV_FILE);
+    if (is_array($env)) {
+        foreach ($env as $key => $value) {
+            if (!getenv($key)) {
+                putenv("$key=$value");
+                $_ENV[$key] = $value;
+                $_SERVER[$key] = $value;
+            }
+        }
+    }
+} else {
+    error_log("Warning: .env file not found in config or parent directories. Using system environment variables.");
+}
+
+// Override with any explicitly set environment variables
 $API_HOST = getenv('API_HOST');
 $API_PORT = getenv('API_PORT');
 if (!$API_HOST) {
@@ -51,6 +50,13 @@ if (!$API_PORT) {
 }
 $API_URL = "http://$API_HOST:$API_PORT";
 error_log("askAPI configured with API_URL=$API_URL");
+
+$API_URL_BROWSER = $API_URL;
+if ($API_HOST === 'api' || $API_HOST === 'localhost:9999' || strpos($API_HOST, 'api') === 0) {
+    
+    $API_URL_BROWSER = "http://localhost:" . $API_PORT;
+    error_log("Browser API URL adjusted for Docker: $API_URL_BROWSER");
+}
 
 function askAPI($endpoint, $method, $data = null){
     global $API_URL;

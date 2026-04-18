@@ -154,12 +154,17 @@ $userTypes = [1 => 'Customer', 2 => 'Professional', 3 => 'Admin', 4 => 'Employee
                         </div>
                         <div class="profile-field-row">
                             <span class="profile-label">Company:</span>
-                            <span><?= htmlspecialchars($publicUser['company_name']) ?></span>
+                            <span><?= htmlspecialchars($publicUser['company_name'] ?? 'N/A') ?></span>
                         </div>
                     </div>
                     <?php if (!empty($showFriendButton) && empty($friendRequestExists)): ?>
                         <button class="btn-primary btn-inline mt-3" id="btn-add-friend" style="width: auto; min-width: 0; min-height: 34px; display: inline-flex; align-items: center; gap: 0.5rem; padding: 8px 14px; margin-top:15px;">
                             <i class="fas fa-user-plus"></i> Become Friend
+                        </button>
+                    <?php endif; ?>
+                    <?php if ($isLoggedIn && !$isCurrentUser && !empty($friendRequestExists)): ?>
+                        <button class="btn-primary btn-inline mt-3" id="btn-start-discussion" style="width: auto; min-width: 0; min-height: 34px; display: inline-flex; align-items: center; gap: 0.5rem; padding: 8px 14px; margin-top:15px; margin-left: 10px;">
+                            <i class="fas fa-comments"></i> Message
                         </button>
                     <?php endif; ?>
                 </div>
@@ -269,16 +274,32 @@ $userTypes = [1 => 'Customer', 2 => 'Professional', 3 => 'Admin', 4 => 'Employee
                     <button class="modal-close" aria-label="Close">&times;</button>
                 </div>
                 <div class="modal-body">
-                    <p>Send an invitation to <strong id="modal-target-username"><?= htmlspecialchars($publicUser['username'] ?? '') ?></strong></p>
-                    <div class="mb-3">
-                        <label for="friend-request-message" class="form-label">Message (optional):</label>
-                        <textarea id="friend-request-message" class="form-control" rows="3" placeholder="Add a personal note like on LinkedIn..."></textarea>
+
+                    <div id="friend-request-form-state">
+                        <p>Send an invitation to <strong id="modal-target-username"><?= htmlspecialchars($publicUser['username'] ?? '') ?></strong></p>
+                        <div class="mb-3">
+                            <label for="friend-request-message" class="form-label">Message (optional):</label>
+                            <textarea id="friend-request-message" class="form-control" rows="3" placeholder="Add a personal note like on LinkedIn..."></textarea>
+                        </div>
+                        <div id="friend-request-error" class="text-danger d-none mb-2"></div>
                     </div>
-                    <div id="friend-request-error" class="text-danger d-none mb-2"></div>
+                    <div id="friend-request-success-state" class="d-none text-center">
+                        <div style="font-size: 48px; margin-bottom: 1rem;">
+                            <i class="fas fa-check-circle" style="color: #10b981;"></i>
+                        </div>
+                        <h3>Friend Request Sent!</h3>
+                        <p>Your friend request has been sent to <strong id="success-target-username"><?= htmlspecialchars($publicUser['username'] ?? '') ?></strong></p>
+                    </div>
                 </div>
                 <div class="modal-actions">
-                    <button class="btn-secondary modal-close-btn" type="button">Cancel</button>
-                    <button class="btn-primary" id="btn-confirm-friend-request" type="button">Send</button>
+
+                    <div id="friend-request-form-actions">
+                        <button class="btn-secondary modal-close-btn" type="button">Cancel</button>
+                        <button class="btn-primary" id="btn-confirm-friend-request" type="button">Send</button>
+                    </div>
+                    <div id="friend-request-success-actions" class="d-none" style="width: 100%; text-align: center;">
+                        <button class="btn-primary modal-close-btn" type="button">Close</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -289,6 +310,7 @@ $userTypes = [1 => 'Customer', 2 => 'Professional', 3 => 'Admin', 4 => 'Employee
             window.publicOffers = <?= json_encode(array_values($publicOffers), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
             window.publicProjects = <?= json_encode(array_values($publicProjects), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
             window.API_TOKEN = "<?= $_SESSION['token'] ?? $_SESSION['jwt_token'] ?? '' ?>";
+            window.API_BASE = "<?= htmlspecialchars($API_URL_BROWSER, ENT_QUOTES, 'UTF-8') ?>";
         </script>
         <script src="../../assets/js/user_profile.js"></script>
     <?php endif; ?>

@@ -114,6 +114,13 @@ func AddMemberToGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	WsHub.Broadcast <- models.BroadcastMessage{
+		Action:     "member_added",
+		TargetType: "group",
+		TargetID:   groupID,
+		SenderID:   userToAdd.ID.String(),
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"status": "success"})

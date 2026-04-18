@@ -130,17 +130,35 @@ $curlErr  = curl_error($ch);
 curl_close($ch);
 
 if ($result === false || $curlErr !== '') {
+    error_log("[customers/gemini-api] curl error: $curlErr");
     http_response_code(502);
-    echo json_encode(['error' => 'Failed to reach Gemini API']);
+    echo json_encode(['error' => 'Failed to reach Gemini API', 'detail' => $curlErr, 'debug' => true]);
     exit;
 }
 
+error_log("[customers/gemini-api] Response ($httpCode): " . substr($result, 0, 2000));
+
 $geminiData = json_decode($result, true);
 
-if ($httpCode !== 200 || !is_array($geminiData)) {
-    $errMsg = $geminiData['error']['message'] ?? 'Gemini API error';
+if ($httpCode !== 200) {
+    error_log("[customers/gemini-api] Non-200 response ($httpCode): " . substr($result, 0, 500));
+    $errMsg = ($geminiData && isset($geminiData['error']['message'])) ? $geminiData['error']['message'] : 'Gemini API error';
     http_response_code(502);
-    echo json_encode(['error' => $errMsg]);
+    echo json_encode(['error' => $errMsg, 'http_code' => $httpCode, 'response' => substr($result, 0, 500), 'debug' => true]);
+    exit;
+}
+
+if (!is_array($geminiData)) {
+    error_log("[customers/gemini-api] Invalid JSON response: " . json_last_error_msg());
+    http_response_code(502);
+    echo json_encode(['error' => 'Invalid response from Gemini', 'json_error' => json_last_error_msg(), 'debug' => true]);
+    exit;
+}
+
+if (!isset($geminiData['candidates'][0]['content']['parts'][0]['text'])) {
+    error_log("[customers/gemini-api] Unexpected response structure: " . json_encode($geminiData));
+    http_response_code(502);
+    echo json_encode(['error' => 'Unexpected response structure from Gemini', 'received' => $geminiData, 'debug' => true]);
     exit;
 }
 
