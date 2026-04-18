@@ -184,6 +184,10 @@
         card.className  = 'service-item';
         card.dataset.id = c.id;
 
+        const capacity = c.capacity || 100;
+        const currentFill = c.current_fill || 0;
+        const percentage = Math.round((currentFill / capacity) * 100);
+
         card.innerHTML = `
             <div class="service-header">
                 <i class="fa-solid fa-warehouse" style="color:#6b7280;font-size:1.1rem;flex-shrink:0;"></i>
@@ -194,6 +198,14 @@
                     <i class="fa-solid fa-location-dot" style="color:#10b981;"></i>
                     ${escHtml([c.number, c.road, c.postal_code, c.city].filter(Boolean).join(', '))}
                 </span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:.8rem;color:#6b7280;">
+                <div style="flex:1;">
+                    <div style="height:12px;background:#e5e7eb;border-radius:4px;overflow:hidden;border:1px solid #d1d5db;">
+                        <div style="height:100%;background:linear-gradient(to right,#10b981,#059669);width:${percentage}%;transition:width 0.3s ease;"></div>
+                    </div>
+                </div>
+                <span style="min-width:50px;text-align:right;font-weight:600;">${currentFill}/${capacity}</span>
             </div>
             <div class="service-actions" style="display:flex;gap:8px;justify-content:center;">
                 <button class="btn-secondary cnt-view-btn" data-id="${escHtml(c.id)}">
@@ -386,6 +398,15 @@
         modal.querySelector('#container-view-city').textContent    = c.city || '-';
         modal.querySelector('#container-view-postal').textContent  = c.postal_code || '-';
         modal.querySelector('#container-view-created').textContent = c.created_at ? new Date(c.created_at).toLocaleDateString('en-GB') : '-';
+
+        const capacity = c.capacity || 100;
+        const currentFill = c.current_fill || 0;
+        const percentage = Math.round((currentFill / capacity) * 100);
+        
+        const gaugeFill = modal.querySelector('#container-view-gauge-fill');
+        const gaugeText = modal.querySelector('#container-view-gauge-text');
+        if (gaugeFill) gaugeFill.style.width = percentage + '%';
+        if (gaugeText) gaugeText.textContent = currentFill + '/' + capacity;
 
         showModal('container-view-modal');
 

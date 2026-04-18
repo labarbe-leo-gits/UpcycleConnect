@@ -15,7 +15,7 @@ func generateDepositBarcode() string {
 
 func GetAllDepositsFromDB() ([]models.Deposit, error) {
 
-	rows, err := Db.Query("SELECT id, user_id, conteneur_id, object_name, object_description, object_state, status, barcode, created_at, updated_at FROM demandes_depot")
+	rows, err := Db.Query("SELECT id, user_id, conteneur_id, object_name, object_description, object_state, status, barcode, retrieval_code, created_at, updated_at FROM demandes_depot")
 	if err != nil {
 		return nil, fmt.Errorf("failed to query deposits: %v", err)
 	}
@@ -27,13 +27,17 @@ func GetAllDepositsFromDB() ([]models.Deposit, error) {
 	for rows.Next() {
 		var deposit models.Deposit
 		var barcode sql.NullString
-		err := rows.Scan(&deposit.ID, &deposit.UserID, &deposit.ConteneurID, &deposit.ObjectName, &deposit.ObjectDescription, &deposit.ObjectState, &deposit.Status, &barcode, &deposit.CreatedAt, &deposit.UpdatedAt)
+		var retrievalCode sql.NullString
+		err := rows.Scan(&deposit.ID, &deposit.UserID, &deposit.ConteneurID, &deposit.ObjectName, &deposit.ObjectDescription, &deposit.ObjectState, &deposit.Status, &barcode, &retrievalCode, &deposit.CreatedAt, &deposit.UpdatedAt)
 
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan deposit: %v", err)
 		}
 		if barcode.Valid {
 			deposit.Barcode = barcode.String
+		}
+		if retrievalCode.Valid {
+			deposit.RetrievalCode = retrievalCode.String
 		}
 
 		deposits = append(deposits, deposit)
@@ -82,7 +86,19 @@ func UpdateDepositStatusInDB(depositIDStr string, status int) error {
 	}
 
 	currentTime := getCurrentTime()
-	if status == 1 {
+
+	if status == 2 {
+		barcode := generateDepositBarcode()
+		// Extract last 6 characters from barcode as retrieval code
+		retrievalCode := ""
+		if len(barcode) >= 6 {
+			retrievalCode = barcode[len(barcode)-6:]
+		}
+		_, err = Db.Exec(
+			"UPDATE demandes_depot SET status = ?, barcode = COALESCE(NULLIF(barcode, ''), ?), retrieval_code = ?, updated_at = ? WHERE id = ?",
+			status, barcode, retrievalCode, currentTime, depositID,
+		)
+	} else if status == 1 {
 		barcode := generateDepositBarcode()
 		_, err = Db.Exec(
 			"UPDATE demandes_depot SET status = ?, barcode = COALESCE(NULLIF(barcode, ''), ?), updated_at = ? WHERE id = ?",
@@ -159,11 +175,15 @@ func GetDepositByIDFromDB(depositIDStr string) (models.Deposit, error) {
 
 	var deposit models.Deposit
 
-	row := Db.QueryRow("SELECT id, user_id, conteneur_id, object_name, object_description, object_state, status, barcode, created_at, updated_at FROM demandes_depot WHERE id = ?", depositIDStr)
+	row := Db.QueryRow("SELECT id, user_id, conteneur_id, object_name, object_description, object_state, status, barcode, retrieval_code, created_at, updated_at FROM demandes_depot WHERE id = ?", depositIDStr)
 	var barcode sql.NullString
-	err := row.Scan(&deposit.ID, &deposit.UserID, &deposit.ConteneurID, &deposit.ObjectName, &deposit.ObjectDescription, &deposit.ObjectState, &deposit.Status, &barcode, &deposit.CreatedAt, &deposit.UpdatedAt)
+	var retrievalCode sql.NullString
+	err := row.Scan(&deposit.ID, &deposit.UserID, &deposit.ConteneurID, &deposit.ObjectName, &deposit.ObjectDescription, &deposit.ObjectState, &deposit.Status, &barcode, &retrievalCode, &deposit.CreatedAt, &deposit.UpdatedAt)
 	if err == nil && barcode.Valid {
 		deposit.Barcode = barcode.String
+	}
+	if err == nil && retrievalCode.Valid {
+		deposit.RetrievalCode = retrievalCode.String
 	}
 
 	if err != nil {
@@ -184,7 +204,7 @@ func GetDepositByIDFromDB(depositIDStr string) (models.Deposit, error) {
 
 func GetDepositsByConteneurIDFromDB(conteneurIDStr string) ([]models.Deposit, error) {
 	rows, err := Db.Query(
-		"SELECT id, user_id, conteneur_id, object_name, object_description, object_state, status, barcode, created_at, updated_at FROM demandes_depot WHERE conteneur_id = ?",
+		"SELECT id, user_id, conteneur_id, object_name, object_description, object_state, status, barcode, retrieval_code, created_at, updated_at FROM demandes_depot WHERE conteneur_id = ?",
 		conteneurIDStr,
 	)
 	if err != nil {
@@ -196,11 +216,15 @@ func GetDepositsByConteneurIDFromDB(conteneurIDStr string) ([]models.Deposit, er
 	for rows.Next() {
 		var d models.Deposit
 		var barcode sql.NullString
-		if err := rows.Scan(&d.ID, &d.UserID, &d.ConteneurID, &d.ObjectName, &d.ObjectDescription, &d.ObjectState, &d.Status, &barcode, &d.CreatedAt, &d.UpdatedAt); err != nil {
+		var retrievalCode sql.NullString
+		if err := rows.Scan(&d.ID, &d.UserID, &d.ConteneurID, &d.ObjectName, &d.ObjectDescription, &d.ObjectState, &d.Status, &barcode, &retrievalCode, &d.CreatedAt, &d.UpdatedAt); err != nil {
 			return nil, fmt.Errorf("getDepositsByConteneurIDFromDB scan error: %v", err)
 		}
 		if barcode.Valid {
 			d.Barcode = barcode.String
+		}
+		if retrievalCode.Valid {
+			d.RetrievalCode = retrievalCode.String
 		}
 		deposits = append(deposits, d)
 	}

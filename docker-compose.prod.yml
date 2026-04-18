@@ -71,6 +71,29 @@ services:
     networks:
       - APIClientNetwork
 
+  glpi:
+    image: diouxx/glpi:latest
+    container_name: upcycleconnect_glpi
+    restart: always
+    environment:
+      TIMEZONE: Europe/Paris
+      MARIADB_HOST: db
+      MARIADB_PORT: "3306"
+      MARIADB_DATABASE: glpi
+      MARIADB_USER: glpi_user
+      MARIADB_PASSWORD: glpi_secret
+    ports:
+      - "8082:80"
+    volumes:
+      - glpi_data:/var/www/html
+      - glpi_config:/etc/glpi
+      - glpi_files:/var/www/html/files
+    depends_on:
+      - db
+    networks:
+      - DataNetwork
+      - APIClientNetwork
+
 networks:
   DataNetwork:
     driver: bridge
@@ -79,4 +102,10 @@ networks:
 
 volumes:
   db_data:
+    driver: local
+  glpi_data:
+    driver: local
+  glpi_config:
+    driver: local
+  glpi_files:
     driver: local

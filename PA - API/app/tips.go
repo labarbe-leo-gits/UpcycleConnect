@@ -6,12 +6,26 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
 )
 
 func GetTips(w http.ResponseWriter, r *http.Request) {
+	page := 1
+	limit := 100
+
+	if pageStr := r.URL.Query().Get("page"); pageStr != "" {
+		if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
+			page = p
+		}
+	}
+	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
+		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 && l <= 100 {
+			limit = l
+		}
+	}
 
 	tips, err := db.GetTipsFromDB()
 	if err != nil {
@@ -20,9 +34,27 @@ func GetTips(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	total := len(tips)
+	start := (page - 1) * limit
+	end := start + limit
+	if start > total {
+		start = total
+	}
+	if end > total {
+		end = total
+	}
+
+	paginatedTips := tips[start:end]
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(tips)
+	response := map[string]interface{}{
+		"items": paginatedTips,
+		"total": total,
+		"page":  page,
+		"limit": limit,
+	}
+	json.NewEncoder(w).Encode(response)
 }
 
 type TipPollResponse struct {

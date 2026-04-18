@@ -60,22 +60,58 @@
     }
 
     async function fetchTipById(uuid) {
-        if (!uuid) return null;
-
-        const response = await fetch(`tip-api?action=get&id=${encodeURIComponent(uuid)}`, {
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to load tip details');
+        console.log('==== fetchTipById START, uuid:', uuid);
+        if (!uuid) {
+            console.log('UUID is falsy, returning null');
+            return null;
         }
 
-        const tip = await response.json();
-        if (tip.error) {
-            throw new Error(tip.error);
-        }
+        try {
+            console.log('Fetching tip from API...');
+            const response = await fetch(`tip-api?action=get&id=${encodeURIComponent(uuid)}`, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            console.log('Response received, status:', response.status, 'ok:', response.ok);
 
-        return tip;
+            if (!response.ok) {
+                console.error('Response not ok, throwing error');
+                throw new Error('Failed to load tip details: HTTP ' + response.status);
+            }
+
+            const text = await response.text();
+            console.log('Response text:', text);
+            
+            if (!text || text === 'null') {
+                console.error('Response text is empty or "null"');
+                throw new Error('Empty response from server');
+            }
+
+            let tip;
+            try {
+                console.log('Parsing JSON...');
+                tip = JSON.parse(text);
+                console.log('Parsed tip:', tip);
+            } catch (e) {
+                console.error('JSON parse failed:', e.message);
+                throw new Error('Invalid JSON response: ' + e.message);
+            }
+
+            if (!tip || typeof tip !== 'object') {
+                console.error('Tip is not an object:', tip);
+                throw new Error('Invalid tip data structure');
+            }
+
+            if (tip.error) {
+                console.error('Tip has error property:', tip.error);
+                throw new Error(tip.error);
+            }
+
+            console.log('==== fetchTipById SUCCESS, returning:', tip);
+            return tip;
+        } catch (err) {
+            console.error('==== fetchTipById CATCH ERROR:', err);
+            throw err;
+        }
     }
 
     async function fetchPoll(pollId) {
@@ -92,29 +128,79 @@
     }
 
     async function fetchPollOptions(pollId) {
-        if (!pollId) return [];
+        console.log('==== fetchPollOptions START, pollId:', pollId);
+        if (!pollId) {
+            console.log('pollId is falsy, returning []');
+            return [];
+        }
 
-        const resp = await fetch(`tip-api?action=poll_options&poll_id=${encodeURIComponent(pollId)}`, {
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        });
-        if (!resp.ok) return [];
+        try {
+            const resp = await fetch(`tip-api?action=poll_options&poll_id=${encodeURIComponent(pollId)}`, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            console.log('Poll options response status:', resp.status);
+            if (!resp.ok) {
+                console.warn('Poll options response not ok, returning []');
+                return [];
+            }
 
-        const data = await resp.json();
-        if (data.error) return [];
-        return data;
+            const text = await resp.text();
+            console.log('Poll options response text:', text);
+            if (!text) {
+                console.warn('Poll options response empty, returning []');
+                return [];
+            }
+
+            const data = JSON.parse(text);
+            console.log('Poll options data:', data);
+            if (data && data.error) {
+                console.warn('Poll options API error:', data.error);
+                return [];
+            }
+            console.log('Returning poll options:', data);
+            return data || [];
+        } catch (err) {
+            console.error('fetchPollOptions error:', err);
+            return [];
+        }
     }
 
     async function fetchPollVotes(pollId) {
-        if (!pollId) return [];
+        console.log('==== fetchPollVotes START, pollId:', pollId);
+        if (!pollId) {
+            console.log('pollId is falsy, returning []');
+            return [];
+        }
 
-        const resp = await fetch(`tip-api?action=poll_votes&poll_id=${encodeURIComponent(pollId)}`, {
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        });
-        if (!resp.ok) return [];
+        try {
+            const resp = await fetch(`tip-api?action=poll_votes&poll_id=${encodeURIComponent(pollId)}`, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            console.log('Poll votes response status:', resp.status);
+            if (!resp.ok) {
+                console.warn('Poll votes response not ok, returning []');
+                return [];
+            }
 
-        const data = await resp.json();
-        if (data.error) return [];
-        return data;
+            const text = await resp.text();
+            console.log('Poll votes response text:', text);
+            if (!text) {
+                console.warn('Poll votes response empty, returning []');
+                return [];
+            }
+
+            const data = JSON.parse(text);
+            console.log('Poll votes data:', data);
+            if (data && data.error) {
+                console.warn('Poll votes API error:', data.error);
+                return [];
+            }
+            console.log('Returning poll votes:', data);
+            return data || [];
+        } catch (err) {
+            console.error('fetchPollVotes error:', err);
+            return [];
+        }
     }
 
     function getCurrentUserId() {
@@ -177,77 +263,155 @@
     }
 
     async function votePoll(pollId, optionId) {
-        const resp = await fetch(`tip-api?action=vote_poll&poll_id=${encodeURIComponent(pollId)}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: JSON.stringify({ option_id: optionId })
-        });
-        if (!resp.ok) {
-            const data = await resp.json().catch(() => ({}));
-            throw new Error(data.error || 'Vote failed');
+        console.log('==== votePoll START, pollId:', pollId, 'optionId:', optionId);
+        try {
+            const resp = await fetch(`tip-api?action=vote_poll&poll_id=${encodeURIComponent(pollId)}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ option_id: optionId })
+            });
+            console.log('Vote poll response status:', resp.status);
+            if (!resp.ok) {
+                const data = await resp.json().catch(() => ({}));
+                console.error('Vote poll error response:', data);
+                throw new Error((data && data.error) ? data.error : 'Vote failed');
+            }
+            const result = await resp.json();
+            console.log('Vote poll result:', result);
+            return result;
+        } catch (err) {
+            console.error('votePoll error:', err);
+            throw err;
         }
-        return await resp.json();
     }
 
     async function fetchTipReactions(tipId) {
-        if (!tipId) return { likes: 0, dislikes: 0, current_user_reaction: -1 };
-        const resp = await fetch(`tip-api?action=tip_reactions&id=${encodeURIComponent(tipId)}`, {
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        });
-        if (!resp.ok) return { likes: 0, dislikes: 0, current_user_reaction: 'none' };
-        const data = await resp.json();
-        if (data.error) return { likes: 0, dislikes: 0, current_user_reaction: 'none' };
-        return data;
+        const defaultReactions = { likes: 0, dislikes: 0, current_user_reaction: -1 };
+        
+        if (!tipId) return defaultReactions;
+        
+        try {
+            const resp = await fetch(`tip-api?action=tip_reactions&id=${encodeURIComponent(tipId)}`, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            
+            if (!resp.ok) {
+                console.warn('Reactions response not ok:', resp.status);
+                return defaultReactions;
+            }
+            
+            const text = await resp.text();
+            console.log('Reactions response text:', text);
+            
+            if (!text || text === 'null') {
+                console.warn('Reactions response is empty or null');
+                return defaultReactions;
+            }
+            
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch (e) {
+                console.error('Failed to parse reactions JSON:', e, 'text was:', text);
+                return defaultReactions;
+            }
+            
+            // Safely check for error
+            if (data && data.error) {
+                console.warn('Reactions API returned error:', data.error);
+                return defaultReactions;
+            }
+            
+            // Return the data if it looks valid
+            if (data && typeof data === 'object') {
+                return {
+                    likes: data.likes || 0,
+                    dislikes: data.dislikes || 0,
+                    current_user_reaction: data.current_user_reaction !== undefined ? data.current_user_reaction : -1
+                };
+            }
+            
+            return defaultReactions;
+        } catch (err) {
+            console.error('fetchTipReactions error:', err);
+            return defaultReactions;
+        }
     }
 
     async function setTipReaction(tipId, reactionType) {
+        console.log('==== setTipReaction START, tipId:', tipId, 'type:', reactionType);
         
-        const resp = await fetch(`tip-api?action=set_reaction&id=${encodeURIComponent(tipId)}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: JSON.stringify({ reaction: reactionType })
-        });
-        if (!resp.ok) {
-            const data = await resp.json().catch(() => ({}));
-            
-            throw new Error(data.error || 'Reaction failed');
+        try {
+            const resp = await fetch(`tip-api?action=set_reaction&id=${encodeURIComponent(tipId)}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ reaction: reactionType })
+            });
+            console.log('Set reaction response status:', resp.status);
+            if (!resp.ok) {
+                const data = await resp.json().catch(() => ({}));
+                console.error('Set reaction error:', data);
+                throw new Error((data && data.error) ? data.error : 'Reaction failed');
+            }
+            const data = await resp.json();
+            console.log('Set reaction result:', data);
+            return data;
+        } catch (err) {
+            console.error('setTipReaction error:', err);
+            throw err;
         }
-        const data = await resp.json();
-        
-        return data;
     }
 
     async function removeTipReaction(tipId) {
-        const resp = await fetch(`tip-api?action=remove_reaction&id=${encodeURIComponent(tipId)}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: JSON.stringify({})
-        });
-        if (!resp.ok) {
-            const data = await resp.json().catch(() => ({}));
-            throw new Error(data.error || 'Remove reaction failed');
+        console.log('==== removeTipReaction START, tipId:', tipId);
+        
+        try {
+            const resp = await fetch(`tip-api?action=remove_reaction&id=${encodeURIComponent(tipId)}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({})
+            });
+            console.log('Remove reaction response status:', resp.status);
+            if (!resp.ok) {
+                const data = await resp.json().catch(() => ({}));
+                console.error('Remove reaction error:', data);
+                throw new Error((data && data.error) ? data.error : 'Remove reaction failed');
+            }
+            const result = await resp.json();
+            console.log('Remove reaction result:', result);
+            return result;
+        } catch (err) {
+            console.error('removeTipReaction error:', err);
+            throw err;
         }
-        return await resp.json();
     }
 
     function renderTip(tip) {
-        if (!tip) {
-            tipContent.innerHTML = '<p class="error-message">Tip not found.</p>';
+        console.log('==== renderTip START, tip:', tip);
+        
+        if (!tip || typeof tip !== 'object') {
+            console.error('renderTip: tip is not an object');
+            tipContent.innerHTML = '<p class="error-message">Tip not found or invalid data.</p>';
             return;
         }
 
         currentTip = tip;
+        console.log('Tip assigned to currentTip, building HTML...');
+        console.log('tip.title:', tip.title);
+        console.log('tip.created_by:', tip.created_by);
+        console.log('tip.id:', tip.id);
+        
         let html = `<div class="tip-header">
-            <h2>${escapeHtml(tip.title)}</h2>
+            <h2>${escapeHtml(tip.title || 'Untitled')}</h2>
             <div class="tip-reaction-icons">
                 <span id="like-btn" class="reaction-icon" data-reaction="1"><i class="fa fa-thumbs-up"></i> <span id="like-count">0</span></span>
                 <span id="dislike-btn" class="reaction-icon" data-reaction="0"><i class="fa fa-thumbs-down"></i> <span id="dislike-count">0</span></span>
@@ -271,26 +435,38 @@
             html += `<div class="tip-poll"><h3>Poll</h3><p>${escapeHtml(pollQuestion)}</p><div id="poll-options"></div></div>`;
         }
 
+        console.log('HTML built, setting innerHTML...');
         tipContent.innerHTML = html;
+        console.log('innerHTML set successfully');
 
         const likeBtn = document.getElementById('like-btn');
         const dislikeBtn = document.getElementById('dislike-btn');
         const likeCount = document.getElementById('like-count');
         const dislikeCount = document.getElementById('dislike-count');
+        console.log('DOM elements found - likeBtn:', !!likeBtn, 'dislikeBtn:', !!dislikeBtn);
 
         async function refreshReactions() {
+            console.log('==== refreshReactions START, tip.id:', tip.id);
+            if (!tip || !tip.id) {
+                console.warn('Cannot refresh reactions - tip or tip.id missing');
+                return;
+            }
+            
             const reactions = await fetchTipReactions(tip.id);
+            console.log('Reactions received:', reactions);
             
             if (likeCount) likeCount.textContent = reactions.likes || 0;
             if (dislikeCount) dislikeCount.textContent = reactions.dislikes || 0;
 
             const currentReaction = Number(reactions.current_user_reaction);
+            console.log('Setting active states, currentReaction:', currentReaction);
             if (likeBtn) likeBtn.classList.toggle('active', currentReaction === 1);
             if (dislikeBtn) dislikeBtn.classList.toggle('active', currentReaction === 0);
+            console.log('==== refreshReactions END');
         }
 
         async function toggleReaction(isLike) {
-            if (!likeBtn || !dislikeBtn) return;
+            if (!likeBtn || !dislikeBtn || !tip || !tip.id) return;
             const activeBtn = isLike ? likeBtn : dislikeBtn;
             const otherBtn = isLike ? dislikeBtn : likeBtn;
             const currentlyActive = activeBtn.classList.contains('active');
@@ -321,7 +497,7 @@
             dislikeBtn.addEventListener('click', async () => toggleReaction(false));
         }
 
-        refreshReactions();
+        refreshReactions().catch(err => console.error('==== refreshReactions PROMISE ERROR:', err));
 
         if (tip.poll_id) {
             return fetchPollOptions(tip.poll_id).then(async options => {
@@ -525,8 +701,12 @@
     }
 
     document.addEventListener('DOMContentLoaded', async function() {
+        console.log('==== DOMContentLoaded START');
         const tipId = getUuid();
+        console.log('Tip UUID from URL:', tipId);
+        
         if (!tipId) {
+            console.error('No tip ID in URL');
             tipContent.innerHTML = '<p class="error-message">Tip ID missing in URL</p>';
             return;
         }
@@ -535,11 +715,18 @@
         showCommentsSkeleton();
 
         try {
+            console.log('Starting to fetch tip...');
             const tip = await fetchTipById(tipId);
+            console.log('Tip fetched successfully:', tip);
+            
+            console.log('Starting to render tip...');
             await renderTip(tip);
+            console.log('Tip rendered successfully');
         } catch (err) {
+            console.error('==== DOMContentLoaded ERROR:', err);
             tipContent.innerHTML = `<p class="error-message">${escapeHtml(err.message)}</p>`;
         } finally {
+            console.log('Hiding skeleton...');
             hideTipSkeleton();
         }
 
@@ -549,6 +736,7 @@
             commentInput.addEventListener('input', updateCommentCounter);
             updateCommentCounter();
         }
+        console.log('==== DOMContentLoaded END');
     });
 
     commentSubmit.addEventListener('click', postComment);

@@ -1,5 +1,20 @@
-CREATE DATABASE IF NOT EXISTS upcycle;
+DROP DATABASE IF EXISTS upcycle;
+DROP DATABASE IF EXISTS glpi;
+
+CREATE DATABASE upcycle;
 ALTER DATABASE upcycle CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+
+CREATE DATABASE glpi;
+ALTER DATABASE glpi CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+
+CREATE USER IF NOT EXISTS 'glpi_user'@'%' IDENTIFIED BY 'glpi_secret';
+
+GRANT ALL PRIVILEGES ON upcycle.* TO 'app'@'%';
+
+GRANT ALL PRIVILEGES ON glpi.* TO 'glpi_user'@'%';
+
+FLUSH PRIVILEGES;
+
 USE upcycle;
 
 SET FOREIGN_KEY_CHECKS = 0;
@@ -152,6 +167,7 @@ CREATE TABLE IF NOT EXISTS demandes_depot (
     object_description TEXT NOT NULL,
     status INT NOT NULL DEFAULT 0,
     barcode VARCHAR(128) NULL UNIQUE,
+    retrieval_code VARCHAR(6) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -219,7 +235,7 @@ CREATE TABLE IF NOT EXISTS conseils (
     title VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
     poll_id CHAR(36) DEFAULT NULL,
-    conseil_type INT NOT NULL,
+    conseil_type INT NOT NULL DEFAULT 0,
     created_by CHAR(36) NOT NULL,
     updated_by CHAR(36) DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

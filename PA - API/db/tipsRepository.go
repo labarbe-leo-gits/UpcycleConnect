@@ -288,8 +288,8 @@ func GetTipCommentByIDFromDB(id string) (*models.TipComment, error) {
 }
 
 func GetTipReactionsFromDB(tipID string) (int, int, error) {
-	var likes int
-	var dislikes int
+	var likes sql.NullInt64
+	var dislikes sql.NullInt64
 	row := Db.QueryRow(`SELECT
 		SUM(CASE WHEN reaction_type = 1 THEN 1 ELSE 0 END) AS likes,
 		SUM(CASE WHEN reaction_type = 0 THEN 1 ELSE 0 END) AS dislikes
@@ -297,7 +297,18 @@ func GetTipReactionsFromDB(tipID string) (int, int, error) {
 	if err := row.Scan(&likes, &dislikes); err != nil {
 		return 0, 0, err
 	}
-	return likes, dislikes, nil
+
+	likesCount := int64(0)
+	if likes.Valid {
+		likesCount = likes.Int64
+	}
+
+	dislikesCount := int64(0)
+	if dislikes.Valid {
+		dislikesCount = dislikes.Int64
+	}
+
+	return int(likesCount), int(dislikesCount), nil
 }
 
 func GetTipReactionByUserFromDB(tipID, userID string) (int, error) {

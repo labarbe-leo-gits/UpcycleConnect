@@ -84,6 +84,22 @@ include_once '../../includes/admin-header.php';
         <div id="container-view-map" style="height:260px;border-radius:10px;overflow:hidden;margin-top:18px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;">
             <span style="color:#9ca3af;font-size:.9rem;"><i class="fa-solid fa-map-location-dot"></i> Loading map…</span>
         </div>
+        <div style="margin-top:18px;padding:14px;background:#f9fafb;border-radius:10px;border:1px solid #e5e7eb;">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+                <i class="fa-solid fa-gauge-high" style="color:#10b981;"></i>
+                <div style="font-weight:600;color:#111827;">Container Capacity</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;">
+                <div style="flex:1;">
+                    <div class="container-gauge-bar" style="height:24px;background:#e5e7eb;border-radius:6px;overflow:hidden;border:1px solid #d1d5db;">
+                        <div id="container-view-gauge-fill" style="height:100%;background:linear-gradient(to right,#10b981,#059669);width:0%;transition:width 0.3s ease;"></div>
+                    </div>
+                </div>
+                <div style="min-width:60px;text-align:right;">
+                    <span id="container-view-gauge-text" style="font-weight:600;color:#111827;font-size:.9rem;">0/100</span>
+                </div>
+            </div>
+        </div>
         <div style="margin-top:16px;display:flex;justify-content:flex-end;">
             <button class="btn-secondary" id="container-view-close-btn">Close</button>
         </div>

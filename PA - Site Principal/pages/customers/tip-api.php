@@ -106,6 +106,11 @@ switch ($action) {
         }
         $resp = askAPI('/tips/' . urlencode($tipId) . '/reactions', 'GET');
         $data = json_decode($resp, true);
+        if ($data === null) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Unable to fetch reactions']);
+            exit;
+        }
         echo json_encode($data);
         exit;
 

@@ -519,18 +519,18 @@
                                 const item = document.createElement('div');
                                 item.style.cssText = 'border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;text-align:center;position:relative;';
                                 const img = document.createElement('img');
-                                img.src = '/PA/files/uploads/deposit/' + encodeURIComponent(f.filename);
+                                img.src = '/files/uploads/deposit/' + encodeURIComponent(f.filename);
                                 img.alt = escapeHtml(f.original_name || f.filename || 'photo');
                                 img.style.cssText = 'width:100%;height:90px;object-fit:cover;cursor:pointer;';
                                 img.addEventListener('click', () => {
-                                    window.open('/PA/files/uploads/deposit/' + encodeURIComponent(f.filename), '_blank');
+                                    window.open('/files/uploads/deposit/' + encodeURIComponent(f.filename), '_blank');
                                 });
                                 const caption = document.createElement('div');
                                 caption.style.cssText = 'padding:4px;font-size:.8rem;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;';
                                 caption.textContent = f.original_name || f.filename;
 
                                 const download = document.createElement('a');
-                                download.href = '/PA/files/uploads/deposit/' + encodeURIComponent(f.filename);
+                                download.href = '/files/uploads/deposit/' + encodeURIComponent(f.filename);
                                 download.download = f.original_name || f.filename;
                                 download.style.cssText = 'position:absolute;top:6px;right:6px;background:rgba(0,0,0,.60);color:#fff;padding:4px 6px;border-radius:4px;font-size:.75rem;';
                                 download.innerHTML = '<i class="fa-solid fa-download"></i>';

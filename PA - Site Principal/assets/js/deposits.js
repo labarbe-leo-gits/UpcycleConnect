@@ -1201,15 +1201,30 @@
                 if (!val) {
                     infoDiv.style.display = 'none';
                     infoDiv.innerHTML = '';
+                    document.getElementById('add-deposit-submit').disabled = false;
                     return;
                 }
                 const c = list.find(x => (x.id || x.ID || '') == val);
                 if (c) {
-                    infoDiv.innerHTML = `<div style='padding:8px 0 0 0;'><strong>${c.name || c.conteneur_name || ''}</strong><br>${[c.number, c.road, c.postal_code, c.city].filter(Boolean).join(', ')}<br>${c.description ? '<span style="color:#888">'+c.description+'</span>' : ''}</div>`;
+                    const capacity = c.capacity || 100;
+                    const currentFill = c.current_fill || 0;
+                    const isFull = currentFill >= capacity;
+                    
+                    if (isFull) {
+                        infoDiv.style.background = 'linear-gradient(135deg, #ef4444, #f87171)';
+                        infoDiv.innerHTML = `<div style='padding:8px 0 0 0;'><strong>${c.name || c.conteneur_name || ''}</strong><br>${[c.number, c.road, c.postal_code, c.city].filter(Boolean).join(', ')}<br><span style="color:#fff;font-weight:600;margin-top:6px;display:inline-block;"><i class="fa-solid fa-circle-exclamation"></i> This container is full and cannot accept new deposits</span></div>`;
+                        document.getElementById('add-deposit-submit').disabled = true;
+                    } else {
+                        infoDiv.style.background = 'linear-gradient(135deg, #10b981, #34d399)';
+                        const fillPercentage = Math.round((currentFill / capacity) * 100);
+                        infoDiv.innerHTML = `<div style='padding:8px 0 0 0;'><strong>${c.name || c.conteneur_name || ''}</strong><br>${[c.number, c.road, c.postal_code, c.city].filter(Boolean).join(', ')}<br><span style="font-size:0.85em;margin-top:6px;display:inline-block;"><i class="fa-solid fa-gauge"></i> Capacity: ${currentFill}/${capacity} (${fillPercentage}%)</span>${c.description ? '<br><span style="color:#ddd">'+c.description+'</span>' : ''}</div>`;
+                        document.getElementById('add-deposit-submit').disabled = false;
+                    }
                     infoDiv.style.display = '';
                 } else {
                     infoDiv.style.display = 'none';
                     infoDiv.innerHTML = '';
+                    document.getElementById('add-deposit-submit').disabled = false;
                 }
             }
 

@@ -11,6 +11,7 @@ type Deposit struct {
 	ObjectState       int       `json:"object_state,omitempty" db:"object_state"`
 	Status            int       `json:"status" db:"status"`
 	Barcode           string    `json:"barcode,omitempty" db:"barcode"`
+	RetrievalCode     string    `json:"retrieval_code,omitempty" db:"retrieval_code"`
 	CreatedAt         string    `json:"created_at" db:"created_at"`
 	UpdatedAt         string    `json:"updated_at" db:"updated_at"`
 }

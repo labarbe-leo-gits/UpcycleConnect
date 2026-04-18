@@ -57,6 +57,22 @@ $payload = [
     'object_state' => isset($input['object_state']) ? (int) $input['object_state'] : 0,
 ];
 
+if (!empty($payload['conteneur_id']) && $payload['conteneur_id'] !== ($depositData['conteneur_id'] ?? '')) {
+    $conteneurResp = askAPI('/conteneurs/' . urlencode($payload['conteneur_id']), 'GET');
+    $conteneur = json_decode($conteneurResp, true);
+    
+    if ($conteneur && isset($conteneur['capacity']) && isset($conteneur['current_fill'])) {
+        $capacity = (int)$conteneur['capacity'];
+        $currentFill = (int)$conteneur['current_fill'];
+        
+        if ($currentFill >= $capacity) {
+            http_response_code(400);
+            echo json_encode(['error' => 'This container is full and cannot accept new deposits']);
+            exit;
+        }
+    }
+}
+
 $apiResp = askAPI('deposits/' . urlencode($depositId), 'PATCH', json_encode($payload));
 $decodedApi = json_decode($apiResp, true);
 if (!$decodedApi || !empty($decodedApi['error'])) {

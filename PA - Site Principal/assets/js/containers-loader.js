@@ -275,7 +275,7 @@
         currentItemsContainerId = container.id;
         const modal = document.getElementById('container-items-modal');
         if (!modal) return;
-        modal.querySelector('#container-items-container-name').textContent = `${container.name || 'Container'} - Approved items`;
+        modal.querySelector('#container-items-container-name').textContent = `${container.name || 'Container'} - Deposited items`;
         modal.classList.add('is-open');
         modal.setAttribute('aria-hidden', 'false');
         document.body.classList.add('modal-open');
@@ -377,6 +377,7 @@
         const title = document.getElementById('item-detail-object');
         const filesList = document.getElementById('item-detail-files-list');
         const recoveredBtn = document.getElementById('item-mark-recovered');
+        const code = document.getElementById('item-detail-conteneur-info');
 
         title.textContent = 'Loading…';
         main.innerHTML = '<p>Loading details…</p>';
@@ -420,19 +421,20 @@
 
                             if (userInfoBox) {
                                 userInfoBox.innerHTML = `
-                                    <h4 style="margin:0 0 8px;">User</h4>
-                                    <div style="display:flex;align-items:center;gap:10px;">
-                                        <div style="width:38px;height:38px;border-radius:50%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;">
-                                            <i class="fa-solid fa-user" style="color:#6b7280;"></i>
-                                        </div>
-                                        <div>
-                                            <div style="font-weight:700;">${escapeHtml(name)}</div>
-                                            <div style="font-size:.85rem;color:#6b7280;">${escapeHtml(username)}</div>
-                                            <div style="font-size:.85rem;color:#6b7280;">${escapeHtml(email)}</div>
-                                            ${phone ? `<div style="font-size:.85rem;color:#6b7280;">${escapeHtml(phone)}</div>` : ''}
-                                        </div>
-                                    </div>
-                                `;
+                                    <div style="display:flex;gap:20px;">
+                                        <div style="flex:1;">
+                                            <h4 style="margin:0 0 8px;">User</h4>
+                                            <div style="display:flex;align-items:center;gap:10px;">
+                                                <div style="width:38px;height:38px;border-radius:50%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;">
+                                                    <i class="fa-solid fa-user" style="color:#6b7280;"></i>
+                                                </div>
+                                                <div>
+                                                    <div style="font-weight:700;">${escapeHtml(name)}</div>
+                                                    <div style="font-size:.85rem;color:#6b7280;">${escapeHtml(username)}</div>
+                                                    <div style="font-size:.85rem;color:#6b7280;">${escapeHtml(email)}</div>\n                                                    ${phone ? `<div style="font-size:.85rem;color:#6b7280;">${escapeHtml(phone)}</div>` : ''}\n                                                </div>\n                                            </div>\n                                        </div>\n                                        `;
+                                code.innerHTML = `
+                                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;background:#f3f4f6;padding:12px 16px;border-radius:8px;min-width:140px;\">\n                                            <div style="font-size:.75rem;color:#6b7280;margin-bottom:6px;font-weight:600;">RETRIEVAL CODE</div>\n                                            <div style="font-size:1.5rem;font-weight:700;letter-spacing:2px;color:#1f2937;font-family:monospace;">${escapeHtml(deposit.retrieval_code || '-')}</div>\n                                        </div>\n                                    </div>\n                                
+                                `
                             }
                         } else {
                             if (userInfoBox) {

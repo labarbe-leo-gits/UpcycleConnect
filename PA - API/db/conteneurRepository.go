@@ -9,7 +9,7 @@ import (
 
 func GetAllConteneursFromDB() ([]models.Conteneur, error) {
 
-	rows, err := Db.Query("SELECT id, conteneur_name, conteneur_city, conteneur_road, conteneur_zip_code, conteneur_number, created_at, updated_at FROM conteneurs")
+	rows, err := Db.Query("SELECT id, conteneur_name, conteneur_city, conteneur_road, conteneur_zip_code, conteneur_number, capacity, created_at, updated_at FROM conteneurs")
 	if err != nil {
 		return nil, fmt.Errorf("failed to query conteneurs: %v", err)
 	}
@@ -20,10 +20,18 @@ func GetAllConteneursFromDB() ([]models.Conteneur, error) {
 
 	for rows.Next() {
 		var conteneur models.Conteneur
-		err := rows.Scan(&conteneur.ID, &conteneur.Name, &conteneur.City, &conteneur.Road, &conteneur.PostalCode, &conteneur.Number, &conteneur.CreatedAt, &conteneur.UpdatedAt)
+		err := rows.Scan(&conteneur.ID, &conteneur.Name, &conteneur.City, &conteneur.Road, &conteneur.PostalCode, &conteneur.Number, &conteneur.Capacity, &conteneur.CreatedAt, &conteneur.UpdatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan conteneur: %v", err)
 		}
+
+		var count int
+		countErr := Db.QueryRow("SELECT COUNT(id) FROM demandes_depot WHERE conteneur_id = ? AND status != 5", conteneur.ID.String()).Scan(&count)
+		if countErr != nil {
+			fmt.Printf("Warning: failed to count items for container %s: %v\n", conteneur.ID, countErr)
+			count = 0
+		}
+		conteneur.CurrentFill = count
 
 		conteneurs = append(conteneurs, conteneur)
 	}
@@ -49,7 +57,7 @@ func CountConteneursFromDB() (int, error) {
 }
 
 func GetConteneursPageFromDB(limit int, offset int) ([]models.Conteneur, error) {
-	rows, err := Db.Query("SELECT id, conteneur_name, conteneur_city, conteneur_road, conteneur_zip_code, conteneur_number, created_at, updated_at FROM conteneurs ORDER BY created_at DESC LIMIT ? OFFSET ?", limit, offset)
+	rows, err := Db.Query("SELECT id, conteneur_name, conteneur_city, conteneur_road, conteneur_zip_code, conteneur_number, capacity, created_at, updated_at FROM conteneurs ORDER BY created_at DESC LIMIT ? OFFSET ?", limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("getConteneursPageFromDB query error: %s", err.Error())
 	}
@@ -58,10 +66,19 @@ func GetConteneursPageFromDB(limit int, offset int) ([]models.Conteneur, error) 
 	var conteneurs []models.Conteneur
 	for rows.Next() {
 		var conteneur models.Conteneur
-		err := rows.Scan(&conteneur.ID, &conteneur.Name, &conteneur.City, &conteneur.Road, &conteneur.PostalCode, &conteneur.Number, &conteneur.CreatedAt, &conteneur.UpdatedAt)
+		err := rows.Scan(&conteneur.ID, &conteneur.Name, &conteneur.City, &conteneur.Road, &conteneur.PostalCode, &conteneur.Number, &conteneur.Capacity, &conteneur.CreatedAt, &conteneur.UpdatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("getConteneursPageFromDB scan error: %s", err.Error())
 		}
+
+		var count int
+		countErr := Db.QueryRow("SELECT COUNT(id) FROM demandes_depot WHERE conteneur_id = ? AND status != 5", conteneur.ID.String()).Scan(&count)
+		if countErr != nil {
+			fmt.Printf("Warning: failed to count items for container %s: %v\n", conteneur.ID, countErr)
+			count = 0
+		}
+		conteneur.CurrentFill = count
+
 		conteneurs = append(conteneurs, conteneur)
 	}
 
@@ -93,8 +110,8 @@ func GetConteneurByIDFromDB(conteneurIDStr string) (models.Conteneur, error) {
 
 	var conteneur models.Conteneur
 
-	row := Db.QueryRow("SELECT id, conteneur_name, conteneur_city, conteneur_road, conteneur_zip_code, conteneur_number, created_at, updated_at FROM conteneurs WHERE id = ?", conteneurIDStr)
-	err := row.Scan(&conteneur.ID, &conteneur.Name, &conteneur.City, &conteneur.Road, &conteneur.PostalCode, &conteneur.Number, &conteneur.CreatedAt, &conteneur.UpdatedAt)
+	row := Db.QueryRow("SELECT id, conteneur_name, conteneur_city, conteneur_road, conteneur_zip_code, conteneur_number, capacity, created_at, updated_at FROM conteneurs WHERE id = ?", conteneurIDStr)
+	err := row.Scan(&conteneur.ID, &conteneur.Name, &conteneur.City, &conteneur.Road, &conteneur.PostalCode, &conteneur.Number, &conteneur.Capacity, &conteneur.CreatedAt, &conteneur.UpdatedAt)
 	if err != nil {
 		return conteneur, fmt.Errorf("failed to query conteneur by ID: %v", err)
 	}
@@ -103,13 +120,20 @@ func GetConteneurByIDFromDB(conteneurIDStr string) (models.Conteneur, error) {
 		return conteneur, fmt.Errorf("error scanning conteneur row: %v", err)
 	}
 
+	var count int
+	countErr := Db.QueryRow("SELECT COUNT(*) FROM demandes_depot WHERE conteneur_id = ? AND status != 5", conteneurIDStr).Scan(&count)
+	if countErr != nil {
+		fmt.Printf("Warning: failed to count items for container %s: %v\n", conteneurIDStr, countErr)
+		count = 0
+	}
+	conteneur.CurrentFill = count
+
 	conteneur.ID, err = uuid.Parse(conteneurIDStr)
 	if err != nil {
 		return conteneur, fmt.Errorf("invalid conteneur ID format: %v", err)
 	}
 
 	return conteneur, nil
-
 }
 
 func UpdateConteneurInDB(conteneurIDStr string, conteneur models.Conteneur) error {
@@ -168,9 +192,9 @@ func DeleteConteneurFromDB(conteneurIDStr string) error {
 
 func GetItemsByConteneurIDFromDB(conteneurIDStr string) ([]models.ConteneurItem, error) {
 	rows, err := Db.Query(
-		`SELECT id, user_id, conteneur_id, object_name, object_description, status, created_at, updated_at
+		`SELECT id, user_id, conteneur_id, object_name, object_description, status, retrieval_code, created_at, updated_at
 		 FROM demandes_depot
-		 WHERE conteneur_id = ? AND status IN (2, 4)
+		 WHERE conteneur_id = ? AND status = 4
 		 ORDER BY created_at ASC`,
 		conteneurIDStr,
 	)
@@ -185,7 +209,7 @@ func GetItemsByConteneurIDFromDB(conteneurIDStr string) ([]models.ConteneurItem,
 		if err := rows.Scan(
 			&item.ID, &item.UserID, &item.ConteneurID,
 			&item.ObjectName, &item.ObjectDescription,
-			&item.Status, &item.CreatedAt, &item.UpdatedAt,
+			&item.Status, &item.RetrievalCode, &item.CreatedAt, &item.UpdatedAt,
 		); err != nil {
 			return nil, fmt.Errorf("GetItemsByConteneurIDFromDB scan error: %v", err)
 		}
