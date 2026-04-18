@@ -140,9 +140,17 @@ function makeCustomSource(string $repoUrl, ?string $name = null): ?array {
 function getDataDir(): string {
     static $dir;
     if ($dir === null) {
-        $dir = realpath(__DIR__ . '/../../../PA - API/data');
-        if ($dir === false) {
-            throw new RuntimeException('Could not locate data directory');
+        // Try Docker path first
+        if (is_dir('/var/www/html/api-data')) {
+            $dir = '/var/www/html/api-data';
+        } else {
+            // Fall back to local development path
+            $localPath = realpath(__DIR__ . '/../../../PA - API/data');
+            if ($localPath !== false) {
+                $dir = $localPath;
+            } else {
+                throw new RuntimeException('Could not locate data directory. Tried: /var/www/html/api-data and ' . __DIR__ . '/../../../PA - API/data');
+            }
         }
     }
     return $dir;

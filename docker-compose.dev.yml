@@ -63,6 +63,7 @@ services:
     volumes:
       - ./PA - BO:/var/www/html:delegated
       - ./files:/var/www/html/files:delegated
+      - ./PA - API/data:/var/www/html/api-data:delegated
       - ./PA - BO/.env.docker:/var/www/html/.env:ro
       - ./vendor:/var/www/html/vendor:ro
     depends_on:
