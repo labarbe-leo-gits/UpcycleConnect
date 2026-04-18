@@ -37,10 +37,51 @@ if (empty($notificationsError) && !empty($notifications)) {
 ?>
 
 <?php
-					$unreadNotifications = array_values(array_filter($notifications, function ($notification) {
-						return empty($notification['read']);
-					}));
-				?>
+	$unreadNotifications = array_values(array_filter($notifications, function ($notification) {
+		return empty($notification['read']);
+	}));
+	$readNotifications = array_values(array_filter($notifications, function ($notification) {
+		return !empty($notification['read']);
+	}));
+?>
+
+<style>
+	.notifications-tabs {
+		display: flex;
+		gap: 0;
+		border-bottom: 2px solid #e5e7eb;
+		margin-bottom: 20px;
+	}
+	.notifications-tab {
+		padding: 12px 24px;
+		background: none;
+		border: none;
+		cursor: pointer;
+		font-weight: 500;
+		color: #6b7280;
+		border-bottom: 3px solid transparent;
+		transition: all 0.3s ease;
+	}
+	.notifications-tab:hover {
+		color: #1f2937;
+	}
+	.notifications-tab.active {
+		color: #059669;
+		border-bottom-color: #059669;
+	}
+	.notifications-tab-count {
+		background: #ef4444;
+		color: white;
+		border-radius: 50%;
+		width: 20px;
+		height: 20px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 0.75em;
+		margin-left: 8px;
+	}
+</style>
 
 <div class="container" id="notifications-root" data-read-url="notifications-read" data-read-all-url="notifications-read-all">
 	<div class="profile-card">
@@ -60,6 +101,17 @@ if (empty($notificationsError) && !empty($notifications)) {
 				
 				><i class="fa-solid fa-envelope-circle-check" ></i> Mark all as read</button>
 			</div>
+		</div>
+
+		<div class="notifications-tabs">
+			<button class="notifications-tab active" data-tab="unread">
+				Unread
+				<span class="notifications-tab-count"><?php echo count($unreadNotifications); ?></span>
+			</button>
+			<button class="notifications-tab" data-tab="read">
+				Read
+				<span class="notifications-tab-count"><?php echo count($readNotifications); ?></span>
+			</button>
 		</div>
 
 		<div class="notifications-skeleton" id="notifications-skeleton">
@@ -84,36 +136,73 @@ if (empty($notificationsError) && !empty($notifications)) {
 			<?php if ($notificationsError): ?>
 				<div class="error-message"><?php echo htmlspecialchars($notificationsError); ?></div>
 			<?php else: ?>
-				<p class="balance-note" id="notifications-empty" style="display: <?php echo empty($unreadNotifications) ? 'block' : 'none'; ?>;">You have no notifications yet.</p>
-				<div class="notifications-list" id="notifications-list">
-					<?php foreach ($unreadNotifications as $notification): ?>
-						<?php
-							$notificationId = $notification['id'] ?? '';
-							$message = $notification['message'] ?? '';
-							$createdAt = $notification['created_at'] ?? '';
-							$annonceId = $notification['annonce_id'] ?? '';
-							$annonceTitle = $annonceTitles[$annonceId] ?? '';
-							$formattedDate = '';
-							if (!empty($createdAt)) {
-								$timestamp = strtotime($createdAt);
-								if ($timestamp !== false) {
-									$formattedDate = date('d/m/Y H:i', $timestamp);
+				<!-- Unread Tab -->
+				<div id="tab-unread" class="notifications-tab-content active">
+					<p class="balance-note" id="notifications-empty-unread" style="display: <?php echo empty($unreadNotifications) ? 'block' : 'none'; ?>;">You have no unread notifications.</p>
+					<div class="notifications-list" id="notifications-list-unread">
+						<?php foreach ($unreadNotifications as $notification): ?>
+							<?php
+								$notificationId = $notification['id'] ?? '';
+								$message = $notification['message'] ?? '';
+								$createdAt = $notification['created_at'] ?? '';
+								$annonceId = $notification['annonce_id'] ?? '';
+								$annonceTitle = $annonceTitles[$annonceId] ?? '';
+								$formattedDate = '';
+								if (!empty($createdAt)) {
+									$timestamp = strtotime($createdAt);
+									if ($timestamp !== false) {
+										$formattedDate = date('d/m/Y H:i', $timestamp);
+									}
 								}
-							}
-						?>
-						<div class="notification-item is-unread" data-notification-id="<?php echo htmlspecialchars($notificationId); ?>">
-							<?php if ($annonceTitle !== ''): ?>
-								<div class="notification-title">Annonce: <?php echo htmlspecialchars($annonceTitle); ?></div>
-							<?php endif; ?>
-							<div class="notification-message"><?php echo htmlspecialchars($message); ?></div>
-							<div class="notification-footer">
-								<?php if ($formattedDate): ?>
-									<div class="notification-date"><?php echo htmlspecialchars($formattedDate); ?></div>
+							?>
+							<div class="notification-item is-unread" data-notification-id="<?php echo htmlspecialchars($notificationId); ?>">
+								<?php if ($annonceTitle !== ''): ?>
+									<div class="notification-title">Annonce: <?php echo htmlspecialchars($annonceTitle); ?></div>
 								<?php endif; ?>
-								<button class="btn-secondary notif-read-btn" type="button" data-notification-id="<?php echo htmlspecialchars($notificationId); ?>"><i class="fa-solid fa-envelope-circle-check"></i> Mark as read</button>
+								<div class="notification-message"><?php echo htmlspecialchars($message); ?></div>
+								<div class="notification-footer">
+									<?php if ($formattedDate): ?>
+										<div class="notification-date"><?php echo htmlspecialchars($formattedDate); ?></div>
+									<?php endif; ?>
+									<button class="btn-secondary notif-read-btn" type="button" data-notification-id="<?php echo htmlspecialchars($notificationId); ?>"><i class="fa-solid fa-envelope-circle-check"></i> Mark as read</button>
+								</div>
 							</div>
-						</div>
-					<?php endforeach; ?>
+						<?php endforeach; ?>
+					</div>
+				</div>
+
+				<!-- Read Tab -->
+				<div id="tab-read" class="notifications-tab-content" style="display: none;">
+					<p class="balance-note" id="notifications-empty-read" style="display: <?php echo empty($readNotifications) ? 'block' : 'none'; ?>;">You have no read notifications.</p>
+					<div class="notifications-list" id="notifications-list-read">
+						<?php foreach ($readNotifications as $notification): ?>
+							<?php
+								$notificationId = $notification['id'] ?? '';
+								$message = $notification['message'] ?? '';
+								$createdAt = $notification['created_at'] ?? '';
+								$annonceId = $notification['annonce_id'] ?? '';
+								$annonceTitle = $annonceTitles[$annonceId] ?? '';
+								$formattedDate = '';
+								if (!empty($createdAt)) {
+									$timestamp = strtotime($createdAt);
+									if ($timestamp !== false) {
+										$formattedDate = date('d/m/Y H:i', $timestamp);
+									}
+								}
+							?>
+							<div class="notification-item" data-notification-id="<?php echo htmlspecialchars($notificationId); ?>">
+								<?php if ($annonceTitle !== ''): ?>
+									<div class="notification-title">Annonce: <?php echo htmlspecialchars($annonceTitle); ?></div>
+								<?php endif; ?>
+								<div class="notification-message"><?php echo htmlspecialchars($message); ?></div>
+								<div class="notification-footer">
+									<?php if ($formattedDate): ?>
+										<div class="notification-date"><?php echo htmlspecialchars($formattedDate); ?></div>
+									<?php endif; ?>
+								</div>
+							</div>
+						<?php endforeach; ?>
+					</div>
 				</div>
 			<?php endif; ?>
 		</div>
@@ -121,6 +210,32 @@ if (empty($notificationsError) && !empty($notifications)) {
 </div>
 
 <script src="../../assets/js/notifications.js"></script>
+
+<script>
+	document.addEventListener('DOMContentLoaded', () => {
+		const tabs = document.querySelectorAll('.notifications-tab');
+		const tabContents = document.querySelectorAll('.notifications-tab-content');
+
+		tabs.forEach(tab => {
+			tab.addEventListener('click', () => {
+				const tabName = tab.dataset.tab;
+
+				tabs.forEach(t => t.classList.remove('active'));
+				tabContents.forEach(content => {
+					content.style.display = 'none';
+					content.classList.remove('active');
+				});
+
+				tab.classList.add('active');
+				const activeContent = document.getElementById(`tab-${tabName}`);
+				if (activeContent) {
+					activeContent.style.display = 'block';
+					activeContent.classList.add('active');
+				}
+			});
+		});
+	});
+</script>
 
 <?php
 include_once '../../includes/footer.php';

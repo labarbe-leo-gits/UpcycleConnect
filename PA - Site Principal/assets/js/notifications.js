@@ -152,7 +152,7 @@
                 });
         });
 
-        setInterval(function() {
+        function silentRefreshNotifications() {
             fetch(pollUrl, {
                 cache: 'no-store',
                 headers: {
@@ -169,14 +169,97 @@
                     if (!Array.isArray(data)) {
                         return;
                     }
-                    var unreadCount = data.filter(function(item) { return !item.read; }).length;
-                    if (unreadCount > lastUnreadCount) {
-                        window.location.reload();
+
+                    var unreadNotifications = data.filter(function(item) { return !item.read; });
+                    var readNotifications = data.filter(function(item) { return item.read; });
+                    var unreadCount = unreadNotifications.length;
+
+                    var unreadTab = document.querySelector('.notifications-tab[data-tab="unread"] .notifications-tab-count');
+                    if (unreadTab) {
+                        unreadTab.textContent = String(unreadCount);
                     }
+
+                    var readTab = document.querySelector('.notifications-tab[data-tab="read"] .notifications-tab-count');
+                    if (readTab) {
+                        readTab.textContent = String(readNotifications.length);
+                    }
+
+                    var unreadList = document.getElementById('notifications-list-unread');
+                    var unreadEmpty = document.getElementById('notifications-empty-unread');
+                    if (unreadList) {
+                        var newUnreadHTML = '';
+                        unreadNotifications.forEach(function(notification) {
+                            var annonceTitle = notification.annonce_title || '';
+                            var formattedDate = '';
+                            if (notification.created_at) {
+                                var timestamp = new Date(notification.created_at).getTime() / 1000;
+                                var date = new Date(timestamp * 1000);
+                                formattedDate = ('0' + date.getDate()).slice(-2) + '/' + 
+                                               ('0' + (date.getMonth() + 1)).slice(-2) + '/' + 
+                                               date.getFullYear() + ' ' +
+                                               ('0' + date.getHours()).slice(-2) + ':' +
+                                               ('0' + date.getMinutes()).slice(-2);
+                            }
+                            newUnreadHTML += '<div class="notification-item is-unread" data-notification-id="' + 
+                                           (notification.id || '') + '">' +
+                                           (annonceTitle ? '<div class="notification-title">Annonce: ' + escapeHtml(annonceTitle) + '</div>' : '') +
+                                           '<div class="notification-message">' + escapeHtml(notification.message || '') + '</div>' +
+                                           '<div class="notification-footer">' +
+                                           (formattedDate ? '<div class="notification-date">' + escapeHtml(formattedDate) + '</div>' : '') +
+                                           '<button class="btn-secondary notif-read-btn" type="button" data-notification-id="' + 
+                                           (notification.id || '') + '"><i class="fa-solid fa-envelope-circle-check"></i> Mark as read</button>' +
+                                           '</div></div>';
+                        });
+                        unreadList.innerHTML = newUnreadHTML;
+                    }
+
+                    if (unreadEmpty) {
+                        unreadEmpty.style.display = unreadCount === 0 ? 'block' : 'none';
+                    }
+
+                    var readList = document.getElementById('notifications-list-read');
+                    var readEmpty = document.getElementById('notifications-empty-read');
+                    if (readList) {
+                        var newReadHTML = '';
+                        readNotifications.forEach(function(notification) {
+                            var annonceTitle = notification.annonce_title || '';
+                            var formattedDate = '';
+                            if (notification.created_at) {
+                                var timestamp = new Date(notification.created_at).getTime() / 1000;
+                                var date = new Date(timestamp * 1000);
+                                formattedDate = ('0' + date.getDate()).slice(-2) + '/' + 
+                                               ('0' + (date.getMonth() + 1)).slice(-2) + '/' + 
+                                               date.getFullYear() + ' ' +
+                                               ('0' + date.getHours()).slice(-2) + ':' +
+                                               ('0' + date.getMinutes()).slice(-2);
+                            }
+                            newReadHTML += '<div class="notification-item" data-notification-id="' + 
+                                         (notification.id || '') + '">' +
+                                         (annonceTitle ? '<div class="notification-title">Annonce: ' + escapeHtml(annonceTitle) + '</div>' : '') +
+                                         '<div class="notification-message">' + escapeHtml(notification.message || '') + '</div>' +
+                                         '<div class="notification-footer">' +
+                                         (formattedDate ? '<div class="notification-date">' + escapeHtml(formattedDate) + '</div>' : '') +
+                                         '</div></div>';
+                        });
+                        readList.innerHTML = newReadHTML;
+                    }
+
+                    if (readEmpty) {
+                        readEmpty.style.display = readNotifications.length === 0 ? 'block' : 'none';
+                    }
+
                     lastUnreadCount = unreadCount;
                 })
                 .catch(function() {});
-        }, 5000);
+        }
+
+        function escapeHtml(text) {
+            var div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        setInterval(silentRefreshNotifications, 5000);
     }
 
     window.addEventListener('load', function() {
