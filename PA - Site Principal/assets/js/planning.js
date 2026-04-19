@@ -957,6 +957,115 @@
         savePlanning(formData);
     });
 
+    var calendarToggleBtn = document.getElementById('calendar-toggle-btn');
+    var calendarPickerPopover = document.getElementById('calendar-picker-popover');
+    var calendarMonthYear = document.getElementById('calendar-month-year');
+    var calendarDays = document.getElementById('calendar-days');
+    var calendarPrevMonth = document.getElementById('calendar-prev-month');
+    var calendarNextMonth = document.getElementById('calendar-next-month');
+    
+    var calendarCurrentDate = new Date();
+
+    function renderCalendar() {
+        calendarMonthYear.textContent = calendarCurrentDate.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+        
+        calendarDays.innerHTML = '';
+        
+        var year = calendarCurrentDate.getFullYear();
+        var month = calendarCurrentDate.getMonth();
+        
+        var firstDay = new Date(year, month, 1);
+
+        var lastDay = new Date(year, month + 1, 0);
+        
+        var startDate = new Date(firstDay);
+        startDate.setDate(startDate.getDate() - ((startDate.getDay() + 6) % 7));
+        
+        var date = new Date(startDate);
+        var weekCount = 0;
+        
+        while (date <= lastDay || weekCount < 6) {
+            for (var i = 0; i < 7; i++) {
+                var dayEl = document.createElement('div');
+                dayEl.className = 'calendar-day';
+                dayEl.textContent = date.getDate();
+                
+                var isOtherMonth = date.getMonth() !== month;
+                var isToday = date.toDateString() === new Date().toDateString();
+                var isInCurrentWeek = date >= currentWeekStart && date <= addDays(currentWeekStart, 6);
+                var isWeekStart = date.getDay() === 1;
+                var isWeekEnd = date.getDay() === 0;
+                
+                if (isOtherMonth) {
+                    dayEl.classList.add('other-month');
+                }
+                if (isToday) {
+                    dayEl.classList.add('today');
+                }
+                if (isInCurrentWeek && !isOtherMonth) {
+                    if (isWeekStart) {
+                        dayEl.classList.add('week-start');
+                    } else if (isWeekEnd) {
+                        dayEl.classList.add('week-end');
+                    } else {
+                        dayEl.classList.add('in-week');
+                    }
+                }
+                
+                if (!isOtherMonth) {
+                    dayEl.addEventListener('click', (function(d) {
+                        return function() {
+                            currentWeekStart = getMonday(new Date(d));
+                            updateDateRangeDisplay();
+                            loadPlannings();
+                            
+                            calendarPickerPopover.classList.remove('active');
+                            renderCalendar();
+                        };
+                    })(new Date(date)));
+                }
+                
+                calendarDays.appendChild(dayEl);
+                date.setDate(date.getDate() + 1);
+            }
+            weekCount++;
+        }
+    }
+
+    if (calendarToggleBtn) {
+        calendarToggleBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            calendarPickerPopover.classList.toggle('active');
+            if (calendarPickerPopover.classList.contains('active')) {
+                renderCalendar();
+                calendarCurrentDate = new Date(currentWeekStart);
+                renderCalendar();
+            }
+        });
+    }
+
+    if (calendarPrevMonth) {
+        calendarPrevMonth.addEventListener('click', function() {
+            calendarCurrentDate.setMonth(calendarCurrentDate.getMonth() - 1);
+            renderCalendar();
+        });
+    }
+
+    if (calendarNextMonth) {
+        calendarNextMonth.addEventListener('click', function() {
+            calendarCurrentDate.setMonth(calendarCurrentDate.getMonth() + 1);
+            renderCalendar();
+        });
+    }
+
+    document.addEventListener('click', function(e) {
+        if (calendarPickerPopover && calendarToggleBtn) {
+            if (!calendarPickerPopover.contains(e.target) && !calendarToggleBtn.contains(e.target)) {
+                calendarPickerPopover.classList.remove('active');
+            }
+        }
+    });
+
     updateDateRangeDisplay();
     loadPlannings();
 })();

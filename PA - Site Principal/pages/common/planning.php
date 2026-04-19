@@ -45,11 +45,36 @@ switch ($user['user_type']) {
 			<button class="date-nav-btn" id="today-btn" title="Jump to this week" style="margin-left:10px;">
 				<i class="fa-solid fa-calendar-day"></i>
 			</button>
+			<button class="date-nav-btn" id="calendar-toggle-btn" title="Open calendar picker" style="margin-left:5px;">
+				<i class="fa-solid fa-calendar"></i>
+			</button>
 		</div>
 		<button class="add-planning-button" id="add-planning-btn">
 			<i class="fa-solid fa-plus"></i>
 			Add Time Slot
 		</button>
+	</div>
+
+	<div class="calendar-picker-popover" id="calendar-picker-popover">
+		<div class="calendar-picker-header">
+			<button class="calendar-nav-btn" id="calendar-prev-month" title="Previous month">
+				<i class="fa-solid fa-chevron-left"></i>
+			</button>
+			<div class="calendar-month-year" id="calendar-month-year">Month Year</div>
+			<button class="calendar-nav-btn" id="calendar-next-month" title="Next month">
+				<i class="fa-solid fa-chevron-right"></i>
+			</button>
+		</div>
+		<div class="calendar-weekdays">
+			<div class="weekday">Mo</div>
+			<div class="weekday">Tu</div>
+			<div class="weekday">We</div>
+			<div class="weekday">Th</div>
+			<div class="weekday">Fr</div>
+			<div class="weekday">Sa</div>
+			<div class="weekday">Su</div>
+		</div>
+		<div class="calendar-days" id="calendar-days"></div>
 	</div>
 
 	<div class="planning-view">

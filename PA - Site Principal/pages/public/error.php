@@ -21,7 +21,7 @@ if (file_exists($errorMappingPath)) {
 	}
 }
 $title = "Error";
-$extraCss = ['/PA/PA%20-%20Site%20Principal/assets/css/error-page.css'];
+$extraCss = ['/assets/css/error-page.css'];
 include_once __DIR__ . '/../../includes/header.php';
 ?>
 
