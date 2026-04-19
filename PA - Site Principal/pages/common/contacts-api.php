@@ -19,6 +19,30 @@ $method = $_SERVER['REQUEST_METHOD'];
 $rawBody = file_get_contents('php://input');
 
 if ($method === 'POST') {
+    $bodyData = json_decode($rawBody, true);
+    
+    $fieldsToCheck = ['message', 'subject', 'content', 'title'];
+    foreach ($fieldsToCheck as $field) {
+        if (is_array($bodyData) && isset($bodyData[$field])) {
+            $value = trim($bodyData[$field]);
+            if ($value !== '') {
+                $moderationPayload = json_encode(['content' => $value]);
+                $moderationResp = askAPI('/moderation', 'POST', $moderationPayload);
+                $moderationData = json_decode($moderationResp, true);
+                
+                if (is_array($moderationData) && isset($moderationData['flagged']) && $moderationData['flagged'] === true) {
+                    $flaggedWords = isset($moderationData['flaggedWords']) && is_array($moderationData['flaggedWords']) 
+                        ? implode(', ', $moderationData['flaggedWords']) 
+                        : 'profanity';
+                    if (ob_get_length()) ob_clean();
+                    http_response_code(422);
+                    echo json_encode(['error' => "$field contains prohibited content ($flaggedWords). Please revise."]);
+                    exit;
+                }
+            }
+        }
+    }
+    
     $resp = askAPI('/contacts', 'POST', $rawBody);
     if (ob_get_length()) ob_clean();
     echo $resp;

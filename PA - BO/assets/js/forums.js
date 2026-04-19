@@ -217,7 +217,104 @@
         openBtn.addEventListener('click', function() { window.location.href = `forum?uuid=${encodeURIComponent(f.id)}`; });
         right.appendChild(openBtn);
 
+        if (window.currentUserId && (f.created_by === window.currentUserId || window.currentUserType == 4)) {
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.className = 'btn-icon delete-forum';
+            deleteBtn.innerHTML = '<i class="fa-regular fa-trash-alt"></i>';
+            deleteBtn.title = 'Delete forum';
+            deleteBtn.addEventListener('click', function() {
+                setupDeleteForumModal(f.id);
+            });
+            right.appendChild(deleteBtn);
+        }
+
         item.appendChild(left);
+        item.appendChild(right);
+        return item;
+    }
+
+    function setupDeleteForumModal(forumId) {
+        const modal = document.getElementById('delete-forum-modal');
+        const form = document.getElementById('delete-forum-form');
+        const closeBtn = document.getElementById('close-delete-forum');
+        
+        if (!modal || !form) return;
+
+        let lastFocused = null;
+        lastFocused = document.activeElement;
+        modal.classList.add('is-open');
+        document.body.classList.add('modal-open');
+        modal.setAttribute('aria-hidden', 'false');
+
+        function closeModal() {
+            modal.classList.remove('is-open');
+            modal.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('modal-open');
+            if (lastFocused && typeof lastFocused.focus === 'function') {
+                lastFocused.focus();
+            }
+            form.onsubmit = null;
+        }
+
+        if (closeBtn) closeBtn.onclick = closeModal;
+        modal.onclick = function(e) { if (e.target === modal) closeModal(); };
+
+        form.onsubmit = function(e) {
+            e.preventDefault();
+            deleteForum(forumId, closeModal);
+        };
+
+        document.onkeydown = function(e) {
+            if (!modal.classList.contains('is-open')) return;
+            if (e.key === 'Escape') closeModal();
+        };
+    }
+
+    function deleteForum(forumId, onClose) {
+        const form = document.getElementById('delete-forum-form');
+        const submitBtn = form ? form.querySelector('button[type="submit"]') : null;
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Deleting...';
+        }
+
+        fetch(`forums-api?forum_id=${encodeURIComponent(forumId)}&_method=DELETE`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(r => r.text())
+        .then(text => {
+            if (text) {
+                try {
+                    const data = JSON.parse(text);
+                    if (data.error) {
+                        alert('Error deleting forum: ' + data.error);
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            submitBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Delete Forum';
+                        }
+                        return;
+                    }
+                } catch (err) {
+                    console.error('Unexpected response:', text, err);
+                }
+            }
+            onClose();
+            location.reload();
+        })
+        .catch(err => {
+            console.error('Failed to delete forum', err);
+            alert('Unable to delete forum. Please try again.');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Delete Forum';
+            }
+        });
+    
         item.appendChild(right);
         return item;
     }

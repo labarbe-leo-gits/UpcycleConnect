@@ -23,6 +23,8 @@ if (!$user) {
     exit;
 }
 
+$moderatedFields = ['username', 'first_name', 'last_name', 'company_name'];
+
 $body  = json_decode(file_get_contents('php://input'), true);
 $field = trim($body['field'] ?? '');
 $value = trim($body['value'] ?? '');
@@ -39,6 +41,22 @@ if ($value === '' && !preg_match('/^user_/', $field)) {
     http_response_code(422);
     echo json_encode(['error' => 'Value cannot be empty']);
     exit;
+}
+
+if (in_array($field, $moderatedFields, true) && $value !== '') {
+
+    $moderationPayload = json_encode(['content' => $value]);
+    $moderationResp = askAPI('/moderation', 'POST', $moderationPayload);
+    $moderationData = json_decode($moderationResp, true);
+    
+    if (is_array($moderationData) && isset($moderationData['flagged']) && $moderationData['flagged'] === true) {
+        $flaggedWords = isset($moderationData['flaggedWords']) && is_array($moderationData['flaggedWords']) 
+            ? implode(', ', $moderationData['flaggedWords']) 
+            : 'profanity';
+        http_response_code(422);
+        echo json_encode(['error' => "This $field contains prohibited content ($flaggedWords). Please choose a different value."]);
+        exit;
+    }
 }
 
 $resp = askAPI("/users/{$user['id']}", 'PATCH', json_encode([$field => $value]));

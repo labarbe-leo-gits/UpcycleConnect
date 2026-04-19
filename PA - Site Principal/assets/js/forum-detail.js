@@ -372,6 +372,199 @@
             });
         }
 
+        const editForumBtn = document.getElementById('edit-forum');
+        const deleteForumBtn = document.getElementById('delete-forum');
+        const editForumModal = document.getElementById('edit-forum-modal');
+        const deleteForumModal = document.getElementById('delete-forum-modal');
+        const editForumForm = document.getElementById('edit-forum-form');
+        const deleteForumForm = document.getElementById('delete-forum-form');
+        const closeEditForumModalBtn = document.getElementById('close-edit-forum-modal');
+        const closeDeleteForumModalBtn = document.getElementById('close-delete-forum-modal');
+
+        function closeForumEditModal() {
+            if (editForumModal) {
+                editForumModal.classList.remove('is-open');
+                document.getElementById('edit-forum-error').style.display = 'none';
+            }
+        }
+
+        function closeForumDeleteModal() {
+            if (deleteForumModal) {
+                deleteForumModal.classList.remove('is-open');
+            }
+        }
+
+        if (editForumBtn) {
+            editForumBtn.addEventListener('click', function() {
+                if (!window.forumId || !window.forumData) {
+                    return;
+                }
+                document.getElementById('edit-forum-title').value = window.forumData.title || '';
+                document.getElementById('edit-forum-description').value = window.forumData.description || '';
+                if (editForumModal) {
+                    editForumModal.classList.add('is-open');
+                }
+            });
+        }
+
+        if (closeEditForumModalBtn) {
+            closeEditForumModalBtn.addEventListener('click', closeForumEditModal);
+        }
+
+        if (editForumModal) {
+            editForumModal.addEventListener('click', function(e) {
+                if (e.target === editForumModal) {
+                    closeForumEditModal();
+                }
+            });
+        }
+
+        if (editForumForm) {
+            editForumForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                if (!window.forumId) return;
+                const title = document.getElementById('edit-forum-title').value.trim();
+                const description = document.getElementById('edit-forum-description').value.trim();
+                if (!title || !description) {
+                    const errorEl = document.getElementById('edit-forum-error');
+                    if (errorEl) {
+                        errorEl.textContent = 'Title and description are required';
+                        errorEl.style.display = 'block';
+                    }
+                    return;
+                }
+                const submitBtn = editForumForm.querySelector('button[type="submit"]');
+                const originalText = submitBtn ? submitBtn.innerHTML : '';
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving';
+                }
+                const payload = { title: title, description: description };
+                fetch(`forums-api?uuid=${encodeURIComponent(window.forumId)}&_method=PATCH`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify(payload)
+                })
+                .then(r => {
+                    if (!r.ok) throw new Error('Server returned ' + r.status);
+                    return r.text();
+                })
+                .then(text => {
+                    if (text) {
+                        try {
+                            const obj = JSON.parse(text);
+                            if (obj.error) {
+                                const errorEl = document.getElementById('edit-forum-error');
+                                if (errorEl) {
+                                    errorEl.textContent = obj.error;
+                                    errorEl.style.display = 'block';
+                                }
+                            }
+                        } catch (err) {
+                            console.error('Unexpected response updating forum:', text, err);
+                        }
+                    }
+                })
+                .then(() => {
+                    closeForumEditModal();
+                    location.reload();
+                })
+                .catch(err => {
+                    console.error('Failed to update forum', err);
+                    const errorEl = document.getElementById('edit-forum-error');
+                    if (errorEl) {
+                        errorEl.textContent = err.message || 'Unable to update forum';
+                        errorEl.style.display = 'block';
+                    }
+                })
+                .finally(() => {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalText;
+                    }
+                });
+            });
+        }
+
+        if (deleteForumBtn) {
+            deleteForumBtn.addEventListener('click', function() {
+                if (deleteForumModal) {
+                    deleteForumModal.classList.add('is-open');
+                }
+            });
+        }
+
+        if (closeDeleteForumModalBtn) {
+            closeDeleteForumModalBtn.addEventListener('click', closeForumDeleteModal);
+        }
+
+        // Close modal when clicking outside (on the modal overlay)
+        if (deleteForumModal) {
+            deleteForumModal.addEventListener('click', function(e) {
+                if (e.target === deleteForumModal) {
+                    closeForumDeleteModal();
+                }
+            });
+        }
+
+        if (deleteForumForm) {
+            deleteForumForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                if (!window.forumId) {
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('Unable to determine which forum to delete', 'error');
+                    }
+                    return;
+                }
+                const submitBtn = deleteForumForm.querySelector('button[type="submit"]');
+                const originalText = submitBtn ? submitBtn.innerHTML : '';
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Deleting';
+                }
+
+                fetch(`forums-api?uuid=${encodeURIComponent(window.forumId)}&_method=DELETE`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(r => {
+                    if (!r.ok) throw new Error('Server returned ' + r.status);
+                    return r.text();
+                })
+                .then(text => {
+                    if (text) {
+                        try {
+                            const obj = JSON.parse(text);
+                            if (obj.error) {
+                                alert(obj.error);
+                            }
+                        } catch (err) {
+                            console.error('Unexpected response deleting forum:', text, err);
+                        }
+                    }
+                })
+                .then(() => {
+                    closeForumDeleteModal();
+                    window.location.href = 'forums';
+                })
+                .catch(err => {
+                    console.error('Failed to delete forum', err);
+                    alert(err.message || 'Unable to delete forum');
+                })
+                .finally(() => {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalText;
+                    }
+                });
+            });
+        }
+
     });
 
     function loadPosts(forumId) {

@@ -7,21 +7,21 @@ include_once '../../config/db.php';
 function getSources(): array {
     $base = [
         [
-            'id' => 'ldnoobw',
-            'name' => 'LDNOOBW',
+            'id' => 'french-swear-words',
+            'name' => 'French Swear Words',
             'repoUrl' => 'https://github.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words',
             'apiUrl' => 'https://api.github.com/repos/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words/contents',
             'rawBase' => 'https://raw.githubusercontent.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words/master/',
-            'localFile' => 'badwords.json',
+            'localFile' => 'badwords-fr.json',
             'canDisconnect' => false,
         ],
         [
-            'id' => 'google-profanity-words',
-            'name' => 'Google Profanity Words',
+            'id' => 'french-profanity-words',
+            'name' => 'French Profanity Words',
             'repoUrl' => 'https://github.com/coffee-and-fun/google-profanity-words',
             'apiUrl' => 'https://api.github.com/repos/coffee-and-fun/google-profanity-words/contents',
             'rawBase' => 'https://raw.githubusercontent.com/coffee-and-fun/google-profanity-words/main/',
-            'localFile' => 'badwords-google.json',
+            'localFile' => 'badwords-fr-profanity.json',
             'canDisconnect' => true,
         ],
     ];

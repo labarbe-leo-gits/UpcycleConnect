@@ -517,8 +517,40 @@
 
             submitButton.disabled = true;
             var originalText = submitButton.innerHTML;
-            submitButton.innerHTML = '<i class="fa-solid fa-spinner"></i> Creating...';
+            submitButton.innerHTML = '<i class="fa-solid fa-spinner"></i> Checking content...';
 
+            if (typeof Moderator !== 'undefined') {
+                Moderator.checkFields({
+                    'title': title,
+                    'description': description
+                }).then(function(validation) {
+                    if (!validation.valid) {
+                        errors.push('Content moderation: ' + Object.values(validation.errors).join('; '));
+                    }
+                    
+                    if (errors.length > 0) {
+                        submitButton.disabled = false;
+                        submitButton.innerHTML = originalText;
+                        var errorMessage = errors.join('<br>');
+                        var errorBox = document.querySelector('.add-modal .form-error') || createErrorBox();
+                        errorBox.innerHTML = errorMessage;
+                        errorBox.style.display = 'block';
+                        return;
+                    }
+                    
+                    submitForm();
+                }).catch(function(err) {
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = originalText;
+                    console.error('Moderation check error:', err);
+                });
+                return;
+            }
+            
+            submitButton.innerHTML = '<i class="fa-solid fa-spinner"></i> Creating...';
+            submitForm();
+
+            function submitForm() {
             var categorySelect = document.getElementById('offer-category');
             var category = categorySelect ? categorySelect.value : '';
 
@@ -595,6 +627,7 @@
                 submitButton.disabled = false;
                 submitButton.innerHTML = originalText;
             });
+            } // End of submitForm()
         });
     }
 

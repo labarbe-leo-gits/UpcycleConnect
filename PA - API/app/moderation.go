@@ -99,3 +99,30 @@ func ModerateContent(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
 }
+
+func CheckContentForBadWords(text string) (bool, []string, error) {
+	if strings.TrimSpace(text) == "" {
+		return false, nil, nil
+	}
+
+	set, err := getBadWordSet()
+	if err != nil {
+		return false, nil, err
+	}
+
+	lowerText := strings.ToLower(text)
+	found := make(map[string]struct{})
+
+	for w := range set {
+		if strings.Contains(lowerText, w) {
+			found[w] = struct{}{}
+		}
+	}
+
+	words := make([]string, 0, len(found))
+	for w := range found {
+		words = append(words, w)
+	}
+
+	return len(words) > 0, words, nil
+}

@@ -21,6 +21,21 @@ if ($data === null) {
 }
 if (isset($data['name'])) {
     $data['name'] = trim(filter_var($data['name'], FILTER_UNSAFE_RAW));
+    
+    if ($data['name'] !== '') {
+        $moderationPayload = json_encode(['content' => $data['name']]);
+        $moderationResp = askAPI('/moderation', 'POST', $moderationPayload);
+        $moderationData = json_decode($moderationResp, true);
+        
+        if (is_array($moderationData) && isset($moderationData['flagged']) && $moderationData['flagged'] === true) {
+            $flaggedWords = isset($moderationData['flaggedWords']) && is_array($moderationData['flaggedWords']) 
+                ? implode(', ', $moderationData['flaggedWords']) 
+                : 'profanity';
+            http_response_code(422);
+            echo json_encode(['error' => "Category name contains prohibited content ($flaggedWords). Please choose different wording."]);
+            exit;
+        }
+    }
 }
 
 $jsonBody = json_encode($data);

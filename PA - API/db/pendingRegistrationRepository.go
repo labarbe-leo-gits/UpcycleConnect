@@ -24,6 +24,7 @@ func GetPendingRegistrationByIdentifier(identifier string) (*models.PendingRegis
 		&registration.FirstName,
 		&registration.LastName,
 		&companyName,
+		&siret,
 		&registration.UserType,
 		&registration.Username,
 		&registration.Email,
@@ -64,6 +65,7 @@ func GetPendingRegistrationByID(id string) (*models.PendingRegistration, error) 
 		&registration.FirstName,
 		&registration.LastName,
 		&companyName,
+		&siret,
 		&registration.UserType,
 		&registration.Username,
 		&registration.Email,
@@ -96,7 +98,7 @@ func CreatePendingRegistration(p models.PendingRegistration) (string, error) {
 	}
 
 	_, err := Db.Exec(
-		"INSERT INTO pending_registrations (id, first_name, last_name, company_name, siret, user_type, username, email, password_hash, llm_quota, token, expires_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())",
+		"INSERT INTO pending_registrations (id, first_name, last_name, company_name, siret, user_type, username, email, password_hash, llm_quota, token, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 		p.ID,
 		p.FirstName,
 		p.LastName,

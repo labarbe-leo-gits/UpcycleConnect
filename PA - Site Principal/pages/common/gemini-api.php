@@ -47,10 +47,34 @@ if ($llmData['usage_today'] >= $llmData['quota']) {
     exit;
 }
 
+
 $geminiKey = getenv('GEMINI_API_KEY');
+$envFile = __DIR__ . '/../../.env';
+$envExists = file_exists($envFile);
+$envData = [];
+
 if (!$geminiKey) {
+    if ($envExists) {
+        $envData = parse_ini_file($envFile);
+        $geminiKey = $envData['GEMINI_API_KEY'] ?? null;
+    }
+}
+
+if (!$geminiKey) {
+    $debugInfo = [
+        'getenv_result' => var_export(getenv('GEMINI_API_KEY'), true),
+        'env_file_path' => $envFile,
+        'env_file_exists' => $envExists,
+        'env_file_content_keys' => $envExists ? array_keys($envData) : [],
+        'env_GEMINI_API_KEY' => $envData['GEMINI_API_KEY'] ?? 'NOT FOUND',
+        'all_env_vars_with_gemini' => array_filter(array_keys($_SERVER), fn($k) => stripos($k, 'gemini') !== false),
+    ];
+    
     http_response_code(500);
-    echo json_encode(['error' => 'Gemini API key not configured. Add GEMINI_API_KEY to your .env file.']);
+    echo json_encode([
+        'error' => 'Gemini API key not configured',
+        'debug' => $debugInfo
+    ]);
     exit;
 }
 
@@ -96,13 +120,15 @@ switch ($type) {
         exit;
 }
 
-$apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent?key=' . urlencode($geminiKey);
+$apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemma-4-26b-a4b-it:generateContent?key=' . urlencode($geminiKey);
+
+$jsonPrompt = $prompt . "\n\nReply with ONLY a JSON object: {\"response\": \"Your message here\"}";
 
 $geminiPayload = json_encode([
     'contents' => [
         [
             'parts' => [
-                ['text' => $prompt]
+                ['text' => $jsonPrompt]
             ]
         ]
     ],
@@ -114,7 +140,8 @@ $geminiPayload = json_encode([
 
 $ch = curl_init($apiUrl);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_TIMEOUT, 20);
+curl_setopt($ch, CURLOPT_TIMEOUT, 50);
+curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
 curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_POSTFIELDS, $geminiPayload);
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
@@ -160,7 +187,60 @@ if (!isset($geminiData['candidates'][0]['content']['parts'][0]['text'])) {
     exit;
 }
 
-$text = $geminiData['candidates'][0]['content']['parts'][0]['text'] ?? '';
+$text = trim($geminiData['candidates'][0]['content']['parts'][0]['text'] ?? '');
+
+
+$responsePos = strrpos($text, '{"response"');
+if ($responsePos !== false) {
+
+    $jsonStart = $responsePos;
+    $braceCount = 0;
+    $inString = false;
+    $escaped = false;
+    
+    for ($i = $jsonStart; $i < strlen($text); $i++) {
+        $char = $text[$i];
+        
+        if ($escaped) {
+            $escaped = false;
+            continue;
+        }
+        
+        if ($char === '\\') {
+            $escaped = true;
+            continue;
+        }
+        
+        if ($char === '"' && !$escaped) {
+            $inString = !$inString;
+            continue;
+        }
+        
+        if (!$inString) {
+            if ($char === '{') $braceCount++;
+            if ($char === '}') {
+                $braceCount--;
+                if ($braceCount === 0) {
+                    $jsonText = substr($text, $jsonStart, $i - $jsonStart + 1);
+                    $jsonParsed = json_decode($jsonText, true);
+                    if (is_array($jsonParsed) && isset($jsonParsed['response'])) {
+                        $text = $jsonParsed['response'];
+                        break;
+                    }
+                }
+            }
+        }
+    }
+}
+
+if (strpos($text, '{"response"') === false) {
+    $jsonParsed = json_decode($text, true);
+    if (is_array($jsonParsed) && isset($jsonParsed['response'])) {
+        $text = $jsonParsed['response'];
+    }
+}
+
+$text = trim($text);
 if ($text === '') {
     http_response_code(502);
     echo json_encode(['error' => 'Empty response from Gemini']);

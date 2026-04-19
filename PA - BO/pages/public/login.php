@@ -1,5 +1,18 @@
 <?php
 session_start();
+
+$ENV_FILE = __DIR__ . '/../.env';
+if (file_exists($ENV_FILE)) {
+    $env = parse_ini_file($ENV_FILE);
+    foreach ($env as $key => $value) {
+        if (!getenv($key)) {
+            putenv("$key=$value");
+        }
+    }
+} else {
+    error_log("Warning: .env file not found at $ENV_FILE. Using system environment variables.");
+}
+
 require_once '../../config/db.php';
 require_once '../../includes/auth.php';
 
@@ -162,7 +175,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <button type="submit">Login</button>
         </form>
-        <button class="btn-secondary" style="margin-top:20px;width:100%;" onclick="window.location.href='../../../PA - Site Principal/pages/public/login'">
+        <?php
+            $backUrl = '../../../../PA - Site Principal/pages/public/login';
+            $appPublicUrl = rtrim((string) getenv('APP_PUBLIC_URL'), '/');
+            
+            if ($appPublicUrl === '') {
+                $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+                $host = 'localhost:8081';
+                $host = preg_replace('#/PA/PA\s*-\s*BO.*#', '', $host);
+                $appPublicUrl = $scheme . '://' . $host;
+            }
+            
+            if ($appPublicUrl !== '' && $appPublicUrl !== 'http://' && $appPublicUrl !== 'https://') {
+                $backUrl = $appPublicUrl . '/pages/public/login';
+            }
+        ?>
+        <button class="btn-secondary" style="margin-top:20px;width:100%;" onclick="window.location.href='<?php echo htmlspecialchars($backUrl); ?>'">
             Back to UpcycleConnect
         </button>
     </div>

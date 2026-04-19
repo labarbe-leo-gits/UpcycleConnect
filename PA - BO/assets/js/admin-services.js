@@ -940,26 +940,32 @@
         errorBox.style.display = 'none';
 
         const editId = this.dataset.editId;
+        const name = this.querySelector('#svc-name').value.trim();
+        const description = this.querySelector('#svc-description').value.trim();
+        
+        const submitBtn = document.getElementById('service-form-submit');
+        submitBtn.disabled = true;
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Saving…';
+        performSubmit();
+
+        function performSubmit() {
         const payload = {
-            name:                 this.querySelector('#svc-name').value.trim(),
-            description:          this.querySelector('#svc-description').value.trim(),
-            price:                parseFloat(this.querySelector('#svc-price').value) || 0,
-            type_id:              this.querySelector('#svc-type').value,
-            service_date:         this.querySelector('#svc-date').value,
-            service_road:         this.querySelector('#svc-road').value.trim(),
-            service_city:         this.querySelector('#svc-city').value.trim(),
-            service_zip:          this.querySelector('#svc-zip').value.trim(),
+            name:                 name,
+            description:          description,
+            price:                parseFloat(document.querySelector('#svc-price').value) || 0,
+            type_id:              document.querySelector('#svc-type').value,
+            service_date:         document.querySelector('#svc-date').value,
+            service_road:         document.querySelector('#svc-road').value.trim(),
+            service_city:         document.querySelector('#svc-city').value.trim(),
+            service_zip:          document.querySelector('#svc-zip').value.trim(),
             meeting_type:         meetingType,
             online_meeting_link:  meetingUrl,
             schedules:            readSchedulesFromForm()
         };
 
-        const maxP = this.querySelector('#svc-max-participants').value;
+        const maxP = document.querySelector('#svc-max-participants').value;
         if (maxP !== '') payload.maximum_participants = parseInt(maxP, 10);
-
-        const submitBtn = document.getElementById('service-form-submit');
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Saving…';
 
         const isEdit  = !!editId;
         const url     = isEdit ? `service-update-api?id=${encodeURIComponent(editId)}` : 'service-create-api';
@@ -1003,6 +1009,7 @@
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Save';
             });
+        } // End of performSubmit()
     });
 
     function confirmDelete(svc) {

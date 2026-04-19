@@ -142,14 +142,14 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
                 </a>
                 <div class="dropdown-menu">
                     <a href="<?= $profileUrl ?>"><i class="fa-solid fa-user"></i>Profile</a>
-                    <a href="<?= base_url('pages/admin/logout.php') ?>" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="fa-solid fa-right-from-bracket"></i>Logout</a>
+                    <a href="<?= base_url('pages/admin/logout') ?>" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="fa-solid fa-right-from-bracket"></i>Logout</a>
                 </div>
             </div>
         </nav>
     </header>
-    <script src="/PA/PA%20-%20BO/assets/js/global-search.js" defer></script>
+    <script src="/assets/js/global-search.js" defer></script>
     
-    <form id="logout-form" action="/PA/PA%20-%20BO/pages/admin/logout" method="POST" class="hidden-form">
+    <form id="logout-form" action="/pages/admin/logout" method="POST" class="hidden-form">
         <input type="hidden" name="logout" value="1">
     </form>
 </body>

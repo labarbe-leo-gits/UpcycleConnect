@@ -40,21 +40,17 @@ $prompt = <<<PROMPT
 You are a content moderator for an online marketplace focused on sustainability.
 Evaluate the following user-generated content for potential issues, offensive language, or policy violations (e.g. scams, hate speech, adult content, etc.):
 "{$content}"
-Reply with a JSON object containing:
-- "flagged": true if the content is inappropriate, false otherwise
-- "reasons": an array of strings explaining why the content was flagged (empty if not
-flagged)
-- "flaggedWords": an array of specific words or short phrases that triggered the
-flagging (empty if none)
-- "flaggedSentences": an array of full sentences from the content that are problematic
 
-Example response:
+IMPORTANT: Reply with ONLY a JSON object. Include nothing else.
+
 {
-  "flagged": true,
-  "reasons": ["Contains hate speech", "Promotes scams"],
-  "flaggedWords": ["scam", "hate"],
-  "flaggedSentences": ["This is a scam."]
+  "flagged": true|false,
+  "reasons": ["reason1", "reason2"],
+  "flaggedWords": ["word1", "word2"],
+  "flaggedSentences": ["sentence1", "sentence2"]
 }
+
+If not flagged, use empty arrays for reasons, flaggedWords, and flaggedSentences.
 PROMPT;
 
 $requestBody = json_encode([
@@ -67,14 +63,15 @@ $requestBody = json_encode([
     ],
 ]);
 
-$url = 'https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent?key=' . urlencode($apiKey);
+$url = 'https://generativelanguage.googleapis.com/v1beta/models/gemma-4-26b-a4b-it:generateContent?key=' . urlencode($apiKey);
 
 $ch = curl_init($url);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_POSTFIELDS, $requestBody);
 curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-curl_setopt($ch, CURLOPT_TIMEOUT, 12);
+curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
 
 $response = curl_exec($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);

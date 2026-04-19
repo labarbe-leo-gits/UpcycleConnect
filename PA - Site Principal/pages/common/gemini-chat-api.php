@@ -38,21 +38,7 @@ if (!is_array($messages) || count($messages) === 0) {
 
 $userId = $loggedIn ? $user['id'] : null;
 
-if ($loggedIn) {
-    $llmRaw = askAPI("/users/{$userId}/llm", 'GET');
-    $llmData = json_decode($llmRaw, true);
-    if (!is_array($llmData) || !isset($llmData['usage_today'], $llmData['quota'])) {
-        http_response_code(502);
-        echo json_encode(['error' => 'Failed to check LLM usage']);
-        exit;
-    }
 
-    if ($llmData['usage_today'] >= $llmData['quota']) {
-        http_response_code(429);
-        echo json_encode(['error' => 'Daily AI quota exceeded — try again tomorrow']);
-        exit;
-    }
-}
 
 function decodeJsonIfArray($payload) {
     $decoded = json_decode($payload, true);
@@ -336,39 +322,44 @@ if ($loggedIn) {
     $systemPrompt = <<<SYSTEM
 You are a helpful support assistant for UpcycleConnect.
 Upcycle Connect is an upcycling marketplace and community platform where creators and customers connect to offer, buy, and manage reclaimed-material services, deposit requests, and refunds.
-Detect the user's language from the conversation and reply in the same language.
-Format your response using markdown when appropriate for emphasis, lists, links, and inline code.
-The user is logged in and you may reference this account summary when answering questions about their offers, orders, refunds, payouts, and profile.
-If the user asks for specific account details, answer using only the information below. Do not invent additional values.
-Use a friendly, concise, and professional tone.
+
+OUTPUT FORMAT: You MUST respond with ONLY a JSON object in this exact format:
+{"response": "Your message here"}
+
+Rules:
+- Detect the user's language and reply in the same language
+- Use markdown in the response for emphasis, lists, links
+- Be friendly, concise, and professional
+- Only answer UpcycleConnect support questions
+- Decline unrelated content, jokes, personal questions, tech stack/code questions
 
 User account summary:
-- User ID: {$userId}
-- Username: {$user['username']}
 - Name: {$fullName}
 - Email: {$user['email']}
 - User type: {$userTypeLabel}
 - Active offers: {$offersCount}
-- Total deposit requests: {$depositsCount}
-- Pending deposit requests: {$pendingDepositsCount}
-- Total refund requests: {$refundRequestsCount}
-- Pending refund requests: {$pendingRefundRequestsCount}
+- Total deposit requests: {$depositsCount} (Pending: {$pendingDepositsCount})
+- Total refund requests: {$refundRequestsCount} (Pending: {$pendingRefundRequestsCount})
 - Total orders: {$ordersCount}
 
-You cannot reply to any unrelated content such as jokes, personal questions, or non-support inquiries. Politely decline to answer if the user's message is not related to support for the UpcycleConnect platform.
-Also, please do not give any data about the platform tech stack and don't answer any code related questions by politely declining to answer and suggesting the user to contact support directly for such inquiries.
+Use this info when answering. Do not invent data. Do not include any text outside the JSON object.
 SYSTEM;
 } else {
     $systemPrompt = <<<SYSTEM
 You are a helpful support assistant for UpcycleConnect.
 Upcycle Connect is an upcycling marketplace and community platform where creators and customers connect to offer, buy, and manage reclaimed-material services, deposit requests, and refunds.
-Detect the user's language from the conversation and reply in the same language.
-Format your response using markdown when appropriate for emphasis, lists, links, and inline code.
-The user is not logged in, so answer using only general support information about the platform.
-Do not reference private account data.
-Use a friendly, concise, and professional tone.
-You cannot reply to any unrelated content such as jokes, personal questions, or non-support inquiries. Politely decline to answer if the user's message is not related to support for the UpcycleConnect platform.
-Also, please do not give any data about the platform tech stack and don't answer any code related questions by politely declining to answer and suggesting the user to contact support directly for such inquiries.
+
+OUTPUT FORMAT: You MUST respond with ONLY a JSON object in this exact format:
+{"response": "Your message here"}
+
+Rules:
+- Detect the user's language and reply in the same language
+- Use markdown in the response for emphasis, lists, links
+- Be friendly, concise, and professional
+- Only answer general UpcycleConnect support questions
+- Decline unrelated content, jokes, personal questions, tech stack/code questions
+
+Do not include any text outside the JSON object.
 SYSTEM;
 }
 
@@ -427,9 +418,35 @@ if (!empty($contents)) {
 }
 
 $apiKey = $_ENV['GEMINI_API_KEY'] ?? $_SERVER['GEMINI_API_KEY'] ?? getenv('GEMINI_API_KEY');
+$envFile = __DIR__ . '/../../.env';
+$envExists = file_exists($envFile);
+$envData = [];
+
 if (!$apiKey) {
+
+    if ($envExists) {
+        $envData = parse_ini_file($envFile);
+        $apiKey = $envData['GEMINI_API_KEY'] ?? null;
+    }
+}
+
+if (!$apiKey) {
+    $debugInfo = [
+        'env_result' => var_export($_ENV['GEMINI_API_KEY'] ?? 'NOT IN $_ENV', true),
+        'server_result' => var_export($_SERVER['GEMINI_API_KEY'] ?? 'NOT IN $_SERVER', true),
+        'getenv_result' => var_export(getenv('GEMINI_API_KEY'), true),
+        'env_file_path' => $envFile,
+        'env_file_exists' => $envExists,
+        'env_file_content_keys' => $envExists ? array_keys($envData) : [],
+        'env_GEMINI_API_KEY' => $envData['GEMINI_API_KEY'] ?? 'NOT FOUND',
+        'all_env_vars_with_gemini' => array_filter(array_keys($_SERVER), fn($k) => stripos($k, 'gemini') !== false),
+    ];
+    
     http_response_code(500);
-    echo json_encode(['error' => 'Gemini API key not configured']);
+    echo json_encode([
+        'error' => 'Gemini API key not configured',
+        'debug' => $debugInfo
+    ]);
     exit;
 }
 
@@ -441,7 +458,7 @@ $requestBody = json_encode([
     ],
 ]);
 
-$url = 'https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent?key=' . urlencode($apiKey);
+$url = 'https://generativelanguage.googleapis.com/v1beta/models/gemma-4-26b-a4b-it:generateContent?key=' . urlencode($apiKey);
 
 $ch = curl_init($url);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -451,7 +468,8 @@ curl_setopt($ch, CURLOPT_HTTPHEADER, [
     'Content-Type: application/json',
     'Content-Length: ' . strlen($requestBody),
 ]);
-curl_setopt($ch, CURLOPT_TIMEOUT, 25);
+curl_setopt($ch, CURLOPT_TIMEOUT, 50);
+curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
 $response = curl_exec($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 $curlErr = curl_error($ch);
@@ -491,6 +509,61 @@ if (!isset($data['candidates'][0]['content']['parts'][0]['text'])) {
 }
 
 $text = trim($data['candidates'][0]['content']['parts'][0]['text'] ?? '');
+
+$jsonMatch = null;
+if (preg_match('/\{.*"response"\s*:\s*"(.*?)"\s*\}/is', $text, $matches)) {
+    $jsonMatch = $matches[1];
+}
+
+if ($jsonMatch === null) {
+    $jsonParsed = json_decode($text, true);
+    if (is_array($jsonParsed) && isset($jsonParsed['response'])) {
+        $text = $jsonParsed['response'];
+    }
+} else {
+    $text = $jsonMatch;
+}
+
+$text = stripslashes($text);
+
+if (stripos($text, 'User says:') !== false || 
+    stripos($text, 'Persona:') !== false ||
+    stripos($text, 'Language Detection:') !== false) {
+    $lines = explode("\n", $text);
+    $actualResponse = [];
+    $foundStart = false;
+    
+    foreach ($lines as $line) {
+        $trimmed = trim($line);
+        
+        if (in_array(true, [
+            stripos($trimmed, 'User says:') !== false,
+            stripos($trimmed, 'Persona:') !== false,
+            stripos($trimmed, 'User Account:') !== false,
+            stripos($trimmed, 'Language Detection:') !== false,
+            stripos($trimmed, 'Constraint:') !== false,
+            stripos($trimmed, 'I should') !== false,
+            stripos($trimmed, 'Language:') !== false,
+            stripos($trimmed, 'Tone:') !== false,
+            stripos($trimmed, 'Scope:') !== false,
+            stripos($trimmed, 'Account info:') !== false,
+            preg_match('/^(User|System|Assistant|I|Maybe|Wait|Actually|Let|Response|Draft|Self-Correction):/', $trimmed),
+            $trimmed === ''
+        ])) {
+            continue;
+        }
+        
+        $foundStart = true;
+        $actualResponse[] = $trimmed;
+    }
+    
+    if ($foundStart && !empty($actualResponse)) {
+        $text = implode("\n", $actualResponse);
+    }
+}
+
+$text = trim($text);
+
 if ($text === '') {
     http_response_code(502);
     echo json_encode(['error' => 'Empty response from Gemini']);

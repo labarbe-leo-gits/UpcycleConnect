@@ -223,6 +223,18 @@ switch ($action) {
             exit;
         }
 
+        $moderationPayload = json_encode(['content' => $content]);
+        $moderationResp = askAPI('/moderation', 'POST', $moderationPayload);
+        $moderationData = json_decode($moderationResp, true);
+        
+        if (is_array($moderationData) && isset($moderationData['flagged']) && $moderationData['flagged'] === true) {
+            $flaggedWords = isset($moderationData['flaggedWords']) && is_array($moderationData['flaggedWords']) 
+                ? implode(', ', $moderationData['flaggedWords']) 
+                : 'profanity';
+            http_response_code(422);
+            echo json_encode(['error' => "Your comment contains prohibited content ($flaggedWords). Please revise."]);
+            exit;
+        }
 
         $currentUserId = $user['id'] ?? '';
         if ($currentUserId === '') {

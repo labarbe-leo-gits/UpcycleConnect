@@ -111,6 +111,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
+    $title = trim($payload['title']);
+    $moderationPayload = json_encode(['content' => $title]);
+    $moderationResp = askAPI('/moderation', 'POST', $moderationPayload);
+    $moderationData = json_decode($moderationResp, true);
+    
+    if (is_array($moderationData) && isset($moderationData['flagged']) && $moderationData['flagged'] === true) {
+        $flaggedWords = isset($moderationData['flaggedWords']) && is_array($moderationData['flaggedWords']) 
+            ? implode(', ', $moderationData['flaggedWords']) 
+            : 'profanity';
+        http_response_code(422);
+        echo json_encode(['error' => "Title contains prohibited content ($flaggedWords). Please choose different wording."]);
+        exit;
+    }
+
+    $description = trim($payload['description']);
+    $moderationPayload = json_encode(['content' => $description]);
+    $moderationResp = askAPI('/moderation', 'POST', $moderationPayload);
+    $moderationData = json_decode($moderationResp, true);
+    
+    if (is_array($moderationData) && isset($moderationData['flagged']) && $moderationData['flagged'] === true) {
+        $flaggedWords = isset($moderationData['flaggedWords']) && is_array($moderationData['flaggedWords']) 
+            ? implode(', ', $moderationData['flaggedWords']) 
+            : 'profanity';
+        http_response_code(422);
+        echo json_encode(['error' => "Description contains prohibited content ($flaggedWords). Please choose different wording."]);
+        exit;
+    }
+
     $pollID = null;
     if (!empty(trim($payload['poll_question'] ?? '')) && isset($payload['poll_options']) && is_array($payload['poll_options'])) {
         $pollOptions = array_values(array_filter(array_map('trim', $payload['poll_options'])));
@@ -181,6 +209,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'PATCH') {
         http_response_code(400);
         echo json_encode(['error' => 'Invalid tip id']);
         exit;
+    }
+
+    if (isset($payload['title'])) {
+        $title = trim($payload['title']);
+        if ($title !== '') {
+            $moderationPayload = json_encode(['content' => $title]);
+            $moderationResp = askAPI('/moderation', 'POST', $moderationPayload);
+            $moderationData = json_decode($moderationResp, true);
+            
+            if (is_array($moderationData) && isset($moderationData['flagged']) && $moderationData['flagged'] === true) {
+                $flaggedWords = isset($moderationData['flaggedWords']) && is_array($moderationData['flaggedWords']) 
+                    ? implode(', ', $moderationData['flaggedWords']) 
+                    : 'profanity';
+                http_response_code(422);
+                echo json_encode(['error' => "Title contains prohibited content ($flaggedWords). Please choose different wording."]);
+                exit;
+            }
+        }
+    }
+
+    if (isset($payload['description'])) {
+        $description = trim($payload['description']);
+        if ($description !== '') {
+            $moderationPayload = json_encode(['content' => $description]);
+            $moderationResp = askAPI('/moderation', 'POST', $moderationPayload);
+            $moderationData = json_decode($moderationResp, true);
+            
+            if (is_array($moderationData) && isset($moderationData['flagged']) && $moderationData['flagged'] === true) {
+                $flaggedWords = isset($moderationData['flaggedWords']) && is_array($moderationData['flaggedWords']) 
+                    ? implode(', ', $moderationData['flaggedWords']) 
+                    : 'profanity';
+                http_response_code(422);
+                echo json_encode(['error' => "Description contains prohibited content ($flaggedWords). Please choose different wording."]);
+                exit;
+            }
+        }
     }
 
     $data = [];

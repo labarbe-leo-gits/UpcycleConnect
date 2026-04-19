@@ -12,8 +12,10 @@ if (!$user) {
     include_once '../../includes/customers-header.php';
 } else if (isset($user['user_type']) && $user['user_type'] == 2) {
     include_once '../../includes/pro-header.php';
-}else if (isset($user['user_type']) && $user['user_type'] == 3) {
+} else if (isset($user['user_type']) && $user['user_type'] == 3) {
     include_once '../../includes/admin-header.php';
+} else if (isset($user['user_type']) && $user['user_type'] == 4) {
+    include_once '../../includes/partials-header.php';
 }
 
 ?>
@@ -69,6 +71,26 @@ if (!$user) {
         </form>
     </div>
 </div>
+
+<div class="add-modal" id="delete-forum-modal">
+    <div class="add-modal-content">
+        <span class="close-button" id="close-delete-forum">&times;</span>
+        <h2>Delete Forum</h2>
+        <p>Are you sure you want to delete this forum? This action cannot be undone.</p>
+        <form id="delete-forum-form">
+            <button type="submit" class="btn-danger">
+                <i class="fa-solid fa-trash"></i> Delete Forum
+            </button>
+        </form>
+    </div>
+</div>
+
+<?php if ($user): ?>
+<script>
+    window.currentUserId = <?= json_encode($user['id'] ?? '') ?>;
+    window.currentUserType = <?= json_encode($user['user_type'] ?? '') ?>;
+</script>
+<?php endif; ?>
 
 <link rel="stylesheet" href="../../assets/css/customers.css">
 <script src="../../assets/js/forums.js" defer></script>

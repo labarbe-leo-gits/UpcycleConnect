@@ -16,6 +16,15 @@ if ($method === 'POST' && isset($_GET['_method'])) {
     $method = strtoupper($_GET['_method']);
 }
 
+if ($method === 'DELETE' && isset($_GET['forum_id']) && $_GET['forum_id'] !== '' && !isset($_GET['post_id'])) {
+    $forumId = rawurldecode($_GET['forum_id']);
+    error_log("forums-api DELETE forum_id=$forumId");
+    $resp = askAPI('/forums/' . $forumId, 'DELETE');
+    if (ob_get_length()) ob_clean();
+    echo $resp;
+    exit;
+}
+
 if ($method === 'POST' && isset($_GET['forum_id']) && $_GET['forum_id'] !== '') {
     $forumId = rawurldecode($_GET['forum_id']);
     $rawBody = file_get_contents('php://input');
@@ -56,6 +65,7 @@ if ($method === 'DELETE' && isset($_GET['forum_id'], $_GET['post_id']) && $_GET[
 $page = isset($_GET['page']) ? max(1, (int) $_GET['page']) : null;
 $limit = isset($_GET['limit']) ? max(1, min(100, (int) $_GET['limit'])) : 5;
 $sort = isset($_GET['sort']) ? $_GET['sort'] : '';
+$search = isset($_GET['search']) ? $_GET['search'] : '';
 
 
 $apiPath = '/forums';
@@ -63,9 +73,12 @@ if (isset($_GET['forum_id']) && $_GET['forum_id'] !== '') {
     $forumId = rawurldecode($_GET['forum_id']);
     $apiPath = '/forums/' . $forumId . '/posts';
 } else if ($page !== null) {
-    $apiPath .= '?page=' . $page . '&limit=' . $limit . ($sort ? '&sort=' . urlencode($sort) : '');
+    $apiPath .= '?page=' . $page . '&limit=' . $limit . ($sort ? '&sort=' . urlencode($sort) : '') . ($search ? '&search=' . urlencode($search) : '');
 } else {
-    if ($sort) $apiPath .= '?sort=' . urlencode($sort);
+    $params = [];
+    if ($sort) $params[] = 'sort=' . urlencode($sort);
+    if ($search) $params[] = 'search=' . urlencode($search);
+    if ($params) $apiPath .= '?' . implode('&', $params);
 }
 
 $resp = askAPI($apiPath, 'GET');

@@ -2,6 +2,7 @@
     'use strict';
 
     document.addEventListener('DOMContentLoaded', function() {
+        setupSearchAndFilters();
         loadTopForums();
         loadAllForumsInitial();
         setupCreateForumModal();
@@ -11,6 +12,81 @@
     const allLimit = 5;
     let allTotal = null;
     let allLoading = false;
+    let currentSort = 'trending';
+    let currentSearch = '';
+    let allForums = [];
+
+    function setupSearchAndFilters() {
+        const searchInput = document.getElementById('forums-search');
+        const sortSelect = document.getElementById('forums-sort');
+        const resetBtn = document.getElementById('reset-filters');
+
+        if (searchInput) {
+            let searchTimeout;
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                currentSearch = this.value.trim().toLowerCase();
+                searchTimeout = setTimeout(function() {
+                    console.log('Search triggered:', currentSearch);
+                    filterAndDisplayForums();
+                }, 300);
+            });
+        }
+
+        if (sortSelect) {
+            sortSelect.addEventListener('change', function() {
+                currentSort = this.value;
+                console.log('Sort changed to:', currentSort);
+                
+                if (currentSort === 'posts-desc' || currentSort === 'posts-asc') {
+                    filterAndDisplayForums();
+                } else {
+                    loadAllForumsInitial();
+                }
+            });
+        }
+
+        if (resetBtn) {
+            resetBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                currentSearch = '';
+                currentSort = 'trending';
+                if (searchInput) searchInput.value = '';
+                if (sortSelect) sortSelect.value = 'trending';
+                loadAllForumsInitial();
+            });
+        }
+    }
+
+    function filterAndDisplayForums() {
+        const list = document.getElementById('forums-all-list');
+        if (!list) return;
+
+        let filtered = allForums;
+        if (currentSearch) {
+            filtered = allForums.filter(f => {
+                const title = (f.title || '').toLowerCase();
+                const desc = (f.description || '').toLowerCase();
+                return title.includes(currentSearch) || desc.includes(currentSearch);
+            });
+        }
+
+        if (currentSort === 'posts-desc') {
+            filtered.sort((a, b) => (b.post_count || 0) - (a.post_count || 0));
+        } else if (currentSort === 'posts-asc') {
+            filtered.sort((a, b) => (a.post_count || 0) - (b.post_count || 0));
+        }
+
+        if (!filtered.length) {
+            list.innerHTML = '<div class="deposit-empty"><p>No forums found.</p></div>';
+            return;
+        }
+
+        list.innerHTML = '';
+        filtered.forEach(function(f) {
+            list.appendChild(renderAllForumItem(f));
+        });
+    }
 
     function loadTopForums() {
         const container = document.getElementById('forums-top3');
@@ -117,11 +193,16 @@
         `;
         list.innerHTML = itemSkeleton.repeat(allLimit);
         seeMore.disabled = true;
-        seeMore.textContent = 'Loading...';
+        seeMore.textContent = 'See more';
+        seeMore.style.display = 'none';
 
         loadAllForumsPage(allPage, allLimit);
 
-        seeMore.addEventListener('click', function() {
+
+        const newSeeMore = seeMore.cloneNode(true);
+        seeMore.parentNode.replaceChild(newSeeMore, seeMore);
+        
+        newSeeMore.addEventListener('click', function() {
             if (!allLoading) loadAllForumsPage(allPage + 1, allLimit);
         });
     }
@@ -132,9 +213,13 @@
         if (!list || !seeMore) return;
         allLoading = true;
         seeMore.disabled = true;
-        seeMore.textContent = 'Loading...';
+        if (page > 1) seeMore.textContent = 'Loading...';
 
-        fetch(`forums-api?page=${page}&limit=${limit}&sort=trending`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+
+        let apiSort = (currentSort === 'posts-desc' || currentSort === 'posts-asc') ? 'trending' : currentSort;
+        let url = `forums-api?page=${page}&limit=${limit}&sort=${encodeURIComponent(apiSort)}`;
+
+        fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
             .then(r => r.text())
             .then(text => {
                 const data = text ? JSON.parse(text) : { items: [] };
@@ -142,26 +227,38 @@
                 allTotal = Number.isFinite(data.total) ? data.total : (allTotal || 0);
 
                 if (page === 1) {
+                    allForums = [];
                     list.innerHTML = '';
                 }
 
                 if (!items.length && page === 1) {
-                    list.innerHTML = '<div class="deposit-empty"><p>No forums yet.</p></div>';
+                    list.innerHTML = '<div class="deposit-empty"><p>No forums found.</p></div>';
                     seeMore.style.display = 'none';
                     return;
                 }
 
-                items.forEach(function(f) {
-                    list.appendChild(renderAllForumItem(f));
-                });
+
+                allForums = allForums.concat(items);
+
+                if (!currentSearch && currentSort !== 'posts-desc' && currentSort !== 'posts-asc') {
+                    items.forEach(function(f) {
+                        list.appendChild(renderAllForumItem(f));
+                    });
+                } else {
+                    filterAndDisplayForums();
+                }
 
                 allPage = page;
 
-                if ((allPage * limit) >= allTotal || items.length < limit) {
-                    seeMore.style.display = 'none';
-                } else {
+
+                const hasMore = (allPage * limit) < allTotal && items.length >= limit;
+                
+                if (hasMore) {
+                    seeMore.style.display = 'block';
                     seeMore.disabled = false;
                     seeMore.textContent = 'See more';
+                } else {
+                    seeMore.style.display = 'none';
                 }
             })
             .catch(err => {
@@ -170,8 +267,7 @@
                 errNode.className = 'error-message';
                 errNode.textContent = 'Unable to load more forums.';
                 list.appendChild(errNode);
-                seeMore.disabled = false;
-                seeMore.textContent = 'See more';
+                seeMore.style.display = 'none';
             })
             .finally(() => { allLoading = false; });
     }
@@ -205,7 +301,13 @@
 
         const meta = document.createElement('div');
         meta.className = 'forum-item-meta';
-        meta.innerHTML = `<span class=\"muted\">${formatDate(f.updated_at || f.created_at || '')}</span>`;
+        let metaHTML = `<span class=\"muted\">${formatDate(f.updated_at || f.created_at || '')}</span>`;
+        
+        if (f.post_count !== undefined && f.post_count !== null) {
+            metaHTML += ` <span class=\"muted\" style="margin-left: 16px;"><i class="fa-solid fa-comments" style="margin-right: 4px; color: #10b981;"></i>${f.post_count} post${f.post_count !== 1 ? 's' : ''}</span>`;
+        }
+        
+        meta.innerHTML = metaHTML;
         left.appendChild(meta);
 
         const right = document.createElement('div');
@@ -217,9 +319,103 @@
         openBtn.addEventListener('click', function() { window.location.href = `forum?uuid=${encodeURIComponent(f.id)}`; });
         right.appendChild(openBtn);
 
+        if (window.currentUserId && (f.created_by === window.currentUserId || window.currentUserType == 4)) {
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.className = 'btn-icon delete-forum';
+            deleteBtn.innerHTML = '<i class="fa-regular fa-trash-alt"></i>';
+            deleteBtn.title = 'Delete forum';
+            deleteBtn.addEventListener('click', function() {
+                setupDeleteForumModal(f.id);
+            });
+            right.appendChild(deleteBtn);
+        }
+
         item.appendChild(left);
         item.appendChild(right);
         return item;
+    }
+
+    function setupDeleteForumModal(forumId) {
+        const modal = document.getElementById('delete-forum-modal');
+        const form = document.getElementById('delete-forum-form');
+        const closeBtn = document.getElementById('close-delete-forum');
+        
+        if (!modal || !form) return;
+
+        let lastFocused = null;
+        lastFocused = document.activeElement;
+        modal.classList.add('is-open');
+        document.body.classList.add('modal-open');
+        modal.setAttribute('aria-hidden', 'false');
+
+        function closeModal() {
+            modal.classList.remove('is-open');
+            modal.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('modal-open');
+            if (lastFocused && typeof lastFocused.focus === 'function') {
+                lastFocused.focus();
+            }
+            form.onsubmit = null;
+        }
+
+        if (closeBtn) closeBtn.onclick = closeModal;
+        modal.onclick = function(e) { if (e.target === modal) closeModal(); };
+
+        form.onsubmit = function(e) {
+            e.preventDefault();
+            deleteForum(forumId, closeModal);
+        };
+
+        document.onkeydown = function(e) {
+            if (!modal.classList.contains('is-open')) return;
+            if (e.key === 'Escape') closeModal();
+        };
+    }
+
+    function deleteForum(forumId, onClose) {
+        const form = document.getElementById('delete-forum-form');
+        const submitBtn = form ? form.querySelector('button[type="submit"]') : null;
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Deleting...';
+        }
+
+        fetch(`forums-api?forum_id=${encodeURIComponent(forumId)}&_method=DELETE`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(r => r.text())
+        .then(text => {
+            if (text) {
+                try {
+                    const data = JSON.parse(text);
+                    if (data.error) {
+                        alert('Error deleting forum: ' + data.error);
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            submitBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Delete Forum';
+                        }
+                        return;
+                    }
+                } catch (err) {
+                    console.error('Unexpected response:', text, err);
+                }
+            }
+            onClose();
+            location.reload();
+        })
+        .catch(err => {
+            console.error('Failed to delete forum', err);
+            alert('Unable to delete forum. Please try again.');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Delete Forum';
+            }
+        });
     }
 
     function setupCreateForumModal() {

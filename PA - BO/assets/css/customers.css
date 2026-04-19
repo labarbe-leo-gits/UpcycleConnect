@@ -1839,6 +1839,18 @@ body.modal-open {
   display: flex;
   gap: 8px;
 }
+.forum-item-actions .btn-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6b7280;
+  font-size: 1rem;
+  padding: 6px 8px;
+  transition: color 0.2s ease;
+}
+.forum-item-actions .btn-icon:hover {
+  color: #ef4444;
+}
 .see-more-btn {
   background: transparent;
   border: 1px solid #e6eef0;

@@ -23,6 +23,7 @@ if (!$user) {
     exit;
 }
 
+$moderatedFields = ['username', 'first_name', 'last_name'];
 
 $body  = json_decode(file_get_contents('php://input'), true);
 $allowed = ['username', 'email', 'first_name', 'last_name', 'user_road_number', 'user_road', 'user_zip_code', 'user_city', 'newsletter_subscribed'];
@@ -59,6 +60,24 @@ if ($value === '' && !preg_match('/^user_/', $field)) {
     echo json_encode(['error' => 'Value cannot be empty']);
     exit;
 }
+
+// Check moderation for sensitive fields
+if (in_array($field, $moderatedFields, true) && $value !== '') {
+    // Call Go API moderation check
+    $moderationPayload = json_encode(['content' => $value]);
+    $moderationResp = askAPI('/moderation', 'POST', $moderationPayload);
+    $moderationData = json_decode($moderationResp, true);
+    
+    if (is_array($moderationData) && isset($moderationData['flagged']) && $moderationData['flagged'] === true) {
+        $flaggedWords = isset($moderationData['flaggedWords']) && is_array($moderationData['flaggedWords']) 
+            ? implode(', ', $moderationData['flaggedWords']) 
+            : 'profanity';
+        http_response_code(422);
+        echo json_encode(['error' => "This $field contains prohibited content ($flaggedWords). Please choose a different value."]);
+        exit;
+    }
+}
+
 $resp = askAPI("/users/{$user['id']}", 'PATCH', json_encode([$field => $value]));
 $data = json_decode($resp, true);
 if (isset($data['error'])) {

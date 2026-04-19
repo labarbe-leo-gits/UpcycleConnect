@@ -29,6 +29,15 @@ if ($userId === '') {
 
 function isExternalAI(string $text): bool {
     $apiKey = getenv('GEMINI_API_KEY');
+    if (!$apiKey) {
+
+        $envFile = __DIR__ . '/../../.env';
+        if (file_exists($envFile)) {
+            $env = parse_ini_file($envFile);
+            $apiKey = $env['GEMINI_API_KEY'] ?? null;
+        }
+    }
+    
     if (!$apiKey || strlen(trim($text)) < 100) {
         error_log('[AI-detect] Skipping — key missing or text too short');
         return false;
@@ -37,12 +46,13 @@ function isExternalAI(string $text): bool {
     $prompt =
         "You are an AI content detector. Analyze the following text and determine whether it was " .
         "likely written by an AI (such as ChatGPT, Gemini, Claude, etc.) or by a human.\n" .
-        "Reply with exactly one word: YES if it is AI-generated, NO if it is human-written.\n\n" .
+        "Reply with ONLY a JSON object: {\"ai_generated\": true} or {\"ai_generated\": false}\n" .
+        "Include nothing else.\n\n" .
         "Text:\n" . mb_substr($text, 0, 1024);
 
     error_log('[AI-detect] Asking Gemini about ' . mb_strlen(mb_substr($text, 0, 1024)) . ' chars');
 
-    $apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent?key=' . urlencode($apiKey);
+    $apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemma-4-26b-a4b-it:generateContent?key=' . urlencode($apiKey);
     $payload = json_encode([
         'contents' => [['parts' => [['text' => $prompt]]]],
         'generationConfig' => [
@@ -55,7 +65,8 @@ function isExternalAI(string $text): bool {
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_POST           => true,
-        CURLOPT_TIMEOUT        => 10,
+        CURLOPT_TIMEOUT        => 30,
+        CURLOPT_CONNECTTIMEOUT => 10,
         CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
         CURLOPT_POSTFIELDS     => $payload,
     ]);
@@ -72,8 +83,13 @@ function isExternalAI(string $text): bool {
     error_log('[AI-detect] HTTP ' . $httpCode . ' — raw response: ' . $resp);
 
     $data   = json_decode($resp, true);
-    $answer = strtoupper(trim($data['candidates'][0]['content']['parts'][0]['text'] ?? ''));
+    $answer = trim($data['candidates'][0]['content']['parts'][0]['text'] ?? '');
     error_log('[AI-detect] Gemini answered: ' . $answer);
+
+    $parsed = json_decode($answer, true);
+    if (is_array($parsed) && isset($parsed['ai_generated'])) {
+        return (bool) $parsed['ai_generated'];
+    }
 
     return str_starts_with($answer, 'YES');
 }

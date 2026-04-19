@@ -39,6 +39,7 @@ services:
     volumes:
       - ./PA - API:/workspace:delegated
       - ./files:/files:ro
+      - ./PA - API/.env:/app/.env:ro
     working_dir: /workspace
     command: >
       sh -c "go mod download && go run api.go"
@@ -56,6 +57,8 @@ services:
     container_name: upcycleconnect_bo_dev
     ports:
       - "8080:80"
+    env_file:
+      - "PA - BO/.env"
     environment:
       API_HOST: api
       API_PORT: "9999"
@@ -65,6 +68,7 @@ services:
       - ./files:/var/www/html/files:delegated
       - ./PA - API/data:/var/www/html/api-data:delegated
       - ./PA - BO/.env.docker:/var/www/html/.env:ro
+      - ./PA - BO/.env:/var/www/html/.env:ro
       - ./vendor:/var/www/html/vendor:ro
     depends_on:
       - db
@@ -79,6 +83,8 @@ services:
     container_name: upcycleconnect_fo_dev
     ports:
       - "8081:80"
+    env_file:
+      - "PA - Site Principal/.env"
     environment:
       API_HOST: api
       API_PORT: "9999"
@@ -87,6 +93,7 @@ services:
     volumes:
       - ./PA - Site Principal:/var/www/html:delegated
       - ./files:/var/www/html/files:delegated
+      - ./PA - Site Principal/.env:/var/www/html/.env:ro
       - ./vendor:/var/www/html/vendor:ro
     depends_on:
       - db

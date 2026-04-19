@@ -16,6 +16,15 @@ if ($method === 'POST' && isset($_GET['_method'])) {
     $method = strtoupper($_GET['_method']);
 }
 
+if ($method === 'DELETE' && isset($_GET['forum_id']) && $_GET['forum_id'] !== '' && !isset($_GET['post_id'])) {
+    $forumId = rawurldecode($_GET['forum_id']);
+    error_log("forums-api DELETE forum_id=$forumId");
+    $resp = askAPI('/forums/' . $forumId, 'DELETE');
+    if (ob_get_length()) ob_clean();
+    echo $resp;
+    exit;
+}
+
 // create new post
 if ($method === 'POST' && isset($_GET['forum_id']) && $_GET['forum_id'] !== '') {
     $forumId = rawurldecode($_GET['forum_id']);

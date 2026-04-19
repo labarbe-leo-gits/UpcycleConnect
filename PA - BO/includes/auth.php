@@ -49,7 +49,7 @@ function requireLogin() {
 
         $current_page = basename($_SERVER['PHP_SELF'], '.php');
         $_SESSION['page_after_login'] = $current_page;
-        header('Location: /PA/PA%20-%20BO/pages/public/login');
+        header('Location: /pages/public/login');
         exit();
     }
 }
@@ -65,7 +65,7 @@ function requireUserType($expectedType) {
             echo json_encode(['error' => 'Unauthorized']);
             exit();
         }
-        header('Location: /PA/PA%20-%20BO/pages/public/login');
+        header('Location: /pages/public/login');
         exit();
     }
 
@@ -156,7 +156,7 @@ function logout() {
     }
     session_unset();
     session_destroy();
-    header('Location: /PA/PA%20-%20BO/pages/public/login');
+    header('Location: /pages/public/login');
     exit();
 }
 ?>

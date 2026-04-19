@@ -2,12 +2,12 @@
 $title = "Logs";
 
 $extraCss = [
-    '/PA/PA - BO/assets/css/admin-logs.css',
+    '/assets/css/admin-logs.css',
     'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
 ];
 $extraJs = [
     'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
-    '/PA/PA - BO/assets/js/admin-logs.js',
+    '/assets/js/admin-logs.js',
 ];
 
 $logDir = realpath(__DIR__ . '/../../../files/logs');

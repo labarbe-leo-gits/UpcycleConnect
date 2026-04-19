@@ -55,7 +55,39 @@
                             if (tokenField) {
                                 tokenField.value = token;
                             }
-                            form.submit();
+                            
+                            var firstName = form.querySelector('[name="first_name"]')?.value || '';
+                            var lastName = form.querySelector('[name="last_name"]')?.value || '';
+                            var username = form.querySelector('[name="username"]')?.value || '';
+                            var companyName = form.querySelector('[name="company_name"]')?.value || '';
+                            
+                            var fieldsToCheck = {
+                                'first_name': firstName,
+                                'last_name': lastName,
+                                'username': username
+                            };
+                            
+                            if (companyName.trim()) {
+                                fieldsToCheck['company_name'] = companyName;
+                            }
+                            
+                            if (typeof Moderator !== 'undefined' && Moderator.checkFields) {
+                                Moderator.checkFields(fieldsToCheck)
+                                    .then(function(checkResult) {
+                                        if (checkResult.valid) {
+                                            form.submit();
+                                        } else {
+                                            var errorsList = Object.values(checkResult.errors).join('\n');
+                                            alert('Content moderation:\n\n' + errorsList);
+                                        }
+                                    })
+                                    .catch(function(err) {
+                                        console.error('Moderation check error:', err);
+                                        form.submit();
+                                    });
+                            } else {
+                                form.submit();
+                            }
                         });
                 });
             });

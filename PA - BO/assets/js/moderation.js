@@ -1,5 +1,12 @@
+
+if (typeof sources === 'undefined') sources = [];
+if (typeof initialSourceId === 'undefined') initialSourceId = null;
+if (typeof initialWords === 'undefined') initialWords = [];
+
+console.log('[Moderation] Initialized with:', { sources, initialSourceId, initialWords });
+
 const sourcesById = (sources || []).reduce((acc, s) => { acc[s.id] = s; return acc; }, {});
-let currentSourceId = initialSourceId in sourcesById ? initialSourceId : (sources[0] && sources[0].id);
+let currentSourceId = (initialSourceId && initialSourceId in sourcesById) ? initialSourceId : (sources && sources[0] && sources[0].id);
 
 const sourceCache = {};
 function setCache(sourceId, data) {
@@ -9,13 +16,20 @@ function setCache(sourceId, data) {
         loaded: true,
     };
 }
-setCache(currentSourceId, {words: initialWords || [], connected: sourcesById[currentSourceId]?.connected});
 
-let words = sourceCache[currentSourceId].words.slice();
+if (currentSourceId) {
+    setCache(currentSourceId, {words: Array.isArray(initialWords) ? initialWords : [], connected: sourcesById[currentSourceId]?.connected});
+}
+
+let words = currentSourceId && sourceCache[currentSourceId] ? sourceCache[currentSourceId].words.slice() : [];
 let filtered = words.slice();
 let displayed = 0;
 const perPage = 10;
 const tbody = document.querySelector('#badwords-table tbody');
+
+if (!tbody) {
+    console.error('[Moderation] Table body not found!');
+}
 
 function showToast(msg, timeout = 3000) {
     const t = document.createElement('div');
@@ -303,10 +317,15 @@ function setCurrentSource(sourceId, {forceReload = false} = {}) {
 
 function updateSourceHeader() {
     const src = sourcesById[currentSourceId];
-    if (!src) return;
+    if (!src) {
+        console.warn('[Moderation] Current source not found:', currentSourceId);
+        return;
+    }
     const link = document.getElementById('current-source-link');
-    link.href = src.repoUrl;
-    link.textContent = src.name;
+    if (link) {
+        link.href = src.repoUrl;
+        link.textContent = src.name;
+    }
 
     const syncText = document.getElementById('sync-text');
     if (syncText) {
@@ -387,38 +406,51 @@ async function disconnectSource(sourceId) {
 }
 
 function initNavigation() {
-    document.getElementById('source-prev').addEventListener('click', () => {
+    const safeBind = (id, handler) => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('click', handler);
+        else console.warn(`[Moderation] Element not found: ${id}`);
+    };
+
+    safeBind('source-prev', () => {
+        if (!sources || sources.length === 0) return;
         const idx = sources.findIndex(s => s.id === currentSourceId);
         const next = sources[(idx - 1 + sources.length) % sources.length];
         setCurrentSource(next.id);
     });
-    document.getElementById('source-next').addEventListener('click', () => {
+    safeBind('source-next', () => {
+        if (!sources || sources.length === 0) return;
         const idx = sources.findIndex(s => s.id === currentSourceId);
         const next = sources[(idx + 1) % sources.length];
         setCurrentSource(next.id);
     });
-    document.getElementById('sources-btn').addEventListener('click', openSourcesModal);
-    document.getElementById('sources-modal-close').addEventListener('click', () => closeModal('sources-modal'));
-    document.getElementById('sources-modal-close-bottom').addEventListener('click', () => closeModal('sources-modal'));
-    document.getElementById('sources-modal').addEventListener('click', e => {
-        if (e.target.id === 'sources-modal') {
-            closeModal('sources-modal');
-        }
-    });
-    document.getElementById('add-source-modal-close').addEventListener('click', closeAddSourceModal);
-    document.getElementById('add-source-cancel').addEventListener('click', closeAddSourceModal);
-    document.getElementById('add-source-submit').addEventListener('click', addCustomSource);
-    document.getElementById('add-source-modal').addEventListener('click', e => {
-        if (e.target.id === 'add-source-modal') {
-            closeAddSourceModal();
-        }
-    });
+    safeBind('sources-btn', openSourcesModal);
+    safeBind('sources-modal-close', () => closeModal('sources-modal'));
+    safeBind('sources-modal-close-bottom', () => closeModal('sources-modal'));
+    safeBind('add-source-modal-close', closeAddSourceModal);
+    safeBind('add-source-cancel', closeAddSourceModal);
+    safeBind('add-source-submit', addCustomSource);
+
+    const sourceModal = document.getElementById('sources-modal');
+    if (sourceModal) {
+        sourceModal.addEventListener('click', e => {
+            if (e.target.id === 'sources-modal') closeModal('sources-modal');
+        });
+    }
+
+    const addModal = document.getElementById('add-source-modal');
+    if (addModal) {
+        addModal.addEventListener('click', e => {
+            if (e.target.id === 'add-source-modal') closeAddSourceModal();
+        });
+    }
+
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape') {
-            if (document.getElementById('sources-modal').getAttribute('aria-hidden') === 'false') {
+            if (sourceModal && sourceModal.getAttribute('aria-hidden') === 'false') {
                 closeModal('sources-modal');
             }
-            if (document.getElementById('add-source-modal').getAttribute('aria-hidden') === 'false') {
+            if (addModal && addModal.getAttribute('aria-hidden') === 'false') {
                 closeAddSourceModal();
             }
         }
@@ -426,45 +458,63 @@ function initNavigation() {
 }
 
 function initDeleteModal() {
-    document.getElementById('delete-modal').addEventListener('click', e => {
-        if (e.target.id === 'delete-modal') {
-            closeModal();
-        }
+    const deleteModal = document.getElementById('delete-modal');
+    if (!deleteModal) {
+        console.warn('[Moderation] Delete modal not found');
+        return;
+    }
+
+    deleteModal.addEventListener('click', e => {
+        if (e.target.id === 'delete-modal') closeModal();
     });
+
     document.addEventListener('keydown', e => {
-        if (e.key === 'Escape' && document.getElementById('delete-modal').getAttribute('aria-hidden') === 'false') {
+        if (e.key === 'Escape' && deleteModal.getAttribute('aria-hidden') === 'false') {
             closeModal();
         }
     });
-    document.getElementById('delete-modal-close').addEventListener('click', () => closeModal());
-    document.getElementById('delete-cancel').addEventListener('click', () => closeModal());
-    document.getElementById('delete-confirm').addEventListener('click', () => {
-        if (!pendingDelete) return;
-        const body = `action=delete&source=${encodeURIComponent(currentSourceId)}&word=${encodeURIComponent(pendingDelete)}`;
-        fetch('', {method: 'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'}, body})
-            .then(r => r.json()).then(resp => {
-                if (resp.ok) {
-                    closeModal();
-                    setCurrentSource(currentSourceId, {forceReload: true});
-                } else {
-                    showToast(resp.error || 'Delete failed');
-                }
-            }).catch(err => {
-                console.error(err);
-                showToast('Delete error');
-            });
-    });
+
+    const closeBtn = document.getElementById('delete-modal-close');
+    if (closeBtn) closeBtn.addEventListener('click', () => closeModal());
+
+    const cancelBtn = document.getElementById('delete-cancel');
+    if (cancelBtn) cancelBtn.addEventListener('click', () => closeModal());
+
+    const confirmBtn = document.getElementById('delete-confirm');
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', () => {
+            if (!pendingDelete || !currentSourceId) return;
+            const body = `action=delete&source=${encodeURIComponent(currentSourceId)}&word=${encodeURIComponent(pendingDelete)}`;
+            fetch('', {method: 'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'}, body})
+                .then(r => r.json()).then(resp => {
+                    if (resp.ok) {
+                        closeModal();
+                        setCurrentSource(currentSourceId, {forceReload: true});
+                    } else {
+                        showToast(resp.error || 'Delete failed');
+                    }
+                }).catch(err => {
+                    console.error(err);
+                    showToast('Delete error');
+                });
+        });
+    }
 }
 
 function initSearch() {
     const searchBox = document.getElementById('search-box');
+    if (!searchBox) {
+        console.warn('[Moderation] Search box not found');
+        return;
+    }
+
     const spinner = document.getElementById('search-spinner');
     let searchTimeout;
     let spinnerVisibleSince = 0;
 
     searchBox.addEventListener('input', () => {
         clearTimeout(searchTimeout);
-        if (spinner.style.display !== 'inline-block') {
+        if (spinner && spinner.style.display !== 'inline-block') {
             spinner.style.display = 'inline-block';
             spinnerVisibleSince = Date.now();
         }
@@ -476,50 +526,80 @@ function initSearch() {
                 filtered = words.filter(w => w.toLowerCase().includes(term));
             }
             displayed = 0;
-            tbody.innerHTML = '';
+            if (tbody) tbody.innerHTML = '';
             renderRows();
             wireDelete();
             updateLoadMoreVisibility();
             const elapsed = Date.now() - spinnerVisibleSince;
             const remaining = 300 - elapsed;
             if (remaining > 0) {
-                setTimeout(() => { spinner.style.display = 'none'; }, remaining);
+                setTimeout(() => { if (spinner) spinner.style.display = 'none'; }, remaining);
             } else {
-                spinner.style.display = 'none';
+                if (spinner) spinner.style.display = 'none';
             }
         }, 150);
     });
 }
 
 function initLoadMore() {
-    document.getElementById('load-more-btn').addEventListener('click', () => {
-        const btn = document.getElementById('load-more-btn');
+    const btn = document.getElementById('load-more-btn');
+    if (!btn) {
+        console.warn('[Moderation] Load more button not found');
+        return;
+    }
+
+    btn.addEventListener('click', () => {
         const spinner = document.getElementById('load-more-spinner');
         btn.disabled = true;
-        spinner.style.display = 'inline-block';
+        if (spinner) spinner.style.display = 'inline-block';
         setTimeout(() => {
             renderRows();
             wireDelete();
             btn.disabled = false;
-            spinner.style.display = 'none';
+            if (spinner) spinner.style.display = 'none';
             updateLoadMoreVisibility();
         }, 200);
     });
 }
 
 function initSync() {
-    document.getElementById('sync-btn').addEventListener('click', () => syncSource(currentSourceId));
+    const syncBtn = document.getElementById('sync-btn');
+    if (syncBtn) {
+        syncBtn.addEventListener('click', () => {
+            if (currentSourceId) syncSource(currentSourceId);
+        });
+    } else {
+        console.warn('[Moderation] Sync button not found');
+    }
 }
 
 function init() {
-    updateSourceHeader();
-    initNavigation();
-    initDeleteModal();
-    initSearch();
-    initLoadMore();
-    initSync();
-    setCurrentSource(currentSourceId, {forceReload: false});
+    console.log('[Moderation] Initializing page...');
+    try {
+        updateSourceHeader();
+        initNavigation();
+        initDeleteModal();
+        initSearch();
+        initLoadMore();
+        initSync();
+        if (currentSourceId) {
+            setCurrentSource(currentSourceId, {forceReload: false});
+        } else if (sources && sources.length > 0) {
+            setCurrentSource(sources[0].id, {forceReload: false});
+        } else {
+            console.warn('[Moderation] No sources available');
+            renderRows();
+        }
+        console.log('[Moderation] Page initialized successfully');
+    } catch (err) {
+        console.error('[Moderation] Initialization error:', err);
+        alert('Error initializing moderation page. Check browser console.');
+    }
 }
 
-init();
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
+}
 

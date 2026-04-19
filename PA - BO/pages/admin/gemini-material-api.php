@@ -35,9 +35,35 @@ if ($material === '') {
 }
 
 $apiKey = getenv('GEMINI_API_KEY');
+$envFile = __DIR__ . '/../../.env';
+$envExists = file_exists($envFile);
+$envData = [];
+$envFileContent = '';
+
+if ($envExists) {
+    $envFileContent = file_get_contents($envFile);
+    $envData = parse_ini_file($envFile);
+    if (!$apiKey) {
+        $apiKey = $envData['GEMINI_API_KEY'] ?? null;
+    }
+}
+
 if (!$apiKey) {
+    $debugInfo = [
+        'getenv_result' => var_export(getenv('GEMINI_API_KEY'), true),
+        'env_file_path' => $envFile,
+        'env_file_exists' => $envExists,
+        'env_file_first_500_chars' => substr($envFileContent, 0, 500),
+        'env_file_content_keys' => $envExists ? array_keys($envData) : [],
+        'parsed_GEMINI_API_KEY_value' => $envData['GEMINI_API_KEY'] ?? 'NOT FOUND IN PARSED',
+        'all_parsed_keys' => $envData,
+    ];
+    
     http_response_code(503);
-    echo json_encode(['error' => 'AI service not configured (missing GEMINI_API_KEY)']);
+    echo json_encode([
+        'error' => 'AI service not configured (missing GEMINI_API_KEY)',
+        'debug' => $debugInfo
+    ]);
     exit;
 }
 
@@ -61,9 +87,9 @@ $prompt = <<<PROMPT
 You are an environmental scientist specialised in life-cycle assessment.
 What is the typical cradle-to-gate CO2 emission factor in kg CO2 equivalent per kg
 for the material called: "{$materialSafe}"?
-Reply with ONLY a single positive decimal number (e.g. 2.5).
-No units, no explanation, no extra text. If the material is unknown or cannot be
-quantified, reply with the number 0.
+
+Reply with ONLY a JSON object: {"co2_factor": 2.5}
+Include nothing else in your response.
 PROMPT;
 
 $requestBody = json_encode([
@@ -76,14 +102,15 @@ $requestBody = json_encode([
     ],
 ]);
 
-$url = 'https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent?key=' . urlencode($apiKey);
+$url = 'https://generativelanguage.googleapis.com/v1beta/models/gemma-4-26b-a4b-it:generateContent?key=' . urlencode($apiKey);
 
 $ch = curl_init($url);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_POSTFIELDS, $requestBody);
 curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-curl_setopt($ch, CURLOPT_TIMEOUT, 12);
+curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
 $caBundle = 'C:/xampp/apache/bin/curl-ca-bundle.crt';
 if (file_exists($caBundle)) {
     curl_setopt($ch, CURLOPT_CAINFO, $caBundle);
@@ -134,12 +161,18 @@ if (!isset($decoded['candidates'][0]['content']['parts'][0]['text'])) {
 
 $text = trim($decoded['candidates'][0]['content']['parts'][0]['text']);
 
-if (!preg_match('/(\d+(?:[.,]\d+)?)/', $text, $matches)) {
-    echo json_encode(['error' => 'Could not parse CO₂ factor from AI response']);
-    exit;
-}
 
-$factor = (float) str_replace(',', '.', $matches[1]);
+$jsonParsed = json_decode($text, true);
+if (is_array($jsonParsed) && isset($jsonParsed['co2_factor'])) {
+    $factor = (float) $jsonParsed['co2_factor'];
+} else {
+
+    if (!preg_match('/(\d+(?:[.,]\d+)?)/', $text, $matches)) {
+        echo json_encode(['error' => 'Could not parse CO₂ factor from AI response']);
+        exit;
+    }
+    $factor = (float) str_replace(',', '.', $matches[1]);
+}
 
 if ($factor <= 0) {
     echo json_encode(['error' => 'Material not recognised by AI']);

@@ -95,6 +95,45 @@ func CreatePendingRegistration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	flagged, words, err := CheckContentForBadWords(req.Username)
+	if err != nil {
+		fmt.Println("[ERROR] CreatePendingRegistration username moderation check:", err)
+
+	} else if flagged && len(words) > 0 {
+		fmt.Println("[INFO] Registration rejected - username contains flagged words:", strings.Join(words, ", "))
+		sendError(w, "Username contains prohibited content. Please choose a different username.", http.StatusBadRequest)
+		return
+	}
+
+	flagged, words, err = CheckContentForBadWords(req.FirstName)
+	if err != nil {
+		fmt.Println("[ERROR] CreatePendingRegistration first_name moderation check:", err)
+	} else if flagged && len(words) > 0 {
+		fmt.Println("[INFO] Registration rejected - first name contains flagged words:", strings.Join(words, ", "))
+		sendError(w, "First name contains prohibited content. Please provide a different name.", http.StatusBadRequest)
+		return
+	}
+
+	flagged, words, err = CheckContentForBadWords(req.LastName)
+	if err != nil {
+		fmt.Println("[ERROR] CreatePendingRegistration last_name moderation check:", err)
+	} else if flagged && len(words) > 0 {
+		fmt.Println("[INFO] Registration rejected - last name contains flagged words:", strings.Join(words, ", "))
+		sendError(w, "Last name contains prohibited content. Please provide a different name.", http.StatusBadRequest)
+		return
+	}
+
+	if req.CompanyName != "" {
+		flagged, words, err = CheckContentForBadWords(req.CompanyName)
+		if err != nil {
+			fmt.Println("[ERROR] CreatePendingRegistration company_name moderation check:", err)
+		} else if flagged && len(words) > 0 {
+			fmt.Println("[INFO] Registration rejected - company name contains flagged words:", strings.Join(words, ", "))
+			sendError(w, "Company name contains prohibited content. Please provide a different name.", http.StatusBadRequest)
+			return
+		}
+	}
+
 	if _, err := mail.ParseAddress(req.Email); err != nil {
 		fmt.Println("[ERROR] CreatePendingRegistration invalid email:", err)
 		sendError(w, "Please provide a valid email address", http.StatusBadRequest)
