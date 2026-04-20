@@ -264,7 +264,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span>${escapeHtml(fileName)}</span>
             </div>`;
         } else {
-            contentHtml = `<div class="content">${escapeHtml(msg.content)}</div>`;
+            const escapedContent = escapeHtml(msg.content).replace(/\n/g, '<br>');
+            contentHtml = `<div class="content">${escapedContent}</div>`;
         }
         
         if (msg.attachments && msg.attachments.length > 0) {

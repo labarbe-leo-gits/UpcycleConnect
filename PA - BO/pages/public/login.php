@@ -187,7 +187,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             if ($appPublicUrl !== '' && $appPublicUrl !== 'http://' && $appPublicUrl !== 'https://') {
-                $backUrl = $appPublicUrl . '/pages/public/login';
+                $backUrl = $appPublicUrl;
             }
         ?>
         <button class="btn-secondary" style="margin-top:20px;width:100%;" onclick="window.location.href='<?php echo htmlspecialchars($backUrl); ?>'">

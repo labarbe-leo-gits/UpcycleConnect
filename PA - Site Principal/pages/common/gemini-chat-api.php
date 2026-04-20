@@ -521,7 +521,7 @@ if ($jsonMatch === null) {
         $text = $jsonParsed['response'];
     }
 } else {
-    $text = $jsonMatch;
+    $text = json_decode('"' . $jsonMatch . '"');
 }
 
 $text = stripslashes($text);
