@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -61,7 +62,7 @@ func GetPaymentRequestsFromDB() ([]models.PaymentRequest, error) {
 func CreatePaymentRequestInDB(paymentRequest models.PaymentRequest) (err error) {
 
 	newID := uuid.New()
-	currentTime := getCurrentTime()
+	currentTime := time.Now().UTC().Format("2006-01-02 15:04:05")
 
 	tx, err := Db.Begin()
 	if err != nil {
@@ -146,7 +147,7 @@ func UpdatePaymentRequestStatusInDB(paymentRequest models.PaymentRequest, newSta
 		return fmt.Errorf("updatePaymentRequestStatusInDB begin: %s", err.Error())
 	}
 
-	currentTime := getCurrentTime()
+	currentTime := time.Now().UTC().Format("2006-01-02 15:04:05")
 
 	_, err = tx.Exec("UPDATE paymentsRequests SET status = ?, updated_at = ? WHERE id = ?", newStatus, currentTime, paymentRequest.ID.String())
 	if err != nil {

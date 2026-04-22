@@ -4,6 +4,7 @@ import (
 	"API/models"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -137,7 +138,7 @@ func GetBankingDetailsByUserIDFromDB(userID uuid.UUID) ([]models.BankingDetails,
 func CreateBankingDetailsInDB(bankingDetails *models.BankingDetails) (uuid.UUID, error) {
 
 	newID := uuid.New()
-	currentTime := getCurrentTime()
+	currentTime := time.Now().UTC().Format("2006-01-02 15:04:05")
 
 	isSavedInt := 0
 	if bankingDetails.IsSaved {

@@ -3,6 +3,7 @@ package db
 import (
 	"API/models"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -92,7 +93,7 @@ func GetConteneursPageFromDB(limit int, offset int) ([]models.Conteneur, error) 
 func CreateConteneurInDB(conteneur models.Conteneur) (uuid.UUID, error) {
 
 	newID := uuid.New()
-	currentTIme := getCurrentTime()
+	currentTIme := time.Now().UTC().Format("2006-01-02 15:04:05")
 
 	_, err := Db.Exec(
 		"INSERT INTO conteneurs (id, conteneur_name, conteneur_city, conteneur_road, conteneur_zip_code, conteneur_number, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
@@ -166,7 +167,7 @@ func UpdateConteneurInDB(conteneurIDStr string, conteneur models.Conteneur) erro
 
 	_, err = Db.Exec(
 		"UPDATE conteneurs SET conteneur_name = ?, conteneur_city = ?, conteneur_road = ?, conteneur_zip_code = ?, conteneur_number = ?, updated_at = ? WHERE id = ?",
-		conteneur.Name, conteneur.City, conteneur.Road, conteneur.PostalCode, conteneur.Number, getCurrentTime(), conteneurID,
+		conteneur.Name, conteneur.City, conteneur.Road, conteneur.PostalCode, conteneur.Number, time.Now().UTC().Format("2006-01-02 15:04:05"), conteneurID,
 	)
 
 	if err != nil {

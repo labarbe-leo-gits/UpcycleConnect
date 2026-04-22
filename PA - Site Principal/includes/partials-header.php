@@ -27,10 +27,26 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
     <link rel="stylesheet" href="../../assets/css/style.css">
     <link rel="stylesheet" href="../../assets/css/customers.css">
     <link rel="stylesheet" href="../../assets/css/pro.css">
+    <link rel="stylesheet" href="../../assets/css/partials.css">
     <link rel="stylesheet" href="../../assets/css/dark.css">
     <link rel="icon" type="image/png" href="../../assets/img/brand/UpcycleDiminutif.png">
     <script src="../../assets/js/dark.js" defer></script>
     <script src="../../assets/js/toast.js" defer></script>
+    <script>window.basePath = '<?= urldecode(dirname($_SERVER["REQUEST_URI"])) ?>';</script>
+    <script>
+        window.API_BASE = <?= json_encode($API_URL_BROWSER ?? $API_URL ?? 'http://127.0.0.1:9999') ?>;
+        window.API_TOKEN = <?= json_encode($_SESSION['jwt_token'] ?? $_SESSION['token'] ?? '') ?>;
+        window.CURRENT_USER_ID = <?= json_encode($user['id'] ?? '') ?>;
+        window.USER_MANAGER_ID = <?= json_encode($user['manager_id'] ?? null) ?>;
+        if (window.API_TOKEN) {
+            try {
+                localStorage.setItem('jwt_token', window.API_TOKEN);
+                localStorage.setItem('token', window.API_TOKEN);
+            } catch (e) {
+                console.warn('Unable to persist API token to localStorage', e);
+            }
+        }
+    </script>
     <?php
     if (!empty(
         isset($extraCss) ? $extraCss : null
@@ -95,6 +111,7 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
                 </a>
                 <div class="dropdown-menu">
                     <a href="<?= $profileUrl ?>"><i class="fa-solid fa-user"></i>Profile</a>
+                    <a href="../customers/notifications"><i class="fa-solid fa-bell"></i>Notifications <span class="notif-badge" id="notifications-count" hidden>0</span></a>
                     <a href="../common/planning"><i class="fa-solid fa-calendar-days"></i>Planning</a>
                     <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="fa-solid fa-right-from-bracket"></i>Logout</a>
                 </div>

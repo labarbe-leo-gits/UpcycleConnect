@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -104,7 +105,7 @@ func GetAllCategoriesFromDB() ([]models.Category, error) {
 func CreateCategoryInDB(categoryDTO models.Category) (uuid.UUID, error) {
 
 	newID := uuid.New()
-	currentTime := getCurrentTime()
+	currentTime := time.Now().UTC().Format("2006-01-02 15:04:05")
 
 	_, err := Db.Exec("INSERT INTO categories (id, name, created_at) VALUES (?, ?, ?)", newID, categoryDTO.Name, currentTime)
 	if err != nil {

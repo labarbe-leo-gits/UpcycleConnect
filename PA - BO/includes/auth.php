@@ -143,7 +143,8 @@ function getLoggedInUser() {
         'last_name' => $_SESSION['last_name'] ?? '',
         'email' => $_SESSION['email'] ?? '',
         'user_type' => $_SESSION['user_type'] ?? null,
-        'oauth_provider' => $_SESSION['oauth_provider'] ?? null
+        'oauth_provider' => $_SESSION['oauth_provider'] ?? null,
+        'manager_id' => $_SESSION['manager_id'] ?? null
     ];
 
 

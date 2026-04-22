@@ -153,7 +153,6 @@
 
             card.innerHTML = `
                 <h3>${escapeHtml(tip.title || 'Untitled tip')}</h3>
-                <p>${escapeHtml(tip.description || '')}</p>
                 <p class="tip-meta">Created by: ${escapeHtml(tip.created_by_name || tip.created_by || 'Anonymous')}</p>
                 <div class="tip-actions">
                     <button class="btn-secondary edit-tip" data-tip-id="${tip.id}">Edit</button>

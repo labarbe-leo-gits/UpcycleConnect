@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -654,7 +655,7 @@ func CountAnnoncesByStatusFromDB(status int) (int, error) {
 
 func CreateAnnonceInDB(annonce models.Annonce) error {
 
-	currentTime := getCurrentTime()
+	currentTime := time.Now().UTC().Format("2006-01-02 15:04:05")
 
 	_, err := Db.Exec("INSERT INTO annonces (id, user_id, title, description, price, view_count, poids_materiaux, facteur_id, type_materiaux, upcycling_score, item_state, category_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", annonce.ID.String(), annonce.UserID.String(), annonce.Title, annonce.Description, annonce.Price, annonce.ViewCount, annonce.PoidsMateriaux, nullableUUID(annonce.FacteurID), annonce.TypeMateriaux, annonce.UpcyclingScore, annonce.ItemState, nullableUUID(annonce.CategoryID), currentTime, currentTime)
 
@@ -686,7 +687,7 @@ func CreateAnnonceInDB(annonce models.Annonce) error {
 
 func UpdateAnnonceInDB(id string, annonce models.Annonce) error {
 
-	currentTime := getCurrentTime()
+	currentTime := time.Now().UTC().Format("2006-01-02 15:04:05")
 
 	_, err := Db.Exec("UPDATE annonces SET title = ?, description = ?, price = ?, status = ?, view_count = ?, poids_materiaux = ?, facteur_id = ?, type_materiaux = ?, upcycling_score = ?, item_state = ?, category_id = ?, updated_at = ? WHERE id = ?", annonce.Title, annonce.Description, annonce.Price, annonce.Status, annonce.ViewCount, annonce.PoidsMateriaux, nullableUUID(annonce.FacteurID), annonce.TypeMateriaux, annonce.UpcyclingScore, annonce.ItemState, nullableUUID(annonce.CategoryID), currentTime, id)
 	if err != nil {
@@ -698,7 +699,7 @@ func UpdateAnnonceInDB(id string, annonce models.Annonce) error {
 }
 
 func UpdateAnnonceStatusInDB(id string, status int) (bool, error) {
-	currentTime := getCurrentTime()
+	currentTime := time.Now().UTC().Format("2006-01-02 15:04:05")
 
 	result, err := Db.Exec("UPDATE annonces SET status = ?, updated_at = ? WHERE id = ? AND status = 0", status, currentTime, id)
 	if err != nil {
@@ -714,7 +715,7 @@ func UpdateAnnonceStatusInDB(id string, status int) (bool, error) {
 }
 
 func AdminUpdateAnnonceStatusInDB(id string, status int) error {
-	currentTime := getCurrentTime()
+	currentTime := time.Now().UTC().Format("2006-01-02 15:04:05")
 	_, err := Db.Exec("UPDATE annonces SET status = ?, updated_at = ? WHERE id = ?", status, currentTime, id)
 	if err != nil {
 		return fmt.Errorf("adminUpdateAnnonceStatus package db : %s", err.Error())

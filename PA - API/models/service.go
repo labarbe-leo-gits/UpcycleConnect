@@ -25,6 +25,7 @@ type Service struct {
 	Schedules           []ServiceSchedule `json:"schedules,omitempty"`
 	MeetingType         string            `json:"meeting_type,omitempty"`
 	OnlineMeetingLink   string            `json:"online_meeting_link,omitempty"`
+	Status              string            `json:"status,omitempty" gorm:"default:published"`
 	CreatedBy           uuid.UUID         `json:"created_by" gorm:"type:uuid;not null"`
 	CreatedAt           string            `json:"created_at,omitempty"`
 	UpdatedAt           string            `json:"updated_at,omitempty"`

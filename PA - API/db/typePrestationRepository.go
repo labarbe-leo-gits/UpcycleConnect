@@ -4,6 +4,7 @@ import (
 	"API/models"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -38,7 +39,7 @@ func GetAllTypePrestations() ([]models.TypePrestation, error) {
 func CreateTypePrestationInDB(typePrestation models.TypePrestation) error {
 
 	typePrestation.ID = uuid.New()
-	currentTime := getCurrentTime()
+	currentTime := time.Now().UTC().Format("2006-01-02 15:04:05")
 
 	query := "INSERT INTO typesPrestations (id, name, created_at) VALUES (?, ?, ?)"
 	_, err := Db.Exec(query, typePrestation.ID, typePrestation.Name, currentTime)

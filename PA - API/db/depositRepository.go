@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -53,7 +54,7 @@ func GetAllDepositsFromDB() ([]models.Deposit, error) {
 func CreateDepositInDB(deposit models.Deposit) (uuid.UUID, error) {
 
 	newID := uuid.New()
-	currentTime := getCurrentTime()
+	currentTime := time.Now().UTC().Format("2006-01-02 15:04:05")
 
 	var barcodeValue interface{} = nil
 	if strings.TrimSpace(deposit.Barcode) != "" {
@@ -85,7 +86,7 @@ func UpdateDepositStatusInDB(depositIDStr string, status int) error {
 		return fmt.Errorf("invalid deposit ID format: %v", err)
 	}
 
-	currentTime := getCurrentTime()
+	currentTime := time.Now().UTC().Format("2006-01-02 15:04:05")
 
 	if status == 2 {
 		barcode := generateDepositBarcode()
@@ -145,7 +146,7 @@ func UpdateDepositInDB(depositIDStr string, conteneurIDStr string, objectName st
 		return fmt.Errorf("only pending deposits can be edited")
 	}
 
-	currentTime := getCurrentTime()
+	currentTime := time.Now().UTC().Format("2006-01-02 15:04:05")
 	_, err = Db.Exec("UPDATE demandes_depot SET conteneur_id = ?, object_name = ?, object_description = ?, object_state = ?, updated_at = ? WHERE id = ?", conteneurID, objectName, objectDescription, objectState, currentTime, depositID)
 	if err != nil {
 		return fmt.Errorf("failed to update deposit: %v", err)
@@ -236,7 +237,7 @@ func GetDepositsByConteneurIDFromDB(conteneurIDStr string) ([]models.Deposit, er
 
 func CreateDepositFileInDB(file models.DepositFile) (uuid.UUID, error) {
 	newID := uuid.New()
-	currentTime := getCurrentTime()
+	currentTime := time.Now().UTC().Format("2006-01-02 15:04:05")
 	_, err := Db.Exec(
 		"INSERT INTO demandes_depot_files (id, deposit_id, filename, original_name, created_at) VALUES (?, ?, ?, ?, ?)",
 		newID, file.DepositID, file.Filename, file.OriginalName, currentTime,

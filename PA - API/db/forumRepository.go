@@ -4,6 +4,7 @@ import (
 	"API/models"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -203,7 +204,7 @@ func CreateForumInDB(forum models.Forum) error {
 
 	newID := uuid.New()
 	userID := forum.CreatedBy
-	currentTime := getCurrentTime()
+	currentTime := time.Now().UTC().Format("2006-01-02 15:04:05")
 
 	_, err := Db.Exec("INSERT INTO forum (id, title, description, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)", newID.String(), forum.Title, forum.Description, userID.String(), currentTime, currentTime)
 	if err != nil {
@@ -217,7 +218,7 @@ func CreateForumInDB(forum models.Forum) error {
 func CreateForumPostInDB(post models.ForumPost) error {
 
 	newID := uuid.New()
-	currentTime := getCurrentTime()
+	currentTime := time.Now().UTC().Format("2006-01-02 15:04:05")
 
 	var parent sql.NullString
 	if post.ParentID != uuid.Nil {
@@ -284,7 +285,7 @@ func GetForumByIDFromDB(forumIDStr string) (*models.Forum, error) {
 
 func UpdateForumPostInDB(postIDStr string, content string) error {
 
-	currentTime := getCurrentTime()
+	currentTime := time.Now().UTC().Format("2006-01-02 15:04:05")
 
 	_, err := Db.Exec("UPDATE forum_posts SET content = ?, updated_at = ? WHERE id = ?", content, currentTime, postIDStr)
 	if err != nil {
@@ -320,7 +321,7 @@ func DeleteForumFromDB(forumIDStr string) error {
 
 func UpdateForumInDB(idForum string, forumDto models.Forum) error {
 
-	currentTime := getCurrentTime()
+	currentTime := time.Now().UTC().Format("2006-01-02 15:04:05")
 
 	_, err := Db.Exec("UPDATE forum SET title = ?, description = ?, updated_at = ? WHERE id = ?", forumDto.Title, forumDto.Description, currentTime, idForum)
 	if err != nil {

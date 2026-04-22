@@ -5,13 +5,14 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 )
 
 func CreateRefundRequestInDB(refundRequest models.RefundRequest) (err error) {
 	newID := uuid.New()
-	currentTime := getCurrentTime()
+	currentTime := time.Now().UTC().Format("2006-01-02 15:04:05")
 
 	_, err = Db.Exec(
 		"INSERT INTO refundsRequests (id, order_id, user_id, reason, status, admin_comment, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
@@ -156,7 +157,7 @@ func GetAllRefundRequestsFromDB() ([]models.RefundRequest, error) {
 }
 
 func UpdateRefundRequestStatusInDB(refundRequestID uuid.UUID, status int, approverID uuid.UUID, adminComment string) error {
-	currentTime := getCurrentTime()
+	currentTime := time.Now().UTC().Format("2006-01-02 15:04:05")
 	query := "UPDATE refundsRequests SET status = ?, approved_by = ?, admin_comment = ?, updated_at = ? WHERE id = ?"
 	params := []interface{}{status, nil, adminComment, currentTime, refundRequestID.String()}
 

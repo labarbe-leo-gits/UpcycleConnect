@@ -468,3 +468,130 @@ func RemoveAffectedEmployee(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusNoContent)
 }
+
+func GetFormationsByCreator(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+	creatorIDStr := query.Get("creator_id")
+	pageParam := query.Get("page")
+	limitParam := query.Get("limit")
+	searchParam := query.Get("search")
+
+	if creatorIDStr == "" {
+		sendError(w, "creator_id parameter is required", http.StatusBadRequest)
+		return
+	}
+
+	creatorID, err := uuid.Parse(creatorIDStr)
+	if err != nil {
+		fmt.Println("[ERROR] GetFormationsByCreator parse UUID:", err)
+		sendError(w, "Invalid creator ID format", http.StatusBadRequest)
+		return
+	}
+
+	page := 1
+	limit := 20
+	if pageParam != "" {
+		if parsed, err := strconv.Atoi(pageParam); err == nil && parsed > 0 {
+			page = parsed
+		}
+	}
+	if limitParam != "" {
+		if parsed, err := strconv.Atoi(limitParam); err == nil && parsed > 0 {
+			limit = parsed
+		}
+	}
+	if limit > 100 {
+		limit = 100
+	}
+
+	offset := (page - 1) * limit
+
+	total, err := db.CountFormationsByCreatorFromDB(creatorID)
+	if err != nil {
+		fmt.Println("[ERROR] GetFormationsByCreator count:", err)
+		sendError(w, "Unable to fetch formations", http.StatusInternalServerError)
+		return
+	}
+
+	formations, err := db.GetFormationsByCreatorFromDB(creatorID, searchParam, limit, offset)
+	if err != nil {
+		fmt.Println("[ERROR] GetFormationsByCreator:", err)
+		sendError(w, "Unable to fetch formations", http.StatusInternalServerError)
+		return
+	}
+
+	response := map[string]interface{}{
+		"items": formations,
+		"total": total,
+		"page":  page,
+		"limit": limit,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+func CreateFormation(w http.ResponseWriter, r *http.Request) {
+	var serviceDto models.Service
+	err := json.NewDecoder(r.Body).Decode(&serviceDto)
+
+	if err != nil {
+		fmt.Println("[ERROR] CreateFormation decode:", err)
+		sendError(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	validationErrors := ValidateServiceDto(serviceDto)
+
+	if len(validationErrors) > 0 {
+		fmt.Println("[ERROR] CreateFormation validation:", validationErrors)
+		sendError(w, fmt.Sprintf("Validation errors: %s", validationErrors), http.StatusBadRequest)
+		return
+	}
+
+	if serviceDto.MeetingType == "zoom" && serviceDto.OnlineMeetingLink == "" {
+		if url, err := createZoomMeeting(serviceDto.Name, serviceDto.ServiceDate); err != nil {
+			fmt.Println("[WARN] could not create zoom meeting:", err)
+		} else {
+			serviceDto.OnlineMeetingLink = url
+		}
+	}
+
+	newID, err := db.CreateServiceInDB(serviceDto)
+
+	if err != nil {
+		fmt.Println("[ERROR] CreateFormation DB insert:", err)
+		sendError(w, "Unable to create formation", http.StatusInternalServerError)
+		return
+	}
+
+	if len(serviceDto.Schedules) > 0 {
+		if err := db.SaveServiceSchedulesInDB(newID, serviceDto.Schedules); err != nil {
+			fmt.Println("[ERROR] CreateFormation save schedules:", err)
+			sendError(w, "Unable to save formation schedules", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	if serviceDto.Status == "draft" {
+		user, err := db.GetUserByIDFromDB(serviceDto.CreatedBy)
+		if err == nil && user.ManagerID != nil && *user.ManagerID != "" {
+			managerID, parseErr := uuid.Parse(*user.ManagerID)
+			if parseErr == nil {
+				notif := models.Notification{
+					UserID:  managerID,
+					Message: fmt.Sprintf("New formation draft to review: %s", serviceDto.Name),
+				}
+				if err := db.CreateNotificationInDB(notif); err != nil {
+					fmt.Println("[WARN] Could not create notification for manager:", err)
+				}
+			}
+		}
+	}
+
+	serviceDto.ID = newID
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(serviceDto)
+}

@@ -95,6 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['last_name'] = $user['last_name'] ?? '';
             $_SESSION['email'] = $user['email'];
             $_SESSION['user_type'] = isset($user['user_type']) ? (int) $user['user_type'] : 1;
+            $_SESSION['manager_id'] = $user['manager_id'] ?? null;
 
             $lastLogin = $user['last_login'] ?? null;
             $_SESSION['show_first_login_tutorial'] =

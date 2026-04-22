@@ -193,6 +193,7 @@ func registerRoute(method, path, description string, handler func(http.ResponseW
 	pattern := method + " " + path
 	finalHandler := handler
 	finalHandler = corsMiddleware(finalHandler)
+	finalHandler = rateLimiterMiddleware(finalHandler)
 
 	requiresAuth := false
 	for _, m := range middlewares {
@@ -575,6 +576,8 @@ func main() {
 	registerRoute("GET", "/products/services/{id}", "Get a specific service by its UUID", app.GetServiceByID, app.JWTAuthMiddleware)
 	registerRoute("PATCH", "/products/services/{id}", "Update a service/event by its UUID", app.UpdateService, app.JWTAuthMiddleware)
 	registerRoute("DELETE", "/products/services/{id}", "Delete a service/event by its UUID", app.DeleteService, app.JWTAuthMiddleware)
+	registerRoute("GET", "/formations", "Get formations for a specific creator (partial user)", app.GetFormationsByCreator, app.JWTAuthMiddleware)
+	registerRoute("POST", "/formations", "Create a new formation (for partials)", app.CreateFormation, app.JWTAuthMiddleware)
 	registerRoute("GET", "/orders", "List all orders", app.GetOrders, app.JWTAuthMiddleware)
 	registerRoute("POST", "/orders", "Create a new order", app.CreateOrder, app.JWTAuthMiddleware)
 	registerRoute("GET", "/annonces", "List all annonces", app.GetAnnonces)
@@ -789,6 +792,13 @@ func main() {
 	registerRoute("POST", "/users/{id}/reviews", "Create a new review for a specific user by their UUID", app.CreateUserReview, app.JWTAuthMiddleware)
 	registerRoute("PATCH", "/users/{id}/reviews/{rID}", "Update a specific review for a user by their UUIDs", app.UpdateUserReview, app.JWTAuthMiddleware)
 	registerRoute("DELETE", "/users/{id}/reviews/{rID}", "Delete a specific review for a user by their UUIDs", app.DeleteUserReview, app.JWTAuthMiddleware)
+
+	registerRoute("GET", "/newsletters", "Get paginated newsletters with search and filtering (admin only)", app.GetNewsletters, app.JWTAuthMiddleware, RoleMiddleware(3))
+	registerRoute("GET", "/newsletters/{id}", "Get full newsletter details (admin only)", app.GetNewsletter, app.JWTAuthMiddleware, RoleMiddleware(3))
+	registerRoute("POST", "/newsletters", "Create a new draft newsletter (admin only)", app.CreateNewsletter, app.JWTAuthMiddleware, RoleMiddleware(3))
+	registerRoute("PATCH", "/newsletters/{id}", "Update an existing newsletter (admin only)", app.UpdateNewsletter, app.JWTAuthMiddleware, RoleMiddleware(3))
+	registerRoute("DELETE", "/newsletters/{id}", "Delete a newsletter (admin only)", app.DeleteNewsletter, app.JWTAuthMiddleware, RoleMiddleware(3))
+	registerRoute("POST", "/newsletters/{id}/send", "Send newsletter to all subscribers (admin only)", app.SendNewsletter, app.JWTAuthMiddleware, RoleMiddleware(3))
 
 	http.Handle("/swagger/", httpSwagger.Handler(httpSwagger.URL("/openapi.json")))
 	http.HandleFunc("/swagger/doc.json", openapiSpecHandler)

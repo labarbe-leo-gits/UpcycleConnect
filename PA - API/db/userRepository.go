@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -580,13 +581,13 @@ func GetAnnonceBuyerIDsFromDB(annonceID string) ([]uuid.UUID, error) {
 func GetUserByIdentifierFromDB(identifier string) (models.User, error) {
 	var user models.User
 	var idStr string
-	var createdAt, lastLogin sql.NullString
+	var createdAt, lastLogin, managerID sql.NullString
 	var companyName, oauthProvider, oauthID, profilePicture sql.NullString
 
 	err := Db.QueryRow(
-		"SELECT id, first_name, last_name, company_name, user_type, username, email, password_hash, balance, upcycling_score, created_at, last_login, oauth_provider, oauth_id, profile_picture FROM users WHERE username = ? OR email = ?",
+		"SELECT id, first_name, last_name, company_name, user_type, username, email, password_hash, balance, upcycling_score, created_at, last_login, oauth_provider, oauth_id, profile_picture, manager_id FROM users WHERE username = ? OR email = ?",
 		identifier, identifier,
-	).Scan(&idStr, &user.FirstName, &user.LastName, &companyName, &user.UserType, &user.Username, &user.Email, &user.Password, &user.Balance, &user.UpcyclingScore, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture)
+	).Scan(&idStr, &user.FirstName, &user.LastName, &companyName, &user.UserType, &user.Username, &user.Email, &user.Password, &user.Balance, &user.UpcyclingScore, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture, &managerID)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -617,6 +618,9 @@ func GetUserByIdentifierFromDB(identifier string) (models.User, error) {
 	if profilePicture.Valid {
 		user.ProfilePicture = profilePicture.String
 	}
+	if managerID.Valid {
+		user.ManagerID = &managerID.String
+	}
 
 	return user, nil
 }
@@ -624,13 +628,13 @@ func GetUserByIdentifierFromDB(identifier string) (models.User, error) {
 func GetUserByEmailFromDB(email string) (models.User, error) {
 	var user models.User
 	var idStr string
-	var createdAt, lastLogin sql.NullString
+	var createdAt, lastLogin, managerID sql.NullString
 	var companyName, oauthProvider, oauthID, profilePicture sql.NullString
 
 	err := Db.QueryRow(
-		"SELECT id, first_name, last_name, company_name, user_type, username, email, password_hash, created_at, last_login, oauth_provider, oauth_id, profile_picture FROM users WHERE email = ?",
+		"SELECT id, first_name, last_name, company_name, user_type, username, email, password_hash, created_at, last_login, oauth_provider, oauth_id, profile_picture, manager_id FROM users WHERE email = ?",
 		email,
-	).Scan(&idStr, &user.FirstName, &user.LastName, &companyName, &user.UserType, &user.Username, &user.Email, &user.Password, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture)
+	).Scan(&idStr, &user.FirstName, &user.LastName, &companyName, &user.UserType, &user.Username, &user.Email, &user.Password, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture, &managerID)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -662,6 +666,9 @@ func GetUserByEmailFromDB(email string) (models.User, error) {
 	if profilePicture.Valid {
 		user.ProfilePicture = profilePicture.String
 	}
+	if managerID.Valid {
+		user.ManagerID = &managerID.String
+	}
 
 	return user, nil
 }
@@ -669,13 +676,13 @@ func GetUserByEmailFromDB(email string) (models.User, error) {
 func GetUserByOAuthFromDB(provider, oauthID string) (models.User, error) {
 	var user models.User
 	var idStr string
-	var createdAt, lastLogin sql.NullString
+	var createdAt, lastLogin, managerID sql.NullString
 	var companyName, oauthProviderVal, oauthIDVal, profilePicture sql.NullString
 
 	err := Db.QueryRow(
-		"SELECT id, first_name, last_name, company_name, user_type, username, email, password_hash, created_at, last_login, oauth_provider, oauth_id, profile_picture FROM users WHERE oauth_provider = ? AND oauth_id = ?",
+		"SELECT id, first_name, last_name, company_name, user_type, username, email, password_hash, created_at, last_login, oauth_provider, oauth_id, profile_picture, manager_id FROM users WHERE oauth_provider = ? AND oauth_id = ?",
 		provider, oauthID,
-	).Scan(&idStr, &user.FirstName, &user.LastName, &companyName, &user.UserType, &user.Username, &user.Email, &user.Password, &createdAt, &lastLogin, &oauthProviderVal, &oauthIDVal, &profilePicture)
+	).Scan(&idStr, &user.FirstName, &user.LastName, &companyName, &user.UserType, &user.Username, &user.Email, &user.Password, &createdAt, &lastLogin, &oauthProviderVal, &oauthIDVal, &profilePicture, &managerID)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -706,6 +713,9 @@ func GetUserByOAuthFromDB(provider, oauthID string) (models.User, error) {
 	}
 	if profilePicture.Valid {
 		user.ProfilePicture = profilePicture.String
+	}
+	if managerID.Valid {
+		user.ManagerID = &managerID.String
 	}
 
 	return user, nil
@@ -1162,7 +1172,7 @@ func UpdateProjectQuotaInDB(userID string, newQuota int) error {
 func CreateDiscussionInDB(discussionDTO models.Discussion) (uuid.UUID, error) {
 
 	newID := uuid.New()
-	CurrentTime := getCurrentTime()
+	CurrentTime := time.Now().UTC().Format("2006-01-02 15:04:05")
 
 	_, err := Db.Exec("INSERT INTO discussions (id, user1_id, user2_id, created_at) VALUES (?, ?, ?, ?)", newID.String(), discussionDTO.User1ID, discussionDTO.User2ID, CurrentTime)
 	if err != nil {

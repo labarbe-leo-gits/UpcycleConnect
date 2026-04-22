@@ -4,6 +4,7 @@ import (
 	"API/models"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -68,7 +69,7 @@ func GetTipsFromDB() ([]models.Tip, error) {
 func CreateTipInDB(tip models.Tip) (uuid.UUID, error) {
 
 	newID := uuid.New()
-	currentTIme := getCurrentTime()
+	currentTIme := time.Now().UTC().Format("2006-01-02 15:04:05")
 
 	updatedBy := tip.UpdatedBy
 	if updatedBy == uuid.Nil {
@@ -154,7 +155,7 @@ func UpdateTipInDB(tipIDStr uuid.UUID, tip models.Tip) error {
 		tip.Description = old_tip.Description
 	}
 
-	currentTIme := getCurrentTime()
+	currentTIme := time.Now().UTC().Format("2006-01-02 15:04:05")
 
 	_, err = Db.Exec(
 		"UPDATE conseils SET title = ?, description = ?, poll_id = ?, updated_by = ?, updated_at = ? WHERE id = ?",

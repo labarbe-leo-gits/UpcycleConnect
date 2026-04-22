@@ -4,6 +4,7 @@ import (
 	"API/models"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -52,7 +53,7 @@ func GetAnnonceImagesFromDB(annonceID uuid.UUID) ([]models.Image, error) {
 func CreateAnnonceImageInDB(image models.Image) error {
 
 	newID := uuid.New()
-	currentTime := getCurrentTime()
+	currentTime := time.Now().UTC().Format("2006-01-02 15:04:05")
 
 	_, err := Db.Exec("INSERT INTO images (id, annonce_id, file_name, created_at) VALUES (?, ?, ?, ?)", newID, image.AnnonceID, image.FileName, currentTime)
 	if err != nil {
@@ -92,7 +93,7 @@ func GetStepImagesFromDB(stepID string) ([]models.Image, error) {
 
 func CreateStepImageInDB(image models.Image) (*models.Image, error) {
 	newID := uuid.New()
-	currentTime := getCurrentTime()
+	currentTime := time.Now().UTC().Format("2006-01-02 15:04:05")
 
 	_, err := Db.Exec("INSERT INTO images (id, step_id, file_name, created_at) VALUES (?, ?, ?, ?)",
 		newID.String(), image.StepID, image.FileName, currentTime)

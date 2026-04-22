@@ -85,6 +85,7 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
                 <div class="dropdown-menu">
                     <a href="<?= base_url('pages/common/forums') ?>"><i class="fa-solid fa-indent"></i>Forums</a>
                     <a href="<?= base_url('pages/admin/users') ?>"><i class="fa-solid fa-user"></i>Users</a>
+                    <a href="<?= base_url('pages/admin/newsletter') ?>"><i class="fa-solid fa-envelopes-bulk"></i>Newsletter</a>
                     <a href="<?= base_url('pages/admin/moderation') ?>"><i class="fa-solid fa-gavel"></i>Moderation</a>
                 </div>
             </div>
