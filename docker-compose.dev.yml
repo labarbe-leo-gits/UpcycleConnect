@@ -124,6 +124,28 @@ services:
       - DataNetwork
       - APIClientNetwork
 
+  processes:
+    build:
+      context: "./PA - Automated Processes"
+    container_name: upcycle_cron_dev
+    restart: unless-stopped
+    env_file:
+      - "PA - Automated Processes/.env"
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_USER=app
+      - DB_PASSWORD=secret
+      - DB_NAME=upcycle
+    volumes:
+      - "./PA - Automated Processes:/app:delegated"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - DataNetwork
+      - APIClientNetwork
+
 networks:
   DataNetwork:
     driver: bridge

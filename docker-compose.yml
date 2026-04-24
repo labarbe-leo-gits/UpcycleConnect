@@ -93,7 +93,28 @@ services:
       - api
     networks:
       - APIClientNetwork
-
+  processes:
+    
+    image: llabarbe/upcycleconnect-cron
+    container_name: upcycleconnect_cron
+    restart: unless-stopped
+    env_file:
+      - "PA - Automated Processes/.env"
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_USER=app
+      - DB_PASSWORD=secret
+      - DB_NAME=upcycle
+    volumes:
+      - "./PA - Automated Processes:/app"
+      - ./files:/app/files
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - DataNetwork
+      - APIClientNetwork
 networks:
   DataNetwork:
     driver: bridge
