@@ -64,34 +64,24 @@ func GetDashboardMetrics(w http.ResponseWriter, r *http.Request) {
 	loginCounts := make(map[string]int)
 	registerCounts := make(map[string]int)
 
-	loginLogCandidates := []string{
-		"/files/logs/login.log",
-		"../files/logs/login.log",
-		"../../files/logs/login.log",
-	}
-	parsedFromLog := false
-	for _, p := range loginLogCandidates {
-		if counts, err := loadCountsFromLog(p, `^\[([0-9]{4}-[0-9]{2}-[0-9]{2}) [0-9]{2}:[0-9]{2}:[0-9]{2}\].*logged in successfully`); err == nil {
-			loginCounts = counts
-			parsedFromLog = true
-			break
-		} else {
-			fmt.Println("[WARN] unable to read login log", p, err)
-		}
+	getLogFilePath := func(filename string) string {
+		return filepath.Join(string(os.PathSeparator), "files", "logs", filename)
 	}
 
-	registerLogCandidates := []string{
-		"/files/logs/register.log",
-		"../files/logs/register.log",
-		"../../files/logs/register.log",
+	loginLogPath := getLogFilePath("login.log")
+	parsedFromLog := false
+	if counts, err := loadCountsFromLog(loginLogPath, `^\[([0-9]{4}-[0-9]{2}-[0-9]{2}) [0-9]{2}:[0-9]{2}:[0-9]{2}\].*logged in successfully`); err == nil {
+		loginCounts = counts
+		parsedFromLog = true
+	} else {
+		fmt.Println("[WARN] unable to read login log", loginLogPath, err)
 	}
-	for _, p := range registerLogCandidates {
-		if counts, err := loadCountsFromLog(p, `^\[([0-9]{4}-[0-9]{2}-[0-9]{2}) [0-9]{2}:[0-9]{2}:[0-9]{2}\].*registered successfully`); err == nil {
-			registerCounts = counts
-			break
-		} else {
-			fmt.Println("[WARN] unable to read register log", p, err)
-		}
+
+	registerLogPath := getLogFilePath("register.log")
+	if counts, err := loadCountsFromLog(registerLogPath, `^\[([0-9]{4}-[0-9]{2}-[0-9]{2}) [0-9]{2}:[0-9]{2}:[0-9]{2}\].*registered successfully`); err == nil {
+		registerCounts = counts
+	} else {
+		fmt.Println("[WARN] unable to read register log", registerLogPath, err)
 	}
 
 	if !parsedFromLog {

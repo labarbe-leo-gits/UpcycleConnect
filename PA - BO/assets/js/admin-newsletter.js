@@ -11,6 +11,7 @@
     let easyMDE;
 
     let currentEditingId = '';
+    let activeSendId = '';
     let _searchTimer = null;
 
     document.addEventListener('DOMContentLoaded', function () {
@@ -18,7 +19,6 @@
         loadEditorOnce();
         requestChunk(false);
 
-        // Bind modal controls
         const modalCloseBtn = document.getElementById('newsletter-form-modal-close');
         const modalCancelBtn = document.getElementById('newsletter-form-cancel');
         const modalSubmitBtn = document.getElementById('newsletter-form-submit');
@@ -30,6 +30,10 @@
 
         const previewCloseBtn = document.getElementById('newsletter-preview-close');
         const previewBackBtn = document.getElementById('newsletter-preview-back');
+
+        const sendCloseBtn = document.getElementById('newsletter-send-close');
+        const sendCancelBtn = document.getElementById('newsletter-send-cancel');
+        const sendConfirmBtn = document.getElementById('newsletter-send-confirm');
 
         if (modalCloseBtn) modalCloseBtn.addEventListener('click', () => closeModal('newsletter-form-modal'));
         if (modalCancelBtn) modalCancelBtn.addEventListener('click', () => closeModal('newsletter-form-modal'));
@@ -46,8 +50,48 @@
             openModal('newsletter-form-modal');
         });
 
-        // Click outside modal to close
-        ['newsletter-form-modal', 'newsletter-confirm-modal', 'newsletter-preview-modal'].forEach(id => {
+        if (sendCloseBtn) sendCloseBtn.addEventListener('click', () => closeModal('newsletter-send-modal'));
+        if (sendCancelBtn) sendCancelBtn.addEventListener('click', () => closeModal('newsletter-send-modal'));
+        if (sendConfirmBtn) sendConfirmBtn.addEventListener('click', confirmSendNewsletter);
+
+        sendConfirmBtn.onclick = function() {
+            const originalContent = sendConfirmBtn.innerHTML;
+            
+            sendConfirmBtn.disabled = true;
+            sendConfirmBtn.innerHTML = '<i class="fa-solid fa-spinner"></i> Sending...';
+            
+            fetch('newsletter-api.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'send',
+                    id: activeSendId
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    
+                    //alert('Newsletter sent to all subscribers!');
+                    closeModal('newsletter-send-modal');
+                    requestChunk(false);
+                } else {
+                    document.getElementById('newsletter-send-error').textContent = data.error || 'Failed to send';
+                    document.getElementById('newsletter-send-error').style.display = 'block';
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                document.getElementById('newsletter-send-error').textContent = 'Server error.';
+                document.getElementById('newsletter-send-error').style.display = 'block';
+            })
+            .finally(() => {
+                sendConfirmBtn.disabled = false;
+                sendConfirmBtn.innerHTML = originalContent;
+            });
+        };
+
+        ['newsletter-form-modal', 'newsletter-confirm-modal', 'newsletter-preview-modal', 'newsletter-send-modal'].forEach(id => {
             const modal = document.getElementById(id);
             if (modal) {
                 modal.addEventListener('click', function (e) {
@@ -60,7 +104,6 @@
     });
 
     function loadEditorOnce() {
-        // Initialize EasyMDE only once when page loads
         if (!easyMDE) {
             easyMDE = new EasyMDE({
                 element: document.getElementById('newsletter-content'),
@@ -86,6 +129,18 @@
         const createBtn = document.getElementById('create-newsletter-btn');
         const searchInput = document.getElementById('newsletter-search');
         const statusFilter = document.getElementById('newsletter-status-filter');
+
+        const container = document.getElementById('newsletters-container');
+        container.addEventListener('click', function(e) {
+            const item = e.target.closest('.admin-list-item');
+            if (!item) return;
+            const { id, title, recipients } = item.dataset;
+
+            if (e.target.closest('.btn-edit'))    window.editNewsletter(id);
+            if (e.target.closest('.btn-preview')) window.previewNewsletter(id);
+            if (e.target.closest('.btn-send'))    window.openSendModal(id, title, parseInt(recipients));
+            if (e.target.closest('.btn-delete'))  window.deleteNewsletter(id, title);
+        });
 
         if (createBtn) {
             createBtn.addEventListener('click', function (e) {
@@ -174,32 +229,32 @@
             return;
         }
 
-        const html = newsletters.map(nl => `
-            <div class="admin-list-item">
-                <div class="admin-list-item-header">
-                    <div>
-                        <h3>${escapeHtml(nl.title)}</h3>
-                        <p style="font-size:14px;color:#9ca3af;margin:4px 0 0 0;">
-                            <span class="status-badge status-${nl.status}">${nl.status_label}</span>
-                            ${nl.created_at ? ' • ' + new Date(nl.created_at).toLocaleDateString() : ''}
-                        </p>
-                    </div>
-                </div>
-                <div class="admin-list-actions">
-                    <button class="btn-icon" title="Edit" onclick="window.editNewsletter('${nl.id}')">
-                        <i class="fa-solid fa-pencil"></i>
-                    </button>
-                    <button class="btn-icon btn-icon-success" title="Preview" onclick="window.previewNewsletter('${nl.id}')">
-                        <i class="fa-solid fa-eye"></i>
-                    </button>
-                    ${nl.status !== 'Sent' ? `
-                        <button class="btn-icon btn-icon-danger" title="Delete" onclick="window.deleteNewsletter('${nl.id}', '${escapeHtml(nl.title)}')">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    ` : ''}
-                </div>
+        const html = newsletters.map(nl => {
+            const statusValue = parseInt(nl.status, 10);
+            const recipientInfo = nl.recipient_count != null ? ` • ${nl.recipient_count} recipients` : '';
+            return `
+    <div class="admin-list-item" 
+         data-id="${nl.id}"
+         data-title="${escapeHtml(nl.title)}"
+         data-recipients="${nl.recipient_count || 0}">
+        <div class="admin-list-item-header">
+            <div>
+                <h3>${escapeHtml(nl.title)}</h3>
+                <p style="font-size:14px;color:#9ca3af;margin:4px 0 0 0;">
+                    <span class="status-badge status-${statusValue}">${nl.status_label}</span>
+                    ${nl.created_at ? ' • ' + new Date(nl.created_at).toLocaleDateString() : ''}${recipientInfo}
+                </p>
             </div>
-        `).join('');
+        </div>
+        <div class="admin-list-actions">
+            <button class="btn-icon btn-edit" title="Edit"><i class="fa-solid fa-pencil"></i></button>
+            <button class="btn-icon btn-icon-success btn-preview" title="Preview"><i class="fa-solid fa-eye"></i></button>
+            ${statusValue !== 2 ? `<button class="btn-icon btn-icon-primary btn-send" title="Send"><i class="fa-solid fa-paper-plane"></i></button>` : ''}
+            ${statusValue !== 2 ? `<button class="btn-icon btn-icon-danger btn-delete" title="Delete"><i class="fa-solid fa-trash"></i></button>` : ''}
+        </div>
+    </div>
+`;
+        }).join('');
 
         if (append) {
             container.innerHTML += html;
@@ -243,11 +298,31 @@
         document.getElementById('newsletter-title').value = '';
         easyMDE.value('');
         document.getElementById('newsletter-status').value = '0';
+        document.getElementById('newsletter-scheduled-date').value = '';
         document.getElementById('newsletter-form-title').textContent = 'Create Newsletter';
         document.getElementById('newsletter-form-send').style.display = 'inline-block';
         document.getElementById('newsletter-form-preview').style.display = 'inline-block';
+        updateScheduleField();
         clearError();
         openModal('newsletter-form-modal');
+    }
+
+    function updateScheduleField() {
+        const status = document.getElementById('newsletter-status').value;
+        const scheduleField = document.getElementById('newsletter-schedule-field');
+        const scheduleInput = document.getElementById('newsletter-scheduled-date');
+        const today = new Date().toISOString().split('T')[0];
+
+        scheduleInput.min = today;
+
+        if (status === '1') {
+            scheduleField.style.display = 'block';
+            scheduleInput.required = true;
+        } else {
+            scheduleField.style.display = 'none';
+            scheduleInput.required = false;
+            scheduleInput.value = '';
+        }
     }
 
     function showError(message) {
@@ -284,11 +359,24 @@
         const id = document.getElementById('newsletter-id').value;
         const title = document.getElementById('newsletter-title').value.trim();
         const content = easyMDE.value().trim();
-        const status = parseInt(document.getElementById('newsletter-status').value);
+        const status = document.getElementById('newsletter-status').value;
+        const scheduledDate = document.getElementById('newsletter-scheduled-date').value;
 
         if (!title || !content) {
             showError('Title and content are required');
             return;
+        }
+
+        if (status === '1') {
+            if (!scheduledDate) {
+                showError('Scheduled date is required for scheduled newsletters');
+                return;
+            }
+            const today = new Date().toISOString().split('T')[0];
+            if (scheduledDate < today) {
+                showError('Scheduled date cannot be in the past');
+                return;
+            }
         }
 
         clearError();
@@ -302,8 +390,11 @@
             status: status
         };
 
-        // If status is "Sent" (2), ask for confirmation before saving
-        if (status === 2) {
+        if (status === '1' && scheduledDate) {
+            payload.scheduled_date = scheduledDate;
+        }
+
+        if (status === '2') {
             if (!confirm('This will mark the newsletter as sent and send it to all subscribers.\n\nAre you sure you want to proceed?')) {
                 return;
             }
@@ -317,20 +408,28 @@
             },
             body: JSON.stringify(payload)
         })
-            .then(r => {
-                if (!r.ok) throw new Error(`HTTP ${r.status}`);
-                return r.text();
+            .then(async r => {
+                const text = await r.text();
+                if (!r.ok) {
+                    let msg = `HTTP ${r.status}`;
+                    try {
+                        const json = JSON.parse(text);
+                        msg = json.error || msg;
+                    } catch (_) {}
+                    throw new Error(msg);
+                }
+                return text;
             })
             .then(text => {
                 try {
                     const data = JSON.parse(text);
                     if (data.success) {
-                        closeModal('newsletter-form-modal');
-                        if (status === 2) {
-                            alert(`Newsletter sent to ${data.sent_count || 0} subscribers`);
-                        } else {
-                            alert(method === 'create' ? 'Newsletter created successfully' : 'Newsletter saved successfully');
+                        const savedId = id || data.id;
+                        if (status === '2') {
+                            return sendFixedNewsletter(savedId, true);
                         }
+                        closeModal('newsletter-form-modal');
+                        alert(method === 'create' ? 'Newsletter created successfully' : 'Newsletter saved successfully');
                         requestChunk(false);
                     } else {
                         showError(data.error || 'Failed to save newsletter');
@@ -360,7 +459,40 @@
             return;
         }
 
-        fetch('newsletter-api.php', {
+        sendFixedNewsletter(id).then(() => {
+            closeModal('newsletter-form-modal');
+        }).catch(err => {
+            showError('An error occurred while sending: ' + err.message);
+        });
+    }
+
+    window.openSendModal = function (id, title, count) {
+        activeSendId = id;
+        document.getElementById('newsletter-send-title').textContent = title;
+        // document.getElementById('newsletter-send-count').textContent = `Recipients: ${count}`;
+        document.getElementById('newsletter-send-error').style.display = 'none';
+        document.getElementById('newsletter-send-error').textContent = '';
+        openModal('newsletter-send-modal');
+    }
+
+    function confirmSendNewsletter() {
+        if (!activeSendId) {
+            document.getElementById('newsletter-send-error').textContent = 'No newsletter selected to send.';
+            document.getElementById('newsletter-send-error').style.display = 'block';
+            return;
+        }
+
+        sendFixedNewsletter(activeSendId).then(() => {
+            closeModal('newsletter-send-modal');
+        }).catch(err => {
+            const errorEl = document.getElementById('newsletter-send-error');
+            errorEl.textContent = err.message;
+            errorEl.style.display = 'block';
+        });
+    }
+
+    function sendFixedNewsletter(id) {
+        return fetch('newsletter-api.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -368,47 +500,61 @@
             },
             body: JSON.stringify({ action: 'send', id: id })
         })
-            .then(r => {
-                if (!r.ok) throw new Error(`HTTP ${r.status}`);
-                return r.text();
+            .then(async r => {
+                const text = await r.text();
+                if (!r.ok) {
+                    let msg = `HTTP ${r.status}`;
+                    try {
+                        const json = JSON.parse(text);
+                        msg = json.error || msg;
+                    } catch (_) {}
+                    throw new Error(msg);
+                }
+                return text;
             })
             .then(text => {
-                try {
-                    const data = JSON.parse(text);
-                    if (data.success) {
-                        closeModal('newsletter-form-modal');
-                        alert(`Newsletter sent to ${data.sent_count} subscribers`);
-                        requestChunk(false);
-                    } else {
-                        showError(data.error || 'Failed to send newsletter');
-                    }
-                } catch (err) {
-                    console.error('JSON parse error:', err, 'Response:', text);
-                    showError('Invalid response from server');
+                const data = JSON.parse(text);
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to send newsletter');
                 }
-            })
-            .catch(err => {
-                console.error('Error:', err);
-                showError('An error occurred while sending: ' + err.message);
+                // alert(`Newsletter sent to ${data.sent_count || 0} subscribers`);
+                requestChunk(false);
             });
     }
 
     function previewNewsletter(e) {
         if (typeof e === 'string') {
-            // Called from view action
             const id = e;
-            fetch('newsletter-api.php?action=get&id=' + encodeURIComponent(id), {
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            fetch('newsletter-api.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ action: 'get', id: id })
             })
-                .then(r => {
-                    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-                    return r.text();
+                .then(async r => {
+                    const text = await r.text();
+                    if (!r.ok) {
+                        let msg = `HTTP ${r.status}`;
+                        try {
+                            const json = JSON.parse(text);
+                            msg = json.error || msg;
+                        } catch (_) {}
+                        throw new Error(msg);
+                    }
+                    return text;
                 })
                 .then(text => {
                     try {
                         const data = JSON.parse(text);
                         if (data.success) {
-                            showPreview(data.newsletter.title, data.newsletter.content);
+                            let title = data.newsletter.title;
+                            let content = data.newsletter.content;
+                            if (data.newsletter.recipient_count != null) {
+                                title += ` (${data.newsletter.recipient_count} recipients)`;
+                            }
+                            showPreview(title, content);
                         } else {
                             alert('Failed to load newsletter: ' + (data.error || 'Unknown error'));
                         }
@@ -419,11 +565,10 @@
                 })
                 .catch(err => {
                     console.error('Error:', err);
-                    alert('An error occurred');
+                    alert('An error occurred: ' + err.message);
                 });
         } else {
             e.preventDefault();
-            // Preview from editor
             const title = document.getElementById('newsletter-title').value.trim();
             const content = easyMDE.value().trim();
 
@@ -475,8 +620,11 @@
 
     // Window functions for onclick handlers
     window.editNewsletter = function (id) {
-        fetch('newsletter-api.php?action=get&id=' + encodeURIComponent(id), {
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        const params = new URLSearchParams({ action: 'get', id: id });
+        fetch('newsletter-api.php?' + params, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
         })
             .then(r => {
                 if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -494,10 +642,10 @@
                         document.getElementById('newsletter-status').value = nl.status;
                         document.getElementById('newsletter-form-title').textContent = 'Edit Newsletter';
                         
-                        // Show send button only for drafts and scheduled
                         const sendBtn = document.getElementById('newsletter-form-send');
                         sendBtn.style.display = nl.status < 2 ? 'inline-block' : 'none';
-                        
+                        document.getElementById('newsletter-scheduled-date').value = nl.scheduled_date || '';
+                        updateScheduleField();
                         clearError();
                         openModal('newsletter-form-modal');
                     } else {
@@ -515,7 +663,46 @@
     };
 
     window.previewNewsletter = function (id) {
-        previewNewsletter(id);
+        const params = new URLSearchParams({ action: 'get', id: id });
+        fetch('newsletter-api.php?' + params, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(async r => {
+                const text = await r.text();
+                if (!r.ok) {
+                    let msg = `HTTP ${r.status}`;
+                    try {
+                        const json = JSON.parse(text);
+                        msg = json.error || msg;
+                    } catch (_) {}
+                    throw new Error(msg);
+                }
+                return text;
+            })
+            .then(text => {
+                try {
+                    const data = JSON.parse(text);
+                    if (data.success) {
+                        let title = data.newsletter.title;
+                        let content = data.newsletter.content;
+                        if (data.newsletter.recipient_count != null) {
+                            title += ` (${data.newsletter.recipient_count} recipients)`;
+                        }
+                        showPreview(title, content);
+                    } else {
+                        alert('Failed to load newsletter: ' + (data.error || 'Unknown error'));
+                    }
+                } catch (err) {
+                    console.error('JSON parse error:', err, 'Response:', text);
+                    alert('Error: Invalid response from server');
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                alert('An error occurred: ' + err.message);
+            });
     };
 
     window.deleteNewsletter = function (id, title) {
@@ -575,4 +762,6 @@
         };
         return text.replace(/[&<>"']/g, m => map[m]);
     }
+
+    window.requestChunk = requestChunk;
 })();

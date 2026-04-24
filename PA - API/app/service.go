@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/google/uuid"
 )
@@ -529,6 +530,154 @@ func GetFormationsByCreator(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
+}
+
+func GetPendingFormationsForManager(w http.ResponseWriter, r *http.Request) {
+	userIDRaw := r.Context().Value("user_id")
+	if userIDRaw == nil {
+		sendError(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	managerID, err := uuid.Parse(fmt.Sprint(userIDRaw))
+	if err != nil {
+		fmt.Println("[ERROR] GetPendingFormationsForManager parse UUID:", err)
+		sendError(w, "Invalid manager ID", http.StatusBadRequest)
+		return
+	}
+
+	query := r.URL.Query()
+	pageParam := query.Get("page")
+	limitParam := query.Get("limit")
+	searchParam := query.Get("search")
+
+	page := 1
+	limit := 20
+	if pageParam != "" {
+		if parsed, err := strconv.Atoi(pageParam); err == nil && parsed > 0 {
+			page = parsed
+		}
+	}
+	if limitParam != "" {
+		if parsed, err := strconv.Atoi(limitParam); err == nil && parsed > 0 {
+			limit = parsed
+		}
+	}
+	if limit > 100 {
+		limit = 100
+	}
+
+	offset := (page - 1) * limit
+
+	total, err := db.CountPendingFormationsForManagerFromDB(managerID, searchParam)
+	if err != nil {
+		fmt.Println("[ERROR] CountPendingFormationsForManager:", err)
+		sendError(w, "Unable to load pending formations", http.StatusInternalServerError)
+		return
+	}
+
+	formations, err := db.GetPendingFormationsForManagerFromDB(managerID, searchParam, limit, offset)
+	if err != nil {
+		fmt.Println("[ERROR] GetPendingFormationsForManager:", err)
+		sendError(w, "Unable to load pending formations", http.StatusInternalServerError)
+		return
+	}
+
+	response := map[string]interface{}{
+		"items": formations,
+		"total": total,
+		"page":  page,
+		"limit": limit,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+func UpdateFormationStatus(w http.ResponseWriter, r *http.Request) {
+	if !strings.HasSuffix(r.URL.Path, "/status") {
+		sendError(w, "Invalid status update path", http.StatusBadRequest)
+		return
+	}
+
+	idStr := strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/formations/"), "/status")
+	serviceID, err := uuid.Parse(idStr)
+	if err != nil {
+		fmt.Println("[ERROR] UpdateFormationStatus parse UUID:", err)
+		sendError(w, "Invalid formation ID format", http.StatusBadRequest)
+		return
+	}
+
+	userIDRaw := r.Context().Value("user_id")
+	if userIDRaw == nil {
+		sendError(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	managerID, err := uuid.Parse(fmt.Sprint(userIDRaw))
+	if err != nil {
+		fmt.Println("[ERROR] UpdateFormationStatus parse manager UUID:", err)
+		sendError(w, "Invalid manager ID", http.StatusBadRequest)
+		return
+	}
+
+	existing, err := db.GetServiceByIDFromDB(serviceID)
+	if err != nil || existing.ID == uuid.Nil {
+		sendError(w, "Formation not found", http.StatusNotFound)
+		return
+	}
+
+	creator, err := db.GetUserByIDFromDB(existing.CreatedBy)
+	if err != nil {
+		fmt.Println("[ERROR] UpdateFormationStatus get creator:", err)
+		sendError(w, "Unable to verify permissions", http.StatusInternalServerError)
+		return
+	}
+
+	if creator.ManagerID == nil || *creator.ManagerID != managerID.String() {
+		sendError(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	var payload struct {
+		Status string `json:"status"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		fmt.Println("[ERROR] UpdateFormationStatus decode:", err)
+		sendError(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	if payload.Status == "" {
+		sendError(w, "Status is required", http.StatusBadRequest)
+		return
+	}
+
+	if payload.Status != "published" && payload.Status != "rejected" {
+		sendError(w, "Invalid status", http.StatusBadRequest)
+		return
+	}
+
+	if err := db.UpdateServiceStatusInDB(serviceID, payload.Status); err != nil {
+		fmt.Println("[ERROR] UpdateFormationStatus DB:", err)
+		sendError(w, "Unable to update formation status", http.StatusInternalServerError)
+		return
+	}
+
+	if payload.Status == "published" || payload.Status == "rejected" {
+		notif := models.Notification{
+			UserID: existing.CreatedBy,
+		}
+		if payload.Status == "published" {
+			notif.Message = fmt.Sprintf("Your formation '%s' has been approved.", existing.Name)
+		} else {
+			notif.Message = fmt.Sprintf("Your formation '%s' has been rejected. Please edit and resubmit.", existing.Name)
+		}
+		if err := db.CreateNotificationInDB(notif); err != nil {
+			fmt.Println("[WARN] UpdateFormationStatus notification:", err)
+		}
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func CreateFormation(w http.ResponseWriter, r *http.Request) {

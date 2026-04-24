@@ -121,10 +121,13 @@ var requestBodyTypes = map[string]reflect.Type{
 	"PATCH /users/{id}/reviews/{rID}":    reflect.TypeOf(reviewUpdateRequestBody{}),
 	"POST /products/services":            reflect.TypeOf(models.Service{}),
 	"PATCH /products/services/{id}":      reflect.TypeOf(models.Service{}),
-	"POST /orders":                       reflect.TypeOf(models.Order{}),
-	"POST /annonces/{id}/images":         reflect.TypeOf(models.Image{}),
-	"POST /notifications":                reflect.TypeOf(models.Notification{}),
-	"POST /payment-requests":             reflect.TypeOf(models.PaymentRequest{}),
+	"PATCH /formations/{id}/status": reflect.TypeOf(struct {
+		Status string `json:"status"`
+	}{}),
+	"POST /orders":               reflect.TypeOf(models.Order{}),
+	"POST /annonces/{id}/images": reflect.TypeOf(models.Image{}),
+	"POST /notifications":        reflect.TypeOf(models.Notification{}),
+	"POST /payment-requests":     reflect.TypeOf(models.PaymentRequest{}),
 	"PATCH /payment-requests/{id}/status": reflect.TypeOf(struct {
 		Status       *int   `json:"status"`
 		ApproverID   string `json:"approver_id,omitempty"`
@@ -193,7 +196,7 @@ func registerRoute(method, path, description string, handler func(http.ResponseW
 	pattern := method + " " + path
 	finalHandler := handler
 	finalHandler = corsMiddleware(finalHandler)
-	finalHandler = rateLimiterMiddleware(finalHandler)
+	//finalHandler = rateLimiterMiddleware(finalHandler)
 
 	requiresAuth := false
 	for _, m := range middlewares {
@@ -577,7 +580,9 @@ func main() {
 	registerRoute("PATCH", "/products/services/{id}", "Update a service/event by its UUID", app.UpdateService, app.JWTAuthMiddleware)
 	registerRoute("DELETE", "/products/services/{id}", "Delete a service/event by its UUID", app.DeleteService, app.JWTAuthMiddleware)
 	registerRoute("GET", "/formations", "Get formations for a specific creator (partial user)", app.GetFormationsByCreator, app.JWTAuthMiddleware)
+	registerRoute("GET", "/formations/pending", "Get pending formations for a manager", app.GetPendingFormationsForManager, app.JWTAuthMiddleware)
 	registerRoute("POST", "/formations", "Create a new formation (for partials)", app.CreateFormation, app.JWTAuthMiddleware)
+	registerRoute("PATCH", "/formations/{id}/status", "Update a formation status", app.UpdateFormationStatus, app.JWTAuthMiddleware)
 	registerRoute("GET", "/orders", "List all orders", app.GetOrders, app.JWTAuthMiddleware)
 	registerRoute("POST", "/orders", "Create a new order", app.CreateOrder, app.JWTAuthMiddleware)
 	registerRoute("GET", "/annonces", "List all annonces", app.GetAnnonces)
@@ -795,8 +800,10 @@ func main() {
 
 	registerRoute("GET", "/newsletters", "Get paginated newsletters with search and filtering (admin only)", app.GetNewsletters, app.JWTAuthMiddleware, RoleMiddleware(3))
 	registerRoute("GET", "/newsletters/{id}", "Get full newsletter details (admin only)", app.GetNewsletter, app.JWTAuthMiddleware, RoleMiddleware(3))
+	registerRoute("GET", "/newsletter-subscribers", "Get newsletter subscriber list (admin only)", app.GetNewsletterSubscribers, app.JWTAuthMiddleware, RoleMiddleware(3))
 	registerRoute("POST", "/newsletters", "Create a new draft newsletter (admin only)", app.CreateNewsletter, app.JWTAuthMiddleware, RoleMiddleware(3))
 	registerRoute("PATCH", "/newsletters/{id}", "Update an existing newsletter (admin only)", app.UpdateNewsletter, app.JWTAuthMiddleware, RoleMiddleware(3))
+	registerRoute("PATCH", "/newsletter/{id}/status", "Update the status of an existing newsletter (admin only)", app.UpdateNewsletterStatus, app.JWTAuthMiddleware, RoleMiddleware(3))
 	registerRoute("DELETE", "/newsletters/{id}", "Delete a newsletter (admin only)", app.DeleteNewsletter, app.JWTAuthMiddleware, RoleMiddleware(3))
 	registerRoute("POST", "/newsletters/{id}/send", "Send newsletter to all subscribers (admin only)", app.SendNewsletter, app.JWTAuthMiddleware, RoleMiddleware(3))
 

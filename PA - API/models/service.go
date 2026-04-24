@@ -27,6 +27,9 @@ type Service struct {
 	OnlineMeetingLink   string            `json:"online_meeting_link,omitempty"`
 	Status              string            `json:"status,omitempty" gorm:"default:published"`
 	CreatedBy           uuid.UUID         `json:"created_by" gorm:"type:uuid;not null"`
+	CreatorFirstName    string            `json:"creator_first_name,omitempty"`
+	CreatorLastName     string            `json:"creator_last_name,omitempty"`
+	CreatorUsername     string            `json:"creator_username,omitempty"`
 	CreatedAt           string            `json:"created_at,omitempty"`
 	UpdatedAt           string            `json:"updated_at,omitempty"`
 }

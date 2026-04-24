@@ -367,6 +367,116 @@ func GetFormationsByCreatorFromDB(creatorID uuid.UUID, search string, limit int,
 	return services, nil
 }
 
+func CountPendingFormationsForManagerFromDB(managerID uuid.UUID, search string) (int, error) {
+	query := "SELECT COUNT(*) FROM evenements e INNER JOIN users u ON e.created_by = u.id WHERE e.status = 'draft' AND u.manager_id = ?"
+	args := []interface{}{managerID.String()}
+
+	if search != "" {
+		query += " AND e.title LIKE ?"
+		args = append(args, "%"+search+"%")
+	}
+
+	var total int
+	err := Db.QueryRow(query, args...).Scan(&total)
+	if err != nil {
+		return 0, fmt.Errorf("countPendingFormationsForManager package db : %s", err.Error())
+	}
+	return total, nil
+}
+
+func GetPendingFormationsForManagerFromDB(managerID uuid.UUID, search string, limit int, offset int) ([]models.Service, error) {
+	services := []models.Service{}
+
+	query := "SELECT e.id, e.title, e.description, e.price, e.event_type, e.event_date, e.event_road, e.event_city, e.event_zip_code, e.maximum_participants, e.current_participants, e.meetingType, e.onlineMeetingLink, e.status, e.created_by, e.created_at, e.updated_at, u.first_name, u.last_name, u.username FROM evenements e INNER JOIN users u ON e.created_by = u.id WHERE e.status = 'draft' AND u.manager_id = ?"
+	args := []interface{}{managerID.String()}
+
+	if search != "" {
+		query += " AND e.title LIKE ?"
+		args = append(args, "%"+search+"%")
+	}
+
+	query += " ORDER BY e.created_at DESC LIMIT ? OFFSET ?"
+	args = append(args, limit, offset)
+
+	rows, err := Db.Query(query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("getPendingFormationsForManager package db : %s", err.Error())
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var service models.Service
+		var idStr string
+		var createdByStr string
+		var createdAt, updatedAt, status sql.NullString
+		var maxParticipants, currentParticipants sql.NullInt64
+		var typeStr string
+		var mt sql.NullString
+		var link sql.NullString
+		err := rows.Scan(&idStr, &service.Name, &service.Description, &service.Price, &typeStr, &service.ServiceDate, &service.ServiceRoad, &service.ServiceCity, &service.ServiceZip, &maxParticipants, &currentParticipants, &mt, &link, &status, &createdByStr, &createdAt, &updatedAt, &service.CreatorFirstName, &service.CreatorLastName, &service.CreatorUsername)
+		if err != nil {
+			return nil, fmt.Errorf("getPendingFormationsForManager package db scan : %s", err.Error())
+		}
+		if mt.Valid {
+			service.MeetingType = mt.String
+		}
+		if link.Valid {
+			service.OnlineMeetingLink = link.String
+		}
+		if status.Valid {
+			service.Status = status.String
+		} else {
+			service.Status = "published"
+		}
+		service.ID, err = uuid.Parse(idStr)
+		if err != nil {
+			return nil, fmt.Errorf("getPendingFormationsForManager package db uuid parse : %s", err.Error())
+		}
+		service.Type, err = uuid.Parse(typeStr)
+		if err != nil {
+			return nil, fmt.Errorf("getPendingFormationsForManager package db uuid parse event_type : %s", err.Error())
+		}
+		service.CreatedBy, err = uuid.Parse(createdByStr)
+		if err != nil {
+			return nil, fmt.Errorf("getPendingFormationsForManager package db uuid parse created_by : %s", err.Error())
+		}
+		if createdAt.Valid {
+			service.CreatedAt = createdAt.String
+		}
+		if updatedAt.Valid {
+			service.UpdatedAt = updatedAt.String
+		}
+		if maxParticipants.Valid {
+			value := int(maxParticipants.Int64)
+			service.MaximumParticipants = &value
+		}
+		if currentParticipants.Valid {
+			service.CurrentParticipants = int(currentParticipants.Int64)
+		}
+		services = append(services, service)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return nil, fmt.Errorf("getPendingFormationsForManager package db rows : %s", err.Error())
+	}
+
+	if err = attachSchedulesToServices(services); err != nil {
+		return nil, err
+	}
+
+	return services, nil
+}
+
+func UpdateServiceStatusInDB(serviceID uuid.UUID, status string) error {
+	currentTime := getCurrentTime()
+	_, err := Db.Exec("UPDATE evenements SET status = ?, updated_at = ? WHERE id = ?", status, currentTime, serviceID.String())
+	if err != nil {
+		return fmt.Errorf("updateServiceStatus package db : %s", err.Error())
+	}
+	return nil
+}
+
 func CountServicesFromDB(availableOnly bool, search string, typeUUID string, employeeUUID string) (int, error) {
 	query := "SELECT COUNT(*) FROM evenements"
 	args := []interface{}{}

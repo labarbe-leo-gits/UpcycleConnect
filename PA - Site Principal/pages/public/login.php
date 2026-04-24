@@ -106,6 +106,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             include_once __DIR__ . '/../common/log-utility.php';
             WriteLog("login", "INFO", $_SERVER['REMOTE_ADDR'], "User {$_SESSION['username']} (ID: {$_SESSION['user_id']}) logged in successfully.");
 
+            
+
             if (isset($_SESSION['page_after_login']) && (int) $_SESSION['user_type'] === 1) {
                 $page = $_SESSION['page_after_login'];
                 unset($_SESSION['page_after_login']);

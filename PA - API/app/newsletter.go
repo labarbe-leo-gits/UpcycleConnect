@@ -1,5 +1,11 @@
 package app
 
+// Hello future developper
+// If you ever have to touch this file, please just don't,
+// This is a warning, not to be a threat, but to care for your mental health,
+// See ya,
+// Hours wasted : 5h
+
 import (
 	"API/db"
 	"API/models"
@@ -11,18 +17,6 @@ import (
 	"strings"
 )
 
-// GetNewsletters godoc
-// @Summary Get paginated newsletters
-// @Description Get newsletters with pagination, search, and status filtering
-// @Tags newsletter
-// @Produce json
-// @Param page query int false "Page number" default(1)
-// @Param limit query int false "Items per page" default(10)
-// @Param search query string false "Search in title"
-// @Param status query int false "Filter by status (0=draft, 1=scheduled, 2=sent)"
-// @Success 200 {object} map[string]interface{} "Success"
-// @Failure 500 {object} map[string]string "Error"
-// @Router /newsletters [get]
 func GetNewsletters(w http.ResponseWriter, r *http.Request) {
 	page := 1
 	limit := 10
@@ -74,19 +68,18 @@ func GetNewsletters(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-// GetNewsletter godoc
-// @Summary Get newsletter by ID
-// @Description Get full newsletter details including content
-// @Tags newsletter
-// @Produce json
-// @Param id query string true "Newsletter ID"
-// @Success 200 {object} map[string]interface{} "Success"
-// @Failure 404 {object} map[string]string "Newsletter not found"
-// @Failure 500 {object} map[string]string "Error"
-// @Router /newsletter/get [get]
 func GetNewsletter(w http.ResponseWriter, r *http.Request) {
+
 	id := r.URL.Query().Get("id")
+
 	if id == "" {
+		parts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+		if len(parts) > 1 {
+			id = parts[len(parts)-1]
+		}
+	}
+
+	if id == "" || id == "get" {
 		sendError(w, "Newsletter ID is required", http.StatusBadRequest)
 		return
 	}
@@ -121,17 +114,32 @@ func GetNewsletter(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-// CreateNewsletter godoc
-// @Summary Create new newsletter
-// @Description Create a new draft newsletter
-// @Tags newsletter
-// @Accept json
-// @Produce json
-// @Param request body map[string]string true "Newsletter data"
-// @Success 201 {object} map[string]interface{} "Created"
-// @Failure 400 {object} map[string]string "Bad request"
-// @Failure 500 {object} map[string]string "Error"
-// @Router /newsletter/create [post]
+func GetNewsletterSubscribers(w http.ResponseWriter, r *http.Request) {
+	users, err := db.GetSubscribedUsersFromDB()
+	if err != nil {
+		fmt.Println("[ERROR] GetNewsletterSubscribers:", err)
+		sendError(w, "Unable to fetch subscribers", http.StatusInternalServerError)
+		return
+	}
+
+	subscribers := make([]map[string]string, 0, len(users))
+	for _, u := range users {
+		subscribers = append(subscribers, map[string]string{
+			"id":         u.ID.String(),
+			"first_name": u.FirstName,
+			"email":      u.Email,
+		})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	response := map[string]interface{}{
+		"success":     true,
+		"subscribers": subscribers,
+	}
+	json.NewEncoder(w).Encode(response)
+}
+
 func CreateNewsletter(w http.ResponseWriter, r *http.Request) {
 	var req map[string]string
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -164,18 +172,35 @@ func CreateNewsletter(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-// UpdateNewsletter godoc
-// @Summary Update newsletter
-// @Description Update an existing newsletter (only if not sent)
-// @Tags newsletter
-// @Accept json
-// @Produce json
-// @Param request body map[string]string true "Newsletter data with id, title, content"
-// @Success 200 {object} map[string]interface{} "Success"
-// @Failure 400 {object} map[string]string "Bad request"
-// @Failure 403 {object} map[string]string "Cannot modify sent newsletter"
-// @Failure 500 {object} map[string]string "Error"
-// @Router /newsletter/update [post]
+func UpdateNewsletterStatus(w http.ResponseWriter, r *http.Request){
+	pathParts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+	if len(pathParts) < 2{
+		sendError(w, "Invalid URL format", http.StatusBadRequest)
+		return
+	}
+	id := pathParts[1]
+
+	var req struct {
+		Status int `json:"status"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil{
+		sendError(w, "Invalid JSON body", http.StatusBadRequest)
+		return
+	}
+
+	if err := db.UpdateNewsletterStatusFromDB(id, req.Status); err != nil{
+		sendError(w, "Failed to update status: " + err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"new_status": req.Status,
+	})
+}
+
 func UpdateNewsletter(w http.ResponseWriter, r *http.Request) {
 	var req map[string]string
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -277,6 +302,7 @@ func SendNewsletter(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id := strings.TrimSpace(req["id"])
+	fmt.Println("ID :", id)
 	if id == "" {
 		sendError(w, "Newsletter ID is required", http.StatusBadRequest)
 		return
@@ -333,43 +359,33 @@ func SendNewsletter(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-// MarkdownToHTML converts markdown to HTML using basic patterns
 func MarkdownToHTML(md string) string {
 	html := md
 
-	// Headers
 	html = regexp.MustCompile(`(?m)^### (.*?)$`).ReplaceAllString(html, "<h3>$1</h3>")
 	html = regexp.MustCompile(`(?m)^## (.*?)$`).ReplaceAllString(html, "<h2>$1</h2>")
 	html = regexp.MustCompile(`(?m)^# (.*?)$`).ReplaceAllString(html, "<h1>$1</h1>")
 
-	// Bold
 	html = regexp.MustCompile(`\*\*(.*?)\*\*`).ReplaceAllString(html, "<strong>$1</strong>")
 	html = regexp.MustCompile(`__(.*?)__`).ReplaceAllString(html, "<strong>$1</strong>")
 
-	// Italic
 	html = regexp.MustCompile(`\*(.*?)\*`).ReplaceAllString(html, "<em>$1</em>")
 	html = regexp.MustCompile(`_(.*?)_`).ReplaceAllString(html, "<em>$1</em>")
 
-	// Links
 	html = regexp.MustCompile(`\[(.*?)\]\((.*?)\)`).ReplaceAllString(html, "<a href=\"$2\">$1</a>")
 
-	// Code blocks
 	html = regexp.MustCompile("```([\\s\\S]*?)```").ReplaceAllString(html, "<pre><code>$1</code></pre>")
 
-	// Inline code
 	html = regexp.MustCompile("`([^`]+)`").ReplaceAllString(html, "<code>$1</code>")
 
-	// Line breaks for paragraphs
 	html = regexp.MustCompile(`\n\n+`).ReplaceAllString(html, "</p><p>")
 	html = "<p>" + html + "</p>"
 
-	// Convert remaining single line breaks to <br>
 	html = regexp.MustCompile(`(?m)\n`).ReplaceAllString(html, "<br>")
 
 	return html
 }
 
-// BuildEmailHTML builds the final email HTML with template
 func BuildEmailHTML(title, content string) string {
 	return `<!DOCTYPE html>
 <html>
@@ -406,10 +422,7 @@ func BuildEmailHTML(title, content string) string {
 </html>`
 }
 
-// SendEmailNewsletter sends email using configured SMTP
 func SendEmailNewsletter(to, name, subject, htmlContent string) error {
-	// For now, return nil (implement actual SMTP sending based on your requirements)
-	// This would typically use a mail library like net/smtp or gopkg.in/mail.v2
 	fmt.Printf("[INFO] Would send email to %s (%s): %s\n", to, name, subject)
 	return nil
 }

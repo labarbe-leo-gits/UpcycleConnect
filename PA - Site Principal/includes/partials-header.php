@@ -88,6 +88,7 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
                 </a>
                 <div class="dropdown-menu">
                     <a href="training"><i class="fa-solid fa-plus-circle"></i>Manage</a>
+                    <a href="awaiting-validation"><i class="fa-solid fa-hourglass-half"></i>Awaiting validation</a>
                     <a href="../common/planning"><i class="fa-solid fa-calendar-days"></i>Planning</a>
                 </div>
             </div>
@@ -111,7 +112,7 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
                 </a>
                 <div class="dropdown-menu">
                     <a href="<?= $profileUrl ?>"><i class="fa-solid fa-user"></i>Profile</a>
-                    <a href="../customers/notifications"><i class="fa-solid fa-bell"></i>Notifications <span class="notif-badge" id="notifications-count" hidden>0</span></a>
+                    <a href="../partials/notifications"><i class="fa-solid fa-bell"></i>Notifications <span class="notif-badge" id="notifications-count" hidden>0</span></a>
                     <a href="../common/planning"><i class="fa-solid fa-calendar-days"></i>Planning</a>
                     <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="fa-solid fa-right-from-bracket"></i>Logout</a>
                 </div>

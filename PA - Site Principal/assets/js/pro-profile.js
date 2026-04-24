@@ -482,7 +482,23 @@
             method: 'POST',
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
             body: fd
-        }).then(function (r) { return r.json(); });
+        }).then(function (r) {
+            return r.text().then(function (text) {
+                if (!r.ok) {
+                    try {
+                        return JSON.parse(text);
+                    } catch (e) {
+                        return { success: false, message: text || 'Server error.' };
+                    }
+                }
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    console.error('Unexpected MFA response:', text);
+                    return { success: false, message: 'Unexpected server response. Please try again.' };
+                }
+            });
+        });
     }
 
     function setFeedback(el, msg, isError) {
@@ -546,8 +562,15 @@
 
     var disableBtn = document.getElementById('mfa-disable-btn');
     if (disableBtn) {
-        disableBtn.addEventListener('click', function () {
-            if (!confirm('Are you sure you want to disable 2FA? This will make your account less secure.')) return;
+        disableBtn.addEventListener('click', async function () {
+            var confirmed = true;
+            if (typeof showConfirmModal === 'function') {
+                confirmed = await showConfirmModal('Are you sure you want to disable 2FA? This will make your account less secure.', 'Disable 2FA');
+            } else {
+                confirmed = confirm('Are you sure you want to disable 2FA? This will make your account less secure.');
+            }
+            if (!confirmed) return;
+
             disableBtn.disabled = true;
             disableBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Disabling...';
             postMFA('mfa_disable').then(function (data) {

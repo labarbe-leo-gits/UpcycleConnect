@@ -10,7 +10,13 @@ $extraJs = [
     '/assets/js/admin-logs.js',
 ];
 
-$logDir = realpath(__DIR__ . '/../../../files/logs');
+$logDir = realpath(__DIR__ . '/../../files/logs');
+if ($logDir === false) {
+    $logDir = __DIR__ . '/../../files/logs';
+}
+
+$filename = $logDir . '/login.log';
+
 
 function listLogFiles($logDir)
 {

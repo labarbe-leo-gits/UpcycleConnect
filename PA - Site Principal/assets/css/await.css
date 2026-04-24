@@ -1,0 +1,155 @@
+.approvals-filter-card {
+        margin: 0 1rem 1.5rem;
+        padding: 1.25rem;
+        border-radius: 12px;
+        background: #ffffff;
+        box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        text-align: center;
+    }
+    .approvals-filter-card label {
+        font-weight: 600;
+        color: #111827;
+        min-width: 80px;
+    }
+    .approval-search-input {
+        flex: 1;
+        min-width: 260px;
+        padding: 0.9rem 1rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        outline: none;
+        max-width: 560px;
+    }
+    .approval-search-input:focus {
+        border-color: #1db584;
+        box-shadow: 0 0 0 4px rgba(29, 181, 132, 0.12);
+    }
+    .approvals-list {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 0 1rem;
+    }
+    .approval-card {
+        padding: 1.5rem 1.75rem;
+        border-radius: 12px;
+        background: #ffffff;
+        box-shadow: 0 14px 40px rgba(15, 23, 42, 0.08);
+        border: 1px solid rgba(15, 23, 42, 0.05);
+    }
+    .approval-card .approval-card-meta {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 1rem;
+        margin-top: 1rem;
+        color: #4b5563;
+        font-size: 0.95rem;
+    }
+    .approval-card .approval-card-meta div {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+    }
+    .approval-card .approval-card-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin-top: 1.5rem;
+        justify-content: center;
+    }
+    .approval-card .approval-card-actions .btn-primary,
+    .approval-card .approval-card-actions .btn-secondary {
+        width: auto;
+        min-width: 140px;
+        padding: 0.85rem 1.5rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+    .approval-card .status-badge {
+        margin-left: auto;
+    }
+
+    /* approval modal styles */
+    #approval-action-modal {
+        display: flex;
+        position: fixed;
+        inset: 0;
+        z-index: 4000;
+        background: rgba(15, 23, 42, 0.55);
+        justify-content: center;
+        align-items: center;
+        padding: 24px;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 200ms ease;
+    }
+
+    #approval-action-modal.is-visible {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    #approval-action-modal .approval-modal {
+        width: min(520px, 92vw);
+        max-height: 75vh;
+        overflow-y: auto;
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 32px;
+        box-shadow: 0 24px 48px rgba(15, 23, 42, 0.18);
+        position: relative;
+        transform: translateY(-14px) scale(0.98);
+        opacity: 0;
+        transition: transform 200ms ease, opacity 200ms ease;
+    }
+
+    #approval-action-modal.is-visible .approval-modal {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+
+    #approval-action-modal .approval-modal .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 24px;
+    }
+
+    #approval-action-modal .approval-modal .modal-header h2 {
+        margin: 0;
+        font-size: 1.35rem;
+        color: #111827;
+    }
+
+    #approval-action-modal .approval-modal .modal-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #6b7280;
+        width: 2rem;
+        height: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    #approval-action-modal .approval-modal .modal-body {
+        color: #374151;
+        line-height: 1.75;
+        margin-bottom: 24px;
+    }
+
+    #approval-action-modal .approval-modal .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }

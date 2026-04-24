@@ -56,6 +56,155 @@ if (!empty($user['id'])) {
     }
 }
 
+if (!function_exists('getEnvValue')) {
+    function getEnvValue(string $key, string $default = ''): string {
+        $value = getenv($key);
+        return $value !== false ? (string)$value : $default;
+    }
+}
+
+function sendMFAEnabledSuccessEmail(string $email, string $name): bool {
+    $smtpHost = getEnvValue('EMAIL_HOST');
+    $smtpPort = getEnvValue('EMAIL_PORT', '587');
+    $smtpUser = getEnvValue('EMAIL_USERNAME');
+    $smtpPass = getEnvValue('EMAIL_PASSWORD');
+    $fromEmail = getEnvValue('EMAIL_FROM', $smtpUser);
+    $fromName = getEnvValue('EMAIL_FROM_NAME', 'UpcycleConnect');
+
+    if ($smtpHost === '' || $smtpUser === '' || $smtpPass === '' || $fromEmail === '' || $email === '') {
+        error_log('sendMFAEnabledSuccessEmail failed: SMTP email settings or recipient email are missing.');
+        return false;
+    }
+
+    $mail = new PHPMailer\PHPMailer\PHPMailer(true);
+    try {
+        $mail->isSMTP();
+        $mail->Host = $smtpHost;
+        $mail->SMTPAuth = true;
+        $mail->Username = $smtpUser;
+        $mail->Password = $smtpPass;
+        $mail->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port = (int) $smtpPort;
+        $mail->CharSet = 'UTF-8';
+
+        $mail->setFrom($fromEmail, $fromName);
+        $mail->addAddress($email, $name ?: $email);
+        $mail->Subject = 'MFA have been enabled for your account';
+        $mail->isHTML(true);
+        $fullName = htmlspecialchars($name ?: 'there', ENT_QUOTES, 'UTF-8');
+
+        $mail->Body = '<!DOCTYPE html>' .
+            '<html lang="en">' .
+            '<head>' .
+            '<meta charset="UTF-8" />' .
+            '<meta name="viewport" content="width=device-width, initial-scale=1.0" />' .
+            '<title>Your MFA Has Been Enabled For Your Account</title>' .
+            '</head>' .
+            '<body style="margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background:#f3f6f8;color:#334155;">' .
+            '<table width="100%" cellpadding="0" cellspacing="0" style="background:#f3f6f8;padding:24px 0;">' .
+            '<tr><td align="center">' .
+            '<table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(15,23,42,.08);">' .
+            '<tr><td style="background:#176f3a;padding:28px 32px;text-align:center;color:#ffffff;">' .
+            '<h1 style="margin:0;font-size:28px;letter-spacing:0.5px;">UpcycleConnect</h1>' .
+            '</td></tr>' .
+            '<tr><td style="padding:32px 40px;">' .
+            '<p style="margin:0 0 16px;font-size:16px;line-height:1.7;color:#334155;">Hello <strong>' . $fullName . '</strong>,</p>' .
+            '<p style="margin:0 0 28px;font-size:16px;line-height:1.75;color:#475569;">Two-factor authentication (2FA) setup has been successfully enabled for your account.</p>' .
+            '<p style="margin:0 0 24px;font-size:14px;line-height:1.7;color:#64748b;">If you are not the one who enabled it, please contact support immediately.</p>' .
+            '<p style="margin:0;font-size:14px;line-height:1.7;color:#64748b;">Thank you,<br />UpcycleConnect</p>' .
+            '</td></tr>' .
+            '<tr><td style="padding:24px 40px 32px;font-size:14px;line-height:1.7;color:#64748b;background:#f8fafc;">' .
+            '<p style="margin:0;">You can return to your profile anytime to confirm your MFA status.</p>' .
+            '</td></tr>' .
+            '</table>' .
+            '</td></tr>' .
+            '</table>' .
+            '</body>' .
+            '</html>';
+        $mail->AltBody = "Hello " . ($name ?: 'there') . ",\n\n" .
+            "Two-factor authentication (2FA) setup has been successfully enabled.\n\n" .
+            "If you did not request this, contact support immediately.\n\n" .
+            "Thank you,\nUpcycleConnect";
+
+        $mail->send();
+        return true;
+    } catch (PHPMailer\PHPMailer\Exception $e) {
+        error_log('sendMFAEnabledSuccessEmail failed: ' . $e->getMessage());
+        return false;
+    }
+}
+
+function sendMFAResetSuccessEmail(string $email, string $name): bool {
+    $smtpHost = getEnvValue('EMAIL_HOST');
+    $smtpPort = getEnvValue('EMAIL_PORT', '587');
+    $smtpUser = getEnvValue('EMAIL_USERNAME');
+    $smtpPass = getEnvValue('EMAIL_PASSWORD');
+    $fromEmail = getEnvValue('EMAIL_FROM', $smtpUser);
+    $fromName = getEnvValue('EMAIL_FROM_NAME', 'UpcycleConnect');
+
+    if ($smtpHost === '' || $smtpUser === '' || $smtpPass === '' || $fromEmail === '' || $email === '') {
+        error_log('sendMFAResetSuccessEmail failed: SMTP email settings or recipient email are missing.');
+        return false;
+    }
+
+    $mail = new PHPMailer\PHPMailer\PHPMailer(true);
+    try {
+        $mail->isSMTP();
+        $mail->Host = $smtpHost;
+        $mail->SMTPAuth = true;
+        $mail->Username = $smtpUser;
+        $mail->Password = $smtpPass;
+        $mail->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port = (int) $smtpPort;
+        $mail->CharSet = 'UTF-8';
+
+        $mail->setFrom($fromEmail, $fromName);
+        $mail->addAddress($email, $name ?: $email);
+        $mail->Subject = 'MFA has been disabled for your account';
+        $mail->isHTML(true);
+        $fullName = htmlspecialchars($name ?: 'there', ENT_QUOTES, 'UTF-8');
+
+        $mail->Body = '<!DOCTYPE html>' .
+            '<html lang="en">' .
+            '<head>' .
+            '<meta charset="UTF-8" />' .
+            '<meta name="viewport" content="width=device-width, initial-scale=1.0" />' .
+            '<title>Your MFA Has Been Disabled For Your Account</title>' .
+            '</head>' .
+            '<body style="margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background:#f3f6f8;color:#334155;">' .
+            '<table width="100%" cellpadding="0" cellspacing="0" style="background:#f3f6f8;padding:24px 0;">' .
+            '<tr><td align="center">' .
+            '<table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(15,23,42,.08);">' .
+            '<tr><td style="background:#176f3a;padding:28px 32px;text-align:center;color:#ffffff;">' .
+            '<h1 style="margin:0;font-size:28px;letter-spacing:0.5px;">UpcycleConnect</h1>' .
+            '</td></tr>' .
+            '<tr><td style="padding:32px 40px;">' .
+            '<p style="margin:0 0 16px;font-size:16px;line-height:1.7;color:#334155;">Hello <strong>' . $fullName . '</strong>,</p>' .
+            '<p style="margin:0 0 28px;font-size:16px;line-height:1.75;color:#475569;">Two-factor authentication (2FA) has been disabled for your account.</p>' .
+            '<p style="margin:0 0 24px;font-size:14px;line-height:1.7;color:#64748b;">If you did not request this, please contact support immediately.</p>' .
+            '<p style="margin:0;font-size:14px;line-height:1.7;color:#64748b;">Thank you,<br />UpcycleConnect</p>' .
+            '</td></tr>' .
+            '<tr><td style="padding:24px 40px 32px;font-size:14px;line-height:1.7;color:#64748b;background:#f8fafc;">' .
+            '<p style="margin:0;">You can return to your profile anytime to manage your account security.</p>' .
+            '</td></tr>' .
+            '</table>' .
+            '</td></tr>' .
+            '</table>' .
+            '</body>' .
+            '</html>';
+        $mail->AltBody = "Hello " . ($name ?: 'there') . ",\n\n" .
+            "Two-factor authentication (2FA) has been disabled for your account.\n\n" .
+            "If you did not request this, please contact support immediately.\n\n" .
+            "Thank you,\nUpcycleConnect";
+
+        $mail->send();
+        return true;
+    } catch (PHPMailer\PHPMailer\Exception $e) {
+        error_log('sendMFAResetSuccessEmail failed: ' . $e->getMessage());
+        return false;
+    }
+}
+
 $userDetailsResponse = askAPI("/users/{$user['id']}", 'GET');
 $userDetails = json_decode($userDetailsResponse, true);
 if (!is_array($userDetails)) {
@@ -308,6 +457,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $data = json_decode($resp, true);
         header('Content-Type: application/json');
         if (isset($data['success']) && $data['success']) {
+            $recipientEmail = $userDetails['email'] ?? $user['email'] ?? '';
+            $recipientName = $userDetails['first_name'] ?? $user['first_name'] ?? '';
+            if ($recipientEmail === '') {
+                error_log('sendMFAEnabledSuccessEmail skipped because no recipient email was available.');
+            } else {
+                $sent = sendMFAEnabledSuccessEmail($recipientEmail, $recipientName);
+                if (! $sent) {
+                    error_log('sendMFAEnabledSuccessEmail returned false for user_id=' . ($user['id'] ?? 'unknown'));
+                }
+            }
             echo json_encode(['success' => true]);
         } else {
             echo json_encode(['success' => false, 'message' => $data['error'] ?? 'Invalid OTP code. Please try again.']);
@@ -320,6 +479,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $data = json_decode($resp, true);
         header('Content-Type: application/json');
         if (isset($data['success']) && $data['success']) {
+            $recipientEmail = $userDetails['email'] ?? $user['email'] ?? '';
+            $recipientName = $userDetails['first_name'] ?? $user['first_name'] ?? '';
+            if ($recipientEmail !== '') {
+                try {
+                    sendMFAResetSuccessEmail($recipientEmail, $recipientName);
+                } catch (Throwable $e) {
+                    error_log('sendMFAResetSuccessEmail failed: ' . $e->getMessage());
+                }
+            } else {
+                error_log('sendMFAResetSuccessEmail skipped because no recipient email was available.');
+            }
             echo json_encode(['success' => true]);
         } else {
             echo json_encode(['success' => false, 'message' => $data['error'] ?? 'Unable to disable 2FA.']);

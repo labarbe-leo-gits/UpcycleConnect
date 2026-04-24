@@ -300,13 +300,18 @@
 }
 
 .friends-page .empty-state {
-  padding: 28px 18px;
+  /* padding: 28px 18px; */
   border: 1px solid #e5e7eb;
   border-radius: 18px;
   background: #f8fafc;
   color: #4b5563;
   text-align: center;
   width: 100%;
+}
+
+.friends-page .empty-state{
+  padding-top: 28px;
+  padding-bottom: 28px;
 }
 
 @media (max-width: 900px) {

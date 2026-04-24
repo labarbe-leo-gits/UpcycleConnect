@@ -204,7 +204,7 @@ func GetSubscribedUsersFromDB() ([]models.User, error) {
 	var users []models.User
 
 	rows, err := Db.Query(
-		"SELECT id, firstname, email FROM users WHERE is_active = 1 AND newsletter_subscribed = 1 ORDER BY id",
+		"SELECT id, first_name, email FROM users WHERE is_active = 1 AND newsletter_subscribed = 1 ORDER BY id",
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query subscribed users: %v", err)

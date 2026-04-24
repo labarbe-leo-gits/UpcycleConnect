@@ -3,8 +3,8 @@
 include_once '../../config/db.php';
 include_once '../../includes/auth.php';
 
-$backupDir = realpath(__DIR__ . '/../../../files/logs/backup');
-$adminActionLog = realpath(__DIR__ . '/../../../files/logs/admin-actions.log');
+$backupDir = realpath(__DIR__ . '/../../files/logs/backup');
+$adminActionLog = realpath(__DIR__ . '/../../files/logs/admin-actions.log');
 
 function safeBaseName($file) {
     $name = basename($file);
@@ -55,8 +55,9 @@ if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
             exit;
         }
 
-        $loginLogPath = realpath(__DIR__ . '/../../../files/logs/login.log');
-        if (!$loginLogPath || !is_file($loginLogPath) || stripos($loginLogPath, realpath(__DIR__ . '/../../../files/logs')) !== 0) {
+        $loginLogPath = realpath(__DIR__ . '/../../files/logs/login.log');
+        $loginLogDir = realpath(__DIR__ . '/../../files/logs');
+        if (!$loginLogPath || !is_file($loginLogPath) || !$loginLogDir || stripos($loginLogPath, $loginLogDir) !== 0) {
             echo json_encode(['success' => false, 'message' => 'Source login log unavailable']);
             exit;
         }

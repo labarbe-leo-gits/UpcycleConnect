@@ -78,6 +78,12 @@ include_once '../../includes/admin-header.php';
                 </select>
             </div>
 
+            <div class="field" id="newsletter-schedule-field" style="display:none;">
+                <label for="newsletter-scheduled-date"><i class="fa-solid fa-calendar-days" style="margin-right:6px;color:#6b7280;"></i>Scheduled Date <span style="color:#ef4444;">*</span></label>
+                <input type="date" id="newsletter-scheduled-date" name="scheduled_date" />
+                <small style="display:block;margin-top:6px;color:#666;">Choose a future date for scheduled sending.</small>
+            </div>
+
             <div class="modal-actions">
                 <button type="button" class="btn-secondary" id="newsletter-form-cancel"><i class="fa-solid fa-times" style="margin-right:6px;"></i>Cancel</button>
                 <button type="button" class="btn-secondary" id="newsletter-form-preview" style="display:none;"><i class="fa-solid fa-eye" style="margin-right:6px;"></i>Preview</button>
@@ -104,8 +110,8 @@ include_once '../../includes/admin-header.php';
 <div class="add-modal" id="newsletter-confirm-modal" role="dialog" aria-hidden="true">
     <div class="add-modal-content" style="max-width:440px;">
         <span class="close-button" id="newsletter-confirm-close">&times;</span>
-        <h2><i class="fa-solid fa-trash" style="margin-right:10px;color:#ef4444;"></i>Delete Newsletter</h2>
-        <p style="color:#374151;margin:14px 0;">
+        <h2 style="justify-content: center;">Delete Newsletter</h2>
+        <p style="color:#374151;margin:14px 0;text-align:center;">
             Are you sure you want to delete <strong id="newsletter-confirm-title"></strong>?
         </p>
         <div id="newsletter-confirm-error" class="form-error" style="display:none;margin:8px 0 0 0;"></div>
@@ -114,6 +120,20 @@ include_once '../../includes/admin-header.php';
             <button type="button" class="btn-danger" id="newsletter-confirm-delete">
                 <i class="fa-solid fa-trash" style="margin-right:6px;"></i> Delete
             </button>
+        </div>
+    </div>
+</div>
+
+<div class="add-modal" id="newsletter-send-modal" role="dialog" aria-hidden="true">
+    <div class="add-modal-content" style="max-width:520px;">
+        <span class="close-button" id="newsletter-send-close">&times;</span>
+        <h2 style="justify-content: center;">Send Newsletter</h2>
+        <p style="color:#374151; margin:14px 0;text-align:center;">You are about to send <strong id="newsletter-send-title"></strong>.</p>
+        <p id="newsletter-send-count" style="color:#374151; margin:8px 0 0 0;"></p>
+        <div id="newsletter-send-error" class="form-error" style="display:none;margin:16px 0 0 0;"></div>
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:24px;justify-content:center;">
+            <button type="button" class="btn-secondary" id="newsletter-send-cancel"><i class="fa-solid fa-times" style="margin-right:6px;"></i>Cancel</button>
+            <button type="button" class="btn-primary" id="newsletter-send-confirm"><i class="fa-solid fa-paper-plane" style="margin-right:6px;"></i>Send Now</button>
         </div>
     </div>
 </div>
