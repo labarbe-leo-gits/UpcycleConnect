@@ -40,7 +40,14 @@ func GetNewsletters(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	newsletters, total, err := db.GetNewslettersFromDB(page, limit, search, status)
+	var senderType *int
+	if senderTypeStr := r.URL.Query().Get("sender_type"); senderTypeStr != "" {
+		if s, err := strconv.Atoi(senderTypeStr); err == nil && (s == 3 || s == 4) {
+			senderType = &s
+		}
+	}
+
+	newsletters, total, err := db.GetNewslettersFromDB(page, limit, search, status, senderType)
 	if err != nil {
 		fmt.Println("[ERROR] GetNewsletters:", err)
 		sendError(w, "Unable to fetch newsletters", http.StatusInternalServerError)
@@ -102,13 +109,14 @@ func GetNewsletter(w http.ResponseWriter, r *http.Request) {
 	response := map[string]interface{}{
 		"success": true,
 		"newsletter": map[string]interface{}{
-			"id":              newsletter.ID,
-			"title":           newsletter.Title,
-			"content":         newsletter.Content,
-			"status":          newsletter.Status,
-			"recipient_count": count,
-			"created_at":      newsletter.CreatedAt,
-			"updated_at":      newsletter.UpdatedAt,
+			"id":                   newsletter.ID,
+			"title":                newsletter.Title,
+			"content":              newsletter.Content,
+			"status":               newsletter.Status,
+			"created_by_user_type": newsletter.CreatedByUserType,
+			"recipient_count":      count,
+			"created_at":           newsletter.CreatedAt,
+			"updated_at":           newsletter.UpdatedAt,
 		},
 	}
 	json.NewEncoder(w).Encode(response)
@@ -155,7 +163,14 @@ func CreateNewsletter(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := db.CreateNewsletterInDB(title, content)
+	createdByUserType := 0
+	if userTypeStr := strings.TrimSpace(req["created_by_user_type"]); userTypeStr != "" {
+		if u, err := strconv.Atoi(userTypeStr); err == nil && (u == 3 || u == 4) {
+			createdByUserType = u
+		}
+	}
+
+	id, err := db.CreateNewsletterInDB(title, content, createdByUserType)
 	if err != nil {
 		fmt.Println("[ERROR] CreateNewsletter:", err)
 		sendError(w, "Unable to create newsletter", http.StatusInternalServerError)
@@ -172,9 +187,9 @@ func CreateNewsletter(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-func UpdateNewsletterStatus(w http.ResponseWriter, r *http.Request){
+func UpdateNewsletterStatus(w http.ResponseWriter, r *http.Request) {
 	pathParts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
-	if len(pathParts) < 2{
+	if len(pathParts) < 2 {
 		sendError(w, "Invalid URL format", http.StatusBadRequest)
 		return
 	}
@@ -184,19 +199,19 @@ func UpdateNewsletterStatus(w http.ResponseWriter, r *http.Request){
 		Status int `json:"status"`
 	}
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil{
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		sendError(w, "Invalid JSON body", http.StatusBadRequest)
 		return
 	}
 
-	if err := db.UpdateNewsletterStatusFromDB(id, req.Status); err != nil{
-		sendError(w, "Failed to update status: " + err.Error(), http.StatusInternalServerError)
+	if err := db.UpdateNewsletterStatusFromDB(id, req.Status); err != nil {
+		sendError(w, "Failed to update status: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"success": true,
+		"success":    true,
 		"new_status": req.Status,
 	})
 }

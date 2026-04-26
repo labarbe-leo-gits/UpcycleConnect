@@ -795,7 +795,10 @@
                         duration = val;
                     }
                 }
-                banUser(user.id, reason, duration);
+                if (btn && btn.dataset.loading === '1') {
+                    return;
+                }
+                banUser(user.id, reason, duration, btn);
             }
         });
         if (btn) {
@@ -805,7 +808,14 @@
                 const cnt = document.getElementById('ban-counter');
                 const len = ta ? ta.value.length : 0;
                 if (cnt) cnt.textContent = `${len}/2000`;
-                btn.disabled = len < 10 || len > 2000;
+                const canSubmit = len >= 10 && len <= 2000;
+                const isLoading = btn.dataset.loading === '1';
+                btn.disabled = !canSubmit || isLoading;
+                btn.style.opacity = btn.disabled ? '0.55' : '1';
+                btn.style.cursor = btn.disabled ? 'not-allowed' : 'pointer';
+                btn.title = canSubmit
+                    ? 'Click to ban this user'
+                    : 'Enter at least 10 characters to enable Ban';
             };
             if (modalBody) {
                 modalBody.addEventListener('input', function(e) {
@@ -818,9 +828,22 @@
 
     
 
-    function banUser(id, reason, duration = 0) {
+    function banUser(id, reason, duration = 0, confirmBtn) {
         const payload = { id: id, ban_reason: reason, duration_days: duration };
+        let succeeded = false;
         console.debug('Banning user with payload', payload);
+
+        if (confirmBtn) {
+            if (!confirmBtn.dataset.originalHtml) {
+                confirmBtn.dataset.originalHtml = confirmBtn.innerHTML;
+            }
+            confirmBtn.dataset.loading = '1';
+            confirmBtn.disabled = true;
+            confirmBtn.style.opacity = '0.65';
+            confirmBtn.style.cursor = 'wait';
+            confirmBtn.title = 'Ban in progress...';
+            confirmBtn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;vertical-align:middle;margin-right:8px;animation:adminUserSpinner 0.8s linear infinite;"></span>Banning...';
+        }
 
         console.debug('API_TOKEN length', window.API_TOKEN ? window.API_TOKEN.length : 'none');
         if (window.API_TOKEN) {
@@ -854,6 +877,7 @@
                 data = { error: 'Invalid JSON from server' };
             }
             if (ok && !data.error) {
+                succeeded = true;
                 showToast('User banned');
             } else {
                 showToast(data.error || ('Ban failed, status '+status));
@@ -863,10 +887,21 @@
         .finally(() => { 
             console.log('Ban user request completed');
             console.debug('Ban details', { userId: id, reason });
-            closeModal();
-            offset = 0;
-            limit = initialSize;
-            requestChunk(false);
+            if (succeeded) {
+                closeModal();
+                offset = 0;
+                limit = initialSize;
+                requestChunk(false);
+            } else if (confirmBtn) {
+                confirmBtn.dataset.loading = '0';
+                confirmBtn.disabled = false;
+                confirmBtn.style.opacity = '1';
+                confirmBtn.style.cursor = 'pointer';
+                confirmBtn.title = 'Click to ban this user';
+                if (confirmBtn.dataset.originalHtml) {
+                    confirmBtn.innerHTML = confirmBtn.dataset.originalHtml;
+                }
+            }
         });
     }
 
@@ -893,26 +928,49 @@
                     showToast('Please select a ban to remove');
                     return;
                 }
-                unbanUser(sel.value);
+                if (btn && btn.dataset.loading === '1') {
+                    return;
+                }
+                unbanUser(sel.value, btn);
             }
         });
         if (btn) {
             const sel = document.getElementById('ban-id-select');
             btn.disabled = true;
+            btn.style.opacity = '0.55';
+            btn.style.cursor = 'not-allowed';
+            btn.title = 'Select a ban to enable Unban';
             if (sel) {
                 btn.disabled = !sel.value;
                 sel.addEventListener('change', () => {
                     btn.disabled = !sel.value;
+                    btn.style.opacity = btn.disabled ? '0.55' : '1';
+                    btn.style.cursor = btn.disabled ? 'not-allowed' : 'pointer';
+                    btn.title = btn.disabled ? 'Select a ban to enable Unban' : 'Click to unban this user';
                 });
             }
         }
     }
 
-    function unbanUser(banId) {
+    function unbanUser(banId, confirmBtn) {
+        let succeeded = false;
         const headers = {'Content-Type':'application/json'};
         if (window.API_TOKEN) {
             headers['Authorization'] = 'Bearer ' + window.API_TOKEN;
         }
+
+        if (confirmBtn) {
+            if (!confirmBtn.dataset.originalHtml) {
+                confirmBtn.dataset.originalHtml = confirmBtn.innerHTML;
+            }
+            confirmBtn.dataset.loading = '1';
+            confirmBtn.disabled = true;
+            confirmBtn.style.opacity = '0.65';
+            confirmBtn.style.cursor = 'wait';
+            confirmBtn.title = 'Unban in progress...';
+            confirmBtn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;vertical-align:middle;margin-right:8px;animation:adminUserSpinner 0.8s linear infinite;"></span>Unbanning...';
+        }
+
         fetch(`user-ban-api?id=${encodeURIComponent(banId)}`, {
             method: 'DELETE',
             headers: headers
@@ -922,6 +980,7 @@
             let data;
             try { data = body ? JSON.parse(body) : {}; } catch(e) { data = {error:'Invalid JSON'}; }
             if (ok && !data.error) {
+                succeeded = true;
                 showToast('User unbanned');
             } else {
                 showToast(data.error || ('Unban failed, status '+status));
@@ -929,10 +988,21 @@
         })
         .catch(err => { console.error('unbanUser error', err); showToast('Unban failed: '+err.message); })
         .finally(() => {
-            closeModal();
-            offset = 0;
-            limit = initialSize;
-            requestChunk(false);
+            if (succeeded) {
+                closeModal();
+                offset = 0;
+                limit = initialSize;
+                requestChunk(false);
+            } else if (confirmBtn) {
+                confirmBtn.dataset.loading = '0';
+                confirmBtn.disabled = false;
+                confirmBtn.style.opacity = '1';
+                confirmBtn.style.cursor = 'pointer';
+                confirmBtn.title = 'Click to unban this user';
+                if (confirmBtn.dataset.originalHtml) {
+                    confirmBtn.innerHTML = confirmBtn.dataset.originalHtml;
+                }
+            }
         });
     }
 

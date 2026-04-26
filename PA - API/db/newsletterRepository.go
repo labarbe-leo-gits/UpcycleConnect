@@ -9,10 +9,10 @@ import (
 	"github.com/google/uuid"
 )
 
-func GetNewslettersFromDB(page, limit int, search string, status *int) ([]models.Newsletter, int, error) {
+func GetNewslettersFromDB(page, limit int, search string, status *int, senderType *int) ([]models.Newsletter, int, error) {
 	var newsletters []models.Newsletter
 
-	query := "SELECT id, title, status, created_at, updated_at FROM newsletter WHERE 1=1"
+	query := "SELECT id, title, status, COALESCE(created_by_user_type, 0) AS created_by_user_type, created_at, updated_at FROM newsletter WHERE 1=1"
 	var args []interface{}
 
 	if search != "" {
@@ -23,6 +23,11 @@ func GetNewslettersFromDB(page, limit int, search string, status *int) ([]models
 	if status != nil {
 		query += " AND status = ?"
 		args = append(args, *status)
+	}
+
+	if senderType != nil {
+		query += " AND created_by_user_type = ?"
+		args = append(args, *senderType)
 	}
 
 	// Get total count - use same query pattern
@@ -37,6 +42,11 @@ func GetNewslettersFromDB(page, limit int, search string, status *int) ([]models
 	if status != nil {
 		countQuery += " AND status = ?"
 		countArgs = append(countArgs, *status)
+	}
+
+	if senderType != nil {
+		countQuery += " AND created_by_user_type = ?"
+		countArgs = append(countArgs, *senderType)
 	}
 
 	var totalCount int
@@ -58,7 +68,7 @@ func GetNewslettersFromDB(page, limit int, search string, status *int) ([]models
 
 	for rows.Next() {
 		var newsletter models.Newsletter
-		err := rows.Scan(&newsletter.ID, &newsletter.Title, &newsletter.Status, &newsletter.CreatedAt, &newsletter.UpdatedAt)
+		err := rows.Scan(&newsletter.ID, &newsletter.Title, &newsletter.Status, &newsletter.CreatedByUserType, &newsletter.CreatedAt, &newsletter.UpdatedAt)
 		if err != nil {
 			return nil, 0, fmt.Errorf("failed to scan newsletter: %v", err)
 		}
@@ -75,8 +85,8 @@ func GetNewslettersFromDB(page, limit int, search string, status *int) ([]models
 func GetNewsletterByIDFromDB(id string) (models.Newsletter, error) {
 	var newsletter models.Newsletter
 
-	row := Db.QueryRow("SELECT id, title, content, status, created_at, updated_at FROM newsletter WHERE id = ?", id)
-	err := row.Scan(&newsletter.ID, &newsletter.Title, &newsletter.Content, &newsletter.Status, &newsletter.CreatedAt, &newsletter.UpdatedAt)
+	row := Db.QueryRow("SELECT id, title, content, status, COALESCE(created_by_user_type, 0) AS created_by_user_type, created_at, updated_at FROM newsletter WHERE id = ?", id)
+	err := row.Scan(&newsletter.ID, &newsletter.Title, &newsletter.Content, &newsletter.Status, &newsletter.CreatedByUserType, &newsletter.CreatedAt, &newsletter.UpdatedAt)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -88,13 +98,13 @@ func GetNewsletterByIDFromDB(id string) (models.Newsletter, error) {
 	return newsletter, nil
 }
 
-func CreateNewsletterInDB(title, content string) (uuid.UUID, error) {
+func CreateNewsletterInDB(title, content string, createdByUserType int) (uuid.UUID, error) {
 	newID := uuid.New()
 	currentTime := time.Now().UTC().Format("2006-01-02 15:04:05")
 
 	_, err := Db.Exec(
-		"INSERT INTO newsletter (id, title, content, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-		newID.String(), title, content, 0, currentTime, currentTime,
+		"INSERT INTO newsletter (id, title, content, status, created_by_user_type, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+		newID.String(), title, content, 0, createdByUserType, currentTime, currentTime,
 	)
 
 	if err != nil {

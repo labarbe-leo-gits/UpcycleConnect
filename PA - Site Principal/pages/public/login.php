@@ -195,7 +195,9 @@ include_once '../../includes/header.php';
         </div>
         
         <div class="form-footer">
-            Don't have an account? <a href="register.php">Register here</a>
+            Don't have an account? <a href="register">Register here</a>
+            <br>
+            Pending registration? <a href="verify">Verify the status here</a>
         </div>
     </form>
 </div>

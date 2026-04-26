@@ -19,6 +19,11 @@ include_once '../../includes/admin-header.php';
             <option value="1">Scheduled</option>
             <option value="2">Sent</option>
         </select>
+        <select id="newsletter-sender-filter" class="admin-filter-select">
+            <option value="">All Senders</option>
+            <option value="3">Admin</option>
+            <option value="4">Partials Employee</option>
+        </select>
         <div class="toolbar-search-wrap">
             <i class="fa-solid fa-search toolbar-search-icon"></i>
             <input type="text" id="newsletter-search" placeholder="Search by title…" />

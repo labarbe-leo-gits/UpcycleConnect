@@ -78,6 +78,7 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
                 <div class="dropdown-menu">
                     <a href="../common/forums"><i class="fa-solid fa-indent"></i>Forums</a>
                     <a href="tips"><i class="fa-solid fa-lightbulb"></i>Tips</a>
+                    <a href="../partials/newsletter"><i class="fa-solid fa-envelopes-bulk"></i>Newsletter</a>
                 </div>
             </div>
 
@@ -133,4 +134,5 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
     });
     </script>
     <?php unset($_SESSION['flash_message']); endif; ?>
+    <script src="../../assets/js/notifications-poll.js"></script>
     <script src="../../assets/js/blob-images.js"></script>

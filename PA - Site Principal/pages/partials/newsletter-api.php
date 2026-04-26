@@ -14,7 +14,7 @@ require_once '../../includes/auth.php';
 header('Content-Type: application/json');
 
 $user = getLoggedInUser();
-if (!$user || $user['user_type'] != 3) {
+if (!$user || $user['user_type'] != 4) {
     http_response_code(401);
     echo json_encode(['error' => 'Unauthorized']);
     exit;
@@ -177,11 +177,12 @@ function forwardListNewsletters($apiBase, $jwtToken) {
     $page = max(1, intval($_GET['page'] ?? 1));
     $search = trim($_GET['search'] ?? '');
     $status = isset($_GET['status']) && $_GET['status'] !== '' ? intval($_GET['status']) : null;
-    $senderType = isset($_GET['sender_type']) && $_GET['sender_type'] !== '' ? intval($_GET['sender_type']) : null;
 
     $queryParams = [
         'page' => $page,
-        'limit' => 10
+        'limit' => 10,
+        // Partials management must never list admin newsletters.
+        'sender_type' => 4
     ];
 
     if ($search !== '') {
@@ -190,10 +191,6 @@ function forwardListNewsletters($apiBase, $jwtToken) {
 
     if ($status !== null) {
         $queryParams['status'] = $status;
-    }
-
-    if ($senderType !== null && in_array($senderType, [3, 4], true)) {
-        $queryParams['sender_type'] = $senderType;
     }
 
     $query = http_build_query($queryParams);

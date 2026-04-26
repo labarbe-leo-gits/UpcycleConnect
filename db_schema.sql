@@ -867,6 +867,7 @@ CREATE TABLE IF NOT EXISTS newsletter(
     title VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
     status INT NOT NULL DEFAULT 0, -- 0: draft, 1: scheduled, 2: sent
+    created_by_user_type INT NULL, -- 3: admin, 4: partials employee
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );

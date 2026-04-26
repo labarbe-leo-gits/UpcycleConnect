@@ -81,7 +81,7 @@ include_once '../../includes/header.php';
 ?>
 
 <div class="container form">
-    <h2>Verify your registration</h2>
+    <h2 style="text-align: center;">Verify your registration</h2>
 
     <?php if ($error_message): ?>
         <div class="error-message"><?php echo htmlspecialchars($error_message); ?></div>
@@ -109,7 +109,7 @@ include_once '../../includes/header.php';
             <button type="submit">Resend verification code</button>
         </form>
     <?php else: ?>
-        <p>Enter the username or email you used to register and we will help you continue verification.</p>
+        <p style="text-align: center;">Enter the username or email you used to register and we will help you continue verification.</p>
         <form method="POST" action="">
             <div class="field">
                 <label for="identifier">Username or Email</label>
@@ -124,7 +124,7 @@ include_once '../../includes/header.php';
     <?php endif; ?>
 
     <div class="form-footer" style="margin-top:24px;">
-        Already verified? <a href="login.php">Login here</a>
+        Already verified? <a href="login">Login here</a>
     </div>
 </div>
 

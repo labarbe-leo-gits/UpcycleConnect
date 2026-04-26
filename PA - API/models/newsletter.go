@@ -3,12 +3,13 @@ package models
 import "github.com/google/uuid"
 
 type Newsletter struct {
-	ID        uuid.UUID `json:"id"`
-	Title     string    `json:"title"`
-	Content   string    `json:"content"`
-	Status    int       `json:"status"` // 0: draft, 1: scheduled, 2: sent
-	CreatedAt string    `json:"created_at"`
-	UpdatedAt string    `json:"updated_at"`
+	ID                uuid.UUID `json:"id"`
+	Title             string    `json:"title"`
+	Content           string    `json:"content"`
+	Status            int       `json:"status"` // 0: draft, 1: scheduled, 2: sent
+	CreatedByUserType int       `json:"created_by_user_type"`
+	CreatedAt         string    `json:"created_at"`
+	UpdatedAt         string    `json:"updated_at"`
 }
 
 type NewsletterRecipient struct {

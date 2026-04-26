@@ -25,6 +25,21 @@ if (!$id) {
 $resp = askAPI('/users/' . urlencode($id) . '/bans', 'GET');
 $decoded = json_decode($resp, true);
 
-if ($decoded != null) {
-    echo json_encode(['bans' => $decoded]);
+$trimmedResp = trim((string)$resp);
+if ($trimmedResp === '' || strtolower($trimmedResp) === 'null') {
+    echo json_encode(['bans' => []]);
+    exit;
 }
+
+if ($decoded === null && json_last_error() !== JSON_ERROR_NONE) {
+    error_log("user-bans-api returned non-JSON: $resp");
+    echo json_encode(['bans' => []]);
+    exit;
+}
+
+if ($decoded === []) {
+    echo json_encode(['bans' => []]);
+    exit;
+}
+
+echo json_encode(['bans' => $decoded]);

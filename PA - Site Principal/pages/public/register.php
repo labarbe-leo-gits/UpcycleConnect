@@ -362,7 +362,7 @@ include_once '../../includes/header.php';
         </button>
         
             <div class="form-footer">
-                Already have an account? <a href="login.php">Login here</a>
+                Already have an account? <a href="login">Login here</a>
             </div>
         </form>
     </div>
