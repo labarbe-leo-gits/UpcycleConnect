@@ -83,7 +83,7 @@ if (empty($notificationsError) && !empty($notifications)) {
 	}
 </style>
 
-<div class="container" id="notifications-root" data-read-url="notifications-read" data-read-all-url="notifications-read-all">
+<div class="container" id="notifications-root" data-read-url="notifications-read" data-read-all-url="notifications-read-all" data-delete-url="notifications-delete">
 	<div class="profile-card">
 
 		<div class="notifications-header">	
@@ -100,6 +100,16 @@ if (empty($notificationsError) && !empty($notifications)) {
 				?>
 				
 				><i class="fa-solid fa-envelope-circle-check" ></i> Mark all as read</button>
+				<button class="btn-secondary" id="clear-notifications-btn" type="button"
+				
+				<?php
+
+					if (count($unreadNotifications) === 0) {
+						echo 'style="cursor: not-allowed;" disabled';
+					}
+				
+				?>
+				><i class="fa-solid fa-trash" ></i> Clear active tab</button>
 			</div>
 		</div>
 

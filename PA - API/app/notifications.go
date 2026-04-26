@@ -104,3 +104,21 @@ func MarkNotificationAsRead(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]bool{"success": true})
 
 }
+
+func DeleteNotification(w http.ResponseWriter, r *http.Request) {
+
+	notificationID := r.URL.Path[len("/notifications/"):]
+
+	err := db.DeleteNotificationFromDB(notificationID)
+
+	if err != nil {
+		fmt.Println("[ERROR] DeleteNotification:", err)
+		sendError(w, "Unable to delete notification", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]bool{"success": true})
+
+}

@@ -38,6 +38,152 @@
         bindEvents();
     }
 
+    function bindAddressAutocomplete() {
+        const searchInput = document.getElementById('form-addr-search');
+        const resultsDiv = document.getElementById('form-addr-results');
+        const roadInput = document.getElementById('form-road');
+        const cityInput = document.getElementById('form-city');
+        const zipInput = document.getElementById('form-zip');
+
+        if (!searchInput || !resultsDiv || !roadInput || !cityInput || !zipInput) {
+            return;
+        }
+
+        const searchWrap = searchInput.closest('.addr-search-wrap');
+        if (searchWrap) {
+            searchWrap.style.position = 'relative';
+        }
+        resultsDiv.style.cssText = [
+            'position:absolute',
+            'z-index:5000',
+            'left:0',
+            'right:0',
+            'margin-top:4px',
+            'background:#fff',
+            'border:1.5px solid #10b981',
+            'border-radius:8px',
+            'box-shadow:0 8px 24px rgba(16,185,129,.13), 0 1.5px 4px rgba(0,0,0,.04)',
+            'max-height:260px',
+            'overflow-y:auto',
+            'padding:4px 0',
+            'display:none'
+        ].join(';');
+
+        let searchTimeout = null;
+
+        searchInput.addEventListener('input', () => {
+            const value = searchInput.value.trim();
+
+            if (!value) {
+                resultsDiv.innerHTML = '';
+                resultsDiv.style.display = 'none';
+                return;
+            }
+
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
+
+            searchTimeout = setTimeout(() => {
+                resultsDiv.style.display = 'block';
+                resultsDiv.innerHTML = '<div style="padding:8px 12px;color:#6b7280;">Searching...</div>';
+
+                fetch(`https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(value)}&limit=5`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Address lookup failed');
+                        }
+
+                        return response.json();
+                    })
+                    .then(data => {
+                        const features = data && Array.isArray(data.features) ? data.features : [];
+
+                        if (!features.length) {
+                            resultsDiv.style.display = 'block';
+                            resultsDiv.innerHTML = '<div style="padding:6px 8px;color:#888;">No results</div>';
+                            return;
+                        }
+
+                        resultsDiv.style.display = 'block';
+                        resultsDiv.innerHTML = features.slice(0, 5).map(feature => {
+                            const props = feature.properties || {};
+                            const labelParts = [props.housenumber, props.street].filter(Boolean).join(' ');
+                            const cityLine = [props.postcode, props.city].filter(Boolean).join(' ');
+
+                            return `<div class="addr-result-item" data-road="${escapeHtml(props.street || props.name || '')}" data-city="${escapeHtml(props.city || '')}" data-postal="${escapeHtml(props.postcode || '')}"><i class='fa-solid fa-location-dot'></i>${escapeHtml(labelParts || props.name || '')}${cityLine ? `, ${escapeHtml(cityLine)}` : ''}</div>`;
+                        }).join('');
+
+                        resultsDiv.querySelectorAll('.addr-result-item').forEach(item => {
+                            item.addEventListener('click', () => {
+                                roadInput.value = item.getAttribute('data-road') || '';
+                                cityInput.value = item.getAttribute('data-city') || '';
+                                zipInput.value = item.getAttribute('data-postal') || '';
+                                searchInput.value = `${roadInput.value}${cityInput.value ? `, ${cityInput.value}` : ''}`.trim();
+                                resultsDiv.innerHTML = '';
+                                resultsDiv.style.display = 'none';
+                            });
+                        });
+                    })
+                    .catch(err => {
+                        console.warn('Address lookup failed, trying fallback:', err);
+                        fetch(`https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=5&q=${encodeURIComponent(value)}`)
+                            .then(response => {
+                                if (!response.ok) {
+                                    throw new Error('Fallback lookup failed');
+                                }
+                                return response.json();
+                            })
+                            .then(items => {
+                                const list = Array.isArray(items) ? items : [];
+                                if (!list.length) {
+                                    resultsDiv.style.display = 'block';
+                                    resultsDiv.innerHTML = '<div style="padding:6px 8px;color:#888;">No results</div>';
+                                    return;
+                                }
+
+                                resultsDiv.style.display = 'block';
+                                resultsDiv.innerHTML = list.slice(0, 5).map(item => {
+                                    const address = item.address || {};
+                                    const road = address.road || address.pedestrian || address.residential || item.display_name || '';
+                                    const city = address.city || address.town || address.village || '';
+                                    const postcode = address.postcode || '';
+                                    const number = address.house_number || '';
+                                    const line = [number, road].filter(Boolean).join(' ');
+                                    const cityLine = [postcode, city].filter(Boolean).join(' ');
+
+                                    return `<div class="addr-result-item" data-road="${escapeHtml(line || road)}" data-city="${escapeHtml(city)}" data-postal="${escapeHtml(postcode)}"><i class='fa-solid fa-location-dot'></i>${escapeHtml(line || road)}${cityLine ? `, ${escapeHtml(cityLine)}` : ''}</div>`;
+                                }).join('');
+
+                                resultsDiv.querySelectorAll('.addr-result-item').forEach(item => {
+                                    item.addEventListener('click', () => {
+                                        roadInput.value = item.getAttribute('data-road') || '';
+                                        cityInput.value = item.getAttribute('data-city') || '';
+                                        zipInput.value = item.getAttribute('data-postal') || '';
+                                        searchInput.value = `${roadInput.value}${cityInput.value ? `, ${cityInput.value}` : ''}`.trim();
+                                        resultsDiv.innerHTML = '';
+                                        resultsDiv.style.display = 'none';
+                                    });
+                                });
+                            })
+                            .catch(() => {
+                                resultsDiv.style.display = 'block';
+                                resultsDiv.innerHTML = '<div style="padding:6px 8px;color:#888;">Error</div>';
+                            });
+                    });
+            }, 350);
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!searchWrap || searchWrap.contains(event.target)) {
+                return;
+            }
+
+            resultsDiv.innerHTML = '';
+            resultsDiv.style.display = 'none';
+        });
+    }
+
     async function loadFormationTypes() {
         try {
             const response = await fetch(`${apiBase}/typesPrestation`, {
@@ -155,6 +301,8 @@
     }
 
     function bindEvents() {
+        bindAddressAutocomplete();
+
         document.getElementById('create-formation-btn').addEventListener('click', () => {
             schedules = [];
             form.reset();

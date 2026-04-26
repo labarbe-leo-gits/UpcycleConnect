@@ -157,3 +157,24 @@ func MarkAllNotificationsAsReadInDB(userID string) error {
 	return nil
 
 }
+
+func DeleteNotificationFromDB(notificationID string) error {
+
+	result, err := Db.Exec("DELETE FROM notifications WHERE id = ?", notificationID)
+
+	if err != nil {
+		return fmt.Errorf("deleteNotification package db : %s", err.Error())
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("deleteNotification package db rows affected : %s", err.Error())
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("notification not found")
+	}
+
+	return nil
+
+}

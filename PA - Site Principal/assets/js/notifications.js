@@ -50,10 +50,113 @@
 
     }
 
+    function getActiveTabName() {
+        var activeTab = document.querySelector('.notifications-tab.active');
+        if (!activeTab) {
+            return 'unread';
+        }
+        return activeTab.getAttribute('data-tab') || 'unread';
+    }
+
+    function getListForTab(tabName) {
+        return document.getElementById('notifications-list-' + tabName);
+    }
+
+    function updateClearButtonState() {
+        var clearBtn = document.getElementById('clear-notifications-btn');
+        if (!clearBtn) {
+            return;
+        }
+
+        var activeTabName = getActiveTabName();
+        var activeList = getListForTab(activeTabName);
+        var count = activeList ? activeList.children.length : 0;
+        var shouldDisable = count === 0;
+
+        clearBtn.disabled = shouldDisable;
+        clearBtn.style.cursor = shouldDisable ? 'not-allowed' : '';
+    }
+
+    function setupClearNotifications() {
+        var root = document.getElementById('notifications-root');
+        var clearBtn = document.getElementById('clear-notifications-btn');
+        var deleteUrl = root ? root.getAttribute('data-delete-url') : '';
+
+        if (!root || !deleteUrl || !clearBtn) {
+            return;
+        }
+
+        clearBtn.addEventListener('click', function() {
+            var activeTabName = getActiveTabName();
+            var activeList = getListForTab(activeTabName);
+            if (!activeList) {
+                return;
+            }
+
+            var items = activeList.querySelectorAll('.notification-item[data-notification-id]');
+            var notificationIds = Array.prototype.map.call(items, function(item) {
+                return item.getAttribute('data-notification-id') || '';
+            }).filter(function(id) {
+                return id !== '';
+            });
+
+            if (notificationIds.length === 0) {
+                updateClearButtonState();
+                return;
+            }
+
+            clearBtn.disabled = true;
+
+            var resolvedUrl = deleteUrl;
+            if (deleteUrl.indexOf('http://') !== 0 && deleteUrl.indexOf('https://') !== 0) {
+                resolvedUrl = new URL(deleteUrl, window.location.href).href;
+            }
+
+            fetch(resolvedUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    notification_ids: notificationIds
+                })
+            })
+                .then(function(response) {
+                    return response.text().then(function(text) {
+                        var data = null;
+                        if (text) {
+                            try {
+                                data = JSON.parse(text);
+                            } catch (error) {
+                                data = null;
+                            }
+                        }
+                        return { response: response, data: data };
+                    });
+                })
+                .then(function(result) {
+                    if (!result.response.ok || (result.data && result.data.success === false)) {
+                        clearBtn.disabled = false;
+                        updateClearButtonState();
+                        return;
+                    }
+
+                    window.location.reload();
+                })
+                .catch(function() {
+                    clearBtn.disabled = false;
+                    updateClearButtonState();
+                });
+        });
+
+        updateClearButtonState();
+    }
+
     function setupMarkAsRead() {
         var root = document.getElementById('notifications-root');
-        var list = document.getElementById('notifications-list');
-        var emptyState = document.getElementById('notifications-empty');
+        var list = document.getElementById('notifications-list-unread');
+        var emptyState = document.getElementById('notifications-empty-unread');
         var readUrl = root ? root.getAttribute('data-read-url') : '';
         var badge = document.getElementById('notifications-count');
         var pollUrl = 'notifications-poll';
@@ -139,6 +242,20 @@
                         badge.textContent = String(nextCount);
                         badge.hidden = nextCount === 0;
                     }
+
+                    var unreadTabCount = document.querySelector('.notifications-tab[data-tab="unread"] .notifications-tab-count');
+                    if (unreadTabCount) {
+                        unreadTabCount.textContent = String(list ? list.children.length : 0);
+                    }
+
+                    var readTabCount = document.querySelector('.notifications-tab[data-tab="read"] .notifications-tab-count');
+                    if (readTabCount) {
+                        var currentReadCount = parseInt(readTabCount.textContent || '0', 10);
+                        var nextReadCount = Number.isFinite(currentReadCount) ? currentReadCount + 1 : 1;
+                        readTabCount.textContent = String(nextReadCount);
+                    }
+
+                    updateClearButtonState();
                 })
                 .catch(function() {
                     if (placeholder && list) {
@@ -149,6 +266,7 @@
                         lastUnreadCount = list.children.length;
                     }
                     target.disabled = false;
+                    updateClearButtonState();
                 });
         });
 
@@ -249,6 +367,7 @@
                     }
 
                     lastUnreadCount = unreadCount;
+                    updateClearButtonState();
                 })
                 .catch(function() {});
         }
@@ -266,5 +385,14 @@
         setTimeout(showContent, 500);
         setupMarkAsRead();
         setupMarkAllAsRead();
+        setupClearNotifications();
+
+        document.addEventListener('click', function(event) {
+            var tab = event.target.closest('.notifications-tab');
+            if (!tab) {
+                return;
+            }
+            setTimeout(updateClearButtonState, 0);
+        });
     });
 })();
