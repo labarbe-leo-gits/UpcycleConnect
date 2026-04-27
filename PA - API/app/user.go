@@ -22,6 +22,7 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 
 	"github.com/google/uuid"
+	"github.com/pquerna/otp/totp"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -1393,6 +1394,23 @@ func GetBansByUserID(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteUser(w http.ResponseWriter, r *http.Request) {
+	var deleteReq struct {
+		Password string `json:"password"`
+		MFACode  string `json:"mfa_code,omitempty"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&deleteReq)
+	if err != nil {
+		fmt.Println("[ERROR] DeleteUser decode:", err)
+		sendError(w, "Invalid JSON format", http.StatusBadRequest)
+		return
+	}
+
+	if deleteReq.Password == "" {
+		sendError(w, "Password is required to delete account", http.StatusBadRequest)
+		return
+	}
+
 	idStr := strings.TrimPrefix(r.URL.Path, "/users/")
 	userID, err := uuid.Parse(idStr)
 	if err != nil {
@@ -1401,15 +1419,148 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := db.DeleteUserFromDB(userID); err != nil {
-		fmt.Println("[ERROR] DeleteUser DB:", err)
-		sendError(w, "Unable to delete user", http.StatusInternalServerError)
+	user, err := db.GetUserByIDFromDB(userID)
+	if err != nil {
+		fmt.Println("[ERROR] DeleteUser get user:", err)
+		sendError(w, "User not found", http.StatusNotFound)
 		return
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(deleteReq.Password))
+	if err != nil {
+		fmt.Println("[ERROR] DeleteUser password verification failed")
+		sendError(w, "Password is incorrect", http.StatusUnauthorized)
+		return
+	}
+
+	twoFAEnabled, secret, tfaErr := db.Get2FAInfoFromDB(userID.String())
+	if tfaErr != nil {
+		fmt.Println("[WARN] DeleteUser get2FAInfo:", tfaErr)
+		twoFAEnabled = false
+	}
+
+	if twoFAEnabled {
+		if deleteReq.MFACode == "" {
+			sendError(w, "MFA code is required to delete account", http.StatusBadRequest)
+			return
+		}
+
+		if !verifyTOTPCode(deleteReq.MFACode, secret) {
+			fmt.Println("[ERROR] DeleteUser MFA verification failed")
+			sendError(w, "Invalid MFA code", http.StatusUnauthorized)
+			return
+		}
+	}
+
+	if err := db.DeleteUserFromDB(userID); err != nil {
+		fmt.Println("[ERROR] DeleteUser DB deletion:", err)
+		sendError(w, "Unable to delete account", http.StatusInternalServerError)
+		return
+	}
+
+	err = sendAccountDeletedEmail(user.Email, user.FirstName)
+	if err != nil {
+		fmt.Println("[WARN] DeleteUser send email:", err)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"message": "User deleted successfully"})
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"message": "Account deleted successfully",
+	})
+}
+
+func verifyTOTPCode(code string, secret string) bool {
+	if secret == "" || code == "" {
+		return false
+	}
+	return totp.Validate(code, secret)
+}
+
+func sendAccountDeletedEmail(email, name string) error {
+	host := os.Getenv("EMAIL_HOST")
+	port := os.Getenv("EMAIL_PORT")
+	username := os.Getenv("EMAIL_USERNAME")
+	password := os.Getenv("EMAIL_PASSWORD")
+	if host == "" || username == "" || password == "" {
+		return fmt.Errorf("email settings are not configured")
+	}
+
+	from := os.Getenv("EMAIL_FROM")
+	if from == "" {
+		from = username
+	}
+	fromName := os.Getenv("EMAIL_FROM_NAME")
+	if fromName == "" {
+		fromName = "UpcycleConnect"
+	}
+	if port == "" {
+		port = "587"
+	}
+
+	auth := smtp.PlainAuth("", username, password, host)
+	addr := fmt.Sprintf("%s:%s", host, port)
+	subject := "Your account has been deleted"
+
+	displayName := name
+	if displayName == "" {
+		displayName = "there"
+	}
+
+	htmlBody := fmt.Sprintf(`
+		<!DOCTYPE html>
+		<html lang="en">
+		<head>
+		  <meta charset="UTF-8" />
+		  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		  <title>Your Account Has Been Deleted</title>
+		</head>
+		<body style="margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background:#f3f6f8;color:#334155;">
+		  <table width="100%%" cellpadding="0" cellspacing="0" style="background:#f3f6f8;padding:24px 0;">
+		    <tr>
+		      <td align="center">
+		        <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(15,23,42,.08);">
+		          <tr>
+		            <td style="background:#176f3a;padding:28px 32px;text-align:center;color:#ffffff;">
+		              <h1 style="margin:0;font-size:28px;letter-spacing:0.5px;">UpcycleConnect</h1>
+		            </td>
+		          </tr>
+		          <tr>
+		            <td style="padding:32px 40px;">
+		              <p style="margin:0 0 16px;font-size:16px;line-height:1.7;color:#334155;">Hello <strong>%s</strong>,</p>
+		              <p style="margin:0 0 28px;font-size:16px;line-height:1.75;color:#475569;">Your UpcycleConnect account has been successfully deleted.</p>
+		              <p style="margin:0 0 24px;font-size:14px;line-height:1.7;color:#64748b;">
+		                If you did not request this action, please contact our support team immediately at <strong>support@upcycleconnect.com</strong>.
+		              </p>
+		              <p style="margin:0;font-size:14px;line-height:1.7;color:#64748b;">
+		                We hope to see you again in the future. If you have any feedback about your experience with UpcycleConnect, please let us know.
+		              </p>
+		            </td>
+		          </tr>
+		          <tr>
+		            <td style="padding:24px 40px 32px;font-size:14px;line-height:1.7;color:#64748b;background:#f8fafc;">
+		              <p style="margin:0;">Thanks,<br />UpcycleConnect Team</p>
+		            </td>
+		          </tr>
+		        </table>
+		      </td>
+		    </tr>
+		  </table>
+		</body>
+		</html>`, html.EscapeString(displayName))
+
+	message := strings.Join([]string{
+		fmt.Sprintf("From: %s <%s>", fromName, from),
+		fmt.Sprintf("To: %s", email),
+		fmt.Sprintf("Subject: %s", subject),
+		"MIME-Version: 1.0",
+		"Content-Type: text/html; charset=\"UTF-8\"",
+		"",
+		htmlBody,
+	}, "\r\n")
+
+	return smtp.SendMail(addr, auth, from, []string{email}, []byte(message))
 }
 
 func GetRefundRequestsByUserID(w http.ResponseWriter, r *http.Request) {

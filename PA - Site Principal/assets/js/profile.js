@@ -1072,6 +1072,190 @@ document.querySelectorAll('.password-toggle').forEach(function(toggle) {
     });
 });
 
+(function() {
+    const deleteAccountBtn = document.getElementById('delete-account-btn');
+    const deleteAccountModal = document.getElementById('delete-account-modal');
+    const closeDeleteAccountModal = document.getElementById('close-delete-account-modal');
+    const cancelDeleteAccount = document.getElementById('cancel-delete-account');
+    const confirmDeleteAccount = document.getElementById('confirm-delete-account');
+    const deletePhraseDisplay = document.getElementById('delete-phrase-display');
+    const deleteConfirmationPhrase = document.getElementById('delete-confirmation-phrase');
+    const deleteAccountPassword = document.getElementById('delete-account-password');
+    const deleteMfaSection = document.getElementById('delete-mfa-section');
+    const deleteMfaInput = document.getElementById('delete-account-mfa');
+    const deleteAccountFeedback = document.getElementById('delete-account-feedback');
+    const deleteAccountForm = document.getElementById('delete-account-form');
+
+    if (!deleteAccountBtn || !deleteAccountModal) return;
+
+    let currentPhrase = '';
+    let mfaRequired = false;
+    const API_URL = "http://" + window.location.hostname + ":9999";
+
+    function generateRandomPhrase() {
+        const words = ['DELETE', 'ACCOUNT', 'PERMANENT', 'CANNOT', 'UNDO', 'CONFIRM', 'FOREVER', 'LOST', 'BACKUP', 'REMOVE'];
+        const shuffled = words.sort(() => Math.random() - 0.5);
+        return shuffled.slice(0, 3).join('-');
+    }
+
+    function openDeleteModal() {
+        currentPhrase = generateRandomPhrase();
+        if (deletePhraseDisplay) {
+            deletePhraseDisplay.textContent = currentPhrase;
+        }
+        if (deleteConfirmationPhrase) {
+            deleteConfirmationPhrase.value = '';
+        }
+        if (deleteAccountPassword) {
+            deleteAccountPassword.value = '';
+        }
+        if (deleteMfaInput) {
+            deleteMfaInput.value = '';
+        }
+        if (deleteAccountFeedback) {
+            deleteAccountFeedback.textContent = '';
+            deleteAccountFeedback.className = '';
+        }
+
+        const userId = window.currentUserId || (typeof getCurrentUserId === 'function' ? getCurrentUserId() : null);
+        if (userId) {
+            authedFetch('/users/' + userId + '/2fa-info', {
+                method: 'GET',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(r => r.json())
+            .then(data => {
+                mfaRequired = data && data.enabled === true;
+                if (deleteMfaSection) {
+                    deleteMfaSection.style.display = mfaRequired ? 'block' : 'none';
+                }
+                if (mfaRequired && deleteMfaInput) {
+                    deleteMfaInput.required = true;
+                }
+            })
+            .catch(() => {
+                mfaRequired = false;
+                if (deleteMfaSection) {
+                    deleteMfaSection.style.display = 'none';
+                }
+            });
+        }
+
+        if (deleteAccountModal) {
+            deleteAccountModal.classList.add('is-visible');
+            deleteAccountModal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('modal-open');
+        }
+    }
+
+    function closeModal() {
+        if (deleteAccountModal) {
+            deleteAccountModal.classList.remove('is-visible');
+            deleteAccountModal.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('modal-open');
+        }
+        currentPhrase = '';
+    }
+
+    deleteAccountBtn.addEventListener('click', openDeleteModal);
+    closeDeleteAccountModal?.addEventListener('click', closeModal);
+    cancelDeleteAccount?.addEventListener('click', closeModal);
+
+    deleteAccountModal?.addEventListener('click', function(e) {
+        if (e.target === deleteAccountModal) {
+            closeModal();
+        }
+    });
+
+    confirmDeleteAccount?.addEventListener('click', async function(e) {
+        e.preventDefault();
+
+        if (deleteAccountFeedback) {
+            deleteAccountFeedback.textContent = '';
+            deleteAccountFeedback.className = '';
+        }
+
+        if (deleteConfirmationPhrase.value.trim() !== currentPhrase) {
+            if (deleteAccountFeedback) {
+                deleteAccountFeedback.textContent = 'Confirmation phrase does not match. Please try again.';
+                deleteAccountFeedback.className = 'error-message';
+            }
+            return;
+        }
+
+        if (!deleteAccountPassword.value) {
+            if (deleteAccountFeedback) {
+                deleteAccountFeedback.textContent = 'Password is required.';
+                deleteAccountFeedback.className = 'error-message';
+            }
+            return;
+        }
+
+        if (mfaRequired && (!deleteMfaInput.value || deleteMfaInput.value.length !== 6)) {
+            if (deleteAccountFeedback) {
+                deleteAccountFeedback.textContent = 'Please enter your 6-digit MFA code.';
+                deleteAccountFeedback.className = 'error-message';
+            }
+            return;
+        }
+
+        confirmDeleteAccount.disabled = true;
+
+        const spinnerEl = confirmDeleteAccount.querySelector('.delete-btn-spinner');
+        const textEl = confirmDeleteAccount.querySelector('.delete-btn-text');
+        if (spinnerEl) spinnerEl.style.display = 'inline';
+        if (textEl) textEl.style.display = 'none';
+
+        try {
+            const userId = window.currentUserId || (typeof getCurrentUserId === 'function' ? getCurrentUserId() : null);
+            if (!userId) {
+                throw new Error('User ID not found');
+            }
+
+            const payload = {
+                password: deleteAccountPassword.value,
+                mfa_code: mfaRequired ? deleteMfaInput.value : undefined
+            };
+
+            const response = await authedFetch('/users/' + userId, {
+                method: 'DELETE',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json().catch(() => null);
+
+            if (!response.ok || !data || !data.success) {
+                throw new Error(data?.message || 'Failed to delete account');
+            }
+
+            if (deleteAccountFeedback) {
+                deleteAccountFeedback.textContent = 'Account deletion initiated. You will be logged out shortly.';
+                deleteAccountFeedback.className = 'success-message';
+            }
+
+            setTimeout(() => {
+                window.location.href = '/pages/public/login';
+            }, 2000);
+
+        } catch (error) {
+            if (deleteAccountFeedback) {
+                deleteAccountFeedback.textContent = error.message || 'Unable to delete account. Please try again.';
+                deleteAccountFeedback.className = 'error-message';
+            }
+        } finally {
+            confirmDeleteAccount.disabled = false;
+
+            const spinnerEl = confirmDeleteAccount.querySelector('.delete-btn-spinner');
+            const textEl = confirmDeleteAccount.querySelector('.delete-btn-text');
+            if (spinnerEl) spinnerEl.style.display = 'none';
+            if (textEl) textEl.style.display = 'inline';
+        }
+    });
+})();
+
 var newPasswordInput = document.querySelector('.password-input[data-strength="true"]');
 if (newPasswordInput) {
     var meter = newPasswordInput.closest('.field').querySelector('.password-meter');

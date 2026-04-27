@@ -501,6 +501,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <meta charset="UTF-8">
 
+<style>
+    @keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+        to {
+            transform: rotate(360deg);
+        }
+    }
+</style>
 
 <div class="container" id="main-content" style="visibility:hidden;">
     <div id="payment-feedback"></div>
@@ -872,6 +882,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             </div>
 
+            <div class="profile-accordion" id="acc-danger-zone" data-section="danger-zone">
+                <button class="accordion-toggle" type="button" aria-expanded="false">
+                    <span><i class="fa-solid fa-skull"></i> Danger zone</span>
+                    <i class="fa-solid fa-chevron-down accordion-chevron"></i>
+                </button>
+                <div class="accordion-body" style="display:none">
+                    <div style="padding: 1.5rem; border: 1px solid #fee2e2; border-radius: 8px; background-color: #fef2f2;">
+                        <h4 style="margin: 0 0 0.5rem 0; color: #c53030; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            Delete Account
+                        </h4>
+                        <p style="margin: 0.5rem 0 1rem 0; color: #742a2a; font-size: 0.95rem;">
+                            This action is permanent and cannot be undone. Your account and all associated data will be deleted.
+                        </p>
+                        <button type="button" id="delete-account-btn" class="btn-danger" style="background: #c53030;">
+                            <i class="fa-solid fa-trash"></i> Delete My Account
+                        </button>
+                    </div>
+                </div>
+            </div>
+
         </div>
         <div class="tab-content" id="upcyclingScore-tab" style="display:none">
             <div class="upcycling-gauge-container">
@@ -1030,19 +1061,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div id="mfa-feedback" style="margin-top:1rem;"></div>
         </div>
-        <div class="modal-overlay" id="password-success-modal" aria-hidden="true">
-            <div class="modal" role="dialog" aria-modal="true" aria-labelledby="password-success-title">
+        <div class="modal-overlay" id="delete-account-modal" aria-hidden="true">
+            <div class="modal" role="dialog" aria-modal="true" aria-labelledby="delete-account-modal-title">
                 <div class="modal-header">
-                    <h2 id="password-success-title">Success</h2>
-                    <button type="button" class="modal-close" id="close-password-success" aria-label="Close">
+                    <h2 id="delete-account-modal-title">Delete Account</h2>
+                    <button type="button" class="modal-close" id="close-delete-account-modal" aria-label="Close">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <p class="center">Your password has been changed successfully.</p>
+                    <p style="color: #742a2a; font-weight: 600; margin-bottom: 1rem;">
+                        This action cannot be undone. Please confirm your request.
+                    </p>
+                    <form id="delete-account-form" novalidate>
+                        <div class="field">
+                            <label for="delete-confirmation-phrase" style="font-weight: 600; color: #333;">
+                                Enter this confirmation phrase to proceed:
+                            </label>
+                            <div id="delete-phrase-display" style="background: #f5f5f5; padding: 1rem; border-radius: 6px; margin: 0.75rem 0; font-family: monospace; font-size: 1.1rem; font-weight: 600; color: #c53030; text-align: center; letter-spacing: 2px;"></div>
+                            <div class="input-wrapper">
+                                <i class="fa-solid fa-check"></i>
+                                <input type="text" id="delete-confirmation-phrase" name="confirmation_phrase" placeholder="Enter the phrase above" autocomplete="off" required style="letter-spacing: 1px;">
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label for="delete-account-password">Your Password</label>
+                            <div class="input-wrapper password-wrapper">
+                                <i class="fa-solid fa-lock"></i>
+                                <input type="password" id="delete-account-password" name="password" required autocomplete="current-password">
+                                <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false">
+                                    <i class="fa-solid fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="delete-mfa-section" style="display:none;">
+                            <div class="field">
+                                <label for="delete-account-mfa">Two-Factor Authentication Code</label>
+                                <div class="input-wrapper">
+                                    <i class="fa-solid fa-key"></i>
+                                    <input type="text" id="delete-account-mfa" name="mfa_code" maxlength="6" inputmode="numeric" pattern="[0-9]{6}" autocomplete="one-time-code" placeholder="000000">
+                                </div>
+                            </div>
+                        </div>
+                        <div id="delete-account-feedback"></div>
+                    </form>
                 </div>
                 <div class="modal-actions">
-                    <button type="button" class="btn-primary" id="password-success-ok">OK</button>
+                    <button type="button" class="btn-secondary" id="cancel-delete-account">Cancel</button>
+                    <button type="button" class="btn-danger" id="confirm-delete-account" style="background: #c53030;">
+                        <span class="delete-btn-text">Delete Account</span>
+                        <span class="delete-btn-spinner" style="display: none;">
+                            <i class="fa-solid fa-spinner" style="animation: spin 1s linear infinite;"></i>
+                        </span>
+                    </button>
                 </div>
             </div>
         </div>
