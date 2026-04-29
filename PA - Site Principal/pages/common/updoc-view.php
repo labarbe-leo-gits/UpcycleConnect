@@ -39,6 +39,13 @@ $isOwner   = ($project['user_id'] ?? '') === $user['id'];
 $likeResp  = askAPI("/projects/{$projectId}/likes", 'GET');
 $likeData  = json_decode($likeResp, true);
 $likeCount = is_array($likeData) ? (int)($likeData['count'] ?? count($likeData)) : 0;
+
+$editorID = $project['user_id'] ?? '';
+$editorResp = askAPI("/users/{$editorID}", 'GET');
+
+$editorData = json_decode($editorResp, true);
+$editorName = is_array($editorData) && !isset($editorData['error']) ? ($editorData['username'] ?? 'Unknown') : 'Unknown';
+
 ?>
 
 <div id="initial-loader">
@@ -56,7 +63,7 @@ $likeCount = is_array($likeData) ? (int)($likeData['count'] ?? count($likeData))
             <a href="updoc?id=<?= urlencode($projectId) ?>" class="updoc-back-btn">
                 <i class="fa-solid fa-pen"></i> Edit
             </a>
-            <a href="export-pdf?id=<?= urlencode($projectId) ?>" target="_blank" class="updoc-back-btn updoc-export-btn">
+            <a href="../common/export-pdf?id=<?= urlencode($projectId) ?>" target="_blank" class="updoc-back-btn updoc-export-btn">
                 <i class="fa-solid fa-file-pdf"></i> Export PDF
             </a>
             <?php endif; ?>
@@ -85,6 +92,7 @@ $likeCount = is_array($likeData) ? (int)($likeData['count'] ?? count($likeData))
             <?php if (!empty($project['ai_generated'])): ?>
             <span class="updoc-ai-badge"><i class="fa-solid fa-wand-magic-sparkles"></i> Likely AI Generated</span>
             <?php endif; ?>
+            <span class="updoc-proj-status usernameStatus">Written by <?= $editorName ?></span>
         </div>
     </div>
 

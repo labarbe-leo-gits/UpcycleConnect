@@ -3,7 +3,7 @@
         'name' => 'upcycleconnect/site-principal',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => 'f1a1db24697b932afef11025e05e7d2648b962fa',
+        'reference' => '3bec3d483f3c5f22672f24ce8ee55a20219d993f',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -196,6 +196,15 @@
             'aliases' => array(),
             'dev_requirement' => false,
         ),
+        'setasign/fpdf' => array(
+            'pretty_version' => '1.8.6',
+            'version' => '1.8.6.0',
+            'reference' => '0838e0ee4925716fcbbc50ad9e1799b5edfae0a0',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../setasign/fpdf',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
         'symfony/deprecation-contracts' => array(
             'pretty_version' => 'v3.6.0',
             'version' => '3.6.0.0',
@@ -208,7 +217,7 @@
         'upcycleconnect/site-principal' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => 'f1a1db24697b932afef11025e05e7d2648b962fa',
+            'reference' => '3bec3d483f3c5f22672f24ce8ee55a20219d993f',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

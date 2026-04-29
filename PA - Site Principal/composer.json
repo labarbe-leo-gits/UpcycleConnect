@@ -5,7 +5,8 @@
     "require": {
         "php": ">=7.4",
         "phpmailer/phpmailer": "^7.0",
-        "google/apiclient": "^2.19"
+        "google/apiclient": "^2.19",
+        "setasign/fpdf": "^1.8"
     },
     "autoload": {
         "psr-4": {

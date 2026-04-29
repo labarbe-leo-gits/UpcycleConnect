@@ -56,6 +56,7 @@ include_once __DIR__ . '/../pages/common/log-utility.php';
     <script src="https://www.google.com/recaptcha/api.js?render=<?php echo getenv('RECAPTCHA_SITE_KEY'); ?>"></script>
     <script src="/assets/js/button.js"></script>
     <script src="/assets/js/blob-images.js"></script>
+    <script src="/assets/js/mobile-menu.js" defer></script>
     <?php
 
     if (!empty(
@@ -125,7 +126,63 @@ include_once __DIR__ . '/../pages/common/log-utility.php';
                 <p>Theme</p>
             </div>
         </nav>
+        <button class="burger-menu-btn" id="burger-menu-btn" aria-label="Toggle mobile menu" aria-expanded="false">
+            <span class="burger-line burger-line-1"></span>
+            <span class="burger-line burger-line-2"></span>
+            <span class="burger-line burger-line-3"></span>
+        </button>
     </header>
+    <div class="mobile-menu-overlay" id="mobile-menu-overlay" aria-hidden="true">
+        <nav class="mobile-menu-panel">
+            <div class="mobile-menu-items">
+                <div class="btn-wrapper mobile-nav-item" onClick="openFile('/pages/public/index')">
+                    <i class="fa-solid fa-house-chimney"></i>
+                    <p>Home</p>
+                </div>
+                <div class="btn-wrapper mobile-nav-item" onClick="openFile('/pages/public/about')">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <p>About</p>
+                </div>
+
+                <div class="nav-dropdown mobile-nav-item">
+                    <a class="btn-wrapper" href="/pages/common/forums">
+                        <i class="fa-solid fa-users"></i>
+                        <p>Community</p>
+                    </a>
+                    <div class="dropdown-menu">
+                        <a href="/pages/common/offers"><i class="fa-solid fa-box-open"></i>Offers</a>
+                        <a href="/pages/common/forums"><i class="fa-solid fa-indent"></i>Forums</a>
+                    </div>
+                </div>
+
+                <div class="btn-wrapper mobile-nav-item" onClick="openFile('/pages/public/contact')">
+                    <i class="fa-solid fa-envelope"></i>
+                    <p>Contact</p>
+                </div>
+                
+                <?php if (isLoggedIn()): ?>
+                    <?php $portalPath = getUserHomePath(getLoggedInUserType() ?? 1); ?>
+                    <div class="btn-wrapper mobile-nav-item" onClick="window.location.href='<?= $portalPath ?>'">
+                        <i class="fa-solid fa-store"></i>
+                        <p>Portal</p>
+                    </div>
+                    <div class="btn-wrapper logout-btn mobile-nav-item" onClick="document.getElementById('logout-form').submit()">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                        <p>Logout</p>
+                    </div>
+                <?php else: ?>
+                    <div class="btn-wrapper mobile-nav-item" onClick="openFile('/pages/public/login')">
+                        <i class="fa-solid fa-right-to-bracket"></i>
+                        <p>Login</p>
+                    </div>
+                <?php endif; ?>
+                <div class="btn-wrapper mobile-nav-item" id="dark-toggle-mobile" title="Toggle dark mode">
+                    <i class="fa-solid fa-moon"></i>
+                    <p>Theme</p>
+                </div>
+            </div>
+        </nav>
+    </div>
     <?php if (isLoggedIn()): ?>
         <form id="logout-form" action="/pages/customers/logout" method="POST" class="hidden-form">
             <input type="hidden" name="logout" value="1">

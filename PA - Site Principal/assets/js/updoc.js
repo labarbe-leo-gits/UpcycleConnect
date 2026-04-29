@@ -492,7 +492,7 @@
 
     function triggerPdfExport() {
         if (!PROJECT_ID) { feedback('Save the project first to export PDF.', 'error'); return; }
-        window.open('export-pdf?id=' + encodeURIComponent(PROJECT_ID), '_blank');
+        window.open('../common/export-pdf?id=' + encodeURIComponent(PROJECT_ID), '_blank');
     }
 
     var aiModal     = document.getElementById('ai-modal');

@@ -47,7 +47,7 @@ $likeCount = is_array($likeData) ? (int)($likeData['count'] ?? count($likeData))
             <a href="updoc?id=<?= urlencode($projectId) ?>" class="updoc-back-btn">
                 <i class="fa-solid fa-pen"></i> Edit
             </a>
-            <a href="export-pdf?id=<?= urlencode($projectId) ?>" target="_blank" class="updoc-back-btn updoc-export-btn">
+            <a href="../common/export-pdf?id=<?= urlencode($projectId) ?>" target="_blank" class="updoc-back-btn updoc-export-btn">
                 <i class="fa-solid fa-file-pdf"></i> Export PDF
             </a>
             <?php endif; ?>
