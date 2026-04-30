@@ -175,6 +175,7 @@ $userTypes = [1 => 'Customer', 2 => 'Professional', 3 => 'Admin', 4 => 'Employee
                 <button class="tab-btn active" data-tab="general">General</button>
                 <button class="tab-btn" data-tab="badges">Badges</button>
                 <button class="tab-btn" data-tab="upcyclingScore">Upcycling Score</button>
+                <button class="tab-btn" data-tab="reviews">User Reviews</button>
             </div>
 
             <div class="tab-content" id="general-tab">
@@ -265,6 +266,38 @@ $userTypes = [1 => 'Customer', 2 => 'Professional', 3 => 'Admin', 4 => 'Employee
                 </div>
                 <p class="upcycling-note">This figure represents the total environmental benefit of the user's offers !</p>
             </div>
+
+            <div class="tab-content" id="reviews-tab" style="display:none;">
+                <div class="review-summary" id="reviews-summary">
+                    <div class="review-summary-card">
+                        <p class="review-summary-title">Average rating</p>
+                        <span id="reviews-average-score" class="review-average-score">0.0 / 5</span>
+                        <div id="reviews-average-stars" class="review-average-stars" aria-hidden="true"></div>
+                        <div id="reviews-average-count" class="review-average-count">No reviews yet</div>
+                    </div>
+                    <div class="review-summary-card" id="reviews-action-card">
+                        <p class="review-form-title" id="reviews-action-title">Share your experience</p>
+                        <p class="review-form-note" id="reviews-action-note">You can leave one review for this user. Edit or delete it at any time.</p>
+                        <div class="review-form-actions" id="reviews-form-cta"></div>
+                    </div>
+                </div>
+
+                <div class="review-form" id="review-form-container" style="display:none;">
+                    <p class="review-form-title" id="review-form-title">Leave a review</p>
+                    <p class="review-form-note" id="review-form-note">Click the recycling icons to rate the user, then add an optional comment.</p>
+                    <div class="rating-picker" id="review-rating-picker" aria-label="Review rating"></div>
+                    <textarea id="review-comment" placeholder="Leave your comment here..."></textarea>
+                    <div class="review-form-actions">
+                        <button type="button" class="btn-primary" id="btn-submit-review">Submit review</button>
+                        <button type="button" class="btn-secondary" id="btn-delete-review" style="display:none;">Delete review</button>
+                    </div>
+                    <div id="review-form-error" class="review-error" aria-live="polite"></div>
+                </div>
+
+                <div id="reviews-list"></div>
+                <p id="reviews-empty" class="review-empty-state">No reviews have been submitted for this user yet.</p>
+            </div>
+
         </div>
 
         <div id="modal-friend-request" class="modal-overlay" aria-hidden="true">
@@ -300,6 +333,23 @@ $userTypes = [1 => 'Customer', 2 => 'Professional', 3 => 'Admin', 4 => 'Employee
                     <div id="friend-request-success-actions" class="d-none" style="width: 100%; text-align: center;">
                         <button class="btn-primary modal-close-btn" type="button">Close</button>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="modal-delete-review" class="modal-overlay" aria-hidden="true">
+            <div class="modal">
+                <div class="modal-header" style="justify-content:center;">
+                    <h2>Delete Review</h2>
+                    <button class="modal-close" aria-label="Close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete your review? This action cannot be undone.</p>
+                    <div id="delete-review-error" class="text-danger d-none mb-2"></div>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn-secondary modal-close-btn" type="button">Cancel</button>
+                    <button class="btn-primary" id="btn-confirm-delete-review" type="button">Delete</button>
                 </div>
             </div>
         </div>

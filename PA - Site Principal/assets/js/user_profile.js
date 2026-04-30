@@ -190,9 +190,375 @@ function escapeHtml(str) {
         .replace(/'/g, '&#39;');
 }
 
+var reviewState = {
+    loaded: false,
+    currentUserReviewId: null,
+    currentReviewRating: 0,
+    currentReviewComment: '',
+    cachedReviewers: {}
+};
+
+function createRatingIcons(rating, count, baseClass) {
+    var html = '';
+    for (var i = 1; i <= count; i++) {
+        var classes = ['fa-solid', 'fa-recycle'];
+        if (i <= rating) classes.push('filled');
+        html += '<i class="' + classes.join(' ') + '"></i>';
+    }
+    return '<span class="' + (baseClass || 'review-rating-icon-group') + '">' + html + '</span>';
+}
+
+function formatReviewDate(timestamp) {
+    if (!timestamp) return '';
+    var date = new Date(timestamp);
+    if (isNaN(date.getTime())) {
+        return timestamp.split('T')[0] || timestamp;
+    }
+    return date.toLocaleDateString();
+}
+
+function setReviewPickerValue(rating) {
+    reviewState.currentReviewRating = rating;
+    var picker = document.getElementById('review-rating-picker');
+    if (!picker) return;
+    picker.querySelectorAll('button').forEach(function(button) {
+        var value = parseInt(button.dataset.rating, 10);
+        button.classList.toggle('selected', value <= rating);
+    });
+}
+
+function buildReviewRatingPicker(selectedRating) {
+    var picker = document.getElementById('review-rating-picker');
+    if (!picker) return;
+    picker.innerHTML = '';
+    for (var i = 1; i <= 5; i++) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.dataset.rating = i;
+        btn.title = i + ' out of 5';
+        btn.innerHTML = '<i class="fa-solid fa-recycle"></i>';
+        btn.className = i <= selectedRating ? 'selected' : '';
+        btn.addEventListener('click', function() {
+            var value = parseInt(this.dataset.rating, 10);
+            setReviewPickerValue(value);
+        });
+        picker.appendChild(btn);
+    }
+    if (selectedRating > 0) {
+        setReviewPickerValue(selectedRating);
+    }
+}
+
+async function lookupReviewerName(userId) {
+    if (!userId) return 'Unknown reviewer';
+    if (reviewState.cachedReviewers[userId]) {
+        return reviewState.cachedReviewers[userId];
+    }
+    try {
+        var res = await fetch(getApiBase() + '/users/' + encodeURIComponent(userId));
+        if (!res.ok) {
+            throw new Error('Unable to load reviewer');
+        }
+        var data = await res.json();
+        var name = data.username || [data.first_name, data.last_name].filter(Boolean).join(' ') || data.id || 'Reviewer';
+        reviewState.cachedReviewers[userId] = name;
+        return name;
+    } catch (e) {
+        console.error('[lookupReviewerName] Error:', e);
+        reviewState.cachedReviewers[userId] = 'Reviewer';
+        return 'Reviewer';
+    }
+}
+
+async function renderReviewsTab() {
+    var reviewsList = document.getElementById('reviews-list');
+    var reviewsEmpty = document.getElementById('reviews-empty');
+    var avgScoreEl = document.getElementById('reviews-average-score');
+    var avgStarsEl = document.getElementById('reviews-average-stars');
+    var avgCountEl = document.getElementById('reviews-average-count');
+    var formContainer = document.getElementById('review-form-container');
+    var actionTitle = document.getElementById('reviews-action-title');
+    var actionNote = document.getElementById('reviews-action-note');
+    var formTitle = document.getElementById('review-form-title');
+    var formNote = document.getElementById('review-form-note');
+    var formError = document.getElementById('review-form-error');
+
+    if (!reviewsList || !avgScoreEl || !avgStarsEl || !avgCountEl || !formContainer) {
+        return;
+    }
+
+    reviewsList.innerHTML = '';
+    reviewsEmpty.textContent = 'Loading reviews...';
+    reviewsEmpty.style.display = 'block';
+    formError.textContent = '';
+
+    var currentUserId = getCurrentUserId();
+    var isOwnProfile = currentUserId && window.publicUserId === currentUserId;
+
+    if (isOwnProfile) {
+        actionTitle.textContent = 'Your profile cannot be reviewed by yourself';
+        actionNote.textContent = 'Users can review your profile from their accounts.';
+        formContainer.style.display = 'none';
+    }
+
+    try {
+        var res = await fetch(getApiBase() + '/users/' + encodeURIComponent(window.publicUserId) + '/reviews');
+        if (!res.ok) {
+            throw new Error('Unable to load reviews');
+        }
+        var reviews = await res.json();
+        if (!Array.isArray(reviews)) {
+            reviews = [];
+        }
+        var average = 0;
+        if (reviews.length > 0) {
+            average = reviews.reduce(function(sum, review) {
+                return sum + (review.rating || 0);
+            }, 0) / reviews.length;
+        }
+        avgScoreEl.textContent = reviews.length > 0 ? average.toFixed(1) + ' / 5' : '0.0 / 5';
+        avgStarsEl.innerHTML = createRatingIcons(Math.round(average), 5, 'review-average-stars');
+        avgCountEl.textContent = reviews.length > 0 ? reviews.length + ' review' + (reviews.length > 1 ? 's' : '') : 'No reviews yet';
+
+        if (!reviews.length) {
+            reviewsEmpty.textContent = 'No reviews have been submitted for this user yet.';
+            reviewsEmpty.style.display = 'block';
+        } else {
+            reviewsEmpty.style.display = 'none';
+        }
+
+        var currentUserReview = null;
+        if (currentUserId) {
+            currentUserReview = reviews.find(function(review) {
+                return review.reviewer_id === currentUserId;
+            });
+        }
+        reviewState.currentUserReviewId = currentUserReview ? currentUserReview.id : null;
+        reviewState.currentReviewRating = currentUserReview ? currentUserReview.rating : 0;
+        reviewState.currentReviewComment = currentUserReview ? (currentUserReview.comment || '') : '';
+
+        if (!isOwnProfile) {
+            if (!getAuthToken()) {
+                formContainer.style.display = 'none';
+                actionTitle.textContent = 'Log in to leave a review';
+                actionNote.textContent = 'Only authenticated users can submit reviews.';
+            } else {
+                formContainer.style.display = 'block';
+                formTitle.textContent = currentUserReview ? 'Edit your review' : 'Leave a review';
+                formNote.textContent = currentUserReview ? 'Update your score and comment anytime.' : 'Click a recycling icon to choose a rating.';
+            }
+        }
+
+        if (reviews.length > 0) {
+            var fragment = document.createDocumentFragment();
+            for (var i = 0; i < reviews.length; i++) {
+                var review = reviews[i];
+                var card = document.createElement('article');
+                card.className = 'review-card';
+                var authorName = review.reviewer_id === currentUserId ? 'You' : 'Reviewer';
+                card.innerHTML =
+                    '<div class="review-card-header">' +
+                        '<div>' +
+                            '<p class="review-card-author">' + escapeHtml(authorName) + '</p>' +
+                            '<p class="review-card-meta"><span class="review-author" data-reviewer-id="' + escapeHtml(review.reviewer_id) + '">' + (authorName === 'You' ? 'You' : 'Reviewer') + '</span> • ' + escapeHtml(formatReviewDate(review.updated_at || review.created_at)) + '</p>' +
+                        '</div>' +
+                        '<div>' + createRatingIcons(review.rating || 0, 5, 'review-rating-icon') + '</div>' +
+                    '</div>' +
+                    '<div class="review-card-comment">' + escapeHtml(review.comment || '') + '</div>';
+                fragment.appendChild(card);
+            }
+            reviewsList.appendChild(fragment);
+            var reviewerSpans = reviewsList.querySelectorAll('.review-author[data-reviewer-id]');
+            reviewerSpans.forEach(function(span) {
+                var reviewerId = span.dataset.reviewerId;
+                if (!reviewerId || reviewerId === currentUserId) {
+                    if (reviewerId === currentUserId) span.textContent = 'You';
+                    return;
+                }
+                lookupReviewerName(reviewerId).then(function(name) {
+                    span.textContent = name;
+                });
+            });
+        }
+
+        buildReviewRatingPicker(reviewState.currentReviewRating);
+        var commentField = document.getElementById('review-comment');
+        if (commentField) {
+            commentField.value = reviewState.currentReviewComment;
+        }
+
+        var deleteButton = document.getElementById('btn-delete-review');
+        if (deleteButton) {
+            deleteButton.style.display = reviewState.currentUserReviewId ? 'block' : 'none';
+        }
+    } catch (e) {
+        console.error('[renderReviewsTab] Error loading reviews:', e);
+        reviewsEmpty.textContent = 'Unable to load reviews at the moment.';
+        reviewsEmpty.style.display = 'block';
+        avgScoreEl.textContent = '0.0 / 5';
+        avgStarsEl.innerHTML = createRatingIcons(0, 5, 'review-average-stars');
+        avgCountEl.textContent = 'Unable to load reviews';
+    }
+}
+
+function setReviewSubmitLoading(isLoading) {
+    var submitButton = document.getElementById('btn-submit-review');
+    if (!submitButton) return;
+    if (isLoading) {
+        submitButton.dataset.originalText = submitButton.innerHTML;
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Saving...';
+    } else {
+        submitButton.disabled = false;
+        submitButton.innerHTML = submitButton.dataset.originalText || 'Submit review';
+    }
+}
+
+async function submitReview() {
+    var commentField = document.getElementById('review-comment');
+    var formError = document.getElementById('review-form-error');
+    if (!commentField || !formError) return;
+    formError.textContent = '';
+
+    if (!window.publicUserId || !getAuthToken()) {
+        formError.textContent = 'You must be logged in to submit a review.';
+        return;
+    }
+    if (window.publicUserId === getCurrentUserId()) {
+        formError.textContent = 'You cannot review yourself.';
+        return;
+    }
+    if (!reviewState.currentReviewRating || reviewState.currentReviewRating < 1) {
+        formError.textContent = 'Please choose a rating between 1 and 5.';
+        return;
+    }
+
+    var payload = {
+        rating: reviewState.currentReviewRating,
+        comment: commentField.value.trim() || ''
+    };
+
+    try {
+        setReviewSubmitLoading(true);
+        var method = reviewState.currentUserReviewId ? 'PATCH' : 'POST';
+        var url = '/users/' + encodeURIComponent(window.publicUserId) + '/reviews';
+        if (reviewState.currentUserReviewId) {
+            url += '/' + encodeURIComponent(reviewState.currentUserReviewId);
+        }
+        var res = await authedFetch(url, {
+            method: method,
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+            var errorText = 'Unable to save your review.';
+            try {
+                var data = await res.json();
+                if (data && data.error) errorText = data.error;
+            } catch (_) {}
+            throw new Error(errorText);
+        }
+        await renderReviewsTab();
+    } catch (e) {
+        console.error('[submitReview] Error:', e);
+        formError.textContent = e.message || 'An error occurred while saving your review.';
+    } finally {
+        setReviewSubmitLoading(false);
+    }
+}
+
+function openDeleteReviewModal() {
+    var modal = document.getElementById('modal-delete-review');
+    if (!modal) return;
+    var deleteError = document.getElementById('delete-review-error');
+    if (deleteError) {
+        deleteError.textContent = '';
+        deleteError.classList.add('d-none');
+    }
+    openModal(modal);
+}
+
+async function deleteReview() {
+    var modal = document.getElementById('modal-delete-review');
+    var deleteError = document.getElementById('delete-review-error');
+    var formError = document.getElementById('review-form-error');
+    if (!formError) return;
+    formError.textContent = '';
+    if (!reviewState.currentUserReviewId) {
+        return;
+    }
+    try {
+        if (modal) {
+            var confirmButton = document.getElementById('btn-confirm-delete-review');
+            if (confirmButton) {
+                confirmButton.disabled = true;
+                confirmButton.dataset.originalText = confirmButton.innerHTML;
+                confirmButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Deleting...';
+            }
+        }
+        var res = await authedFetch('/users/' + encodeURIComponent(window.publicUserId) + '/reviews/' + encodeURIComponent(reviewState.currentUserReviewId), {
+            method: 'DELETE'
+        });
+        if (!res.ok) {
+            var errorText = 'Unable to remove your review.';
+            try {
+                var data = await res.json();
+                if (data && data.error) errorText = data.error;
+            } catch (_) {}
+            throw new Error(errorText);
+        }
+        if (modal) {
+            closeModal(modal);
+        }
+        reviewState.currentUserReviewId = null;
+        reviewState.currentReviewRating = 0;
+        reviewState.currentReviewComment = '';
+        buildReviewRatingPicker(0);
+        var commentField = document.getElementById('review-comment');
+        if (commentField) commentField.value = '';
+        await renderReviewsTab();
+    } catch (e) {
+        console.error('[deleteReview] Error:', e);
+        if (deleteError) {
+            deleteError.textContent = e.message || 'An error occurred while deleting your review.';
+            deleteError.classList.remove('d-none');
+        } else {
+            formError.textContent = e.message || 'An error occurred while deleting your review.';
+        }
+    } finally {
+        if (modal) {
+            var confirmButton = document.getElementById('btn-confirm-delete-review');
+            if (confirmButton) {
+                confirmButton.disabled = false;
+                confirmButton.innerHTML = confirmButton.dataset.originalText || 'Delete';
+            }
+        }
+    }
+}
+
+async function initReviewsTab() {
+    if (reviewState.loaded) {
+        return;
+    }
+    reviewState.loaded = true;
+    buildReviewRatingPicker(0);
+    var submitButton = document.getElementById('btn-submit-review');
+    var deleteButton = document.getElementById('btn-delete-review');
+    var confirmDeleteButton = document.getElementById('btn-confirm-delete-review');
+    if (submitButton) {
+        submitButton.addEventListener('click', submitReview);
+    }
+    if (deleteButton) {
+        deleteButton.addEventListener('click', openDeleteReviewModal);
+    }
+    if (confirmDeleteButton) {
+        confirmDeleteButton.addEventListener('click', deleteReview);
+    }
+    await renderReviewsTab();
+}
+
 function buildOfferCard(item) {
     var card = document.createElement('div');
-    card.className = 'acc-card acc-card--annonce';
     card.setAttribute('role', 'listitem');
 
     var title = escapeHtml(item.title || 'Untitled offer');
@@ -548,8 +914,15 @@ document.addEventListener('DOMContentLoaded', () => {
             if (target === 'upcyclingScore') {
                 renderScoreGauge();
             }
+            if (target === 'reviews') {
+                initReviewsTab();
+            }
         });
     });
+
+    if (document.querySelector('.tab-btn.active[data-tab="reviews"]')) {
+        initReviewsTab();
+    }
 
     document.querySelectorAll('.btn-copy').forEach(function(btn) {
         btn.addEventListener('click', async function(e) {
