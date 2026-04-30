@@ -216,6 +216,7 @@ include_once '../../includes/header.php';
                 <i class="fa-solid fa-user"></i>
                 <input type="text" id="username_customer" name="username" class="iconInput" placeholder="Choose a username" required>
             </div>
+            <small class="field-note field-status" aria-live="polite"></small>
         </div>
         
         <div class="field">
@@ -254,7 +255,7 @@ include_once '../../includes/header.php';
         
         <div class="field cgu-field"> 
             <label> 
-                <input type="checkbox" name="cgu" required> I agree to the <a href="cgu"can you change the  target="_blank">Terms and Conditions</a> 
+                <input type="checkbox" name="cgu" required> I agree to the <a href="cgu" target="_blank">Terms and Conditions</a> 
             </label> 
         </div>
 
@@ -289,13 +290,7 @@ include_once '../../includes/header.php';
             </div>
         </div>
 
-        <div class="field">
-            <label for="company_name_artisan">Company Name (Optional)</label>
-            <div class="input-wrapper">
-                <i class="fa-solid fa-id-card"></i>
-                <input type="text" id="company_name_artisan" name="company_name" class="iconInput" placeholder="Company Name">
-            </div>
-        </div>
+        <input type="hidden" id="company_name_artisan" name="company_name" value="">
 
         <div class="field">
             <label for="siret_artisan">SIRET / SIREN</label>
@@ -304,6 +299,7 @@ include_once '../../includes/header.php';
                 <input type="text" id="siret_artisan" name="siret" class="iconInput" placeholder="123 456 789 00012" required>
             </div>
             <small class="field-note">Enter your 14-digit SIRET or 9-digit SIREN number.</small>
+            <small class="field-note field-status" aria-live="polite"></small>
         </div>
         
         <div class="field">
@@ -312,6 +308,7 @@ include_once '../../includes/header.php';
                 <i class="fa-solid fa-user"></i>
                 <input type="text" id="username_artisan" name="username" class="iconInput" placeholder="Choose a username" required>
             </div>
+            <small class="field-note field-status" aria-live="polite"></small>
         </div>
         
         <div class="field">
@@ -350,7 +347,7 @@ include_once '../../includes/header.php';
          
         <div class="field cgu-field"> 
             <label> 
-                <input type="checkbox" name="cgu" required> I agree to the <a href="cgu"can you change the  target="_blank">Terms and Conditions</a> 
+                <input type="checkbox" name="cgu" required> I agree to the <a href="cgu" target="_blank">Terms and Conditions</a> 
             </label> 
         </div>
 
