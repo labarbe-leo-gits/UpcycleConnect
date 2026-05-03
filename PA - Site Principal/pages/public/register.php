@@ -164,7 +164,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (int) $user_type_filtered === 2) {
     $active_form = 'artisan';
 }
 
-$title = "Register";
+$title = 'Register';
 include_once '../../includes/header.php';
 ?>
 
@@ -181,73 +181,73 @@ include_once '../../includes/header.php';
         </div>
     <?php endif; ?>
 
-    <div class="form-switcher" role="tablist" aria-label="Registration form selector">
+    <div class="form-switcher" role="tablist" aria-label="<?= htmlspecialchars('Registration form selector') ?>">
         <button type="button" class="switcher-btn" data-target="customer" aria-pressed="<?php echo $active_form === 'customer' ? 'true' : 'false'; ?>">
-            Customer
+            <?= htmlspecialchars('Customer') ?>
         </button>
         <button type="button" class="switcher-btn" data-target="artisan" aria-pressed="<?php echo $active_form === 'artisan' ? 'true' : 'false'; ?>">
-            Artisan / Pro
+            <?= htmlspecialchars('Artisan / Pro') ?>
         </button>
     </div>
 
     <div class="register-forms-stage">
         <form action="" method="POST" class="register-form" data-form="customer" aria-hidden="<?php echo $active_form === 'customer' ? 'false' : 'true'; ?>">
-            <h2>Customer Account</h2>
+            <h2><?= htmlspecialchars('Customer Account') ?></h2>
 
         <div class="field">
-            <label for="first_name_customer">First Name</label>
+            <label for="first_name_customer"><?= htmlspecialchars('First Name') ?></label>
             <div class="input-wrapper">
                 <i class="fa-solid fa-id-card"></i>
-                <input type="text" id="first_name_customer" name="first_name" class="iconInput" placeholder="First name" required>
+                <input type="text" id="first_name_customer" name="first_name" class="iconInput" placeholder="<?= htmlspecialchars('First name') ?>" required>
             </div>
         </div>
 
         <div class="field">
-            <label for="last_name_customer">Last Name</label>
+            <label for="last_name_customer"><?= htmlspecialchars('Last Name') ?></label>
             <div class="input-wrapper">
                 <i class="fa-solid fa-id-card"></i>
-                <input type="text" id="last_name_customer" name="last_name" class="iconInput" placeholder="Last name" required>
+                <input type="text" id="last_name_customer" name="last_name" class="iconInput" placeholder="<?= htmlspecialchars('Last name') ?>" required>
             </div>
         </div>
         
         <div class="field">
-            <label for="username_customer">Username</label>
+            <label for="username_customer"><?= htmlspecialchars('Username') ?></label>
             <div class="input-wrapper">
                 <i class="fa-solid fa-user"></i>
-                <input type="text" id="username_customer" name="username" class="iconInput" placeholder="Choose a username" required>
+                <input type="text" id="username_customer" name="username" class="iconInput" placeholder="<?= htmlspecialchars('Choose a username') ?>" required>
             </div>
             <small class="field-note field-status" aria-live="polite"></small>
         </div>
         
         <div class="field">
-            <label for="email_customer">Email Address</label>
+            <label for="email_customer"><?= htmlspecialchars('Email Address') ?></label>
             <div class="input-wrapper">
                 <i class="fa-solid fa-envelope"></i>
-                <input type="email" id="email_customer" name="email" class="iconInput" placeholder="you@example.com" required>
+                <input type="email" id="email_customer" name="email" class="iconInput" placeholder="<?= htmlspecialchars('you@example.com') ?>" required>
             </div>
         </div>
         
         <div class="field">
-            <label for="password_customer">Password</label>
+            <label for="password_customer"><?= htmlspecialchars('Password') ?></label>
             <div class="input-wrapper password-wrapper">
                 <i class="fa-solid fa-lock"></i>
-                <input type="password" id="password_customer" name="password" class="iconInput password-input" placeholder="Create a password" required data-strength="true">
-                <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false">
+                <input type="password" id="password_customer" name="password" class="iconInput password-input" placeholder="<?= htmlspecialchars('Create a password') ?>" required data-strength="true">
+                <button type="button" class="password-toggle" aria-label="<?= htmlspecialchars('Show password') ?>" aria-pressed="false">
                     <i class="fa-solid fa-eye"></i>
                 </button>
             </div>
             <div class="password-meter" aria-live="polite">
                 <div class="password-meter-bar"></div>
-                <span class="password-meter-text">Strength: </span>
+                <span class="password-meter-text"><?= htmlspecialchars('Strength: ') ?></span>
             </div>
         </div>
         
         <div class="field">
-            <label for="confirm_password_customer">Confirm Password</label>
+            <label for="confirm_password_customer"><?= htmlspecialchars('Confirm Password') ?></label>
             <div class="input-wrapper password-wrapper">
                 <i class="fa-solid fa-lock"></i>
-                <input type="password" id="confirm_password_customer" name="confirm_password" class="iconInput" placeholder="Confirm your password" required>
-                <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false">
+                <input type="password" id="confirm_password_customer" name="confirm_password" class="iconInput" placeholder="<?= htmlspecialchars('Confirm your password') ?>" required>
+                <button type="button" class="password-toggle" aria-label="<?= htmlspecialchars('Show password') ?>" aria-pressed="false">
                     <i class="fa-solid fa-eye"></i>
                 </button>
             </div>
@@ -255,7 +255,7 @@ include_once '../../includes/header.php';
         
         <div class="field cgu-field"> 
             <label> 
-                <input type="checkbox" name="cgu" required> I agree to the <a href="cgu" target="_blank">Terms and Conditions</a> 
+                <input type="checkbox" name="cgu" required> <?= htmlspecialchars('I agree to the') ?> <a href="cgu" target="_blank"><?= htmlspecialchars('Terms and Conditions') ?></a> 
             </label> 
         </div>
 
@@ -263,83 +263,83 @@ include_once '../../includes/header.php';
         <input type="hidden" name="recaptcha_token" class="recaptcha-token">
         
         <button type="submit">
-            <i class="fa-solid fa-user-plus"></i> Create Customer Account
+            <i class="fa-solid fa-user-plus"></i> <?= htmlspecialchars('Create Customer Account') ?>
         </button>
         
             <div class="form-footer">
-                Already have an account? <a href="login.php">Login here</a>
+                <?= htmlspecialchars('Already have an account?') ?> <a href="login.php"><?= htmlspecialchars('Login here') ?></a>
             </div>
         </form>
 
         <form action="" method="POST" class="register-form" data-form="artisan" aria-hidden="<?php echo $active_form === 'artisan' ? 'false' : 'true'; ?>">
-            <h2>Artisan / Professional Account</h2>
+            <h2><?= htmlspecialchars('Artisan / Professional Account') ?></h2>
 
         <div class="field">
-            <label for="first_name_artisan">First Name</label>
+            <label for="first_name_artisan"><?= htmlspecialchars('First Name') ?></label>
             <div class="input-wrapper">
                 <i class="fa-solid fa-id-card"></i>
-                <input type="text" id="first_name_artisan" name="first_name" class="iconInput" placeholder="First name" required>
+                <input type="text" id="first_name_artisan" name="first_name" class="iconInput" placeholder="<?= htmlspecialchars('First name') ?>" required>
             </div>
         </div>
 
         <div class="field">
-            <label for="last_name_artisan">Last Name</label>
+            <label for="last_name_artisan"><?= htmlspecialchars('Last Name') ?></label>
             <div class="input-wrapper">
                 <i class="fa-solid fa-id-card"></i>
-                <input type="text" id="last_name_artisan" name="last_name" class="iconInput" placeholder="Last name" required>
+                <input type="text" id="last_name_artisan" name="last_name" class="iconInput" placeholder="<?= htmlspecialchars('Last name') ?>" required>
             </div>
         </div>
 
         <input type="hidden" id="company_name_artisan" name="company_name" value="">
 
         <div class="field">
-            <label for="siret_artisan">SIRET / SIREN</label>
+            <label for="siret_artisan"><?= htmlspecialchars('SIRET / SIREN') ?></label>
             <div class="input-wrapper">
                 <i class="fa-solid fa-id-badge"></i>
-                <input type="text" id="siret_artisan" name="siret" class="iconInput" placeholder="123 456 789 00012" required>
+                <input type="text" id="siret_artisan" name="siret" class="iconInput" placeholder="<?= htmlspecialchars('123 456 789 00012') ?>" required>
             </div>
-            <small class="field-note">Enter your 14-digit SIRET or 9-digit SIREN number.</small>
+            <small class="field-note"><?= htmlspecialchars('Enter your 14-digit SIRET or 9-digit SIREN number.') ?></small>
             <small class="field-note field-status" aria-live="polite"></small>
         </div>
         
         <div class="field">
-            <label for="username_artisan">Username</label>
+            <label for="username_artisan"><?= htmlspecialchars('Username') ?></label>
             <div class="input-wrapper">
                 <i class="fa-solid fa-user"></i>
-                <input type="text" id="username_artisan" name="username" class="iconInput" placeholder="Choose a username" required>
+                <input type="text" id="username_artisan" name="username" class="iconInput" placeholder="<?= htmlspecialchars('Choose a username') ?>" required>
             </div>
             <small class="field-note field-status" aria-live="polite"></small>
         </div>
         
         <div class="field">
-            <label for="email_artisan">Email Address</label>
+            <label for="email_artisan"><?= htmlspecialchars('Email Address') ?></label>
             <div class="input-wrapper">
                 <i class="fa-solid fa-envelope"></i>
-                <input type="email" id="email_artisan" name="email" class="iconInput" placeholder="you@example.com" required>
+                <input type="email" id="email_artisan" name="email" class="iconInput" placeholder="<?= htmlspecialchars('you@example.com') ?>" required>
             </div>
         </div>
         
         <div class="field">
-            <label for="password_artisan">Password</label>
+            <label for="password_artisan"><?= htmlspecialchars('Password') ?></label>
             <div class="input-wrapper password-wrapper">
                 <i class="fa-solid fa-lock"></i>
-                <input type="password" id="password_artisan" name="password" class="iconInput password-input" placeholder="Create a password" required data-strength="true">
-                <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false">
+                <input type="password" id="password_artisan" name="password" class="iconInput password-input" placeholder="<?= htmlspecialchars('Create a password') ?>" required data-strength="true">
+                <button type="button" class="password-toggle" aria-label="<?= htmlspecialchars('Show password') ?>" aria-pressed="false">
                     <i class="fa-solid fa-eye"></i>
                 </button>
             </div>
             <div class="password-meter" aria-live="polite">
                 <div class="password-meter-bar"></div>
-                <span class="password-meter-text">Strength: </span>
+                <span class="password-meter-text"><?= htmlspecialchars('Strength: ') ?></span>
             </div>
         </div>
         
         <div class="field">
-            <label for="confirm_password_artisan">Confirm Password</label>
+            <label for="confirm_password_artisan"><?= htmlspecialchars('Confirm Password') ?></label>
             <div class="input-wrapper password-wrapper">
                 <i class="fa-solid fa-lock"></i>
-                <input type="password" id="confirm_password_artisan" name="confirm_password" class="iconInput" placeholder="Confirm your password" required>
-                <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false">
+                <input type="password" id="confirm_password_artisan" name="confirm_password" class="iconInput" placeholder="<?= htmlspecialchars('Confirm your password') ?>" required>
+                <button type="button" class="password-toggle" aria-label="<?= htmlspecialchars('Show password') ?>" aria-pressed="false">
                     <i class="fa-solid fa-eye"></i>
                 </button>
             </div>
@@ -347,7 +347,7 @@ include_once '../../includes/header.php';
          
         <div class="field cgu-field"> 
             <label> 
-                <input type="checkbox" name="cgu" required> I agree to the <a href="cgu" target="_blank">Terms and Conditions</a> 
+                <input type="checkbox" name="cgu" required> <?= htmlspecialchars('I agree to the') ?> <a href="cgu" target="_blank"><?= htmlspecialchars('Terms and Conditions') ?></a> 
             </label> 
         </div>
 
@@ -355,11 +355,11 @@ include_once '../../includes/header.php';
         <input type="hidden" name="recaptcha_token" class="recaptcha-token">
         
         <button type="submit">
-            <i class="fa-solid fa-user-plus"></i> Create Artisan Account
+            <i class="fa-solid fa-user-plus"></i> <?= htmlspecialchars('Create Artisan Account') ?>
         </button>
         
             <div class="form-footer">
-                Already have an account? <a href="login">Login here</a>
+                <?= htmlspecialchars('Already have an account?') ?> <a href="login"><?= htmlspecialchars('Login here') ?></a>
             </div>
         </form>
     </div>

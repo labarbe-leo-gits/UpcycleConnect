@@ -29,6 +29,30 @@ func DeleteBanRecord(banID uuid.UUID) error {
 	return nil
 }
 
+func GetAllBanRecords() ([]models.Ban, error) {
+	rows, err := Db.Query("SELECT id, user_id, reason, banned_by, duration_days, banned_at FROM ban")
+	if err != nil {
+		return nil, fmt.Errorf("getAllBans package db: %s", err.Error())
+	}
+
+	defer rows.Close()
+
+	var bans []models.Ban
+
+	for rows.Next() {
+		var ban models.Ban
+		err := rows.Scan(&ban.ID, &ban.UserID, &ban.Reason, &ban.BannedBy, &ban.DurationDays, &ban.BannedAt)
+
+		if err != nil {
+			return nil, fmt.Errorf("getAllBans package db scan: %s", err.Error())
+		}
+
+		bans = append(bans, ban)
+	}
+
+	return bans, nil
+}
+
 func GetBanRecordByID(banID uuid.UUID) (models.Ban, error) {
 	var ban models.Ban
 	err := Db.QueryRow("SELECT id, user_id, reason, banned_by, duration_days, banned_at FROM ban WHERE id = ?", banID.String()).

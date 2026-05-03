@@ -66,11 +66,37 @@ $priceDisplay = ($priceTTC == 0) ? "Free" : "€ " . number_format($priceTTC, 2)
 $isOwnOffer = !empty($offer['user_id']) && !empty($user['id']) && $offer['user_id'] === $user['id'];
 
 $creatorName = null;
+$sellerAverageRating = null;
+$sellerReviewCount = 0;
 if (isset($offer['user_id']) && !empty($offer['user_id'])) {
 	$userResponse = askAPI("/users/" . $offer['user_id'], 'GET');
 	$userData = json_decode($userResponse, true);
 	if (isset($userData['username'])) {
 		$creatorName = $userData['username'];
+	}
+
+	$reviewsResponse = askAPI("/users/" . $offer['user_id'] . "/reviews", 'GET');
+	$reviewsData = json_decode($reviewsResponse, true);
+	$reviewItems = [];
+	if (is_array($reviewsData)) {
+		$reviewItems = $reviewsData;
+		if (isset($reviewsData['items']) && is_array($reviewsData['items'])) {
+			$reviewItems = $reviewsData['items'];
+		}
+	}
+	if (is_array($reviewItems) && count($reviewItems) > 0) {
+		$sumRating = 0;
+		$validCount = 0;
+		foreach ($reviewItems as $review) {
+			if (isset($review['rating']) && is_numeric($review['rating'])) {
+				$sumRating += floatval($review['rating']);
+				$validCount++;
+			}
+		}
+		if ($validCount > 0) {
+			$sellerAverageRating = $sumRating / $validCount;
+			$sellerReviewCount = $validCount;
+		}
 	}
 }
 
@@ -236,7 +262,23 @@ if (!empty($offer['created_at'])) {
 					</div>
 				</div>
 				<?php endif; ?>
-
+			<?php if ($sellerAverageRating !== null): ?>
+			<div class="info-item">
+				<i class="fa-solid fa-recycle"></i>
+				<div class="info-content">
+					<span class="label">Seller rating</span>
+					<span class="value"><?php echo number_format($sellerAverageRating, 1); ?> / 5 (<?php echo $sellerReviewCount; ?>)</span>
+				</div>
+			</div>
+			<?php elseif (!empty($offer['user_id'])): ?>
+			<div class="info-item">
+				<i class="fa-solid fa-recycle"></i>
+				<div class="info-content">
+					<span class="label">Seller rating</span>
+					<span class="value">No reviews yet</span>
+				</div>
+			</div>
+			<?php endif; ?>
 				<?php if ($createdAt): ?>
 				<div class="info-item">
 					<i class="fa-regular fa-calendar"></i>

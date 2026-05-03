@@ -273,13 +273,20 @@
             });
         }
         const userTypeSelect = document.getElementById('new-usertype');
-        const companyGroup = document.getElementById('company-group');
+        const siretGroup = document.getElementById('siret-group');
         const managerGroup = document.getElementById('manager-group');
         if (userTypeSelect) {
             userTypeSelect.addEventListener('change', function() {
-                if (companyGroup) companyGroup.style.display = this.value === '2' ? 'block' : 'none';
+                const proSelected = this.value === '2';
+                if (siretGroup) siretGroup.style.display = proSelected ? 'block' : 'none';
                 if (managerGroup) managerGroup.style.display = this.value === '4' ? 'block' : 'none';
             });
+        }
+        const siretInput = document.getElementById('new-siret');
+        if (siretInput) {
+            siretInput.addEventListener('input', debounce(function() {
+                checkAdminSiretValue(siretInput);
+            }, 500));
         }
         bindManagerLookup();
     }
@@ -664,6 +671,14 @@
                 `<td style="padding:6px 0;vertical-align:top;"><button class="btn-copy btn-edit-manager" title="Edit Manager"><i class="fa-solid fa-pen"></i></button></td>` +
                 `</tr>`;
         }
+        if (u.user_type === 2) {
+            var companyName = u.company_name ? escapeHtml(u.company_name) : '-';
+            html += `<tr>` +
+                `<td style="padding:6px 0;font-weight:600;vertical-align:top;">Company Name</td>` +
+                `<td style="padding:6px 0;vertical-align:top;">${companyName}</td>` +
+                `<td></td>` +
+                `</tr>`;
+        }
         html += '</table>';
         return html;
     }
@@ -1035,10 +1050,11 @@
             form.addEventListener('submit', handleCreateUserSubmit);
         }
         const userTypeSelect = document.getElementById('new-usertype');
-        const companyGroup = document.getElementById('company-group');
+        const siretGroup = document.getElementById('siret-group');
         const managerGroup = document.getElementById('manager-group');
         if (userTypeSelect) {
-            if (companyGroup) companyGroup.style.display = userTypeSelect.value === '2' ? 'block' : 'none';
+            const proSelected = userTypeSelect.value === '2';
+            if (siretGroup) siretGroup.style.display = proSelected ? 'block' : 'none';
             if (managerGroup) managerGroup.style.display = userTypeSelect.value === '4' ? 'block' : 'none';
         }
         // Reset manager lookup state
@@ -1052,6 +1068,12 @@
         if (newManagerId) newManagerId.value = '';
         if (managerSearchInput) managerSearchInput.value = '';
         if (managerResults) { managerResults.innerHTML = ''; managerResults.style.display = 'none'; }
+        const siretInput = document.getElementById('new-siret');
+        if (siretInput) {
+            siretInput.value = '';
+            const status = siretInput.closest('.field')?.querySelector('.field-status');
+            if (status) status.textContent = '';
+        }
 
         modal.querySelectorAll('.password-toggle').forEach(function(toggle) {
             toggle.addEventListener('click', function() {
@@ -1204,6 +1226,85 @@
                   alert('Create failed: ' + err.message);
               }
           });
+    }
+
+    function checkAdminSiretValue(input) {
+        const rawValue = input.value || '';
+        const cleaned = normalizeDigits(rawValue);
+        const field = input.closest('.field');
+        const status = field ? field.querySelector('.field-status') : null;
+        const companyField = document.getElementById('new-company');
+        if (!status) return;
+        if (cleaned === '') {
+            setFieldStatus(status, '', '');
+            return;
+        }
+        if (cleaned.length !== 9 && cleaned.length !== 14) {
+            setFieldStatus(status, 'Enter a 9-digit SIREN or 14-digit SIRET', 'error-message');
+            return;
+        }
+        setFieldStatus(status, 'Checking SIRET / SIREN...', '');
+        fetch('https://recherche-entreprises.api.gouv.fr/search?q=' + encodeURIComponent(cleaned) + '&per_page=1')
+            .then(response => {
+                if (!response.ok) throw new Error('invalid response');
+                return response.json();
+            })
+            .then(data => {
+                const item = Array.isArray(data.results) ? data.results[0] : null;
+                if (!item) throw new Error('not found');
+                const itemSiret = normalizeDigits((item.siege && item.siege.siret) || item.siret || '');
+                const itemSiren = normalizeDigits(item.siren || '');
+                const matchingSirets = [itemSiret];
+                const matchingSirens = [itemSiren];
+                if (Array.isArray(item.matching_etablissements)) {
+                    item.matching_etablissements.forEach(est => {
+                        const estSiret = normalizeDigits(est.siret || '');
+                        const estSiren = normalizeDigits(est.siren || '');
+                        if (estSiret) matchingSirets.push(estSiret);
+                        if (estSiren) matchingSirens.push(estSiren);
+                    });
+                }
+                const isValid = (cleaned.length === 14 && matchingSirets.some(s => s === cleaned)) ||
+                    (cleaned.length === 9 && (matchingSirens.some(s => s === cleaned) || matchingSirets.some(s => s.startsWith(cleaned))));
+                if (!isValid) throw new Error('not found');
+                const companyName = extractCompanyName(item);
+                setFieldStatus(status, 'Valid SIRET / SIREN', 'status-available');
+                if (companyField && companyName) {
+                    companyField.value = companyName;
+                }
+            })
+            .catch(() => {
+                setFieldStatus(status, 'SIRET/SIREN not found or invalid', 'error-message');
+            });
+    }
+
+    function normalizeDigits(value) {
+        return String(value || '').replace(/\D/g, '');
+    }
+
+    function setFieldStatus(element, message, statusClass) {
+        if (!element) return;
+        element.textContent = message;
+        element.classList.remove('status-available', 'status-unavailable', 'error-message');
+        if (statusClass) {
+            element.classList.add(statusClass);
+        }
+    }
+
+    function debounce(callback, delay) {
+        let timer;
+        return function() {
+            const args = arguments;
+            clearTimeout(timer);
+            timer = setTimeout(function() {
+                callback.apply(null, args);
+            }, delay);
+        };
+    }
+
+    function extractCompanyName(item) {
+        if (!item || typeof item !== 'object') return '';
+        return item.nom_raison_sociale || item.nom_complet || item.nom_commercial || item.nom_entreprise || item.nom || (item.unite_legale && item.unite_legale.denomination) || (item.unite_legale && item.unite_legale.denomination_usuelle) || '';
     }
 
     function updateUrlParams() {

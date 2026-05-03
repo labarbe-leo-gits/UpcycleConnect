@@ -1,8 +1,8 @@
 crons :
-- ban lift
+- ban lift ok
 - backup
 - Email de rappel de connexion
-- Reset Quotas LLM
+- Reset Quotas LLM ok
 
 MAILS :
 - mfa activé / désactivé users non admin

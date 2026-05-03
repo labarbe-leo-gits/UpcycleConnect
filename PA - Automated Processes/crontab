@@ -1,0 +1,1 @@
+0 0 * * * cd /app && php scripts/user.php >> /var/log/cron.log 2>&1

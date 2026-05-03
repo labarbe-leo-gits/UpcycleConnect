@@ -157,12 +157,15 @@ if (ob_get_level()) { @ob_flush(); }
                     </select>
                 </div>
             </div>
-            <div class="field" id="company-group" style="display:none;">
-                <label for="new-company">Company name (optional)</label>
+            <input type="hidden" id="new-company" name="company_name" value="" />
+            <div class="field" id="siret-group" style="display:none;">
+                <label for="new-siret">SIRET / SIREN</label>
                 <div class="input-wrapper">
-                    <i class="fa-solid fa-building"></i>
-                    <input type="text" id="new-company" name="company_name" placeholder="Company Name" />
+                    <i class="fa-solid fa-id-badge"></i>
+                    <input type="text" id="new-siret" name="siret" class="iconInput" placeholder="123 456 789 00012" />
                 </div>
+                <small class="field-note">Enter your 14-digit SIRET or 9-digit SIREN number.</small>
+                <small class="field-note field-status" aria-live="polite"></small>
             </div>
             <div class="field" id="manager-group" style="display:none;">
                 <label>Manager <span style="font-size:.85em;color:#6b7280;font-weight:400;">(optional)</span></label>
