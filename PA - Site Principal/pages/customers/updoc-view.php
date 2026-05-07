@@ -147,11 +147,11 @@ $likeCount = is_array($likeData) ? (int)($likeData['count'] ?? count($likeData))
             <i class="fa-solid fa-xmark"></i>
         </button>
         <div class="modal-header">
-            <h2>Add a comment</h2>
+            <h2 data-i18n="customers.updoc.add_comment">Add a comment</h2>
         </div>
         <div class="modal-body">
             <div class="field">
-                <label for="comment-add-input">Your comment</label>
+                <label for="comment-add-input" data-i18n="customers.updoc.your_comment">Your comment</label>
                 <textarea id="comment-add-input" placeholder="Write your comment…" maxlength="1000"></textarea>
             </div>
         </div>
@@ -170,11 +170,11 @@ $likeCount = is_array($likeData) ? (int)($likeData['count'] ?? count($likeData))
             <i class="fa-solid fa-xmark"></i>
         </button>
         <div class="modal-header">
-            <h2>Edit comment</h2>
+            <h2 data-i18n="customers.updoc.edit_comment">Edit comment</h2>
         </div>
         <div class="modal-body">
             <div class="field">
-                <label for="comment-edit-input">Your comment</label>
+                <label for="comment-edit-input" data-i18n="customers.updoc.your_comment">Your comment</label>
                 <textarea id="comment-edit-input" maxlength="1000"></textarea>
             </div>
         </div>
@@ -193,10 +193,10 @@ $likeCount = is_array($likeData) ? (int)($likeData['count'] ?? count($likeData))
             <i class="fa-solid fa-xmark"></i>
         </button>
         <div class="modal-header">
-            <h2>Delete comment</h2>
+            <h2 data-i18n="customers.updoc.delete_comment">Delete comment</h2>
         </div>
         <div class="modal-body">
-            <p style="color:#555;">Are you sure you want to delete this comment? This action cannot be undone.</p>
+            <p style="color:#555;" data-i18n="customers.updoc.delete_comment_confirm">Are you sure you want to delete this comment? This action cannot be undone.</p>
         </div>
         <div class="modal-actions">
             <button type="button" class="btn-secondary" id="comment-delete-cancel">Cancel</button>

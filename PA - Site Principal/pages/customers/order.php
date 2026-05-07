@@ -105,7 +105,7 @@ if ($productType === 'service') {
 }
 
 if ($price > 0 && empty($stripeConfig['publishable_key'])) {
-    echo '<div class="container"><p class="error-message">Stripe is not configured. Please contact support.</p></div>';
+    echo '<div class="container"><p class="error-message" data-i18n="customers.order.error.stripe_not_configured">Stripe is not configured. Please contact support.</p></div>';
     include_once '../../includes/footer.php';
     exit;
 }
@@ -198,15 +198,15 @@ $freeNotice = $productType === 'offer'
 
     <div class="checkout-container actual-content" style="display: none;">
         <div class="checkout-header">
-            <h1><i class="fa-solid fa-shopping-cart"></i> Checkout</h1>
+            <h1><i class="fa-solid fa-shopping-cart"></i> <span data-i18n="customers.order.order_summary">Checkout</span></h1>
             <a href="<?php echo htmlspecialchars($backLink); ?>" class="back-link">
-                <i class="fa-solid fa-arrow-left"></i> <?php echo htmlspecialchars($backLabel); ?>
+                <i class="fa-solid fa-arrow-left"></i> <span data-i18n="customers.order.back_to_product"><?php echo htmlspecialchars($backLabel); ?></span>
             </a>
         </div>
 
         <div class="checkout-content">
             <div class="order-summary">
-                <h2>Order Summary</h2>
+                <h2 data-i18n="customers.order.order_summary">Order Summary</h2>
                 
                 <div class="product-item">
                     <div class="product-header">
@@ -242,20 +242,20 @@ $freeNotice = $productType === 'offer'
                 <div class="price-breakdown">
                     <?php if ($productType === 'offer' && $priceTTC > 0): ?>
                     <div class="price-row">
-                        <span>Net price (HT)</span>
+                        <span data-i18n="customers.order.success.net_price">Net price (HT)</span>
                         <span>€ <?php echo number_format($priceHT, 2); ?></span>
                     </div>
                     <div class="price-row">
-                        <span>UpcycleConnect commission (8%)</span>
+                        <span data-i18n="customers.order.success.upcycleconnect_commission">UpcycleConnect commission (8%)</span>
                         <span>€ <?php echo number_format($priceHT * $UPCYCLE_COMMISSION_RATE, 2); ?></span>
                     </div>
                     <div class="price-row">
-                        <span>Stripe fees (~2.9% + €0.30)</span>
+                        <span data-i18n="customers.order.success.stripe_fees">Stripe fees (~2.9% + €0.30)</span>
                         <span>€ <?php echo number_format($priceTTC - $priceHT * (1 + $UPCYCLE_COMMISSION_RATE), 2); ?></span>
                     </div>
                     <?php endif; ?>
                     <div class="price-row total">
-                        <span>Total<?php echo ($productType === 'offer' && $priceTTC > 0) ? ' (TTC)' : ''; ?></span>
+                        <span data-i18n="customers.order.success.total_ttc">Total<?php echo ($productType === 'offer' && $priceTTC > 0) ? ' (TTC)' : ''; ?></span>
                         <span class="total-price"><?php echo $priceDisplay; ?></span>
                     </div>
                     <?php if ($productType === 'offer' && $priceTTC > 0): ?>
@@ -273,7 +273,7 @@ $freeNotice = $productType === 'offer'
             ?>
 
             <div class="payment-section">
-                <h2>Payment Information</h2>
+                <h2 data-i18n="customers.order.payment_information">Payment Information</h2>
 
                 <?php if ($productType === 'service' && !$hasSchedule): ?>
                     <div class="error-message">This service is not available for booking because it has no schedules.</div>
@@ -312,7 +312,7 @@ $freeNotice = $productType === 'offer'
                         <?php endif; ?>
 
                         <button type="submit" class="btn-primary btn-complete" id="submit-free-order">
-                            <span id="free-button-text"><i class="fa-solid fa-check"></i> Complete Order</span>
+                            <span id="free-button-text"><i class="fa-solid fa-check"></i> <span data-i18n="customers.order.complete_order">Complete Order</span></span>
                             <span id="free-spinner" class="spinner" style="display: none;"></span>
                         </button>
                     </form>
@@ -323,9 +323,9 @@ $freeNotice = $productType === 'offer'
 
                         <?php if ($productType === 'service' && $hasSchedule): ?>
                         <div class="form-group">
-                            <label for="schedule-select">Choose schedule</label>
+                            <label for="schedule-select" data-i18n="customers.order.choose_schedule">Choose schedule</label>
                             <select id="schedule-select" class="form-control" required>
-                                <option value="">-- Select schedule --</option>
+                                <option value="" data-i18n="customers.order.select_schedule">-- Select schedule --</option>
                                 <?php foreach ($serviceSchedules as $slot): ?>
                                     <?php
                                         $hour = isset($slot['hour']) ? sprintf('%02d:00', intval($slot['hour'])) : 'Unknown';
@@ -339,20 +339,20 @@ $freeNotice = $productType === 'offer'
                         <?php endif; ?>
 
                         <div class="form-group">
-                            <label for="cardholder-name">Cardholder Name</label>
+                            <label for="cardholder-name" data-i18n="customers.order.cardholder_name">Cardholder Name</label>
                             <input type="text" id="cardholder-name" name="cardholder_name" required 
-                                   placeholder="John Doe" class="form-control">
+                                   placeholder="John Doe" data-i18n-placeholder="customers.order.cardholder_name" class="form-control">
                         </div>
                         
                         <div class="form-group">
-                            <label for="card-element">Card Information</label>
+                            <label for="card-element" data-i18n="customers.order.card_information">Card Information</label>
                             <div id="card-element" class="stripe-element">
                             </div>
                             <div id="card-errors" role="alert"></div>
                         </div>
                         
                         <div class="form-group">
-                            <label for="billing-email">Billing Email</label>
+                            <label for="billing-email" data-i18n="customers.order.billing_email">Billing Email</label>
                             <input type="email" id="billing-email" name="billing_email" 
                                    value="<?php echo htmlspecialchars($user['email'] ?? ''); ?>" 
                                    required class="form-control">
@@ -360,14 +360,14 @@ $freeNotice = $productType === 'offer'
                         
                         <button type="submit" class="btn-primary btn-complete" id="submit-payment">
                             <span id="button-text">
-                                <i class="fa-solid fa-lock"></i> Pay <?php echo $priceDisplay; ?><?php if ($productType === 'offer' && $priceTTC > 0): ?> (TTC)<?php endif; ?>
+                                <i class="fa-solid fa-lock"></i> <span data-i18n="customers.order.pay">Pay</span> <span id="payment-amount"><?php echo $priceDisplay; ?><?php if ($productType === 'offer' && $priceTTC > 0): ?> (TTC)<?php endif; ?></span>
                             </span>
                             <span id="spinner" class="spinner" style="display: none;"></span>
                         </button>
                         
                         <div class="secure-notice">
                             <i class="fa-solid fa-shield-halved"></i>
-                            Secure payment powered by Stripe
+                            <span data-i18n="customers.order.secure_payment">Secure payment powered by Stripe</span>
                         </div>
                     </form>
                 <?php endif; ?>

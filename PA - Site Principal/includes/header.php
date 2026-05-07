@@ -55,6 +55,7 @@ include_once __DIR__ . '/../pages/common/log-utility.php';
     <?php endif; ?>
     <script src="https://www.google.com/recaptcha/api.js?render=<?php echo getenv('RECAPTCHA_SITE_KEY'); ?>"></script>
     <script src="/assets/js/button.js"></script>
+    <script src="/assets/js/i18n.js" defer></script>
     <script src="/assets/js/blob-images.js"></script>
     <script src="/assets/js/mobile-menu.js" defer></script>
     <?php
@@ -78,31 +79,31 @@ include_once __DIR__ . '/../pages/common/log-utility.php';
 <body><script>if(localStorage.getItem('theme')==='dark')document.body.classList.add('dark-mode');</script>
     <header>
         <div class="left">
-            <h3>UpcycleConnect</h3>
+            <h3 data-i18n="site.title">UpcycleConnect</h3>
         </div>
         <nav>
             <div class="btn-wrapper" onClick="openFile('/pages/public/index')">
                 <i class="fa-solid fa-house-chimney"></i>
-                <p>Home</p>
+                <p data-i18n="nav.home">Home</p>
             </div>
             <div class="btn-wrapper" onClick="openFile('/pages/public/about')">
                 <i class="fa-solid fa-circle-info"></i>
-                <p>About</p>
+                <p data-i18n="nav.about">About</p>
             </div>
 
             <div class="nav-dropdown community-dropdown">
                 <a class="btn-wrapper" href="/pages/common/forums">
                     <i class="fa-solid fa-users"></i>
-                    <p>Community</p>
+                    <p data-i18n="nav.community">Community</p>
                 </a>
                 <div class="dropdown-menu">
-                    <a href="/pages/common/offers"><i class="fa-solid fa-box-open"></i>Offers</a>
-                    <a href="/pages/common/forums"><i class="fa-solid fa-indent"></i>Forums</a>
+                    <a href="/pages/common/offers"><i class="fa-solid fa-box-open"></i><span data-i18n="nav.offers">Offers</span></a>
+                    <a href="/pages/common/forums"><i class="fa-solid fa-indent"></i><span data-i18n="nav.forums">Forums</span></a>
                 </div>
             </div>
-<div class="btn-wrapper" onClick="openFile('/pages/public/contact')">
+            <div class="btn-wrapper" onClick="openFile('/pages/public/contact')">
                 <i class="fa-solid fa-envelope"></i>
-                <p>Contact</p>
+                <p data-i18n="nav.contact">Contact</p>
             </div>
             
             <?php if (isLoggedIn()): ?>
@@ -118,12 +119,12 @@ include_once __DIR__ . '/../pages/common/log-utility.php';
             <?php else: ?>
                     <div class="btn-wrapper" onClick="openFile('/pages/public/login')">
                     <i class="fa-solid fa-right-to-bracket"></i>
-                    <p>Login</p>
+                    <p data-i18n="nav.login">Login</p>
                 </div>
             <?php endif; ?>
-            <div class="btn-wrapper" id="dark-toggle" title="Toggle dark mode">
+            <div class="btn-wrapper" id="dark-toggle" data-i18n-title="nav.toggle_theme" title="Toggle dark mode">
                 <i class="fa-solid fa-moon"></i>
-                <p>Theme</p>
+                <p data-i18n="nav.theme">Theme</p>
             </div>
         </nav>
         <button class="burger-menu-btn" id="burger-menu-btn" aria-label="Toggle mobile menu" aria-expanded="false">
@@ -137,48 +138,48 @@ include_once __DIR__ . '/../pages/common/log-utility.php';
             <div class="mobile-menu-items">
                 <div class="btn-wrapper mobile-nav-item" onClick="openFile('/pages/public/index')">
                     <i class="fa-solid fa-house-chimney"></i>
-                    <p>Home</p>
+                    <p data-i18n="nav.home">Home</p>
                 </div>
                 <div class="btn-wrapper mobile-nav-item" onClick="openFile('/pages/public/about')">
                     <i class="fa-solid fa-circle-info"></i>
-                    <p>About</p>
+                    <p data-i18n="nav.about">About</p>
                 </div>
 
                 <div class="nav-dropdown mobile-nav-item">
                     <a class="btn-wrapper" href="/pages/common/forums">
                         <i class="fa-solid fa-users"></i>
-                        <p>Community</p>
+                        <p data-i18n="nav.community">Community</p>
                     </a>
                     <div class="dropdown-menu">
-                        <a href="/pages/common/offers"><i class="fa-solid fa-box-open"></i>Offers</a>
-                        <a href="/pages/common/forums"><i class="fa-solid fa-indent"></i>Forums</a>
+                        <a href="/pages/common/offers"><i class="fa-solid fa-box-open"></i><span data-i18n="nav.offers">Offers</span></a>
+                        <a href="/pages/common/forums"><i class="fa-solid fa-indent"></i><span data-i18n="nav.forums">Forums</span></a>
                     </div>
                 </div>
 
                 <div class="btn-wrapper mobile-nav-item" onClick="openFile('/pages/public/contact')">
                     <i class="fa-solid fa-envelope"></i>
-                    <p>Contact</p>
+                    <p data-i18n="nav.contact">Contact</p>
                 </div>
                 
                 <?php if (isLoggedIn()): ?>
                     <?php $portalPath = getUserHomePath(getLoggedInUserType() ?? 1); ?>
                     <div class="btn-wrapper mobile-nav-item" onClick="window.location.href='<?= $portalPath ?>'">
                         <i class="fa-solid fa-store"></i>
-                        <p>Portal</p>
+                        <p data-i18n="nav.portal">Portal</p>
                     </div>
                     <div class="btn-wrapper logout-btn mobile-nav-item" onClick="document.getElementById('logout-form').submit()">
                         <i class="fa-solid fa-right-from-bracket"></i>
-                        <p>Logout</p>
+                        <p data-i18n="nav.logout">Logout</p>
                     </div>
                 <?php else: ?>
                     <div class="btn-wrapper mobile-nav-item" onClick="openFile('/pages/public/login')">
                         <i class="fa-solid fa-right-to-bracket"></i>
-                        <p>Login</p>
+                        <p data-i18n="nav.login">Login</p>
                     </div>
                 <?php endif; ?>
-                <div class="btn-wrapper mobile-nav-item" id="dark-toggle-mobile" title="Toggle dark mode">
+                <div class="btn-wrapper mobile-nav-item" id="dark-toggle-mobile" data-i18n-title="nav.toggle_theme" title="Toggle dark mode">
                     <i class="fa-solid fa-moon"></i>
-                    <p>Theme</p>
+                    <p data-i18n="nav.theme">Theme</p>
                 </div>
             </div>
         </nav>

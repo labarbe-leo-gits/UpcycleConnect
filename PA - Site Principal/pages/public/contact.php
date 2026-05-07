@@ -105,17 +105,17 @@ include_once '../../includes/header.php';
 ?>
 
 <div class="container">
-    <h1>Contact Us</h1>
-    <p>We'd love to hear from you! Whether you have questions about our services, want to share feedback, or are interested in partnership opportunities, feel free to reach out.</p>
+    <h1 data-i18n="public.contact.title">Contact Us</h1>
+    <p data-i18n="public.contact.description">We'd love to hear from you! Whether you have questions about our services, want to share feedback, or are interested in partnership opportunities, feel free to reach out.</p>
 
     <ul class="social-links">
-        <li><a href="#" aria-label="Twitter"><i class="fa-brands fa-twitter"></i> Twitter</a></li>
-        <li><a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook"></i> Facebook</a></li>
-        <li><a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i> Instagram</a></li>
+        <li><a href="#" aria-label="Twitter" data-i18n-aria-label="public.contact.social_twitter"><i class="fa-brands fa-twitter"></i> <span data-i18n="public.contact.social_twitter">Twitter</span></a></li>
+        <li><a href="#" aria-label="Facebook" data-i18n-aria-label="public.contact.social_facebook"><i class="fa-brands fa-facebook"></i> <span data-i18n="public.contact.social_facebook">Facebook</span></a></li>
+        <li><a href="#" aria-label="Instagram" data-i18n-aria-label="public.contact.social_instagram"><i class="fa-brands fa-instagram"></i> <span data-i18n="public.contact.social_instagram">Instagram</span></a></li>
     </ul>
 
-    <h2 class="middle">Contact Form</h2>
-    <p class="middle">If you prefer, you can also send us a message directly through the form below. We look forward to hearing from you!</p>
+    <h2 class="middle" data-i18n="public.contact.form_title">Contact Form</h2>
+    <p class="middle" data-i18n="public.contact.form_description">If you prefer, you can also send us a message directly through the form below. We look forward to hearing from you!</p>
 
     <div id="contact-feedback">
         <?php if ($feedbackMessage !== ''): ?>
@@ -127,27 +127,27 @@ include_once '../../includes/header.php';
 
     <form id="contact-form" method="POST" action="">
         <div class="field">
-            <label for="name">Your name</label>
+            <label for="name" data-i18n="public.contact.your_name">Your name</label>
             <div class="input-wrapper">
                 <i class="fa-solid fa-user"></i>
-                <input type="text" id="name" name="name" placeholder="John Doe" required value="<?= htmlspecialchars($oldName, ENT_QUOTES, 'UTF-8') ?>">
+                <input type="text" id="name" name="name" placeholder="John Doe" data-i18n-placeholder="public.contact.name_placeholder" required value="<?= htmlspecialchars($oldName, ENT_QUOTES, 'UTF-8') ?>">
             </div>
         </div>
 
         <div class="field">
-            <label for="email">Email</label>
+            <label for="email" data-i18n="public.contact.email">Email</label>
             <div class="input-wrapper">
                 <i class="fa-solid fa-envelope"></i>
-                <input type="email" id="email" name="email" placeholder="Your email address" required value="<?= htmlspecialchars($oldEmail, ENT_QUOTES, 'UTF-8') ?>">
+                <input type="email" id="email" name="email" placeholder="Your email address" data-i18n-placeholder="public.contact.email_placeholder" required value="<?= htmlspecialchars($oldEmail, ENT_QUOTES, 'UTF-8') ?>">
             </div>
         </div>
 
         <div class="field">
-            <label for="message">Message</label>
-            <textarea id="message" name="message" placeholder="Your message here..." required><?= htmlspecialchars($oldMessage, ENT_QUOTES, 'UTF-8') ?></textarea>
+            <label for="message" data-i18n="public.contact.message">Message</label>
+            <textarea id="message" name="message" placeholder="Your message here..." data-i18n-placeholder="public.contact.message_placeholder" required><?= htmlspecialchars($oldMessage, ENT_QUOTES, 'UTF-8') ?></textarea>
         </div>
 
-        <button id="contact-submit-button" type="submit">Send Message</button>
+        <button id="contact-submit-button" type="submit" data-i18n="public.contact.send_message">Send Message</button>
     </form>
 </div>
 

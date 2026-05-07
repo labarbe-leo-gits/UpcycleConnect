@@ -574,7 +574,7 @@ $isPuppeteerRender = !empty($_GET['print']) && !empty($_GET['token']);
 
         <?php if (!empty($project['description'])): ?>
         <div class="pdf-desc-card">
-            <h2>Project Description</h2>
+            <h2 data-i18n="customers.export_pdf.project_description">Project Description</h2>
             <div class="prose" id="description-render">
                 <noscript><?= nl2br(htmlspecialchars($project['description'])) ?></noscript>
             </div>
@@ -594,7 +594,7 @@ $isPuppeteerRender = !empty($_GET['print']) && !empty($_GET['token']);
 
         <?php if (!empty($steps)): ?>
         <div class="pdf-steps-title">
-            <i class="fa-solid fa-route"></i> Step-by-step guide
+            <i class="fa-solid fa-route"></i> <span data-i18n="customers.export_pdf.step_by_step_guide">Step-by-step guide</span>
         </div>
         <div class="pdf-timeline">
             <?php foreach ($steps as $idx => $step): ?>
@@ -643,7 +643,7 @@ $isPuppeteerRender = !empty($_GET['print']) && !empty($_GET['token']);
     </div>
 
     <div class="pdf-footer">
-        Generated with <span>UpDoc</span> — UpcycleConnect &middot; <?= date('d/m/Y') ?>
+        <span data-i18n="customers.export_pdf.generated_with">Generated with</span> <span>UpDoc</span> — UpcycleConnect &middot; <?= date('d/m/Y') ?>
     </div>
 
     <?php if (!$isPuppeteerRender): ?>

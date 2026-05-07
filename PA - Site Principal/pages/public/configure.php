@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>UpcycleConnect - Configure Account</title>
+    <title data-i18n="public.configure.page_title">UpcycleConnect - Configure Account</title>
     <link rel="stylesheet" href="../../assets/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         <style>
@@ -94,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="error-message"><i class="fa-solid fa-circle-exclamation"></i> <?= htmlspecialchars($error) ?></div>
         <?php endif; ?>
         <form method="POST">
-            <h2>Complete Your Account</h2>
+            <h2 data-i18n="public.configure.complete_account">Complete Your Account</h2>
                 <div id="skeleton-form">
                     <div class="field">
                         <div class="input-wrapper skeleton"></div>
@@ -111,30 +111,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 <div id="real-form" style="display:none;">
                     <div class="field">
-                        <label for="first_name">First Name</label>
+                        <label for="first_name" data-i18n="public.configure.first_name">First Name</label>
                         <div class="input-wrapper">
                             <i class="fa-solid fa-user"></i>
-                            <input type="text" id="first_name" name="first_name" placeholder="Enter your first name" value="<?= htmlspecialchars($prefill['first_name'] ?? '') ?>" required>
+                            <input type="text" id="first_name" name="first_name" placeholder="Enter your first name" data-i18n-placeholder="public.configure.first_name_placeholder" value="<?= htmlspecialchars($prefill['first_name'] ?? '') ?>" required>
                         </div>
                     </div>
                     <div class="field">
-                        <label for="last_name">Last Name</label>
+                        <label for="last_name" data-i18n="public.configure.last_name">Last Name</label>
                         <div class="input-wrapper">
                             <i class="fa-solid fa-user"></i>
-                            <input type="text" id="last_name" name="last_name" placeholder="Enter your last name" value="<?= htmlspecialchars($prefill['last_name'] ?? '') ?>" required>
+                            <input type="text" id="last_name" name="last_name" placeholder="Enter your last name" data-i18n-placeholder="public.configure.last_name_placeholder" value="<?= htmlspecialchars($prefill['last_name'] ?? '') ?>" required>
                         </div>
                     </div>
                     <div class="field">
-                        <label for="user_type">Account Type</label>
+                        <label for="user_type" data-i18n="public.configure.account_type">Account Type</label>
                         <div class="input-wrapper">
                             <i class="fa-solid fa-briefcase"></i>
                             <select id="user_type" name="user_type">
-                                <option value="1" <?= (isset($prefill['user_type']) && $prefill['user_type'] == 1) ? 'selected' : '' ?>>Customer</option>
-                                <option value="2" <?= (isset($prefill['user_type']) && $prefill['user_type'] == 2) ? 'selected' : '' ?>>Professional / Artisan</option>
+                                <option value="1" <?= (isset($prefill['user_type']) && $prefill['user_type'] == 1) ? 'selected' : '' ?> data-i18n="public.configure.customer">Customer</option>
+                                <option value="2" <?= (isset($prefill['user_type']) && $prefill['user_type'] == 2) ? 'selected' : '' ?> data-i18n="public.configure.professional_artisan">Professional / Artisan</option>
                             </select>
                         </div>
                     </div>
-                    <button type="submit" class="btn-primary" id="create-account-btn"><i class="fa-solid fa-check"></i> Create Account</button>
+                    <button type="submit" class="btn-primary" id="create-account-btn"><i class="fa-solid fa-check"></i> <span data-i18n="public.configure.create_account">Create Account</span></button>
                 </div>
                 <script>
                 document.addEventListener('DOMContentLoaded', function() {

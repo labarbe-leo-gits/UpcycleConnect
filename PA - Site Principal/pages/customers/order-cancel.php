@@ -54,7 +54,7 @@ if (!$service || isset($service['error'])) {
 }
 
 if (!$service && !$offer) {
-    echo '<div class="container"><p class="error-message">Product not found.</p></div>';
+    echo '<div class="container"><p class="error-message" data-i18n="customers.order.cancel.product_not_found">Product not found.</p></div>';
     include_once '../../includes/footer.php';
     exit;
 }
@@ -68,15 +68,15 @@ $priceDisplay = ($price == 0) ? 'Free' : '€ ' . number_format($price, 2);
 <div class="container">
     <div class="checkout-container">
         <div class="checkout-header">
-            <h1><i class="fa-solid fa-circle-xmark"></i> Order Canceled</h1>
+            <h1><i class="fa-solid fa-circle-xmark"></i> <span data-i18n="customers.order.cancel.order_canceled">Order Canceled</span></h1>
             <a href="<?php echo $productType === 'offer' ? 'offers' : 'services'; ?>" class="back-link">
-                <i class="fa-solid fa-arrow-left"></i> <?php echo $productType === 'offer' ? 'Back to offers' : 'Back to services'; ?>
+                <i class="fa-solid fa-arrow-left"></i> <span data-i18n="customers.order.cancel.back_to_list"><?php echo $productType === 'offer' ? 'Back to offers' : 'Back to services'; ?></span>
             </a>
         </div>
 
         <div class="checkout-content">
             <div class="order-summary">
-                <h2>Summary</h2>
+                <h2 data-i18n="customers.order.cancel.summary">Summary</h2>
                 <div class="product-item">
                     <div class="product-header">
                         <h3><i class="fa-solid <?php echo $productType === 'offer' ? 'fa-box-open' : 'fa-briefcase'; ?>"></i> <?php echo htmlspecialchars($productName); ?></h3>
@@ -87,14 +87,14 @@ $priceDisplay = ($price == 0) ? 'Free' : '€ ' . number_format($price, 2);
                 </div>
                 <div class="price-breakdown">
                     <div class="price-row">
-                        <span>Total</span>
+                        <span data-i18n="customers.order.cancel.total">Total</span>
                         <span class="total-price"><?php echo $priceDisplay; ?></span>
                     </div>
                 </div>
             </div>
 
             <div class="payment-section">
-                <h2>What happened?</h2>
+                <h2 data-i18n="customers.order.cancel.what_happened">What happened?</h2>
                 <p class="error-message"><?php echo htmlspecialchars($reason); ?></p>
                 <a class="btn-primary" href="order?product_uuid=<?php echo htmlspecialchars($productUuid); ?>">Try again</a>
             </div>

@@ -81,7 +81,7 @@ include_once '../../includes/header.php';
 ?>
 
 <div class="container form">
-    <h2 style="text-align: center;">Verify your registration</h2>
+    <h2 style="text-align: center;" data-i18n="public.verify.title">Verify your registration</h2>
 
     <?php if ($error_message): ?>
         <div class="error-message"><?php echo htmlspecialchars($error_message); ?></div>
@@ -91,40 +91,40 @@ include_once '../../includes/header.php';
     <?php endif; ?>
 
     <?php if ($pendingRegistration): ?>
-        <p>A verification code was sent to <strong><?php echo htmlspecialchars($pendingRegistration['email']); ?></strong>.</p>
+        <p data-i18n="public.verify.sent_to">A verification code was sent to</p> <strong><?php echo htmlspecialchars($pendingRegistration['email']); ?></strong>.
         <form method="POST" action="">
             <div class="field">
-                <label for="code">Verification code</label>
+                <label for="code" data-i18n="public.verify.verification_code">Verification code</label>
                 <div class="input-wrapper">
                     <i class="fa-solid fa-shield-halved"></i>
-                    <input type="text" id="code" name="code" class="iconInput" placeholder="Enter the 6-digit code" maxlength="6" required>
+                    <input type="text" id="code" name="code" class="iconInput" placeholder="Enter the 6-digit code" data-i18n-placeholder="public.verify.code_placeholder" maxlength="6" required>
                 </div>
             </div>
             <input type="hidden" name="action" value="verify">
-            <button type="submit">Confirm my email</button>
+            <button type="submit" data-i18n="public.verify.confirm_email">Confirm my email</button>
         </form>
 
         <form method="POST" action="" style="margin-top: 20px;">
             <input type="hidden" name="action" value="resend">
-            <button type="submit">Resend verification code</button>
+            <button type="submit" data-i18n="public.verify.resend_verification_code">Resend verification code</button>
         </form>
     <?php else: ?>
-        <p style="text-align: center;">Enter the username or email you used to register and we will help you continue verification.</p>
+        <p style="text-align: center;" data-i18n="public.verify.enter_username_email">Enter the username or email you used to register and we will help you continue verification.</p>
         <form method="POST" action="">
             <div class="field">
-                <label for="identifier">Username or Email</label>
+                <label for="identifier" data-i18n="public.verify.username_or_email">Username or Email</label>
                 <div class="input-wrapper">
                     <i class="fa-solid fa-user"></i>
-                    <input type="text" id="identifier" name="identifier" class="iconInput" placeholder="Username or email" required>
+                    <input type="text" id="identifier" name="identifier" class="iconInput" placeholder="Username or email" data-i18n-placeholder="public.verify.username_or_email_placeholder" required>
                 </div>
             </div>
             <input type="hidden" name="action" value="lookup">
-            <button type="submit">Find my registration</button>
+            <button type="submit" data-i18n="public.verify.find_my_registration">Find my registration</button>
         </form>
     <?php endif; ?>
 
     <div class="form-footer" style="margin-top:24px;">
-        Already verified? <a href="login">Login here</a>
+        <span data-i18n="public.verify.already_verified">Already verified?</span> <a href="login" data-i18n="public.verify.login_here">Login here</a>
     </div>
 </div>
 

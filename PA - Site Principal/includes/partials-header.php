@@ -32,11 +32,14 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
     <link rel="icon" type="image/png" href="../../assets/img/brand/UpcycleDiminutif.png">
     <script src="../../assets/js/dark.js" defer></script>
     <script src="../../assets/js/toast.js" defer></script>
+    <script src="../../assets/js/i18n.js" defer></script>
     <script>window.basePath = '<?= urldecode(dirname($_SERVER["REQUEST_URI"])) ?>';</script>
     <script>
         window.API_BASE = <?= json_encode($API_URL_BROWSER ?? $API_URL ?? 'http://127.0.0.1:9999') ?>;
         window.API_TOKEN = <?= json_encode($_SESSION['jwt_token'] ?? $_SESSION['token'] ?? '') ?>;
+        window.currentUserId = <?= json_encode($user['id'] ?? '') ?>;
         window.CURRENT_USER_ID = <?= json_encode($user['id'] ?? '') ?>;
+        window.currentUserType = <?= json_encode($user['user_type'] ?? '') ?>;
         window.USER_MANAGER_ID = <?= json_encode($user['manager_id'] ?? null) ?>;
         if (window.API_TOKEN) {
             try {
@@ -67,36 +70,39 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
 <body><script>if(localStorage.getItem('theme')==='dark')document.body.classList.add('dark-mode');</script>
     <header data-api-base="<?php echo htmlspecialchars($API_URL ?? ''); ?>" data-user-id="<?php echo htmlspecialchars($user['id'] ?? ''); ?>">
         <div class="left">
-            <h1>Employee Portal</h1>
+            <h1 data-i18n="site.employee_portal">Employee Portal</h1>
         </div>
         <nav>
             <div class="nav-dropdown community-dropdown">
                 <a class="btn-wrapper" href="../common/forums">
                     <i class="fa-solid fa-users"></i>
-                    <p>Community</p>
+                    <p data-i18n="nav.community">Community</p>
                 </a>
                 <div class="dropdown-menu">
-                    <a href="../common/forums"><i class="fa-solid fa-indent"></i>Forums</a>
-                    <a href="tips"><i class="fa-solid fa-lightbulb"></i>Tips</a>
-                    <a href="../partials/newsletter"><i class="fa-solid fa-envelopes-bulk"></i>Newsletter</a>
+                    <a href="../common/forums"><i class="fa-solid fa-indent"></i><span data-i18n="nav.forums">Forums</span></a>
+                    <a href="tips"><i class="fa-solid fa-lightbulb"></i><span data-i18n="nav.tips">Tips</span></a>
+                    <a href="../partials/newsletter"><i class="fa-solid fa-envelopes-bulk"></i><span data-i18n="nav.newsletter">Newsletter</span></a>
                 </div>
             </div>
 
             <div class="nav-dropdown training-dropdown">
                 <a class="btn-wrapper" href="training">
                     <i class="fa-solid fa-graduation-cap"></i>
-                    <p>Formations</p>
+                    <p data-i18n="nav.formations">Formations</p>
                 </a>
                 <div class="dropdown-menu">
-                    <a href="training"><i class="fa-solid fa-plus-circle"></i>Manage</a>
-                    <a href="awaiting-validation"><i class="fa-solid fa-hourglass-half"></i>Awaiting validation</a>
-                    <a href="../common/planning"><i class="fa-solid fa-calendar-days"></i>Planning</a>
+                    <a href="training"><i class="fa-solid fa-plus-circle"></i><span data-i18n="nav.manage">Manage</span></a>
+                    <a href="awaiting-validation"><i class="fa-solid fa-hourglass-half"></i><span data-i18n="nav.awaiting_validation">Awaiting validation</span></a>
+                    <a href="../common/planning"><i class="fa-solid fa-calendar-days"></i><span data-i18n="nav.planning">Planning</span></a>
                 </div>
             </div>
 
-            <div class="btn-wrapper" id="dark-toggle" title="Toggle dark mode">
+            <div class="btn-wrapper language-select-wrapper">
+                <select id="language-select" class="language-selector" aria-label="Language"></select>
+            </div>
+            <div class="btn-wrapper" id="dark-toggle" data-i18n-title="nav.toggle_theme" title="Toggle dark mode">
                 <i class="fa-solid fa-moon"></i>
-                <p>Theme</p>
+                <p data-i18n="nav.theme">Theme</p>
             </div>
 
             <?php
@@ -113,8 +119,8 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
                 </a>
                 <div class="dropdown-menu">
                     <a href="<?= $profileUrl ?>"><i class="fa-solid fa-user"></i>Profile</a>
-                    <a href="../partials/notifications"><i class="fa-solid fa-bell"></i>Notifications <span class="notif-badge" id="notifications-count" hidden>0</span></a>
-                    <a href="../common/planning"><i class="fa-solid fa-calendar-days"></i>Planning</a>
+                    <a href="../partials/notifications"><i class="fa-solid fa-bell"></i><span data-i18n="nav.notifications">Notifications</span> <span class="notif-badge" id="notifications-count" hidden>0</span></a>
+                    <a href="../common/planning"><i class="fa-solid fa-calendar-days"></i><span data-i18n="nav.planning">Planning</span></a>
                     <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="fa-solid fa-right-from-bracket"></i>Logout</a>
                 </div>
             </div>

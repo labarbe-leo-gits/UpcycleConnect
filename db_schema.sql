@@ -882,4 +882,14 @@ CREATE TABLE IF NOT EXISTS newsletter_recipients (
     UNIQUE INDEX idx_newsletter_recipient (newsletter_id, user_id)
 );
 
+CREATE TABLE IF NOT EXISTS favorites (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    user_id CHAR(36) NOT NULL,
+    annonce_id CHAR(36) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (annonce_id) REFERENCES annonces(id) ON DELETE CASCADE,
+    UNIQUE INDEX idx_favorite (user_id, annonce_id)
+);
+
 SET FOREIGN_KEY_CHECKS = 1;

@@ -22,10 +22,10 @@ $user = getLoggedInUser();
 
         <div class="tip-comments" id="tip-comments">
             <div class="comment-submit">
-                <h3>Post a comment</h3>
-                <textarea id="comment-input" rows="3" placeholder="Share your view..."></textarea>
+                <h3 data-i18n="customers.tip.post_comment">Post a comment</h3>
+                <textarea id="comment-input" rows="3" placeholder="Share your view..." data-i18n-placeholder="customers.tip.share_your_view"></textarea>
                 <div class="comment-counter" id="comment-counter">0 / 1500</div>
-                <button class="btn-primary" id="comment-submit" style="margin-bottom:20px;">Send</button>
+                <button class="btn-primary" id="comment-submit" style="margin-bottom:20px;"><span data-i18n="customers.tip.send">Send</span></button>
             </div>
             <div class="skeleton-comments" id="comments-loading">
                 <div class="skeleton-line" style="width: 80%;"></div>

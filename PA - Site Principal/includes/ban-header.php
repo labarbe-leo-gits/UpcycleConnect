@@ -16,6 +16,7 @@
     <link rel="icon" type="image/png" href="../../assets/img/brand/UpcycleDiminutif.png">
     <link rel="stylesheet" href="../../assets/css/dark.css">
     <script src="../../assets/js/dark.js" defer></script>
+    <script src="../../assets/js/i18n.js" defer></script>
     <script src="https://www.google.com/recaptcha/api.js?render=<?php echo getenv('RECAPTCHA_SITE_KEY'); ?>"></script>
     <script src="../../assets/js/button.js"></script>
     <script src="../../assets/js/blob-images.js"></script>
@@ -23,16 +24,16 @@
 <body><script>if(localStorage.getItem('theme')==='dark')document.body.classList.add('dark-mode');</script>
     <header>
         <div class="left">
-            <h3>UpcycleConnect</h3>
+            <h3 data-i18n="site.title">UpcycleConnect</h3>
         </div>
         <nav>
             <div class="btn-wrapper logout-btn" onClick="document.getElementById('logout-form').submit()">
                     <i class="fa-solid fa-right-from-bracket"></i>
-                    <p>Logout</p>
+                    <p data-i18n="nav.logout">Logout</p>
                 </div>
-            <div class="btn-wrapper" id="dark-toggle" title="Toggle dark mode">
+            <div class="btn-wrapper" id="dark-toggle" data-i18n-title="nav.toggle_theme" title="Toggle dark mode">
                 <i class="fa-solid fa-moon"></i>
-                <p>Theme</p>
+                <p data-i18n="nav.theme">Theme</p>
             </div>
         </nav>
     </header>

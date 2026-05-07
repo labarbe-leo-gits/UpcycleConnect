@@ -4057,6 +4057,15 @@ body.modal-open {
   flex-wrap: wrap;
 }
 
+.acc-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  flex-wrap: nowrap;
+  margin-top: 1rem;
+}
+
 .acc-status {
   display: inline-block;
   font-size: 0.72rem;

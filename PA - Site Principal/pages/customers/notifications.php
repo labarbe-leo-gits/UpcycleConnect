@@ -99,7 +99,7 @@ if (empty($notificationsError) && !empty($notifications)) {
 				
 				?>
 				
-				><i class="fa-solid fa-envelope-circle-check" ></i> Mark all as read</button>
+				><i class="fa-solid fa-envelope-circle-check" ></i> <span data-i18n="customers.notifications.mark_all_read">Mark all as read</span></button>
 				<button class="btn-secondary" id="clear-notifications-btn" type="button"
 				
 				<?php
@@ -109,7 +109,7 @@ if (empty($notificationsError) && !empty($notifications)) {
 					}
 				
 				?>
-				><i class="fa-solid fa-trash" ></i> Clear active tab</button>
+				><i class="fa-solid fa-trash" ></i> <span data-i18n="customers.notifications.clear_active_tab">Clear active tab</span></button>
 			</div>
 		</div>
 

@@ -336,6 +336,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <button type="button" class="btn-primary btn-inline" id="open-payment-modal">
                         <i class="fa-solid fa-money-check-dollar"></i> Request Payment of Balance
                     </button>
+                    <button type="button" class="btn-secondary btn-inline" id="download-personal-data-btn">
+                        <i class="fa-solid fa-download"></i> Download My Personal Data
+                    </button>
                     <a href="dashboard" id="sub-quick-access" class="sub-quick-btn" title="Subscription">
                         <i class="fa-solid fa-gauge-high"></i>
                         <span id="sub-quick-label">Dashboard</span>
@@ -354,6 +357,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <button class="tab-btn" data-tab="contracts">Contracts</button>
             <button class="tab-btn" data-tab="billing">Billing history</button>
             <button class="tab-btn" data-tab="marketplace">Marketplace</button>
+            <button class="tab-btn" data-tab="favorites">Favorites</button>
             <button class="tab-btn" data-tab="badges">Badges</button>
             <?php if (empty($user['oauth_provider'])): ?>
                 <button class="tab-btn" data-tab="security">Security</button>
@@ -412,10 +416,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </p>
 
             <div class="updoc-tab-pagination" id="updoc-pagination" style="display:none;">
-                <button class="btn-secondary" id="updoc-prev-btn" disabled>Previous</button>
-                <span class="page-info" id="updoc-page-info"></span>
-                <button class="btn-secondary" id="updoc-next-btn">Next</button>
-            </div>
+        </div>
+        </div>
+        <div class="tab-content" id="favorites-tab" style="display:none;">
+            <h3><i class="fa-solid fa-heart"></i> Favorites</h3>
+            <p style="margin-top:0.5rem;color:#555;">Saved annonces are shown here. Click the heart button to remove an item from your favorites.</p>
+            <div id="favorites-status" style="margin:1rem 0 0;display:none;color:#d97706;"></div>
+            <div id="favorites-list" class="favorites-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1rem;align-items:flex-start;"></div>
+            <p id="favorites-empty" style="display:none;color:#666;margin-top:1rem;">You have no favorite annonces yet.</p>
         </div>
 
         <div class="modal-overlay" id="updoc-delete-modal" aria-hidden="true">
@@ -602,6 +610,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             </div>
         </div>
+        <div class="tab-content" id="contracts-tab" style="display:none;">
             <h3><i class="fa-solid fa-file-contract"></i> Contracts</h3>
             <div id="contracts-skeleton" class="acc-skeleton-row" style="display:none;">
                 <div class="acc-skel-card"></div>
@@ -938,6 +947,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <script>
     window.currentUserId = <?= json_encode($user['id'] ?? '') ?>;
+    window.currentUserType = <?= json_encode($user['user_type'] ?? '') ?>;
     window.profileSectionApiPath = '../customers/profile-section-api';
     window.UPDOC_BASE_PATH = '../common/';
     window.UPDOC_API_PATH = '../common/updoc-api-create';

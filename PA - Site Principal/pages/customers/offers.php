@@ -9,8 +9,7 @@ $user = getLoggedInUser();
 <div class="container">
 
 	<div class="offers-header">
-		<button class="add-offer-button" id="add-offer">
-			<i class="fa-solid fa-plus"></i>
+        <button class="add-offer-button" id="add-offer" data-i18n="customers.offers.add_offer">
 			Add Offer
 		</button>
 	</div>
@@ -34,41 +33,41 @@ $user = getLoggedInUser();
 <div class="add-modal">
 	<div class="add-modal-content">
 		<span class="close-button" id="close-add-modal">&times;</span>
-		<h2>Add New Offer</h2>
+		<h2 data-i18n="customers.offers.add_new_offer">Add New Offer</h2>
 		<form id="add-offer-form">
 			<div class="form-group">
-				<label for="offer-title">Title:</label>
+				<label for="offer-title" data-i18n="customers.offers.title_label">Title:</label>
 				<input type="text" id="offer-title" name="offer-title" required>
 			</div>
 			<div class="form-group">
-				<label for="offer-description">Description:</label>
+				<label for="offer-description" data-i18n="customers.offers.description_label">Description:</label>
 				<textarea id="offer-description" name="offer-description" required></textarea>
 			</div>
 			<div class="form-group">
-				<label for="offer-price">
+				<label for="offer-price" data-i18n="customers.offers.price_label">
 					Price:
-					<span class="help-icon" title="Put 0 to mark the offer as free. You'll receive 85% of the price (15% platform fee).">
+					<span class="help-icon" title="Put 0 to mark the offer as free. You'll receive 85% of the price (15% platform fee)." data-i18n-title="customers.offers.price_help">
 						<i class="fa-solid fa-circle-question"></i>
-						<span class="help-tooltip">Put 0 to mark the offer as free. You'll receive 85% of the price (15% platform fee).</span>
+						<span class="help-tooltip" data-i18n="customers.offers.price_help">Put 0 to mark the offer as free. You'll receive 85% of the price (15% platform fee).</span>
 					</span>
 				</label>
 				<input type="number" id="offer-price" name="offer-price" required>
 			</div>
                     <div class="form-group">
-                            <label for="offer-weight">Material weight (kg):</label>
+                            <label for="offer-weight" data-i18n="customers.offers.material_weight">Material weight (kg):</label>
                             <input type="number" step="0.01" id="offer-weight" name="offer-weight" min="0">
                     </div>
                     <div class="form-group">
-                            <label for="offer-material">Material type:</label>
+                            <label for="offer-material" data-i18n="customers.offers.material_type">Material type:</label>
                             <select id="offer-material" name="offer-material">
-                                <option value="">-- select --</option>
+                                <option value="" data-i18n="customers.offers.select_placeholder">-- select --</option>
 
-                                <option value="other">Other...</option>
+                                <option value="other" data-i18n="customers.offers.other">Other...</option>
                             </select>
-                            <input type="text" id="offer-material-custom" name="offer-material-custom" placeholder="Specify material" style="display:none; margin-top:5px;">
+                            <input type="text" id="offer-material-custom" name="offer-material-custom" placeholder="Specify material" data-i18n-placeholder="customers.offers.specify_material" style="display:none; margin-top:5px;">
                     </div>
                     <div class="form-group" id="offer-estimation-group" style="display:none;">
-                            <label for="offer-estimation">Estimated upcycling score:</label>
+                            <label for="offer-estimation" data-i18n="customers.offers.estimated_upcycling_score">Estimated upcycling score:</label>
                             <input type="number" step="0.01" id="offer-estimation" name="offer-estimation" min="0">
                     </div>
 			<div class="form-group">
@@ -77,9 +76,9 @@ $user = getLoggedInUser();
 						<div class="drop-zone-icon">
 							<i class="fa-solid fa-cloud-arrow-up"></i>
 						</div>
-						<p class="drop-zone-title">Drop files here or click to browse</p>
-						<p class="drop-zone-subtitle">Support for multiple images</p>
-						<button type="button" class="drop-zone-button">
+						<p class="drop-zone-title" data-i18n="customers.offers.drop_files">Drop files here or click to browse</p>
+						<p class="drop-zone-subtitle" data-i18n="customers.offers.support_multiple_images">Support for multiple images</p>
+						<button type="button" class="drop-zone-button" data-i18n="customers.offers.browse_files">
 							<i class="fa-solid fa-folder-open"></i> Browse Files
 						</button>
 					</div>
@@ -89,7 +88,7 @@ $user = getLoggedInUser();
 			</div>
 			<button type="submit">
 				<i class="fa-solid fa-plus"></i>
-				Add Offer
+				<span data-i18n="customers.offers.add_offer">Add Offer</span>
 			</button>
 		</form>
 	</div>

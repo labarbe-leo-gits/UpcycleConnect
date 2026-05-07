@@ -83,6 +83,14 @@ func rateLimiterMiddleware(next http.HandlerFunc) http.HandlerFunc {
 
 var registeredEndpoints []models.Endpoint
 
+type apiRoute struct {
+	method  string
+	path    string
+	handler http.HandlerFunc
+}
+
+var apiRoutes []apiRoute
+
 var pathParamRegex = regexp.MustCompile(`\{([^/}]+)\}`)
 
 type moderationRequestBody struct {
@@ -117,10 +125,13 @@ var requestBodyTypes = map[string]reflect.Type{
 	"POST /facteurs":                     reflect.TypeOf(models.FacteurMateriaux{}),
 	"PATCH /facteurs/{id}":               reflect.TypeOf(models.FacteurMateriaux{}),
 	"POST /users/{id}/badges":            reflect.TypeOf(models.Badge{}),
-	"POST /users/{id}/reviews":           reflect.TypeOf(reviewRequestBody{}),
-	"PATCH /users/{id}/reviews/{rID}":    reflect.TypeOf(reviewUpdateRequestBody{}),
-	"POST /products/services":            reflect.TypeOf(models.Service{}),
-	"PATCH /products/services/{id}":      reflect.TypeOf(models.Service{}),
+	"POST /users/{id}/favorites": reflect.TypeOf(struct {
+		AnnonceID string `json:"annonce_id"`
+	}{}),
+	"POST /users/{id}/reviews":        reflect.TypeOf(reviewRequestBody{}),
+	"PATCH /users/{id}/reviews/{rID}": reflect.TypeOf(reviewUpdateRequestBody{}),
+	"POST /products/services":         reflect.TypeOf(models.Service{}),
+	"PATCH /products/services/{id}":   reflect.TypeOf(models.Service{}),
 	"PATCH /formations/{id}/status": reflect.TypeOf(struct {
 		Status string `json:"status"`
 	}{}),
@@ -192,15 +203,65 @@ func corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+func normalizeRoutePath(path string) string {
+	if path == "/{$}" {
+		return "/"
+	}
+	if !strings.HasPrefix(path, "/") {
+		path = "/" + path
+	}
+	return path
+}
+
+func matchRoute(routePath, requestPath string) bool {
+	routePath = normalizeRoutePath(routePath)
+	if routePath == requestPath {
+		return true
+	}
+	routeSegments := strings.Split(strings.Trim(routePath, "/"), "/")
+	requestSegments := strings.Split(strings.Trim(requestPath, "/"), "/")
+	if len(routeSegments) != len(requestSegments) {
+		return false
+	}
+	for i := 0; i < len(routeSegments); i++ {
+		segment := routeSegments[i]
+		if strings.HasPrefix(segment, "{") && strings.HasSuffix(segment, "}") {
+			continue
+		}
+		if segment != requestSegments[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func findRoute(method, requestPath string) http.HandlerFunc {
+	for _, route := range apiRoutes {
+		if !strings.EqualFold(route.method, method) {
+			continue
+		}
+		if matchRoute(route.path, requestPath) {
+			return route.handler
+		}
+	}
+	return nil
+}
+
+func requestRouter(w http.ResponseWriter, r *http.Request) {
+	if handler := findRoute(r.Method, r.URL.Path); handler != nil {
+		handler(w, r)
+		return
+	}
+	notFoundHandler(w, r)
+}
+
 func registerRoute(method, path, description string, handler func(http.ResponseWriter, *http.Request), middlewares ...func(http.HandlerFunc) http.HandlerFunc) {
-	pattern := method + " " + path
 	finalHandler := handler
 	finalHandler = corsMiddleware(finalHandler)
 	//finalHandler = rateLimiterMiddleware(finalHandler)
 
 	requiresAuth := false
 	for _, m := range middlewares {
-
 		name := runtime.FuncForPC(reflect.ValueOf(m).Pointer()).Name()
 		if strings.Contains(name, "JWTAuthMiddleware") || strings.Contains(name, "InternalKeyMiddleware") || strings.Contains(name, "RoleMiddleware") {
 			requiresAuth = true
@@ -216,7 +277,11 @@ func registerRoute(method, path, description string, handler func(http.ResponseW
 	for i := len(middlewares) - 1; i >= 0; i-- {
 		finalHandler = middlewares[i](finalHandler)
 	}
-	http.HandleFunc(pattern, finalHandler)
+	apiRoutes = append(apiRoutes, apiRoute{
+		method:  method,
+		path:    path,
+		handler: finalHandler,
+	})
 	registeredEndpoints = append(registeredEndpoints, models.Endpoint{
 		Method:         method,
 		Path:           path,
@@ -570,6 +635,7 @@ func main() {
 	registerRoute("GET", "/dashboard-metrics", "Get aggregated dashboard metrics (admin only)", app.GetDashboardMetrics, app.JWTAuthMiddleware, RoleMiddleware(3))
 	registerRoute("GET", "/profile/{username}", "Get public profile by username", app.GetPublicUser)
 	registerRoute("GET", "/users/{id}", "Get a specific user by his UUID", app.GetUserByID, app.JWTAuthMiddleware)
+	registerRoute("GET", "/users/{id}/personal-data", "Download personal data for a specific user", app.GetPersonalDataExport, app.JWTAuthMiddleware)
 	registerRoute("GET", "/users/{id}/contracts", "Get contracts for a specific user by their UUID", app.GetContractsByUserID, app.JWTAuthMiddleware)
 	registerRoute("GET", "/users/{id}/invoices", "Get invoices for a specific user by their UUID", app.GetInvoicesByUserID, app.JWTAuthMiddleware)
 	registerRoute("GET", "/users/{id}/orders", "Get all orders for a specific user by their UUID", app.GetOrdersByUserID, app.JWTAuthMiddleware)
@@ -808,9 +874,17 @@ func main() {
 	registerRoute("DELETE", "/newsletters/{id}", "Delete a newsletter (admin only)", app.DeleteNewsletter, app.JWTAuthMiddleware)
 	registerRoute("POST", "/newsletters/{id}/send", "Send newsletter to all subscribers (admin only)", app.SendNewsletter, app.JWTAuthMiddleware)
 
+	registerRoute("GET", "/users/{id}/favorites", "List all favorite items for a specific user by their UUID", app.GetUserFavorites, app.JWTAuthMiddleware)
+
+	/* TODOOOOOOO */
+	registerRoute("POST", "/users/{id}/favorites", "Add a new favorite item for a specific user by their UUID", app.AddUserFavorite, app.JWTAuthMiddleware)
+	registerRoute("DELETE", "/users/{id}/favorites/{fID}", "Remove a specific favorite item for a user by their UUIDs", app.RemoveUserFavorite, app.JWTAuthMiddleware)
+
+	http.HandleFunc("/translations", corsMiddleware(translationsHandler))
+	http.HandleFunc("/translations/", corsMiddleware(translationsHandler))
 	http.Handle("/swagger/", httpSwagger.Handler(httpSwagger.URL("/openapi.json")))
 	http.HandleFunc("/swagger/doc.json", openapiSpecHandler)
-	http.HandleFunc("/", notFoundHandler)
+	http.HandleFunc("/", requestRouter)
 
 	fmt.Println("Listening at : " + host + ":" + port)
 	root := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

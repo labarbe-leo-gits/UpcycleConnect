@@ -163,6 +163,159 @@ func GetUserByID(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "%s", jsonResponse)
 }
 
+func getUserIDFromURLPath(path string) (uuid.UUID, error) {
+	trimmed := strings.TrimPrefix(path, "/users/")
+	segments := strings.SplitN(trimmed, "/", 2)
+	if len(segments) == 0 || segments[0] == "" {
+		return uuid.Nil, fmt.Errorf("invalid user ID path")
+	}
+	return uuid.Parse(segments[0])
+}
+
+func GetPersonalDataExport(w http.ResponseWriter, r *http.Request) {
+	userID, err := getUserIDFromURLPath(r.URL.Path)
+	if err != nil {
+		fmt.Println("[ERROR] GetPersonalDataExport parse UUID:", err)
+		sendError(w, "Invalid user ID format", http.StatusBadRequest)
+		return
+	}
+
+	tokenUID, ok := r.Context().Value("user_id").(string)
+	if !ok || tokenUID == "" {
+		sendError(w, "Missing or invalid user token", http.StatusUnauthorized)
+		return
+	}
+	if tokenUID != userID.String() {
+		sendError(w, "Forbidden: access denied", http.StatusForbidden)
+		return
+	}
+
+	user, err := db.GetUserByIDFromDB(userID)
+	if err != nil {
+		fmt.Println("[ERROR] GetPersonalDataExport DB query:", err)
+		sendError(w, "User not found", http.StatusNotFound)
+		return
+	}
+	user.Password = ""
+
+	bankingDetails, bankingErr := db.GetBankingDetailsByUserIDFromDB(userID)
+	annonces, annoncesErr := db.GetAnnoncesByUserIDFromDB(userID.String())
+	orders, ordersErr := db.GetOrdersByUserIDFromDB(userID)
+	deposits, depositsErr := db.GetDepositsByUserIDFromDB(userID)
+	projects, projectsErr := db.GetProjectsByUserIDFromDB(userID.String())
+	projectsWithCounts := make([]map[string]interface{}, 0, len(projects))
+	for _, project := range projects {
+		annonceID := interface{}(nil)
+		if project.AnnonceID != nil {
+			annonceID = project.AnnonceID.String()
+		}
+
+		likes, likeErr := db.GetProjectLikeCountFromDB(project.ID.String())
+		commentCount := 0
+		if comments, commentErr := db.GetProjectCommentsFromDB(project.ID.String()); commentErr == nil {
+			commentCount = len(comments)
+		} else {
+			fmt.Println("[ERROR] GetProjectCommentsFromDB:", commentErr)
+		}
+		if likeErr != nil {
+			fmt.Println("[ERROR] GetProjectLikeCountFromDB:", likeErr)
+		}
+
+		projectsWithCounts = append(projectsWithCounts, map[string]interface{}{
+			"id":           project.ID.String(),
+			"user_id":      project.UserID.String(),
+			"author_name":  project.AuthorName,
+			"annonce_id":   annonceID,
+			"title":        project.Title,
+			"description":  project.Description,
+			"status":       project.Status,
+			"ai_generated": project.AIGenerated,
+			"created_at":   project.CreatedAt,
+			"updated_at":   project.UpdatedAt,
+			"likes":        likes,
+			"comments":     commentCount,
+		})
+	}
+	favorites, favoritesErr := db.GetFavoritesByUserID(userID)
+	notifications, notificationsErr := db.GetNotificationsByUserIDFromDB(userID)
+	contracts, contractsErr := db.GetContractsByUserID(userID)
+	invoices, invoicesErr := db.GetInvoicesByUserID(userID)
+	refundRequests, refundsErr := db.GetRefundRequestsByUserIDFromDB(userID.String())
+	payouts, payoutsErr := db.GetPayoutsByUserIDFromDB(userID)
+	bans, bansErr := db.GetBansByUserIDFromDB(userID.String())
+	subscription, subscriptionErr := db.GetSubscriptionByUserIDFromDB(userID.String())
+	llmUsage, llmQuota, llmErr := db.GetLLMUsageByUserIDFromDB(userID.String())
+
+	result := map[string]interface{}{
+		"user":            user,
+		"banking_details": bankingDetails,
+		"annonces":        annonces,
+		"orders":          orders,
+		"deposits":        deposits,
+		"projects":        projectsWithCounts,
+		"favorites":       favorites,
+		"notifications":   notifications,
+		"contracts":       contracts,
+		"invoices":        invoices,
+		"refund_requests": refundRequests,
+		"payouts":         payouts,
+		"bans":            bans,
+		"subscription":    subscription,
+		"llm_usage":       llmUsage,
+		"llm_quota":       llmQuota,
+	}
+
+	errors := map[string]string{}
+	if bankingErr != nil {
+		errors["banking_details"] = bankingErr.Error()
+	}
+	if annoncesErr != nil {
+		errors["annonces"] = annoncesErr.Error()
+	}
+	if ordersErr != nil {
+		errors["orders"] = ordersErr.Error()
+	}
+	if depositsErr != nil {
+		errors["deposits"] = depositsErr.Error()
+	}
+	if projectsErr != nil {
+		errors["projects"] = projectsErr.Error()
+	}
+	if favoritesErr != nil {
+		errors["favorites"] = favoritesErr.Error()
+	}
+	if notificationsErr != nil {
+		errors["notifications"] = notificationsErr.Error()
+	}
+	if contractsErr != nil {
+		errors["contracts"] = contractsErr.Error()
+	}
+	if invoicesErr != nil {
+		errors["invoices"] = invoicesErr.Error()
+	}
+	if refundsErr != nil {
+		errors["refund_requests"] = refundsErr.Error()
+	}
+	if payoutsErr != nil {
+		errors["payouts"] = payoutsErr.Error()
+	}
+	if bansErr != nil {
+		errors["bans"] = bansErr.Error()
+	}
+	if subscriptionErr != nil {
+		errors["subscription"] = subscriptionErr.Error()
+	}
+	if llmErr != nil {
+		errors["llm_usage"] = llmErr.Error()
+	}
+	if len(errors) > 0 {
+		result["errors"] = errors
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}
+
 func CheckForExistingUsername(username string) (bool, error) {
 
 	existing, err := db.GetUserByUsernameFromDB(username)

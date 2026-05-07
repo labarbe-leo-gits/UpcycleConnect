@@ -11,23 +11,23 @@ $user = getLoggedInUser();
 <div class="container">
     <div class="tips-controls">
         <div class="tips-search">
-            <input id="tips-search" type="text" placeholder="Search tips..." />
-            <button id="tips-search-clear" class="btn-secondary" type="button">Clear</button>
+            <input id="tips-search" type="text" placeholder="Search tips..." data-i18n-placeholder="customers.tips.search_placeholder" />
+            <button id="tips-search-clear" class="btn-secondary" type="button"><span data-i18n="customers.tips.clear">Clear</span></button>
         </div>
         <div class="tips-filters">
             <label>
-                <span>Status</span>
+                <span data-i18n="customers.tips.status">Status</span>
                 <select id="tips-filter-status">
-                    <option value="all">All</option>
-                    <option value="new">New</option>
-                    <option value="reviewed">Reviewed</option>
+                    <option value="all" data-i18n="customers.tips.all">All</option>
+                    <option value="new" data-i18n="customers.tips.new">New</option>
+                    <option value="reviewed" data-i18n="customers.tips.reviewed">Reviewed</option>
                 </select>
             </label>
             <label>
-                <span>Sort</span>
+                <span data-i18n="customers.tips.sort">Sort</span>
                 <select id="tips-sort">
-                    <option value="newest">Newest</option>
-                    <option value="oldest">Oldest</option>
+                    <option value="newest" data-i18n="customers.tips.newest">Newest</option>
+                    <option value="oldest" data-i18n="customers.tips.oldest">Oldest</option>
                 </select>
             </label>
         </div>

@@ -22,6 +22,14 @@ const paymentModal = document.getElementById('payment-modal');
     const profilePictureFeedback = document.getElementById('profile-picture-feedback');
     const profilePictureHistory = document.getElementById('profile-picture-history');
     const profilePicPreview = document.getElementById('profile-pic-preview');
+    const downloadPersonalDataBtn = document.getElementById('download-personal-data-btn');
+    const personalDataDownloadUrl = '/pages/common/export-personal-data';
+
+    if (downloadPersonalDataBtn) {
+        downloadPersonalDataBtn.addEventListener('click', function () {
+            window.location.href = personalDataDownloadUrl;
+        });
+    }
 
     console.log('profile.js loaded');
     console.log('profile picture controls:', {
@@ -526,6 +534,7 @@ const paymentModal = document.getElementById('payment-modal');
             profilePicPreview.src = profilePicPreview.dataset.blobSrc;
         }
         restoreProfilePictureFromApi();
+        setupFavoritesTab();
         var initial = document.getElementById('upcycling-score-value');
         if (initial) {
             var m = initial.textContent.match(/^(\d+)/);
@@ -558,11 +567,180 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
             document.getElementById('myupdoc-tab').style.display = '';
         } else if (tab === 'badges') {
             document.getElementById('badges-tab').style.display = '';
+        } else if (tab === 'favorites') {
+            document.getElementById('favorites-tab').style.display = '';
+            var favoriteButton = this;
+            if (favoriteButton && !favoriteButton.dataset.loaded) {
+                favoriteButton.dataset.loaded = '1';
+                loadFavoritesTab();
+            }
         } else if (tab === 'mfa') {
             document.getElementById('mfa-tab').style.display = '';
         }
     });
 });
+
+function escapeHtml(str) {
+    return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function setupFavoritesTab() {
+    var favoritesTabButton = document.querySelector('.tab-btn[data-tab="favorites"]');
+    if (!favoritesTabButton) {
+        return;
+    }
+    if (favoritesTabButton.classList.contains('active')) {
+        favoritesTabButton.dataset.loaded = '1';
+        loadFavoritesTab();
+    }
+}
+
+async function loadFavoritesTab() {
+    var userId = window.currentUserId;
+    var list = document.getElementById('favorites-list');
+    var empty = document.getElementById('favorites-empty');
+    var status = document.getElementById('favorites-status');
+    if (!userId || !list || !empty) {
+        return;
+    }
+    list.innerHTML = '<div class="skeleton-service-item" style="grid-column:1/-1;"><div class="skeleton skeleton-image"></div><div class="skeleton skeleton-title"></div><div class="skeleton skeleton-description"></div><div class="skeleton skeleton-description"></div><div class="skeleton skeleton-price"></div></div>';
+    empty.style.display = 'none';
+    status.style.display = 'none';
+
+    try {
+        var response = await authedFetch('/users/' + encodeURIComponent(userId) + '/favorites');
+        if (!response.ok) {
+            throw new Error('Unable to load favorites.');
+        }
+        var favorites = await response.json();
+        if (!Array.isArray(favorites) || favorites.length === 0) {
+            list.innerHTML = '';
+            empty.style.display = '';
+            return;
+        }
+        var results = await Promise.all(favorites.map(async function(entry) {
+            if (!entry || !entry.annonce_id) {
+                return null;
+            }
+            try {
+                var annonceResponse = await authedFetch('/annonces/' + encodeURIComponent(entry.annonce_id));
+                if (!annonceResponse.ok) {
+                    return null;
+                }
+                var annonce = await annonceResponse.json();
+                return { favorite: entry, annonce: annonce };
+            } catch (err) {
+                return null;
+            }
+        }));
+
+        var loaded = results.filter(function(item) {
+            return item && item.annonce && item.favorite && item.favorite.id;
+        });
+        if (loaded.length === 0) {
+            list.innerHTML = '';
+            empty.style.display = '';
+            return;
+        }
+
+        list.innerHTML = '';
+        loaded.forEach(function(item) {
+            list.appendChild(createFavoriteCard(item.favorite, item.annonce));
+        });
+        empty.style.display = 'none';
+    } catch (err) {
+        list.innerHTML = '';
+        empty.style.display = '';
+        if (status) {
+            status.style.display = '';
+            status.textContent = err.message || 'Unable to load favorites.';
+        }
+    }
+}
+
+function createFavoriteCard(favorite, annonce) {
+    var card = document.createElement('div');
+    card.className = 'acc-card acc-card--favorite';
+    card.setAttribute('role', 'listitem');
+
+    var imageHtml = '';
+    if (annonce.image) {
+        imageHtml = '<div class="acc-card-thumb"><img src="' + escapeHtml(annonce.image) + '" alt="' + escapeHtml(annonce.title || 'Favorite annonce') + '" loading="lazy"></div>';
+    } else {
+        imageHtml = '<div class="acc-card-thumb acc-card-thumb--placeholder"><i class="fa-solid fa-image"></i></div>';
+    }
+
+    var title = escapeHtml(annonce.title || 'Saved annonce');
+    var price = escapeHtml(annonce.price || 'Free');
+    var category = escapeHtml(annonce.category_name || '');
+
+    card.innerHTML =
+        imageHtml +
+        '<div class="acc-card-body">' +
+            '<div class="acc-card-title">' + title + '</div>' +
+            '<div class="acc-card-meta" style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">' +
+                (category ? '<span class="acc-status acc-status-available">' + category + '</span>' : '') +
+                '<span class="acc-card-amount">' + price + '</span>' +
+            '</div>' +
+            '<div class="acc-card-actions">' +
+                '<button type="button" class="btn-secondary unfavorite-btn" data-favorite-id="' + escapeHtml(favorite.id) + '" data-annonce-id="' + escapeHtml(favorite.annonce_id) + '"><i class="fa-solid fa-heart"></i> Remove</button>' +
+                '<a href="../common/offer?uuid=' + encodeURIComponent(annonce.id) + '" class="btn-primary"><i class="fa-solid fa-arrow-right"></i> View</a>' +
+            '</div>' +
+        '</div>';
+
+    var unfavoriteBtn = card.querySelector('.unfavorite-btn');
+    if (unfavoriteBtn) {
+        unfavoriteBtn.addEventListener('click', async function () {
+            var button = this;
+            var favoriteId = button.dataset.favoriteId;
+            if (!favoriteId) {
+                return;
+            }
+            button.disabled = true;
+            try {
+                var response = await authedFetch('/users/' + encodeURIComponent(window.currentUserId) + '/favorites/' + encodeURIComponent(favoriteId), {
+                    method: 'DELETE'
+                });
+                if (!response.ok) {
+                    throw new Error('Unable to remove favorite.');
+                }
+                var result = await response.json().catch(function () { return null; });
+                if (!result || !result.success) {
+                    throw new Error('Unable to remove favorite.');
+                }
+                card.remove();
+                var list = document.getElementById('favorites-list');
+                if (list && list.children.length === 0) {
+                    var empty = document.getElementById('favorites-empty');
+                    if (empty) {
+                        empty.style.display = '';
+                    }
+                }
+            } catch (err) {
+                button.disabled = false;
+                var status = document.getElementById('favorites-status');
+                if (status) {
+                    status.style.display = '';
+                    status.textContent = err.message || 'Unable to remove favorite.';
+                }
+            }
+        });
+    }
+
+    return card;
+}
+
+function refreshFavoritesTabIfVisible() {
+    var activeButton = document.querySelector('.tab-btn.active[data-tab="favorites"]');
+    if (activeButton && activeButton.dataset.loaded) {
+        loadFavoritesTab();
+    }
+}
 
 var gaugeMax = 100;
 

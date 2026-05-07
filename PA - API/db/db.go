@@ -52,7 +52,29 @@ func NewDB() *sql.DB {
 		panic(err.Error())
 	}
 
+	if err := db.Ping(); err != nil {
+		panic(fmt.Errorf("failed to ping database: %w", err))
+	}
+
+	if err := ensureFavoritesTable(db); err != nil {
+		panic(fmt.Errorf("failed to ensure favorites table: %w", err))
+	}
+
 	fmt.Println("Database connection established")
 	return db
 
+}
+
+// DEBUG AHHHHHHHHHHH
+func ensureFavoritesTable(db *sql.DB) error {
+	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS favorites (
+		id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+		user_id CHAR(36) NOT NULL,
+		annonce_id CHAR(36) NOT NULL,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		UNIQUE INDEX idx_favorite (user_id, annonce_id),
+		INDEX idx_favorites_user_id (user_id),
+		INDEX idx_favorites_annonce_id (annonce_id)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`)
+	return err
 }

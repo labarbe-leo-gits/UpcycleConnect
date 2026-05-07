@@ -181,73 +181,73 @@ include_once '../../includes/header.php';
         </div>
     <?php endif; ?>
 
-    <div class="form-switcher" role="tablist" aria-label="<?= htmlspecialchars('Registration form selector') ?>">
-        <button type="button" class="switcher-btn" data-target="customer" aria-pressed="<?php echo $active_form === 'customer' ? 'true' : 'false'; ?>">
+    <div class="form-switcher" role="tablist" aria-label="<?= htmlspecialchars('Registration form selector') ?>" data-i18n-aria-label="public.register.registration_form_selector">
+        <button type="button" class="switcher-btn" data-target="customer" aria-pressed="<?php echo $active_form === 'customer' ? 'true' : 'false'; ?>" data-i18n="public.register.customer">
             <?= htmlspecialchars('Customer') ?>
         </button>
-        <button type="button" class="switcher-btn" data-target="artisan" aria-pressed="<?php echo $active_form === 'artisan' ? 'true' : 'false'; ?>">
+        <button type="button" class="switcher-btn" data-target="artisan" aria-pressed="<?php echo $active_form === 'artisan' ? 'true' : 'false'; ?>" data-i18n="public.register.artisan_professional">
             <?= htmlspecialchars('Artisan / Pro') ?>
         </button>
     </div>
 
     <div class="register-forms-stage">
         <form action="" method="POST" class="register-form" data-form="customer" aria-hidden="<?php echo $active_form === 'customer' ? 'false' : 'true'; ?>">
-            <h2><?= htmlspecialchars('Customer Account') ?></h2>
+            <h2 data-i18n="public.register.customer_account"><?= htmlspecialchars('Customer Account') ?></h2>
 
         <div class="field">
-            <label for="first_name_customer"><?= htmlspecialchars('First Name') ?></label>
+            <label for="first_name_customer" data-i18n="public.register.first_name"><?= htmlspecialchars('First Name') ?></label>
             <div class="input-wrapper">
                 <i class="fa-solid fa-id-card"></i>
-                <input type="text" id="first_name_customer" name="first_name" class="iconInput" placeholder="<?= htmlspecialchars('First name') ?>" required>
+                <input type="text" id="first_name_customer" name="first_name" class="iconInput" placeholder="<?= htmlspecialchars('First name') ?>" data-i18n-placeholder="public.register.first_name_placeholder" required>
             </div>
         </div>
 
         <div class="field">
-            <label for="last_name_customer"><?= htmlspecialchars('Last Name') ?></label>
+            <label for="last_name_customer" data-i18n="public.register.last_name"><?= htmlspecialchars('Last Name') ?></label>
             <div class="input-wrapper">
                 <i class="fa-solid fa-id-card"></i>
-                <input type="text" id="last_name_customer" name="last_name" class="iconInput" placeholder="<?= htmlspecialchars('Last name') ?>" required>
+                <input type="text" id="last_name_customer" name="last_name" class="iconInput" placeholder="<?= htmlspecialchars('Last name') ?>" data-i18n-placeholder="public.register.last_name_placeholder" required>
             </div>
         </div>
         
         <div class="field">
-            <label for="username_customer"><?= htmlspecialchars('Username') ?></label>
+            <label for="username_customer" data-i18n="public.register.username"><?= htmlspecialchars('Username') ?></label>
             <div class="input-wrapper">
                 <i class="fa-solid fa-user"></i>
-                <input type="text" id="username_customer" name="username" class="iconInput" placeholder="<?= htmlspecialchars('Choose a username') ?>" required>
+                <input type="text" id="username_customer" name="username" class="iconInput" placeholder="<?= htmlspecialchars('Choose a username') ?>" data-i18n-placeholder="public.register.username_placeholder" required>
             </div>
             <small class="field-note field-status" aria-live="polite"></small>
         </div>
         
         <div class="field">
-            <label for="email_customer"><?= htmlspecialchars('Email Address') ?></label>
+            <label for="email_customer" data-i18n="public.register.email_address"><?= htmlspecialchars('Email Address') ?></label>
             <div class="input-wrapper">
                 <i class="fa-solid fa-envelope"></i>
-                <input type="email" id="email_customer" name="email" class="iconInput" placeholder="<?= htmlspecialchars('you@example.com') ?>" required>
+                <input type="email" id="email_customer" name="email" class="iconInput" placeholder="<?= htmlspecialchars('you@example.com') ?>" data-i18n-placeholder="public.register.email_placeholder" required>
             </div>
         </div>
         
         <div class="field">
-            <label for="password_customer"><?= htmlspecialchars('Password') ?></label>
+            <label for="password_customer" data-i18n="public.register.password"><?= htmlspecialchars('Password') ?></label>
             <div class="input-wrapper password-wrapper">
                 <i class="fa-solid fa-lock"></i>
-                <input type="password" id="password_customer" name="password" class="iconInput password-input" placeholder="<?= htmlspecialchars('Create a password') ?>" required data-strength="true">
-                <button type="button" class="password-toggle" aria-label="<?= htmlspecialchars('Show password') ?>" aria-pressed="false">
+                <input type="password" id="password_customer" name="password" class="iconInput password-input" placeholder="<?= htmlspecialchars('Create a password') ?>" data-i18n-placeholder="public.register.password_placeholder" required data-strength="true">
+                <button type="button" class="password-toggle" aria-label="<?= htmlspecialchars('Show password') ?>" data-i18n-aria-label="public.register.show_password" aria-pressed="false">
                     <i class="fa-solid fa-eye"></i>
                 </button>
             </div>
             <div class="password-meter" aria-live="polite">
                 <div class="password-meter-bar"></div>
-                <span class="password-meter-text"><?= htmlspecialchars('Strength: ') ?></span>
+                <span class="password-meter-text" data-i18n="public.register.password_strength"><?= htmlspecialchars('Strength: ') ?></span>
             </div>
         </div>
         
         <div class="field">
-            <label for="confirm_password_customer"><?= htmlspecialchars('Confirm Password') ?></label>
+            <label for="confirm_password_customer" data-i18n="public.register.confirm_password"><?= htmlspecialchars('Confirm Password') ?></label>
             <div class="input-wrapper password-wrapper">
                 <i class="fa-solid fa-lock"></i>
-                <input type="password" id="confirm_password_customer" name="confirm_password" class="iconInput" placeholder="<?= htmlspecialchars('Confirm your password') ?>" required>
-                <button type="button" class="password-toggle" aria-label="<?= htmlspecialchars('Show password') ?>" aria-pressed="false">
+                <input type="password" id="confirm_password_customer" name="confirm_password" class="iconInput" placeholder="<?= htmlspecialchars('Confirm your password') ?>" data-i18n-placeholder="public.register.confirm_password_placeholder" required>
+                <button type="button" class="password-toggle" aria-label="<?= htmlspecialchars('Show password') ?>" data-i18n-aria-label="public.register.show_password" aria-pressed="false">
                     <i class="fa-solid fa-eye"></i>
                 </button>
             </div>
@@ -255,91 +255,91 @@ include_once '../../includes/header.php';
         
         <div class="field cgu-field"> 
             <label> 
-                <input type="checkbox" name="cgu" required> <?= htmlspecialchars('I agree to the') ?> <a href="cgu" target="_blank"><?= htmlspecialchars('Terms and Conditions') ?></a> 
+                <input type="checkbox" name="cgu" required> <span data-i18n="public.register.agree_to"><?= htmlspecialchars('I agree to the') ?></span> <a href="cgu" target="_blank" data-i18n="public.register.terms_and_conditions"><?= htmlspecialchars('Terms and Conditions') ?></a> 
             </label> 
         </div>
 
         <input type="hidden" name="user_type" value="1">
         <input type="hidden" name="recaptcha_token" class="recaptcha-token">
         
-        <button type="submit">
+        <button type="submit" data-i18n="public.register.create_customer_account">
             <i class="fa-solid fa-user-plus"></i> <?= htmlspecialchars('Create Customer Account') ?>
         </button>
         
             <div class="form-footer">
-                <?= htmlspecialchars('Already have an account?') ?> <a href="login.php"><?= htmlspecialchars('Login here') ?></a>
-            </div>
+                <span data-i18n="public.register.already_have_account">Already have an account?</span> <a href="login" data-i18n="public.register.login_here">Login here</a>
+        </div>
         </form>
 
         <form action="" method="POST" class="register-form" data-form="artisan" aria-hidden="<?php echo $active_form === 'artisan' ? 'false' : 'true'; ?>">
-            <h2><?= htmlspecialchars('Artisan / Professional Account') ?></h2>
+            <h2 data-i18n="public.register.artisan_account"><?= htmlspecialchars('Artisan / Professional Account') ?></h2>
 
         <div class="field">
-            <label for="first_name_artisan"><?= htmlspecialchars('First Name') ?></label>
+            <label for="first_name_artisan" data-i18n="public.register.first_name"><?= htmlspecialchars('First Name') ?></label>
             <div class="input-wrapper">
                 <i class="fa-solid fa-id-card"></i>
-                <input type="text" id="first_name_artisan" name="first_name" class="iconInput" placeholder="<?= htmlspecialchars('First name') ?>" required>
+                <input type="text" id="first_name_artisan" name="first_name" class="iconInput" placeholder="<?= htmlspecialchars('First name') ?>" data-i18n-placeholder="public.register.first_name_placeholder" required>
             </div>
         </div>
 
         <div class="field">
-            <label for="last_name_artisan"><?= htmlspecialchars('Last Name') ?></label>
+            <label for="last_name_artisan" data-i18n="public.register.last_name"><?= htmlspecialchars('Last Name') ?></label>
             <div class="input-wrapper">
                 <i class="fa-solid fa-id-card"></i>
-                <input type="text" id="last_name_artisan" name="last_name" class="iconInput" placeholder="<?= htmlspecialchars('Last name') ?>" required>
+                <input type="text" id="last_name_artisan" name="last_name" class="iconInput" placeholder="<?= htmlspecialchars('Last name') ?>" data-i18n-placeholder="public.register.last_name_placeholder" required>
             </div>
         </div>
 
         <input type="hidden" id="company_name_artisan" name="company_name" value="">
 
         <div class="field">
-            <label for="siret_artisan"><?= htmlspecialchars('SIRET / SIREN') ?></label>
+            <label for="siret_artisan" data-i18n="public.register.siret_label"><?= htmlspecialchars('SIRET / SIREN') ?></label>
             <div class="input-wrapper">
                 <i class="fa-solid fa-id-badge"></i>
-                <input type="text" id="siret_artisan" name="siret" class="iconInput" placeholder="<?= htmlspecialchars('123 456 789 00012') ?>" required>
+                <input type="text" id="siret_artisan" name="siret" class="iconInput" placeholder="<?= htmlspecialchars('123 456 789 00012') ?>" data-i18n-placeholder="public.register.siret_placeholder" required>
             </div>
             <small class="field-note"><?= htmlspecialchars('Enter your 14-digit SIRET or 9-digit SIREN number.') ?></small>
             <small class="field-note field-status" aria-live="polite"></small>
         </div>
         
         <div class="field">
-            <label for="username_artisan"><?= htmlspecialchars('Username') ?></label>
+            <label for="username_artisan" data-i18n="public.register.username"><?= htmlspecialchars('Username') ?></label>
             <div class="input-wrapper">
                 <i class="fa-solid fa-user"></i>
-                <input type="text" id="username_artisan" name="username" class="iconInput" placeholder="<?= htmlspecialchars('Choose a username') ?>" required>
+                <input type="text" id="username_artisan" name="username" class="iconInput" placeholder="<?= htmlspecialchars('Choose a username') ?>" data-i18n-placeholder="public.register.username_placeholder" required>
             </div>
             <small class="field-note field-status" aria-live="polite"></small>
         </div>
         
         <div class="field">
-            <label for="email_artisan"><?= htmlspecialchars('Email Address') ?></label>
+            <label for="email_artisan" data-i18n="public.register.email_address"><?= htmlspecialchars('Email Address') ?></label>
             <div class="input-wrapper">
                 <i class="fa-solid fa-envelope"></i>
-                <input type="email" id="email_artisan" name="email" class="iconInput" placeholder="<?= htmlspecialchars('you@example.com') ?>" required>
+                <input type="email" id="email_artisan" name="email" class="iconInput" placeholder="<?= htmlspecialchars('you@example.com') ?>" data-i18n-placeholder="public.register.email_placeholder" required>
             </div>
         </div>
         
         <div class="field">
-            <label for="password_artisan"><?= htmlspecialchars('Password') ?></label>
+            <label for="password_artisan" data-i18n="public.register.password"><?= htmlspecialchars('Password') ?></label>
             <div class="input-wrapper password-wrapper">
                 <i class="fa-solid fa-lock"></i>
-                <input type="password" id="password_artisan" name="password" class="iconInput password-input" placeholder="<?= htmlspecialchars('Create a password') ?>" required data-strength="true">
-                <button type="button" class="password-toggle" aria-label="<?= htmlspecialchars('Show password') ?>" aria-pressed="false">
+                <input type="password" id="password_artisan" name="password" class="iconInput password-input" placeholder="<?= htmlspecialchars('Create a password') ?>" data-i18n-placeholder="public.register.password_placeholder" required data-strength="true">
+                <button type="button" class="password-toggle" aria-label="<?= htmlspecialchars('Show password') ?>" data-i18n-aria-label="public.register.show_password" aria-pressed="false">
                     <i class="fa-solid fa-eye"></i>
                 </button>
             </div>
             <div class="password-meter" aria-live="polite">
                 <div class="password-meter-bar"></div>
-                <span class="password-meter-text"><?= htmlspecialchars('Strength: ') ?></span>
+                <span class="password-meter-text" data-i18n="public.register.password_strength"><?= htmlspecialchars('Strength: ') ?></span>
             </div>
         </div>
         
         <div class="field">
-            <label for="confirm_password_artisan"><?= htmlspecialchars('Confirm Password') ?></label>
+            <label for="confirm_password_artisan" data-i18n="public.register.confirm_password"><?= htmlspecialchars('Confirm Password') ?></label>
             <div class="input-wrapper password-wrapper">
                 <i class="fa-solid fa-lock"></i>
-                <input type="password" id="confirm_password_artisan" name="confirm_password" class="iconInput" placeholder="<?= htmlspecialchars('Confirm your password') ?>" required>
-                <button type="button" class="password-toggle" aria-label="<?= htmlspecialchars('Show password') ?>" aria-pressed="false">
+                <input type="password" id="confirm_password_artisan" name="confirm_password" class="iconInput" placeholder="<?= htmlspecialchars('Confirm your password') ?>" data-i18n-placeholder="public.register.confirm_password_placeholder" required>
+                <button type="button" class="password-toggle" aria-label="<?= htmlspecialchars('Show password') ?>" data-i18n-aria-label="public.register.show_password" aria-pressed="false">
                     <i class="fa-solid fa-eye"></i>
                 </button>
             </div>
@@ -347,20 +347,20 @@ include_once '../../includes/header.php';
          
         <div class="field cgu-field"> 
             <label> 
-                <input type="checkbox" name="cgu" required> <?= htmlspecialchars('I agree to the') ?> <a href="cgu" target="_blank"><?= htmlspecialchars('Terms and Conditions') ?></a> 
+                <input type="checkbox" name="cgu" required> <span data-i18n="public.register.agree_to"><?= htmlspecialchars('I agree to the') ?></span> <a href="cgu" target="_blank" data-i18n="public.register.terms_and_conditions"><?= htmlspecialchars('Terms and Conditions') ?></a> 
             </label> 
         </div>
 
         <input type="hidden" name="user_type" value="2">
         <input type="hidden" name="recaptcha_token" class="recaptcha-token">
         
-        <button type="submit">
+        <button type="submit" data-i18n="public.register.create_artisan_account">
             <i class="fa-solid fa-user-plus"></i> <?= htmlspecialchars('Create Artisan Account') ?>
         </button>
         
             <div class="form-footer">
-                <?= htmlspecialchars('Already have an account?') ?> <a href="login"><?= htmlspecialchars('Login here') ?></a>
-            </div>
+                <span data-i18n="public.register.already_have_account">Already have an account?</span> <a href="login" data-i18n="public.register.login_here">Login here</a>
+        </div>
         </form>
     </div>
 </div>

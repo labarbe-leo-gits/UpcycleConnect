@@ -150,54 +150,54 @@ include_once '../../includes/header.php';
     <?php endif; ?>
 
     <form method="POST" action="">
-        <h2>Welcome Back!</h2>
+        <h2 data-i18n="public.login.welcome_back">Welcome Back!</h2>
         
         <div class="field">
-            <label for="identifier">Username or Email</label>
+            <label for="identifier" data-i18n="public.login.username_or_email">Username or Email</label>
             <div class="input-wrapper">
                 <i class="fa-solid fa-user"></i>
-                <input type="text" id="identifier" name="identifier" class="iconInput" placeholder="Enter your username or email" required>
+                <input type="text" id="identifier" name="identifier" class="iconInput" placeholder="Enter your username or email" data-i18n-placeholder="public.login.username_or_email_placeholder" required>
             </div>
         </div>
         
         <div class="field">
-            <label for="password">Password</label>
+            <label for="password" data-i18n="public.login.password">Password</label>
             <div class="input-wrapper password-wrapper">
                 <i class="fa-solid fa-lock"></i>
-                <input type="password" id="password" name="password" class="iconInput" placeholder="Enter your password" required>
-                <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false">
+                <input type="password" id="password" name="password" class="iconInput" placeholder="Enter your password" data-i18n-placeholder="public.login.password_placeholder" required>
+                <button type="button" class="password-toggle" aria-label="Show password" data-i18n-aria-label="public.login.show_password" aria-pressed="false">
                     <i class="fa-solid fa-eye"></i>
                 </button>
             </div>
         </div>
         
         <div class="forgot-password-wrapper">
-            <a href="#" class="forgot-password">Forgot Password?</a>
+            <a href="#" class="forgot-password" data-i18n="public.login.forgot_password">Forgot Password?</a>
         </div>
         
         <input type="hidden" name="recaptcha_token" id="recaptcha_token">
         
-        <button type="submit" id="login-submit-btn">Login</button>
+        <button type="submit" id="login-submit-btn" data-i18n="public.login.login">Login</button>
         
         <div class="divider">
-            <span>or continue with</span>
+            <span data-i18n="public.login.or_continue_with">or continue with</span>
         </div>
         
         <div class="social-login-buttons">
             <button type="button" class="social-btn google-btn" onclick="loginWithGoogle()">
                 <i class="fa-brands fa-google"></i>
-                <span>Google</span>
+                <span data-i18n="public.login.google">Google</span>
             </button>
             <button type="button" class="social-btn facebook-btn" onclick="loginWithFacebook()">
                 <i class="fa-brands fa-facebook-f"></i>
-                <span>Facebook</span>
+                <span data-i18n="public.login.facebook">Facebook</span>
             </button>
         </div>
         
         <div class="form-footer">
-            Don't have an account? <a href="register">Register here</a>
+            <span data-i18n="public.login.no_account">Don't have an account?</span> <a href="register" data-i18n="public.login.register_here">Register here</a>
             <br>
-            Pending registration? <a href="verify">Verify the status here</a>
+            <span data-i18n="public.login.pending_registration">Pending registration?</span> <a href="verify" data-i18n="public.login.verify_status">Verify the status here</a>
         </div>
     </form>
 </div>
@@ -205,8 +205,8 @@ include_once '../../includes/header.php';
 <div class="modal-overlay" id="forgot-password-modal" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="forgot-password-title">
         <div class="modal-header">
-            <h2 id="forgot-password-title"><i class="fa-solid fa-shield-halved"></i> Forgot Password</h2>
-            <button type="button" class="modal-close" id="close-forgot-modal" aria-label="Close">
+            <h2 id="forgot-password-title"><i class="fa-solid fa-shield-halved"></i> <span data-i18n="public.login.forgot_password">Forgot Password</span></h2>
+            <button type="button" class="modal-close" id="close-forgot-modal" aria-label="Close" data-i18n-aria-label="public.login.close_modal">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
@@ -216,15 +216,15 @@ include_once '../../includes/header.php';
             <div id="forgot-password-step1">
                 <form id="forgot-password-request-form">
                     <div class="field">
-                        <label for="forgot-email">Email address</label>
+                        <label for="forgot-email" data-i18n="public.login.email_address">Email address</label>
                         <div class="input-wrapper">
                             <i class="fa-solid fa-envelope"></i>
-                            <input type="email" id="forgot-email" name="forgot_email" placeholder="Enter your email" required>
+                            <input type="email" id="forgot-email" name="forgot_email" placeholder="Enter your email" data-i18n-placeholder="public.login.forgot_email_placeholder" required>
                         </div>
                     </div>
                     <div class="modal-actions">
-                        <button type="button" class="btn-primary" id="forgot-send-code-button"><i class="fa-solid fa-paper-plane"></i> Send Code</button>
-                        <button type="button" class="btn-secondary" id="cancel-forgot-modal"><i class="fa-solid fa-xmark"></i> Cancel</button>
+                        <button type="button" class="btn-primary" id="forgot-send-code-button"><i class="fa-solid fa-paper-plane"></i> <span data-i18n="public.login.send_code">Send Code</span></button>
+                        <button type="button" class="btn-secondary" id="cancel-forgot-modal"><i class="fa-solid fa-xmark"></i> <span data-i18n="public.login.cancel">Cancel</span></button>
                     </div>
                 </form>
             </div>
@@ -233,30 +233,30 @@ include_once '../../includes/header.php';
                 <form id="forgot-password-step2-form">
                     <input type="hidden" id="forgot-email-hidden" name="forgot_email">
                     <div class="field" id="forgot-code-field">
-                        <label for="forgot-code">Verification code</label>
+                        <label for="forgot-code" data-i18n="public.login.verification_code">Verification code</label>
                         <div class="input-wrapper">
                             <i class="fa-solid fa-key"></i>
-                            <input type="text" id="forgot-code" name="code" placeholder="Enter code" required maxlength="6">
+                            <input type="text" id="forgot-code" name="code" placeholder="Enter code" data-i18n-placeholder="public.login.forgot_code_placeholder" required maxlength="6">
                         </div>
                     </div>
 
                     <div id="forgot-password-fields" style="display: none;">
                         <div class="field">
-                            <label for="forgot-new-password">New password</label>
+                            <label for="forgot-new-password" data-i18n="public.login.new_password">New password</label>
                             <div class="input-wrapper password-wrapper">
                                 <i class="fa-solid fa-lock"></i>
-                                <input type="password" id="forgot-new-password" name="new_password" placeholder="Enter new password" required>
-                                <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false">
+                                <input type="password" id="forgot-new-password" name="new_password" placeholder="Enter new password" data-i18n-placeholder="public.login.forgot_new_password_placeholder" required>
+                                <button type="button" class="password-toggle" aria-label="Show password" data-i18n-aria-label="public.login.show_password" aria-pressed="false">
                                     <i class="fa-solid fa-eye"></i>
                                 </button>
                             </div>
                         </div>
                         <div class="field">
-                            <label for="forgot-confirm-password">Confirm password</label>
+                            <label for="forgot-confirm-password" data-i18n="public.login.confirm_password">Confirm password</label>
                             <div class="input-wrapper password-wrapper">
                                 <i class="fa-solid fa-lock"></i>
-                                <input type="password" id="forgot-confirm-password" name="confirm_password" placeholder="Confirm new password" required>
-                                <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false">
+                                <input type="password" id="forgot-confirm-password" name="confirm_password" placeholder="Confirm new password" data-i18n-placeholder="public.login.forgot_confirm_password_placeholder" required>
+                                <button type="button" class="password-toggle" aria-label="Show password" data-i18n-aria-label="public.login.show_password" aria-pressed="false">
                                     <i class="fa-solid fa-eye"></i>
                                 </button>
                             </div>
@@ -264,9 +264,9 @@ include_once '../../includes/header.php';
                     </div>
 
                     <div class="modal-actions">
-                        <button type="button" class="btn-primary" id="forgot-verify-code-button"><i class="fa-solid fa-check"></i> Verify Code</button>
-                        <button type="button" class="btn-primary hidden" id="forgot-reset-password-button" style="display: none;"><i class="fa-solid fa-key"></i> Reset Password</button>
-                        <button type="button" class="btn-secondary" id="forgot-back-button"><i class="fa-solid fa-arrow-left"></i> Back</button>
+                        <button type="button" class="btn-primary" id="forgot-verify-code-button"><i class="fa-solid fa-check"></i> <span data-i18n="public.login.verify_code">Verify Code</span></button>
+                        <button type="button" class="btn-primary hidden" id="forgot-reset-password-button" style="display: none;"><i class="fa-solid fa-key"></i> <span data-i18n="public.login.reset_password">Reset Password</span></button>
+                        <button type="button" class="btn-secondary" id="forgot-back-button"><i class="fa-solid fa-arrow-left"></i> <span data-i18n="public.login.back">Back</span></button>
                     </div>
                 </form>
             </div>

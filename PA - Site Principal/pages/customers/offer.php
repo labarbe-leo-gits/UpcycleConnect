@@ -156,7 +156,7 @@ if (!empty($offer['created_at'])) {
 
 		<div class="service-info">
 			<div class="info-section">
-				<h2>Description</h2>
+				<h2 data-i18n="customers.offer.description">Description</h2>
 				<p class="description-text"><?php echo nl2br(htmlspecialchars($offer['description'] ?? 'No description available')); ?></p>
 			</div>
 
@@ -165,7 +165,7 @@ if (!empty($offer['created_at'])) {
 				<div class="info-item">
 					<i class="fa-solid fa-user"></i>
 					<div class="info-content">
-						<span class="label">Seller</span>
+						<span class="label" data-i18n="customers.offer.seller">Seller</span>
 						<span class="value"><?php echo htmlspecialchars($creatorName); ?></span>
 					</div>
 				</div>
@@ -175,7 +175,7 @@ if (!empty($offer['created_at'])) {
 				<div class="info-item">
 					<i class="fa-regular fa-calendar"></i>
 					<div class="info-content">
-						<span class="label">Posted</span>
+						<span class="label" data-i18n="customers.offer.posted">Posted</span>
 						<span class="value"><?php echo $createdAt; ?></span>
 					</div>
 				</div>
@@ -186,14 +186,14 @@ if (!empty($offer['created_at'])) {
 						<i class="fa-solid fa-tag"></i>
 					<?php endif; ?>
 					<div class="info-content">
-						<span class="label">Price</span>
+						<span class="label" data-i18n="customers.offer.price">Price</span>
 						<span class="value price"><?php echo $priceDisplay; ?></span>
 					</div>
 				</div>				<?php if (!empty($offer['poids_materiaux'])): ?>
 				<div class="info-item">
 					<i class="fa-solid fa-weight-hanging"></i>
 					<div class="info-content">
-						<span class="label">Weight</span>
+						<span class="label" data-i18n="customers.offer.weight">Weight</span>
 						<span class="value"><?php echo htmlspecialchars($offer['poids_materiaux']); ?> kg</span>
 					</div>
 				</div>
@@ -202,7 +202,7 @@ if (!empty($offer['created_at'])) {
 				<div class="info-item">
 					<i class="fa-solid fa-recycle"></i>
 					<div class="info-content">
-						<span class="label">Material</span>
+						<span class="label" data-i18n="customers.offer.material">Material</span>
 						<span class="value"><?php echo htmlspecialchars($offer['type_materiaux']); ?></span>
 					</div>
 				</div>
@@ -212,7 +212,7 @@ if (!empty($offer['created_at'])) {
 				<div class="info-item">
 					<i class="fa-regular fa-eye"></i>
 					<div class="info-content">
-						<span class="label">Views</span>
+						<span class="label" data-i18n="customers.offer.views">Views</span>
 						<span class="value"><?php echo $views; ?></span>
 					</div>
 				</div>
@@ -222,11 +222,11 @@ if (!empty($offer['created_at'])) {
 			<div class="service-actions">
 				<?php if ($isOwnOffer): ?>
 					<button class="btn-primary" type="button" disabled>
-						Your Offer
+						<span data-i18n="customers.offer.your_offer">Your Offer</span>
 					</button>
 				<?php else: ?>
 					<button class="btn-primary" onclick="handlePurchase()">
-						<?php echo $price > 0 ? 'Buy Now' : 'Get Now'; ?>
+						<?php echo $price > 0 ? '<span data-i18n="customers.offer.buy_now">Buy Now</span>' : '<span data-i18n="customers.offer.get_now">Get Now</span>'; ?>
 					</button>
 				<?php endif; ?>
 				<a href="offers" class="btn-secondary">Back to Offers</a>

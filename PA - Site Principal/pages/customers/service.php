@@ -147,7 +147,7 @@ if (is_array($ordersDecoded)) {
         
         <div class="service-info">
             <div class="info-section">
-                <h2>Description</h2>
+                <h2 data-i18n="customers.service.description">Description</h2>
                 <p class="description-text"><?php echo nl2br(htmlspecialchars($service['description'] ?? 'No description available')); ?></p>
             </div>
             
@@ -156,7 +156,7 @@ if (is_array($ordersDecoded)) {
                 <div class="info-item">
                     <i class="fa-regular fa-calendar"></i>
                     <div class="info-content">
-                        <span class="label">Date</span>
+                        <span class="label" data-i18n="customers.service.date">Date</span>
                         <span class="value"><?php echo $serviceDate; ?></span>
                     </div>
                 </div>
@@ -166,7 +166,7 @@ if (is_array($ordersDecoded)) {
                 <div class="info-item">
                     <i class="fa-solid fa-clock"></i>
                     <div class="info-content">
-                        <span class="label">Schedules</span>
+                        <span class="label" data-i18n="customers.service.schedules">Schedules</span>
                         <span class="value">
                             <?php
                             $slots = array_map(function($slot) {
@@ -184,7 +184,7 @@ if (is_array($ordersDecoded)) {
                 <div class="info-item">
                     <i class="fa-solid fa-user"></i>
                     <div class="info-content">
-                        <span class="label">Organized by</span>
+                        <span class="label" data-i18n="customers.service.organized_by">Organized by</span>
                         <span class="value"><?php echo htmlspecialchars($creatorName); ?></span>
                     </div>
                 </div>
@@ -194,7 +194,7 @@ if (is_array($ordersDecoded)) {
                 <div class="info-item">
                     <i class="fa-solid fa-users"></i>
                     <div class="info-content">
-                        <span class="label">Spots left</span>
+                        <span class="label" data-i18n="customers.service.spots_left">Spots left</span>
                         <span class="value"><?php echo $spotsLeft; ?></span>
                     </div>
                 </div>
@@ -204,7 +204,7 @@ if (is_array($ordersDecoded)) {
                 <div class="info-item location">
                     <i class="fa-solid fa-location-dot"></i>
                     <div class="info-content">
-                        <span class="label">Location</span>
+                        <span class="label" data-i18n="customers.service.location">Location</span>
                         <span class="value">
                             <?php 
                             $location = [];
@@ -223,7 +223,7 @@ if (is_array($ordersDecoded)) {
                         <i class="fa-solid fa-tag"></i>
                     <?php endif; ?>
                     <div class="info-content">
-                        <span class="label">Price</span>
+                        <span class="label" data-i18n="customers.service.price">Price</span>
                         <span class="value price"><?php echo $priceDisplay; ?></span>
                     </div>
                 </div>
@@ -237,7 +237,7 @@ if (is_array($ordersDecoded)) {
                 <button class="<?php echo $buttonClass; ?>" onclick="handlePurchase()" <?php echo ($isFull || $booked) ? 'disabled' : ''; ?>>
                     <?php echo $buttonLabel; ?>
                 </button>
-                <a href="services" class="btn-secondary">Back to Services</a>
+                <a href="services" class="btn-secondary" data-i18n="customers.service.back_to_services">Back to Services</a>
             </div>
         </div>
     </div>

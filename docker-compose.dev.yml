@@ -42,7 +42,7 @@ services:
       - ./PA - API/.env:/app/.env:ro
     working_dir: /workspace
     command: >
-      sh -c "go mod download && go run api.go"
+      sh -c "go mod download && go run ."
     depends_on:
       db:
         condition: service_healthy

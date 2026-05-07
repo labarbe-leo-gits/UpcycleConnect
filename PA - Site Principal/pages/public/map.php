@@ -28,7 +28,7 @@ include_once '../../includes/header.php';
 
 <div class="container" style="padding:0;">
     <div style="position:relative;width:80%;margin:0 auto 12px;">
-        <input type="text" id="map-search-input" placeholder="Search address…" style="width:100%;padding:8px 12px;font-size:1em;border:1px solid #ccc;border-radius:6px;" />
+        <input type="text" id="map-search-input" placeholder="Search address…" data-i18n-placeholder="public.map.search_address" style="width:100%;padding:8px 12px;font-size:1em;border:1px solid #ccc;border-radius:6px;" />
         <div id="map-search-input-results" style="position:absolute;top:100%;left:0;right:0;z-index:1000;
             background:#fff;border:1px solid #e5e7eb;border-radius:8px;display:none;
             max-height:240px;overflow-y:auto;"></div>

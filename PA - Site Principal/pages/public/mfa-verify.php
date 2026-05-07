@@ -80,15 +80,15 @@ include_once '../../includes/header.php';
 
 <div class="container form">
     <form method="POST" action="" autocomplete="off" id="mfa-form">
-        <h2><i class="fa-solid fa-shield-halved"></i> Two-Factor Authentication</h2>
-        <p class="form-info">Open your authenticator app and enter the 6-digit code to continue.</p>
+        <h2><i class="fa-solid fa-shield-halved"></i> <span data-i18n="public.mfa.title">Two-Factor Authentication</span></h2>
+        <p class="form-info" data-i18n="public.mfa.description">Open your authenticator app and enter the 6-digit code to continue.</p>
 
         <?php if ($error_message): ?>
             <div class="error-message"><?= htmlspecialchars($error_message) ?></div>
         <?php endif; ?>
 
         <div class="field">
-            <label for="otp_code">Authentication Code</label>
+            <label for="otp_code" data-i18n="public.mfa.auth_code">Authentication Code</label>
             <div class="input-wrapper">
                 <i class="fa-solid fa-key"></i>
                 <input
@@ -97,6 +97,7 @@ include_once '../../includes/header.php';
                     name="otp_code"
                     class="iconInput"
                     placeholder="Enter 6-digit code"
+                    data-i18n-placeholder="public.mfa.code_placeholder"
                     maxlength="6"
                     inputmode="numeric"
                     pattern="[0-9]{6}"
@@ -108,11 +109,11 @@ include_once '../../includes/header.php';
         </div>
 
         <button type="submit" class="btn-primary" id="mfa-submit-btn">
-            <i class="fa-solid fa-check"></i> Verify
+            <i class="fa-solid fa-check"></i> <span data-i18n="public.mfa.verify">Verify</span>
         </button>
 
         <div class="form-footer">
-            <a href="login.php"><i class="fa-solid fa-arrow-left"></i> Back to Login</a>
+            <a href="login.php"><i class="fa-solid fa-arrow-left"></i> <span data-i18n="public.mfa.back_to_login">Back to Login</span></a>
         </div>
     </form>
 </div>

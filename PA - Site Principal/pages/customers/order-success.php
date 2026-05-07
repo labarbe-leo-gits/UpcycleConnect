@@ -54,8 +54,7 @@ if (!$service || isset($service['error'])) {
 }
 
 if (!$service && !$offer) {
-    echo '<div class="container"><p class="error-message">Product not found.</p></div>';
-    include_once '../../includes/footer.php';
+        echo '<div class="container"><p class="error-message" data-i18n="customers.order.cancel.product_not_found">Product not found.</p></div>';
     exit;
 }
 
@@ -217,13 +216,13 @@ $hasOrderError = (!$paymentVerified) || !empty($orderSaveError);
         <div class="checkout-header">
             <h1>
                 <?php if ($hasOrderError): ?>
-                    <i class="fa-solid fa-circle-xmark"></i> Order Issue
+                    <i class="fa-solid fa-circle-xmark"></i> <span data-i18n="customers.order.success.order_issue">Order Issue</span>
                 <?php else: ?>
-                    <i class="fa-solid fa-circle-check"></i> Order Confirmed
+                    <i class="fa-solid fa-circle-check"></i> <span data-i18n="customers.order.success.order_confirmed">Order Confirmed</span>
                 <?php endif; ?>
             </h1>
             <a href="<?php echo $productType === 'offer' ? 'offers' : 'services'; ?>" class="back-link">
-                <i class="fa-solid fa-arrow-left"></i> <?php echo $productType === 'offer' ? 'Back to offers' : 'Back to services'; ?>
+                <i class="fa-solid fa-arrow-left"></i> <span data-i18n="customers.order.success.back_to_list"><?php echo $productType === 'offer' ? 'Back to offers' : 'Back to services'; ?></span>
             </a>
         </div>
 
@@ -279,7 +278,7 @@ $hasOrderError = (!$paymentVerified) || !empty($orderSaveError);
                         <p>Payment ID: <?php echo htmlspecialchars($paymentIntentId); ?></p>
                     <?php endif; ?>
                     <?php if (!$orderSaveError): ?>
-                        <a class="btn-primary" href="<?php echo $productType === 'offer' ? 'offers' : 'services'; ?>">Browse more <?php echo $productType === 'offer' ? 'offers' : 'services'; ?></a>
+                        <a class="btn-primary" href="<?php echo $productType === 'offer' ? 'offers' : 'services'; ?>"><span data-i18n="customers.order.success.browse_more">Browse more</span> <?php echo $productType === 'offer' ? 'offers' : 'services'; ?></a>
                     <?php endif; ?>
                 <?php else: ?>
                     <p class="error-message"><?php echo htmlspecialchars($paymentError ?: 'Payment could not be verified.'); ?></p>

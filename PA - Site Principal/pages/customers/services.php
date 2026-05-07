@@ -16,24 +16,24 @@ $user = getLoggedInUser();
     <div class="services-toolbar offers-toolbar">
         <div class="offers-toolbar-filters">
             <select id="service-type-filter">
-                <option value="">All types</option>
+                <option value="" data-i18n="customers.services.all_types">All types</option>
             </select>
             <select id="service-page-size">
-                <option value="4">4 / page</option>
-                <option value="8">8 / page</option>
-                <option value="12">12 / page</option>
-                <option value="20">20 / page</option>
-                <option value="50">50 / page</option>
+                <option value="4" data-i18n="customers.services.per_page_4">4 / page</option>
+                <option value="8" data-i18n="customers.services.per_page_8">8 / page</option>
+                <option value="12" data-i18n="customers.services.per_page_12">12 / page</option>
+                <option value="20" data-i18n="customers.services.per_page_20">20 / page</option>
+                <option value="50" data-i18n="customers.services.per_page_50">50 / page</option>
             </select>
             <button id="service-reset-filters" class="btn-secondary" type="button">
                 <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
-                Reset filters
+                <span data-i18n="customers.services.reset_filters">Reset filters</span>
             </button>
         </div>
         <div class="offers-toolbar-search">
             <div class="toolbar-search-wrap">
                 <i class="fa-solid fa-search toolbar-search-icon"></i>
-                <input id="service-search" type="search" placeholder="Search…" autocomplete="off" />
+                <input id="service-search" type="search" placeholder="Search…" data-i18n-placeholder="customers.services.search_placeholder" autocomplete="off" />
             </div>
         </div>
     </div>

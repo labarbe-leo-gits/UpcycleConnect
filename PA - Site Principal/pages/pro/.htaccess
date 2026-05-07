@@ -7,7 +7,7 @@ RewriteCond %{REQUEST_URI} -api\.php$ [NC]
 RewriteRule ^ - [L]
 
 RewriteCond %{THE_REQUEST} \s/+([^.]+)\.php [NC]
-RewriteRule ^ %1 [R=301,L,NE]
+RewriteRule ^ /%1 [R=301,L,NE]
 
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_FILENAME}.php -f

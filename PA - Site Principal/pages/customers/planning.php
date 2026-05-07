@@ -9,18 +9,18 @@ $user = getLoggedInUser();
 
 	<div class="planning-header">
 		<div class="planning-date-nav">
-			<button class="date-nav-btn" id="prev-week-btn" title="Previous week">
+			<button class="date-nav-btn" id="prev-week-btn" title="Previous week" data-i18n-title="customers.planning.previous_week">
 				<i class="fa-solid fa-chevron-left"></i>
 			</button>
 			<span class="planning-date-range" id="planning-date-range"></span>
-			<button class="date-nav-btn" id="next-week-btn" title="Next week">
+			<button class="date-nav-btn" id="next-week-btn" title="Next week" data-i18n-title="customers.planning.next_week">
 				<i class="fa-solid fa-chevron-right"></i>
 			</button>
-			<button class="date-nav-btn" id="today-btn" title="Jump to this week" style="margin-left:10px;">
+			<button class="date-nav-btn" id="today-btn" title="Jump to this week" data-i18n-title="customers.planning.jump_to_this_week" style="margin-left:10px;">
 				<i class="fa-solid fa-calendar-day"></i>
 			</button>
 		</div>
-		<button class="add-planning-button" id="add-planning-btn">
+		<button class="add-planning-button" id="add-planning-btn" data-i18n="customers.planning.add_time_slot">
 			<i class="fa-solid fa-plus"></i>
 			Add Time Slot
 		</button>
@@ -34,14 +34,14 @@ $user = getLoggedInUser();
 			<table class="timetable">
 				<thead>
 					<tr>
-						<th class="time-column">Time</th>
-						<th id="day-header-0">Monday</th>
-						<th id="day-header-1">Tuesday</th>
-						<th id="day-header-2">Wednesday</th>
-						<th id="day-header-3">Thursday</th>
-						<th id="day-header-4">Friday</th>
-						<th id="day-header-5">Saturday</th>
-						<th id="day-header-6">Sunday</th>
+						<th class="time-column" data-i18n="customers.planning.time">Time</th>
+						<th id="day-header-0" data-i18n="customers.planning.monday">Monday</th>
+						<th id="day-header-1" data-i18n="customers.planning.tuesday">Tuesday</th>
+						<th id="day-header-2" data-i18n="customers.planning.wednesday">Wednesday</th>
+						<th id="day-header-3" data-i18n="customers.planning.thursday">Thursday</th>
+						<th id="day-header-4" data-i18n="customers.planning.friday">Friday</th>
+						<th id="day-header-5" data-i18n="customers.planning.saturday">Saturday</th>
+						<th id="day-header-6" data-i18n="customers.planning.sunday">Sunday</th>
 					</tr>
 				</thead>
 				<tbody id="timetable-body">
@@ -62,12 +62,12 @@ $user = getLoggedInUser();
 		</div>
 
 		<div class="planning-list-view">
-			<h2>Upcoming Slots</h2>
+			<h2 data-i18n="customers.planning.upcoming_slots">Upcoming Slots</h2>
 			<div class="planning-list" id="planning-list">
 				<div class="empty-state">
 					<i class="fa-solid fa-calendar-xmark"></i>
-					<p>No planning slots yet</p>
-					<small>Click "Add Time Slot" to create your first availability</small>
+					<p data-i18n="customers.planning.no_slots_yet">No planning slots yet</p>
+					<small data-i18n="customers.planning.click_add_time_slot">Click "Add Time Slot" to create your first availability</small>
 				</div>
 			</div>
 		</div>
@@ -77,15 +77,15 @@ $user = getLoggedInUser();
 <div class="planning-modal" id="planning-modal">
 	<div class="planning-modal-content">
 		<span class="close-button" id="close-planning-modal">&times;</span>
-		<h2>Add Planning Slot</h2>
+		<h2 data-i18n="customers.planning.add_planning_slot">Add Planning Slot</h2>
 		<form id="planning-form">
             <div id="planning-error" class="form-error" style="display:none;"></div>
 			<div class="form-group">
-				<label for="planning-date">Date:</label>
+				<label for="planning-date" data-i18n="customers.planning.date">Date:</label>
 				<input type="date" id="planning-date" name="date" value="<?php echo date('Y-m-d'); ?>">
 			</div>
 			<div class="form-group">
-				<label for="planning-start-time">Start Time:</label>
+				<label for="planning-start-time" data-i18n="customers.planning.start_time">Start Time:</label>
 				<div class="time-selects">
 					<select id="planning-start-hour" name="start_hour">
 						<?php for ($h = 1; $h <= 12; $h++): ?>
@@ -105,7 +105,7 @@ $user = getLoggedInUser();
 				</div>
 			</div>
 			<div class="form-group">
-				<label for="planning-end-time">End Time:</label>
+				<label for="planning-end-time" data-i18n="customers.planning.end_time">End Time:</label>
 				<div class="time-selects">
 					<select id="planning-end-hour" name="end_hour">
 						<?php for ($h = 1; $h <= 12; $h++): ?>
@@ -125,16 +125,16 @@ $user = getLoggedInUser();
 				</div>
 			</div>
 			<div class="form-group">
-				<label for="planning-title">Title:</label>
-				<input type="text" id="planning-title" name="title" placeholder="Upcycling learning" required>
+				<label for="planning-title" data-i18n="customers.planning.title">Title:</label>
+				<input type="text" id="planning-title" name="title" placeholder="Upcycling learning" data-i18n-placeholder="customers.planning.title_placeholder" required>
 			</div>
 			<div class="form-group">
-				<label for="planning-description">Description (Optional):</label>
-				<textarea id="planning-description" name="description" placeholder="Add a note..."></textarea>
+				<label for="planning-description" data-i18n="customers.planning.description_optional">Description (Optional):</label>
+				<textarea id="planning-description" name="description" placeholder="Add a note..." data-i18n-placeholder="customers.planning.add_note"></textarea>
 			</div>
 			<div class="form-actions">
-				<button type="submit" class="btn-primary"><i class="fa-solid fa-floppy-disk"></i>&nbsp;Save Slot</button>
-				<button type="button" class="btn-secondary" id="cancel-planning"><i class="fa-solid fa-xmark"></i>&nbsp;Cancel</button>
+				<button type="submit" class="btn-primary"><i class="fa-solid fa-floppy-disk"></i>&nbsp;<span data-i18n="customers.planning.save_slot">Save Slot</span></button>
+				<button type="button" class="btn-secondary" id="cancel-planning"><i class="fa-solid fa-xmark"></i>&nbsp;<span data-i18n="customers.planning.cancel">Cancel</span></button>
 			</div>
 		</form>
 	</div>
@@ -143,7 +143,7 @@ $user = getLoggedInUser();
 <div class="view-planning-modal">
 	<div class="view-planning-modal-content">
 		<span class="close-button" id="close-view-planning-modal">&times;</span>
-		<h2 id="view-planning-title">Slot Details</h2>
+		<h2 id="view-planning-title" data-i18n="customers.planning.slot_details">Slot Details</h2>
 		<p><strong>Date:</strong> <span id="view-planning-date"></span></p>
 		<p><strong>Time:</strong> <span id="view-planning-time"></span></p>
 		<p><strong>Description:</strong></p>
@@ -154,15 +154,15 @@ $user = getLoggedInUser();
 <div class="edit-planning-modal">
 	<div class="edit-planning-modal-content">
 		<span class="close-button" id="close-edit-planning-modal">&times;</span>
-		<h2 class="middle">Edit Planning Slot</h2>
+		<h2 class="middle" data-i18n="customers.planning.edit_planning_slot">Edit Planning Slot</h2>
 		<form id="edit-planning-form" id="edit-planning-form">
 			<div id="edit-planning-error" class="form-error" style="display:none;"></div>
 			<div class="form-group">
-				<label for="edit-planning-date">Date:</label>
+				<label for="edit-planning-date" data-i18n="customers.planning.date">Date:</label>
 				<input type="date" id="edit-planning-date" name="date">
 			</div>
 			<div class="form-group">
-				<label for="edit-planning-start-time">Start Time:</label>
+				<label for="edit-planning-start-time" data-i18n="customers.planning.start_time">Start Time:</label>
 				<div class="time-selects">
 					<select id="edit-planning-start-hour" name="start_hour">
 						<?php for ($h = 1; $h <= 12; $h++): ?>
@@ -182,7 +182,7 @@ $user = getLoggedInUser();
 				</div>
 			</div>
 			<div class="form-group">
-				<label for="edit-planning-end-time">End Time:</label>
+				<label for="edit-planning-end-time" data-i18n="customers.planning.end_time">End Time:</label>
 				<div class="time-selects">
 					<select id="edit-planning-end-hour" name="end_hour">
 						<?php for ($h = 1; $h <= 12; $h++): ?>
@@ -202,16 +202,16 @@ $user = getLoggedInUser();
 				</div>
 			</div>
 			<div class="form-group">
-				<label for="edit-planning-title">Title:</label>
-				<input type="text" id="edit-planning-title" name="title" placeholder="Upcycling learning" required>
+				<label for="edit-planning-title" data-i18n="customers.planning.title">Title:</label>
+				<input type="text" id="edit-planning-title" name="title" placeholder="Upcycling learning" data-i18n-placeholder="customers.planning.title_placeholder" required>
 			</div>
 			<div class="form-group">
-				<label for="edit-planning-description">Description (Optional):</label>
-				<textarea id="edit-planning-description" name="description" placeholder="Add a note..."></textarea>
+				<label for="edit-planning-description" data-i18n="customers.planning.description_optional">Description (Optional):</label>
+				<textarea id="edit-planning-description" name="description" placeholder="Add a note..." data-i18n-placeholder="customers.planning.add_note"></textarea>
 			</div>
 			<div class="form-actions">
-				<button type="submit" class="btn-primary"><i class="fa-solid fa-floppy-disk"></i>&nbsp;Save Changes</button>
-				<button type="button" class="btn-secondary" id="cancel-edit-planning"><i class="fa-solid fa-xmark"></i>&nbsp;Cancel</button>
+				<button type="submit" class="btn-primary"><i class="fa-solid fa-floppy-disk"></i>&nbsp;<span data-i18n="customers.planning.save_changes">Save Changes</span></button>
+				<button type="button" class="btn-secondary" id="cancel-edit-planning"><i class="fa-solid fa-xmark"></i>&nbsp;<span data-i18n="customers.planning.cancel">Cancel</span></button>
 			</div>
 		</form>
 	</div>
@@ -220,11 +220,11 @@ $user = getLoggedInUser();
 <div class="delete-confirmation-modal">
 	<div class="delete-confirmation-content">
 		<span class="close-button" id="close-delete-confirmation">&times;</span>
-		<h2>Confirm Deletion</h2>
-		<p>Are you sure you want to delete this planning slot?</p>
+		<h2 data-i18n="customers.planning.confirm_deletion">Confirm Deletion</h2>
+		<p data-i18n="customers.planning.delete_planning_slot">Are you sure you want to delete this planning slot?</p>
 		<div class="form-actions">
-			<button class="btn-danger" id="confirm-delete-btn"><i class="fa-solid fa-trash"></i>&nbsp;Delete</button>
-			<button class="btn-secondary" id="cancel-delete-btn"><i class="fa-solid fa-xmark"></i>&nbsp;Cancel</button>
+			<button class="btn-danger" id="confirm-delete-btn"><i class="fa-solid fa-trash"></i>&nbsp;<span data-i18n="customers.planning.delete">Delete</span></button>
+			<button class="btn-secondary" id="cancel-delete-btn"><i class="fa-solid fa-xmark"></i>&nbsp;<span data-i18n="customers.planning.cancel">Cancel</span></button>
 		</div>
 	</div>
 </div>
