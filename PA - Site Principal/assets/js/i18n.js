@@ -224,6 +224,14 @@ async function initializeI18n() {
   translateAttributes(translations, fallback);
   translateTextNodes(translations, fallback);
   translateTitle(translations, fallback);
+  window.currentLocale = locale;
+  window.currentTranslations = translations || {};
+  window.currentFallback = fallback || {};
+  window.translatePage = function () {
+    translateAttributes(window.currentTranslations || {}, window.currentFallback || {});
+    translateTextNodes(window.currentTranslations || {}, window.currentFallback || {});
+    translateTitle(window.currentTranslations || {}, window.currentFallback || {});
+  };
 }
 
 document.addEventListener('DOMContentLoaded', () => {

@@ -259,7 +259,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="success-message"><?= htmlspecialchars($paymentSuccess) ?></div>
     <?php endif; ?>
 
-    <h1>Welcome<?php echo $companyName !== '' ? ', ' . htmlspecialchars($companyName) : ''; ?>!</h1>
+    <h1><span data-i18n="pro.profile.welcome">Welcome</span><?php echo $companyName !== '' ? ', ' . htmlspecialchars($companyName) : ''; ?>!</h1>
 
     <div class="profile-card">
         <div class="profile-header-flex">
@@ -271,12 +271,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     data-blob-src="<?= $profilePictureUrl ?>"
                     src="<?= $profilePictureUrl ?>"
                     alt="Profile Picture"
+                    data-i18n-alt="pro.profile.profile_picture_alt"
                     class="profile-pic-large"
                     id="profile-pic-preview"
                 >
                 <input type="file" id="profile-picture-input" accept="image/*" style="display:none">
                 <button type="button" id="upload-profile-picture-btn" class="btn-secondary" style="margin-top:1rem;">
-                    <i class="fa-solid fa-camera"></i> Change avatar
+                    <i class="fa-solid fa-camera"></i> <span data-i18n="pro.profile.change_avatar">Change avatar</span>
                 </button>
                 <div id="profile-picture-feedback" class="profile-picture-feedback" aria-live="polite" style="margin-top:.75rem;"></div>
                 <div id="profile-picture-history" class="profile-picture-history" style="margin-top:1rem;"></div>
@@ -291,28 +292,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php endif; ?>
                 <div class="profile-fields">
                     <div class="profile-field-row">
-                        <span class="profile-label">User ID:</span>
+                        <span class="profile-label" data-i18n="pro.profile.user_id">User ID:</span>
                         <span><?= htmlspecialchars($user['id']) ?></span>
-                        <button class="btn-copy" data-copy="<?= htmlspecialchars($user['id']) ?>" title="Copy User ID">
+                        <button class="btn-copy" data-copy="<?= htmlspecialchars($user['id']) ?>" data-i18n-title="pro.profile.copy_user_id_title" title="Copy User ID">
                             <i class="fa-solid fa-copy"></i>
                         </button>
                     </div>
                     <div class="profile-field-row editable-row">
-                        <span class="profile-label">Username:</span>
+                        <span class="profile-label" data-i18n="pro.profile.username">Username:</span>
                         <span id="username-value"><?= htmlspecialchars($user['username']) ?></span>
-                        <button class="btn-copy btn-edit-inline" data-edit="username" title="Edit Username">
+                        <button class="btn-copy btn-edit-inline" data-edit="username" data-i18n-title="pro.profile.edit_username_title" title="Edit Username">
                             <i class="fa-solid fa-pen"></i>
                         </button>
                     </div>
                     <div class="profile-field-row editable-row">
-                        <span class="profile-label">Email:</span>
+                        <span class="profile-label" data-i18n="pro.profile.email">Email:</span>
                         <span id="email-value"><?= htmlspecialchars($user['email']) ?></span>
-                        <button class="btn-copy btn-edit-inline" data-edit="email" title="Edit Email">
+                        <button class="btn-copy btn-edit-inline" data-edit="email" data-i18n-title="pro.profile.edit_email_title" title="Edit Email">
                             <i class="fa-solid fa-pen"></i>
                         </button>
                     </div>
                     <div class="profile-field-row">
-                        <span class="profile-label">Balance:</span>
+                        <span class="profile-label" data-i18n="pro.profile.balance">Balance:</span>
                         <span id="balance-total"><?= htmlspecialchars((string) $balance) ?></span> €
                     </div>
                 </div>
@@ -334,41 +335,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div> -->
                 <div class="profile-actions">
                     <button type="button" class="btn-primary btn-inline" id="open-payment-modal">
-                        <i class="fa-solid fa-money-check-dollar"></i> Request Payment of Balance
+                        <i class="fa-solid fa-money-check-dollar"></i> <span data-i18n="pro.profile.request_payment">Request Payment of Balance</span>
                     </button>
                     <button type="button" class="btn-secondary btn-inline" id="download-personal-data-btn">
-                        <i class="fa-solid fa-download"></i> Download My Personal Data
+                        <i class="fa-solid fa-download"></i> <span data-i18n="pro.profile.download_personal_data">Download My Personal Data</span>
                     </button>
-                    <a href="dashboard" id="sub-quick-access" class="sub-quick-btn" title="Subscription">
+                    <a href="dashboard" id="sub-quick-access" class="sub-quick-btn" data-i18n-title="pro.profile.subscription_title" title="Subscription">
                         <i class="fa-solid fa-gauge-high"></i>
-                        <span id="sub-quick-label">Dashboard</span>
+                        <span id="sub-quick-label" data-i18n="pro.profile.dashboard">Dashboard</span>
                     </a>
                     <button onclick="document.getElementById('logout-form').submit()" class="btn-logout">
-                        <i class="fa-solid fa-right-from-bracket"></i> Logout
+                        <i class="fa-solid fa-right-from-bracket"></i> <span data-i18n="pro.profile.logout">Logout</span>
                     </button>
                 </div>
             </div>
         </div>
         <hr>
         <div class="profile-tabs">
-            <button class="tab-btn active" data-tab="general">General</button>
-            <button class="tab-btn" data-tab="myupdoc">My UpDoc</button>
-            <button class="tab-btn" data-tab="business">Business Info</button>
-            <button class="tab-btn" data-tab="contracts">Contracts</button>
-            <button class="tab-btn" data-tab="billing">Billing history</button>
-            <button class="tab-btn" data-tab="marketplace">Marketplace</button>
-            <button class="tab-btn" data-tab="favorites">Favorites</button>
-            <button class="tab-btn" data-tab="badges">Badges</button>
+            <button class="tab-btn active" data-tab="general" data-i18n="pro.profile.tab.general">General</button>
+            <button class="tab-btn" data-tab="myupdoc" data-i18n="pro.profile.tab.myupdoc">My UpDoc</button>
+            <button class="tab-btn" data-tab="business" data-i18n="pro.profile.tab.business">Business Info</button>
+            <button class="tab-btn" data-tab="contracts" data-i18n="pro.profile.tab.contracts">Contracts</button>
+            <button class="tab-btn" data-tab="billing" data-i18n="pro.profile.tab.billing">Billing history</button>
+            <button class="tab-btn" data-tab="marketplace" data-i18n="pro.profile.tab.marketplace">Marketplace</button>
+            <button class="tab-btn" data-tab="favorites" data-i18n="pro.profile.tab.favorites">Favorites</button>
+            <button class="tab-btn" data-tab="badges" data-i18n="pro.profile.tab.badges">Badges</button>
             <?php if (empty($user['oauth_provider'])): ?>
-                <button class="tab-btn" data-tab="security">Security</button>
-                <button class="tab-btn" data-tab="mfa">MFA</button>
+                <button class="tab-btn" data-tab="security" data-i18n="pro.profile.tab.security">Security</button>
+                <button class="tab-btn" data-tab="mfa" data-i18n="pro.profile.tab.mfa">MFA</button>
             <?php endif; ?>
         </div>
 
         <div class="tab-content" id="myupdoc-tab" style="display:none">
             <div class="updoc-tab-header">
             <div class="updoc-tab-title-group">
-                <h3><i class="fa-solid fa-book-open"></i> My UpDoc Projects</h3>
+                <h3><i class="fa-solid fa-book-open"></i> <span data-i18n="pro.profile.my_updoc_projects">My UpDoc Projects</span></h3>
                 <?php if ($updocQuota !== null):
                     $usagePercent = $updocQuota === 0 ? 0 : min(100, (int) floor($updocProjectCount * 100 / max(1, $updocQuota)));
                     if ($updocQuota === 0) {
@@ -384,19 +385,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="updoc-quota-info">
                     <span class="updoc-quota-pill <?= htmlspecialchars($usageClass) ?>">
                         <?php if ($updocQuota === 0): ?>
-                            Unlimited projects
+                            <span data-i18n="pro.profile.unlimited_projects">Unlimited projects</span>
                         <?php else: ?>
                             <?= htmlspecialchars($updocProjectCount . ' / ' . $updocQuota . ' projects used') ?>
                         <?php endif; ?>
                     </span>
                     <?php if ($updocQuota === 0): ?>
-                        <span class="updoc-quota-pill updoc-quota-note">Current use: <?= htmlspecialchars($updocProjectCount) ?> project<?= $updocProjectCount === 1 ? '' : 's' ?></span>
+                        <span class="updoc-quota-pill updoc-quota-note"><span data-i18n="pro.profile.current_use">Current use</span>: <?= htmlspecialchars($updocProjectCount) ?> project<?= $updocProjectCount === 1 ? '' : 's' ?></span>
                     <?php endif; ?>
                 </div>
                 <?php endif; ?>
             </div>
             <a href="../common/updoc-create" class="updoc-create-btn">
-                <i class="fa-solid fa-plus"></i> New project
+                <i class="fa-solid fa-plus"></i> <span data-i18n="pro.profile.new_project">New project</span>
             </a>
         </div>
 
@@ -411,35 +412,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <p id="updoc-empty-msg" class="updoc-tab-empty" style="display:none;">
                 <i class="fa-solid fa-book-open" style="font-size:1.5rem;color:#ccc;display:block;margin-bottom:.5rem;"></i>
-                You haven't created any projects yet.<br>
-                <a href="../common/updoc-create" style="color:var(--color-primary,#3d8b5e);font-weight:600;">Create your first UpDoc project</a>
+                <span data-i18n="pro.profile.updoc_empty_message">You haven't created any projects yet.</span><br>
+                <a href="../common/updoc-create" style="color:var(--color-primary,#3d8b5e);font-weight:600;"><span data-i18n="pro.profile.updoc_create_first">Create your first UpDoc project</span></a>
             </p>
 
             <div class="updoc-tab-pagination" id="updoc-pagination" style="display:none;">
         </div>
         </div>
         <div class="tab-content" id="favorites-tab" style="display:none;">
-            <h3><i class="fa-solid fa-heart"></i> Favorites</h3>
-            <p style="margin-top:0.5rem;color:#555;">Saved annonces are shown here. Click the heart button to remove an item from your favorites.</p>
+            <h3><i class="fa-solid fa-heart"></i> <span data-i18n="pro.profile.favorites">Favorites</span></h3>
+            <p style="margin-top:0.5rem;color:#555;"><span data-i18n="pro.profile.favorites_description">Saved annonces are shown here. Click the heart button to remove an item from your favorites.</span></p>
             <div id="favorites-status" style="margin:1rem 0 0;display:none;color:#d97706;"></div>
             <div id="favorites-list" class="favorites-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1rem;align-items:flex-start;"></div>
-            <p id="favorites-empty" style="display:none;color:#666;margin-top:1rem;">You have no favorite annonces yet.</p>
+            <p id="favorites-empty" style="display:none;color:#666;margin-top:1rem;" data-i18n="pro.profile.favorites_empty">You have no favorite annonces yet.</p>
         </div>
 
         <div class="modal-overlay" id="updoc-delete-modal" aria-hidden="true">
             <div class="modal" role="dialog" aria-modal="true" aria-labelledby="updoc-delete-title">
                 <div class="modal-header">
-                    <h2 id="updoc-delete-title">Delete project</h2>
-                    <button type="button" class="modal-close" id="updoc-delete-close" aria-label="Close">
+                    <h2 id="updoc-delete-title" data-i18n="pro.profile.updoc_delete_project">Delete project</h2>
+                    <button type="button" class="modal-close" id="updoc-delete-close" data-i18n-aria-label="pro.profile.close" aria-label="Close">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <p>Are you sure you want to delete <strong id="updoc-delete-name"></strong>? This action cannot be undone.</p>
+                    <p><span data-i18n-html="pro.profile.updoc_delete_confirmation">Are you sure you want to delete <strong id="updoc-delete-name"></strong>? This action cannot be undone.</span></p>
                 </div>
                 <div class="modal-actions">
-                    <button type="button" class="btn-secondary" id="updoc-delete-cancel">Cancel</button>
-                    <button type="button" class="btn-primary" id="updoc-delete-confirm" style="background:#e53e3e;">Delete</button>
+                    <button type="button" class="btn-secondary" id="updoc-delete-cancel" data-i18n="pro.profile.cancel">Cancel</button>
+                    <button type="button" class="btn-primary" id="updoc-delete-confirm" style="background:#e53e3e;" data-i18n="pro.profile.delete">Delete</button>
                 </div>
             </div>
         </div>
@@ -486,12 +487,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ?>
             <p class="balance-note" style="margin-top:.5rem;">
                 <i class="fa-solid fa-circle-info"></i>
-                Your account is active. Use the tabs above to manage your business information and security settings.
+                <span data-i18n="pro.profile.account_active_info">Your account is active. Use the tabs above to manage your business information and security settings.</span>
             </p>
 
             <div class="profile-accordion" id="acc-subscription">
                 <button class="accordion-toggle" type="button" aria-expanded="false">
-                    <span><i class="fas fa-crown"></i> Subscription</span>
+                    <span><i class="fas fa-crown"></i> <span data-i18n="pro.profile.subscription">Subscription</span></span>
                     <i class="fa-solid fa-chevron-down accordion-chevron"></i>
                 </button>
                 <div class="accordion-body" style="display:none">
@@ -507,43 +508,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <div class="tab-content" id="business-tab" style="display:none;">
-            <h3><i class="fa-solid fa-briefcase"></i> Business Information</h3>
+            <h3><i class="fa-solid fa-briefcase"></i> <span data-i18n="pro.profile.business_information">Business Information</span></h3>
             <div class="profile-fields" style="margin-top:1rem;">
                 <div class="profile-field-row editable-row">
-                    <span class="profile-label">Company name:</span>
+                    <span class="profile-label" data-i18n="pro.profile.company_name">Company name:</span>
                     <span id="company_name-value"><?= htmlspecialchars($companyName) ?></span>
-                    <button class="btn-copy btn-edit-inline" data-edit="company_name" title="Edit Company Name">
+                    <button class="btn-copy btn-edit-inline" data-edit="company_name" data-i18n-title="pro.profile.edit_company_name_title" title="Edit Company Name">
                         <i class="fa-solid fa-pen"></i>
                     </button>
                 </div>
                 <div class="profile-field-row editable-row">
-                    <span class="profile-label">Contact first name:</span>
+                    <span class="profile-label" data-i18n="pro.profile.contact_first_name">Contact first name:</span>
                     <span id="first_name-value"><?= htmlspecialchars($firstName) ?></span>
-                    <button class="btn-copy btn-edit-inline" data-edit="first_name" title="Edit First Name">
+                    <button class="btn-copy btn-edit-inline" data-edit="first_name" data-i18n-title="pro.profile.edit_first_name_title" title="Edit First Name">
                         <i class="fa-solid fa-pen"></i>
                     </button>
                 </div>
                 <div class="profile-field-row editable-row">
-                    <span class="profile-label">Contact last name:</span>
+                    <span class="profile-label" data-i18n="pro.profile.contact_last_name">Contact last name:</span>
                     <span id="last_name-value"><?= htmlspecialchars($lastName) ?></span>
-                    <button class="btn-copy btn-edit-inline" data-edit="last_name" title="Edit Last Name">
+                    <button class="btn-copy btn-edit-inline" data-edit="last_name" data-i18n-title="pro.profile.edit_last_name_title" title="Edit Last Name">
                         <i class="fa-solid fa-pen"></i>
                     </button>
                 </div>
                 <div class="profile-field-row">
-                    <span class="profile-label">Account type:</span>
-                    <span>Professional</span>
+                    <span class="profile-label" data-i18n="pro.profile.account_type">Account type:</span>
+                    <span data-i18n="pro.profile.professional">Professional</span>
                 </div>
             </div>
         </div>
 
         <div class="tab-content" id="marketplace-tab" style="display:none;">
-            <h3><i class="fa-solid fa-store"></i> Marketplace</h3>
-            <p class="balance-note" style="margin-top:.5rem;"><i class="fa-solid fa-circle-info"></i> Manage your posted offers and order history here.</p>
+            <h3><i class="fa-solid fa-store"></i> <span data-i18n="pro.profile.marketplace">Marketplace</span></h3>
+            <p class="balance-note" style="margin-top:.5rem;"><i class="fa-solid fa-circle-info"></i> <span data-i18n="pro.profile.manage_posted_offers">Manage your posted offers and order history here.</span></p>
 
             <div class="profile-accordion" id="acc-orders" data-section="orders">
                 <button class="accordion-toggle" type="button" aria-expanded="false">
-                    <span><i class="fa-solid fa-box-open"></i> My Orders</span>
+                    <span><i class="fa-solid fa-box-open"></i> <span data-i18n="pro.profile.my_orders">My Orders</span></span>
                     <i class="fa-solid fa-chevron-down accordion-chevron"></i>
                 </button>
                 <div class="accordion-body" style="display:none">
@@ -556,18 +557,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="acc-carousel" style="display:none">
                         <div class="acc-track" role="list"></div>
                         <div class="acc-nav">
-                            <button class="btn-secondary acc-prev" type="button" disabled><i class="fa-solid fa-chevron-left"></i> Previous</button>
+                            <button class="btn-secondary acc-prev" type="button" disabled><i class="fa-solid fa-chevron-left"></i> <span data-i18n="pro.profile.previous">Previous</span></button>
                             <span class="acc-page-info"></span>
-                            <button class="btn-secondary acc-next" type="button"><i class="fa-solid fa-chevron-right"></i> See more</button>
+                            <button class="btn-secondary acc-next" type="button"><i class="fa-solid fa-chevron-right"></i> <span data-i18n="pro.profile.see_more">See more</span></button>
                         </div>
                     </div>
-                    <p class="acc-empty" style="display:none">You have no orders yet.</p>
+                    <p class="acc-empty" style="display:none" data-i18n="pro.profile.no_orders_yet">You have no orders yet.</p>
                 </div>
             </div>
 
             <div class="profile-accordion" id="acc-annonces" data-section="annonces">
                 <button class="accordion-toggle" type="button" aria-expanded="false">
-                    <span><i class="fa-solid fa-tag"></i> My Posted Offers</span>
+                    <span><i class="fa-solid fa-tag"></i> <span data-i18n="pro.profile.my_posted_offers">My Posted Offers</span></span>
                     <i class="fa-solid fa-chevron-down accordion-chevron"></i>
                 </button>
                 <div class="accordion-body" style="display:none">
@@ -580,38 +581,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="acc-carousel" style="display:none">
                         <div class="acc-track" role="list"></div>
                         <div class="acc-nav">
-                            <button class="btn-secondary acc-prev" type="button" disabled><i class="fa-solid fa-chevron-left"></i> Previous</button>
+                            <button class="btn-secondary acc-prev" type="button" disabled><i class="fa-solid fa-chevron-left"></i> <span data-i18n="pro.profile.previous">Previous</span></button>
                             <span class="acc-page-info"></span>
-                            <button class="btn-secondary acc-next" type="button"><i class="fa-solid fa-chevron-right"></i> See more</button>
+                            <button class="btn-secondary acc-next" type="button"><i class="fa-solid fa-chevron-right"></i> <span data-i18n="pro.profile.see_more">See more</span></button>
                         </div>
                     </div>
-                    <p class="acc-empty" style="display:none">You have no posted offers yet.</p>
+                    <p class="acc-empty" style="display:none" data-i18n="pro.profile.no_posted_offers_yet">You have no posted offers yet.</p>
                 </div>
             </div>
 
             <div class="profile-accordion" id="acc-danger-zone" data-section="danger-zone">
                 <button class="accordion-toggle" type="button" aria-expanded="false">
-                    <span><i class="fa-solid fa-skull"></i> Danger zone</span>
+                    <span><i class="fa-solid fa-skull"></i> <span data-i18n="pro.profile.danger_zone">Danger zone</span></span>
                     <i class="fa-solid fa-chevron-down accordion-chevron"></i>
                 </button>
                 <div class="accordion-body" style="display:none">
                     <div style="padding: 1.5rem; border: 1px solid #fee2e2; border-radius: 8px; background-color: #fef2f2;">
                         <h4 style="margin: 0 0 0.5rem 0; color: #c53030; display: flex; align-items: center; gap: 0.5rem;">
                             <i class="fa-solid fa-triangle-exclamation"></i>
-                            Delete Account
+                            <span data-i18n="pro.profile.delete_account">Delete Account</span>
                         </h4>
-                        <p style="margin: 0.5rem 0 1rem 0; color: #742a2a; font-size: 0.95rem;">
+                        <p style="margin: 0.5rem 0 1rem 0; color: #742a2a; font-size: 0.95rem;" data-i18n="pro.profile.delete_account_warning">
                             This action is permanent and cannot be undone. Your account and all associated data will be deleted.
                         </p>
                         <button type="button" id="delete-account-btn" class="btn-danger" style="background: #c53030;">
-                            <i class="fa-solid fa-trash"></i> Delete My Account
+                            <i class="fa-solid fa-trash"></i> <span data-i18n="pro.profile.delete_my_account">Delete My Account</span>
                         </button>
                     </div>
                 </div>
             </div>
         </div>
         <div class="tab-content" id="contracts-tab" style="display:none;">
-            <h3><i class="fa-solid fa-file-contract"></i> Contracts</h3>
+            <h3><i class="fa-solid fa-file-contract"></i> <span data-i18n="pro.profile.contracts">Contracts</span></h3>
             <div id="contracts-skeleton" class="acc-skeleton-row" style="display:none;">
                 <div class="acc-skel-card"></div>
                 <div class="acc-skel-card"></div>
@@ -621,16 +622,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div id="contracts-grid" class="acc-carousel" style="display:none;">
                 <div class="acc-track" role="list"></div>
                 <div class="acc-nav">
-                    <button class="btn-secondary acc-prev" type="button" disabled><i class="fa-solid fa-chevron-left"></i> Previous</button>
+                    <button class="btn-secondary acc-prev" type="button" disabled><i class="fa-solid fa-chevron-left"></i> <span data-i18n="pro.profile.previous">Previous</span></button>
                     <span class="acc-page-info"></span>
-                    <button class="btn-secondary acc-next" type="button">See more <i class="fa-solid fa-chevron-right"></i></button>
+                    <button class="btn-secondary acc-next" type="button"><span data-i18n="pro.profile.see_more">See more</span> <i class="fa-solid fa-chevron-right"></i></button>
                 </div>
             </div>
-            <p id="contracts-empty" class="acc-empty" style="display:none">No contracts found yet.</p>
+            <p id="contracts-empty" class="acc-empty" style="display:none" data-i18n="pro.profile.no_contracts">No contracts found yet.</p>
         </div>
 
         <div class="tab-content" id="billing-tab" style="display:none;">
-            <h3><i class="fa-solid fa-receipt"></i> Billing history</h3>
+            <h3><i class="fa-solid fa-receipt"></i> <span data-i18n="pro.profile.billing_history">Billing history</span></h3>
             <div id="billing-skeleton" class="acc-skeleton-row" style="display:none;">
                 <div class="acc-skel-card"></div>
                 <div class="acc-skel-card"></div>
@@ -640,16 +641,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div id="billing-grid" class="acc-carousel" style="display:none;">
                 <div class="acc-track" role="list"></div>
                 <div class="acc-nav">
-                    <button class="btn-secondary acc-prev" type="button" disabled><i class="fa-solid fa-chevron-left"></i> Previous</button>
+                    <button class="btn-secondary acc-prev" type="button" disabled><i class="fa-solid fa-chevron-left"></i> <span data-i18n="pro.profile.previous">Previous</span></button>
                     <span class="acc-page-info"></span>
-                    <button class="btn-secondary acc-next" type="button">See more <i class="fa-solid fa-chevron-right"></i></button>
+                    <button class="btn-secondary acc-next" type="button"><span data-i18n="pro.profile.see_more">See more</span> <i class="fa-solid fa-chevron-right"></i></button>
                 </div>
             </div>
-            <p id="billing-empty" class="acc-empty" style="display:none">No invoices found yet.</p>
+            <p id="billing-empty" class="acc-empty" style="display:none" data-i18n="pro.profile.no_invoices">No invoices found yet.</p>
         </div>
 
         <div class="tab-content" id="security-tab" style="display:none;">
-            <h3>Change Password</h3>
+            <h3 data-i18n="pro.profile.change_password">Change Password</h3>
             <div id="password-feedback">
                 <?php if (!empty($passwordErrors)): ?>
                     <div class="error-message"><?= htmlspecialchars(implode(' ', $passwordErrors)) ?></div>
@@ -660,68 +661,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <form id="change-password-form" class="change-password-form" autocomplete="off">
                 <input type="hidden" name="form_type" value="password_change">
                 <div class="field">
-                    <label for="current-password">Current Password</label>
+                    <label for="current-password" data-i18n="pro.profile.current_password">Current Password</label>
                     <div class="input-wrapper password-wrapper">
                         <i class="fa-solid fa-lock"></i>
                         <input type="password" id="current-password" name="current_password" required autocomplete="current-password">
-                        <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false">
+                        <button type="button" class="password-toggle" data-i18n-aria-label="pro.profile.show_password" aria-label="Show password" aria-pressed="false">
                             <i class="fa-solid fa-eye"></i>
                         </button>
                     </div>
                 </div>
                 <div class="field">
-                    <label for="new-password">New Password</label>
+                    <label for="new-password" data-i18n="pro.profile.new_password">New Password</label>
                     <div class="input-wrapper password-wrapper">
                         <i class="fa-solid fa-lock"></i>
                         <input type="password" id="new-password" name="new_password" class="password-input" data-strength="true" required autocomplete="new-password">
-                        <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false">
+                        <button type="button" class="password-toggle" data-i18n-aria-label="pro.profile.show_password" aria-label="Show password" aria-pressed="false">
                             <i class="fa-solid fa-eye"></i>
                         </button>
                     </div>
                     <div class="password-meter">
                         <div class="password-meter-bar"></div>
-                        <span class="password-meter-text">Strength</span>
+                        <span class="password-meter-text" data-i18n="pro.profile.password_strength">Strength</span>
                     </div>
                 </div>
                 <div class="field">
-                    <label for="confirm-password">Confirm New Password</label>
+                    <label for="confirm-password" data-i18n="pro.profile.confirm_new_password">Confirm New Password</label>
                     <div class="input-wrapper password-wrapper">
                         <i class="fa-solid fa-lock"></i>
                         <input type="password" id="confirm-password" name="confirm_password" required autocomplete="new-password">
-                        <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false">
+                        <button type="button" class="password-toggle" data-i18n-aria-label="pro.profile.show_password" aria-label="Show password" aria-pressed="false">
                             <i class="fa-solid fa-eye"></i>
                         </button>
                     </div>
                 </div>
-                <button type="submit" class="btn-primary">Change Password</button>
+                <button type="submit" class="btn-primary" data-i18n="pro.profile.change_password_button">Change Password</button>
             </form>
         </div>
 
         <div class="tab-content" id="mfa-tab" style="display:none;">
-            <h3><i class="fa-solid fa-shield-halved"></i> Two-Factor Authentication (TOTP)</h3>
+            <h3><i class="fa-solid fa-shield-halved"></i> <span data-i18n="pro.profile.two_factor_authentication">Two-Factor Authentication (TOTP)</span></h3>
             <div id="mfa-status-badge" class="mfa-status-badge <?= $twoFAEnabled ? 'mfa-enabled' : 'mfa-disabled' ?>">
                 <?php if ($twoFAEnabled): ?>
-                    <i class="fa-solid fa-circle-check"></i> 2FA is <strong>enabled</strong> — your account is protected.
+                    <i class="fa-solid fa-circle-check"></i> <span data-i18n-html="pro.profile.twofa_enabled_protected">2FA is <strong>enabled</strong> — your account is protected.</span>
                 <?php else: ?>
-                    <i class="fa-solid fa-circle-xmark"></i> 2FA is <strong>disabled</strong>.
+                    <i class="fa-solid fa-circle-xmark"></i> <span data-i18n-html="pro.profile.twofa_disabled">2FA is <strong>disabled</strong>.</span>
                 <?php endif; ?>
             </div>
             <?php if ($twoFAEnabled): ?>
-                <p>You can disable Two-Factor Authentication below.</p>
+                <p data-i18n="pro.profile.disable_2fa_warning">You can disable Two-Factor Authentication below.</p>
                 <button type="button" class="btn-danger" id="mfa-disable-btn">
-                    <i class="fa-solid fa-lock-open"></i> Disable 2FA
+                    <i class="fa-solid fa-lock-open"></i> <span data-i18n="pro.profile.disable_2fa">Disable 2FA</span>
                 </button>
             <?php else: ?>
-                <p>Add an extra layer of security by linking an authenticator app (Google Authenticator, Authy, etc.).</p>
+                <p data-i18n="pro.profile.mfa_intro">Add an extra layer of security by linking an authenticator app (Google Authenticator, Authy, etc.).</p>
                 <button type="button" class="btn-primary" id="mfa-setup-btn">
-                    <i class="fa-solid fa-qrcode"></i> Setup 2FA
+                    <i class="fa-solid fa-qrcode"></i> <span data-i18n="pro.profile.setup_2fa">Setup 2FA</span>
                 </button>
                 <div id="mfa-setup-panel" style="display:none;margin-top:1.5rem;">
-                    <p class="mfa-info-text">Scan this QR code with your authenticator app, or enter the key manually.</p>
+                    <p class="mfa-info-text" data-i18n="pro.profile.mfa_scan_info">Scan this QR code with your authenticator app, or enter the key manually.</p>
                     <div id="mfa-qr-code" style="margin:1rem 0;"></div>
-                    <p class="mfa-info-text">Manual key: <code id="mfa-secret-display" class="mfa-secret-key"></code></p>
+                    <p class="mfa-info-text"><span data-i18n="pro.profile.manual_key">Manual key:</span> <code id="mfa-secret-display" class="mfa-secret-key"></code></p>
                     <div class="field" style="max-width:280px;">
-                        <label for="mfa-verify-code">Enter the 6-digit code to confirm</label>
+                        <label for="mfa-verify-code" data-i18n="pro.profile.enter_6_digit_code">Enter the 6-digit code to confirm</label>
                         <div class="input-wrapper">
                             <i class="fa-solid fa-key"></i>
                             <input
@@ -738,7 +739,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                     <div id="mfa-setup-feedback"></div>
                     <button type="button" class="btn-primary" id="mfa-enable-btn">
-                        <i class="fa-solid fa-check"></i> Activate 2FA
+                        <i class="fa-solid fa-check"></i> <span data-i18n="pro.profile.activate_2fa">Activate 2FA</span>
                     </button>
                 </div>
             <?php endif; ?>
@@ -748,44 +749,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="modal-overlay" id="password-success-modal" aria-hidden="true">
             <div class="modal" role="dialog" aria-modal="true" aria-labelledby="password-success-title">
                 <div class="modal-header">
-                    <h2 id="password-success-title">Success</h2>
-                    <button type="button" class="modal-close" id="close-password-success" aria-label="Close">
+                    <h2 id="password-success-title" data-i18n="pro.profile.success">Success</h2>
+                    <button type="button" class="modal-close" id="close-password-success" data-i18n-aria-label="pro.profile.close" aria-label="Close">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <p class="center">Your password has been changed successfully.</p>
+                    <p class="center" data-i18n="pro.profile.password_changed_success">Your password has been changed successfully.</p>
                 </div>
                 <div class="modal-actions">
-                    <button type="button" class="btn-primary" id="password-success-ok">OK</button>
+                    <button type="button" class="btn-primary" id="password-success-ok" data-i18n="pro.profile.ok">OK</button>
                 </div>
             </div>
         </div>
         <div class="modal-overlay" id="delete-account-modal" aria-hidden="true">
             <div class="modal" role="dialog" aria-modal="true" aria-labelledby="delete-account-modal-title">
                 <div class="modal-header">
-                    <h2 id="delete-account-modal-title"><i class="fa-solid fa-triangle-exclamation" style="color:#c53030;"></i> Delete Account</h2>
-                    <button type="button" class="modal-close" id="close-delete-account-modal" aria-label="Close">
+                    <h2 id="delete-account-modal-title"><i class="fa-solid fa-triangle-exclamation" style="color:#c53030;"></i> <span data-i18n="pro.profile.delete_account">Delete Account</span></h2>
+                    <button type="button" class="modal-close" id="close-delete-account-modal" data-i18n-aria-label="pro.profile.close" aria-label="Close">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <p style="color: #742a2a; font-weight: 600; margin-bottom: 1rem;">
+                    <p style="color: #742a2a; font-weight: 600; margin-bottom: 1rem;" data-i18n="pro.profile.confirm_delete_account_message">
                         This action cannot be undone. Please confirm your request.
                     </p>
                     <form id="delete-account-form" novalidate>
                         <div class="field">
-                            <label for="delete-confirmation-phrase" style="font-weight: 600; color: #333;">
+                            <label for="delete-confirmation-phrase" style="font-weight: 600; color: #333;" data-i18n="pro.profile.enter_phrase_to_proceed">
                                 Enter this confirmation phrase to proceed:
                             </label>
                             <div id="delete-phrase-display" style="background: #f5f5f5; padding: 1rem; border-radius: 6px; margin: 0.75rem 0; font-family: monospace; font-size: 1.1rem; font-weight: 600; color: #c53030; text-align: center; letter-spacing: 2px;"></div>
                             <div class="input-wrapper">
                                 <i class="fa-solid fa-check"></i>
-                                <input type="text" id="delete-confirmation-phrase" name="confirmation_phrase" placeholder="Enter the phrase above" autocomplete="off" required style="letter-spacing: 1px;">
+                                <input type="text" id="delete-confirmation-phrase" name="confirmation_phrase" placeholder="Enter the phrase above" data-i18n-placeholder="pro.profile.enter_phrase_above" autocomplete="off" required style="letter-spacing: 1px;">
                             </div>
                         </div>
                         <div class="field">
-                            <label for="delete-account-password">Your Password</label>
+                            <label for="delete-account-password" data-i18n="pro.profile.your_password">Your Password</label>
                             <div class="input-wrapper password-wrapper">
                                 <i class="fa-solid fa-lock"></i>
                                 <input type="password" id="delete-account-password" name="password" required autocomplete="current-password">
@@ -796,7 +797,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                         <div id="delete-mfa-section" style="display:none;">
                             <div class="field">
-                                <label for="delete-account-mfa">Two-Factor Authentication Code</label>
+                                <label for="delete-account-mfa" data-i18n="pro.profile.twofa_code">Two-Factor Authentication Code</label>
                                 <div class="input-wrapper">
                                     <i class="fa-solid fa-key"></i>
                                     <input type="text" id="delete-account-mfa" name="mfa_code" maxlength="6" inputmode="numeric" pattern="[0-9]{6}" autocomplete="one-time-code" placeholder="000000">
@@ -807,8 +808,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </form>
                 </div>
                 <div class="modal-actions">
-                    <button type="button" class="btn-secondary" id="cancel-delete-account">Cancel</button>
-                    <button type="button" class="btn-danger" id="confirm-delete-account" style="background: #c53030;">Delete Account</button>
+                    <button type="button" class="btn-secondary" id="cancel-delete-account" data-i18n="pro.profile.cancel">Cancel</button>
+                    <button type="button" class="btn-danger" id="confirm-delete-account" style="background: #c53030;" data-i18n="pro.profile.delete_account">Delete Account</button>
                 </div>
             </div>
         </div>
@@ -818,8 +819,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <div class="modal-overlay" id="payment-modal" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="payment-modal-title">
         <div class="modal-header">
-            <h2 id="payment-modal-title">Request Payment</h2>
-            <button type="button" class="modal-close" id="close-payment-modal" aria-label="Close">
+            <h2 id="payment-modal-title" data-i18n="pro.profile.request_payment_modal">Request Payment</h2>
+            <button type="button" class="modal-close" id="close-payment-modal" data-i18n-aria-label="pro.profile.close" aria-label="Close">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
@@ -827,7 +828,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <form method="POST" class="form" novalidate id="payment-request-form">
                 <input type="hidden" name="form_type" value="payment">
                 <div class="field">
-                    <label for="amount">Amount to request</label>
+                    <label for="amount" data-i18n="pro.profile.amount_to_request">Amount to request</label>
                     <div class="input-wrapper">
                         <i class="fa-solid fa-euro-sign"></i>
                         <input
@@ -841,24 +842,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             required
                         />
                     </div>
-                    <p class="balance-note">Available balance: <span id="balance-available"><?= htmlspecialchars(number_format((float) $balance, 2)) ?></span> €</p>
+                    <p class="balance-note"><span data-i18n="pro.profile.available_balance">Available balance:</span> <span id="balance-available"><?= htmlspecialchars(number_format((float) $balance, 2)) ?></span> €</p>
                 </div>
                 <div class="field">
-                    <label>Banking details</label>
+                    <label data-i18n="pro.profile.banking_details">Banking details</label>
                     <div class="radio-options">
                         <label class="radio-option">
                             <input type="radio" name="banking_option" value="saved" <?php echo $hasSavedBankingDetails ? 'checked' : 'disabled'; ?> />
-                            Saved banking details
+                            <span data-i18n="pro.profile.saved_banking_details">Saved banking details</span>
                         </label>
                         <label class="radio-option">
                             <input type="radio" name="banking_option" value="new" <?php echo $hasSavedBankingDetails ? '' : 'checked'; ?> />
-                            Use new banking details
+                            <span data-i18n="pro.profile.use_new_banking_details">Use new banking details</span>
                         </label>
                     </div>
                 </div>
                 <div id="saved-details-section">
                     <div class="field">
-                        <label for="banking_details_id">Saved banking details</label>
+                        <label for="banking_details_id" data-i18n="pro.profile.saved_banking_details_label">Saved banking details</label>
                         <div class="input-wrapper">
                             <i class="fa-solid fa-id-card"></i>
                             <select id="banking_details_id" name="banking_details_id" <?php echo $hasSavedBankingDetails ? '' : 'disabled'; ?>>
@@ -880,43 +881,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 <div id="new-details-section">
                     <div class="field">
-                        <label for="account_holder_name">Account holder name</label>
+                        <label for="account_holder_name" data-i18n="pro.profile.account_holder_name">Account holder name</label>
                         <div class="input-wrapper">
                             <i class="fa-solid fa-address-card"></i>
-                            <input type="text" id="account_holder_name" name="account_holder_name" placeholder="Full name" />
+                            <input type="text" id="account_holder_name" name="account_holder_name" placeholder="Full name" data-i18n-placeholder="pro.profile.account_holder_name_placeholder" />
                         </div>
                     </div>
                     <div class="field">
-                        <label for="rib">RIB</label>
+                        <label for="rib" data-i18n="pro.profile.rib">RIB</label>
                         <div class="input-wrapper">
                             <i class="fa-solid fa-building-columns"></i>
-                            <input type="text" id="rib" name="rib" placeholder="Your RIB" />
+                            <input type="text" id="rib" name="rib" placeholder="Your RIB" data-i18n-placeholder="pro.profile.rib_placeholder" />
                         </div>
                     </div>
                     <div class="field">
-                        <label for="iban">IBAN</label>
+                        <label for="iban" data-i18n="pro.profile.iban">IBAN</label>
                         <div class="input-wrapper">
                             <i class="fa-solid fa-credit-card"></i>
-                            <input type="text" id="iban" name="iban" placeholder="Your IBAN" />
+                            <input type="text" id="iban" name="iban" placeholder="Your IBAN" data-i18n-placeholder="pro.profile.iban_placeholder" />
                         </div>
                     </div>
                     <div class="field">
-                        <label for="bic">BIC</label>
+                        <label for="bic" data-i18n="pro.profile.bic">BIC</label>
                         <div class="input-wrapper">
                             <i class="fa-solid fa-building-columns"></i>
-                            <input type="text" id="bic" name="bic" placeholder="Your BIC" />
+                            <input type="text" id="bic" name="bic" placeholder="Your BIC" data-i18n-placeholder="pro.profile.bic_placeholder" />
                         </div>
                     </div>
                     <div class="field">
                         <label>
                             <input type="checkbox" name="save_details" />
-                            Save these details for future requests
+                            <span data-i18n="pro.profile.save_details_future_requests">Save these details for future requests</span>
                         </label>
                     </div>
                 </div>
                 <div class="modal-actions">
-                    <button type="button" class="btn-secondary" id="cancel-payment-modal">Cancel</button>
-                    <button type="submit" class="btn-primary">Request Payment</button>
+                    <button type="button" class="btn-secondary" id="cancel-payment-modal" data-i18n="pro.profile.cancel">Cancel</button>
+                    <button type="submit" class="btn-primary" data-i18n="pro.profile.request_payment">Request Payment</button>
                 </div>
             </form>
         </div>
@@ -926,8 +927,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <div class="modal-overlay" id="address-modal" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="address-modal-title">
         <div class="modal-header">
-            <h2 id="address-modal-title">Locate Address</h2>
-            <button type="button" class="modal-close" id="address-modal-close" aria-label="Close">
+            <h2 id="address-modal-title" data-i18n="pro.profile.locate_address">Locate Address</h2>
+            <button type="button" class="modal-close" id="address-modal-close" data-i18n-aria-label="pro.profile.close" aria-label="Close">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>

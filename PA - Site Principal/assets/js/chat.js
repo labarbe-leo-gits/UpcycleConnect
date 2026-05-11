@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let ws = null;
     let currentGroups = [];
     let currentDiscussions = [];
+    const senderUsernameCache = new Map();
 
     const chatList = document.getElementById('chat-list');
     const chatSearchInput = document.getElementById('chat-search');
@@ -78,6 +79,46 @@ document.addEventListener('DOMContentLoaded', () => {
                 ...options.headers
             }
         });
+    }
+
+    async function fetchUsername(userId) {
+        if (!userId) {
+            return null;
+        }
+        if (senderUsernameCache.has(userId)) {
+            return senderUsernameCache.get(userId);
+        }
+
+        try {
+            const res = await authFetch(`/users/${encodeURIComponent(userId)}`);
+            if (!res.ok) {
+                return null;
+            }
+            const user = await res.json();
+            const username = user?.username || null;
+            if (username) {
+                senderUsernameCache.set(userId, username);
+            }
+            return username;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function formatSenderLabel(msg) {
+        if (msg.sender_username) {
+            if (msg.sender_id) {
+                senderUsernameCache.set(msg.sender_id, msg.sender_username);
+            }
+            return msg.sender_username;
+        }
+        if (msg.sender_id && senderUsernameCache.has(msg.sender_id)) {
+            return senderUsernameCache.get(msg.sender_id);
+        }
+        if (msg.sender_id && msg.sender_id.length >= 8) {
+            return `User ${msg.sender_id.substring(0,8)}`;
+        }
+        return 'Unknown';
     }
 
     async function loadDiscussionsAndGroups() {
@@ -321,14 +362,27 @@ document.addEventListener('DOMContentLoaded', () => {
             attachmentsHtml += '</div>';
         }
         
+        const senderLabel = formatSenderLabel(msg);
         msgEl.innerHTML = `
             <div class="chat-bubble">
-                ${!isMine ? `<small class="sender-name"><i class="fa-solid fa-user-circle"></i> User ${msg.sender_id.substring(0,8)}</small>` : ''}
+                ${!isMine ? `<small class="sender-name"><i class="fa-solid fa-user-circle"></i> <span class=\"sender-name-text\">${escapeHtml(senderLabel)}</span></small>` : ''}
                 ${contentHtml}
                 ${attachmentsHtml}
             </div>
         `;
         messagesContainer.appendChild(msgEl);
+
+        if (!isMine && senderLabel.startsWith('User ') && msg.sender_id) {
+            fetchUsername(msg.sender_id).then(username => {
+                if (username) {
+                    const senderNameSpan = msgEl.querySelector('.sender-name-text');
+                    if (senderNameSpan) {
+                        senderNameSpan.textContent = username;
+                    }
+                }
+            });
+        }
+
         scrollToBottom();
     }
 

@@ -5,23 +5,40 @@
         return Number(n).toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d });
     }
 
+    function t(key, defaultText) {
+        if (typeof getTranslationValue === 'function') {
+            var translations = window.currentTranslations || {};
+            var fallback = window.currentFallback || {};
+            return getTranslationValue(key, translations, fallback) || defaultText || '';
+        }
+        return defaultText || '';
+    }
+
+    function translatePage() {
+        if (typeof window.translatePage === 'function') {
+            window.translatePage();
+        }
+    }
+
     function renderPremium(priceDisplay) {
         var el = document.getElementById('acc-sub-content');
         el.innerHTML =
             '<div class="acc-sub-actions">'
-            + '<div class="acc-sub-premium-status"><i class="fas fa-crown"></i> Premium active</div>'
+            + '<div class="acc-sub-premium-status"><i class="fas fa-crown"></i> <span data-i18n="pro.subscription.premium_active">Premium active</span></div>'
             + '</div>'
-            + '<p style="font-size:14px;color:#065f46;margin:0 0 16px;">You have access to all advanced UpcycleConnect features.</p>'
+            + '<p style="font-size:14px;color:#065f46;margin:0 0 16px;"><span data-i18n="pro.subscription.access_advanced_features">You have access to all advanced UpcycleConnect features.</span></p>'
             + '<div class="acc-sub-actions">'
-            + '<a href="dashboard" class="sub-quick-btn primary"><i class="fas fa-chart-bar"></i> Go to Dashboard</a>'
-            + '<button id="acc-btn-manage" class="sub-quick-btn" data-url="create-billing-portal"><i class="fas fa-cog"></i> Manage subscription</button>'
+            + '<a href="dashboard" class="sub-quick-btn primary"><i class="fas fa-chart-bar"></i> <span data-i18n="pro.profile.go_to_dashboard">Go to Dashboard</span></a>'
+            + '<button id="acc-btn-manage" class="sub-quick-btn" data-url="create-billing-portal"><i class="fas fa-cog"></i> <span data-i18n="pro.subscription.manage_subscription">Manage subscription</span></button>'
             + '</div>';
+        translatePage();
 
         var btnManage = document.getElementById('acc-btn-manage');
         if (btnManage) {
             btnManage.addEventListener('click', function () {
                 btnManage.disabled = true;
-                btnManage.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Redirecting…';
+                btnManage.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span data-i18n="pro.profile.redirecting">Redirecting…</span>';
+                translatePage();
                 fetch(btnManage.dataset.url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
@@ -30,14 +47,16 @@
                     if (data.portal_url) {
                         window.location.href = data.portal_url;
                     } else {
-                        alert(data.error || 'An error occurred.');
+                        alert(data.error || t('pro.profile.error_occurred', 'An error occurred.'));
                         btnManage.disabled = false;
-                        btnManage.innerHTML = '<i class="fas fa-cog"></i> Manage subscription';
+                        btnManage.innerHTML = '<i class="fas fa-cog"></i> <span data-i18n="pro.subscription.manage_subscription">Manage subscription</span>';
+                        translatePage();
                     }
                 }).catch(function () {
-                    alert('Network error.');
+                    alert(t('pro.profile.network_error', 'Network error.'));
                     btnManage.disabled = false;
-                    btnManage.innerHTML = '<i class="fas fa-cog"></i> Manage subscription';
+                    btnManage.innerHTML = '<i class="fas fa-cog"></i> <span data-i18n="pro.subscription.manage_subscription">Manage subscription</span>';
+                    translatePage();
                 });
             });
         }
@@ -47,18 +66,19 @@
         var display = priceDisplay || '€29.99 / month';
         var el = document.getElementById('acc-sub-content');
         el.innerHTML =
-            '<p class="acc-sub-free-cta">You are on the <strong>Free</strong> plan. Upgrade to unlock advanced analytics and tools.</p>'
+            '<p class="acc-sub-free-cta"><span data-i18n="pro.profile.free_plan_message">You are on the <strong>Free</strong> plan. Upgrade to unlock advanced analytics and tools.</span></p>'
             + '<div class="acc-sub-actions">'
-            + '<a href="subscription" class="sub-quick-btn primary"><i class="fas fa-crown"></i> Go Premium</a>'
-            + '<a href="subscription" class="sub-quick-btn"><i class="fas fa-info-circle"></i> Learn more</a>'
-            + '</div>'
-            
+            + '<a href="subscription" class="sub-quick-btn primary"><i class="fas fa-crown"></i> <span data-i18n="pro.subscription.go_premium">Go Premium</span></a>'
+            + '<a href="subscription" class="sub-quick-btn"><i class="fas fa-info-circle"></i> <span data-i18n="pro.profile.learn_more">Learn more</span></a>'
+            + '</div>';
+        translatePage();
 
         var btnSub = document.getElementById('acc-btn-subscribe');
         if (btnSub) {
             btnSub.addEventListener('click', function () {
                 btnSub.disabled = true;
-                btnSub.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Redirecting…';
+                btnSub.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span data-i18n="pro.profile.redirecting">Redirecting…</span>';
+                translatePage();
                 fetch('create-subscription-checkout', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
@@ -67,14 +87,16 @@
                     if (data.checkout_url) {
                         window.location.href = data.checkout_url;
                     } else {
-                        alert(data.error || 'An error occurred.');
+                        alert(data.error || t('pro.profile.error_occurred', 'An error occurred.'));
                         btnSub.disabled = false;
-                        btnSub.innerHTML = '<i class="fas fa-crown"></i> Go Premium';
+                        btnSub.innerHTML = '<i class="fas fa-crown"></i> <span data-i18n="pro.subscription.go_premium">Go Premium</span>';
+                        translatePage();
                     }
                 }).catch(function () {
-                    alert('Network error.');
+                    alert(t('pro.profile.network_error', 'Network error.'));
                     btnSub.disabled = false;
-                    btnSub.innerHTML = '<i class="fas fa-crown"></i> Go Premium';
+                    btnSub.innerHTML = '<i class="fas fa-crown"></i> <span data-i18n="pro.subscription.go_premium">Go Premium</span>';
+                    translatePage();
                 });
             });
         }
@@ -93,18 +115,19 @@
             var quickBtn   = document.getElementById('sub-quick-access');
 
             if (data.is_premium) {
-                if (quickLabel) quickLabel.textContent = 'My subscription';
+                if (quickLabel) quickLabel.textContent = t('pro.profile.my_subscription', 'My subscription');
                 if (quickBtn)   quickBtn.classList.add('primary');
                 renderPremium(data.price_display);
             } else {
-                if (quickLabel) quickLabel.textContent = 'Go Premium';
+                if (quickLabel) quickLabel.textContent = t('pro.subscription.go_premium', 'Go Premium');
                 renderFree(data.price_display);
             }
         }).catch(function () {
             document.getElementById('acc-sub-skeleton').style.display = 'none';
             document.getElementById('acc-sub-content').style.display  = '';
             document.getElementById('acc-sub-content').innerHTML =
-                '<p style="color:#9ca3af;font-size:14px;">Unable to load subscription status.</p>';
+                '<p style="color:#9ca3af;font-size:14px;"><span data-i18n="pro.profile.unable_load_subscription_status">Unable to load subscription status.</span></p>';
+            translatePage();
         });
     }
 
@@ -123,7 +146,8 @@
     function buildContractCard(c) {
         var status = c.status === 1 ? 'Active' : 'Inactive';
         var statusCls = c.status === 1 ? 'status-confirmed' : 'status-cancelled';
-        var title = c.contract_ref || c.subscription_id || c.id || 'Subscription';
+        var statusKey = c.status === 1 ? 'pro.profile.contract_status_active' : 'pro.profile.contract_status_inactive';
+        var title = c.contract_ref || c.subscription_id || c.id || t('pro.profile.subscription', 'Subscription');
         var amount = (c.amount != null && !isNaN(parseFloat(c.amount))) ? parseFloat(c.amount).toFixed(2) : null;
         var start = c.start_date || '';
         var end = c.end_date || '';
@@ -135,13 +159,14 @@
             '<div class="acc-card-icon"><i class="fa-solid fa-file-contract"></i></div>' +
             '<div class="acc-card-body">' +
               '<div class="acc-card-title">' + escHtml(title) + '</div>' +
-              '<div class="acc-card-meta"><span class="acc-status ' + statusCls + '">' + escHtml(status) + '</span></div>' +
+              '<div class="acc-card-meta"><span class="acc-status ' + statusCls + '"><span data-i18n="' + statusKey + '">' + escHtml(status) + '</span></span></div>' +
               (amount ? '<div class="acc-card-amount">€ ' + escHtml(amount) + '</div>' : '') +
               ((start || end) ? '<div class="acc-card-date"><i class="fa-regular fa-calendar"></i> ' + escHtml(start + (start && end ? ' → ' : '') + end) + '</div>' : '') +
               '<div class="acc-card-actions" style="display:flex;gap:5px;justify-content:center;align-items:center;width:100%;border-top:1px solid #ccc;padding-top:10px;flex-wrap:wrap;">' +
-                '<button class="btn-secondary manage-contract-btn" style="padding:6px;" data-subscription-id="' + escAttr(c.subscription_id || '') + '"><i class="fas fa-cog"></i> Manage subscription</button>' +
+                '<button class="btn-secondary manage-contract-btn" style="padding:6px;" data-subscription-id="' + escAttr(c.subscription_id || '') + '"><i class="fas fa-cog"></i> <span data-i18n="pro.subscription.manage_subscription">Manage subscription</span></button>' +
               '</div>' +
             '</div>';
+        translatePage();
         return el;
     }
 
@@ -208,7 +233,8 @@
         track.querySelectorAll('.manage-contract-btn').forEach(function (btn) {
             btn.addEventListener('click', function () {
                 btn.disabled = true;
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Redirecting…';
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span data-i18n="pro.profile.redirecting">Redirecting…</span>';
+                translatePage();
                 fetch('create-billing-portal', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
@@ -217,14 +243,16 @@
                     if (data.portal_url) {
                         window.location.href = data.portal_url;
                     } else {
-                        alert(data.error || 'An error occurred.');
+                        alert(data.error || t('pro.profile.error_occurred', 'An error occurred.'));
                         btn.disabled = false;
-                        btn.innerHTML = '<i class="fas fa-cog"></i> Manage subscription';
+                        btn.innerHTML = '<i class="fas fa-cog"></i> <span data-i18n="pro.subscription.manage_subscription">Manage subscription</span>';
+                        translatePage();
                     }
                 }).catch(function () {
-                    alert('Network error.');
+                    alert(t('pro.profile.network_error', 'Network error.'));
                     btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-cog"></i> Manage subscription';
+                    btn.innerHTML = '<i class="fas fa-cog"></i> <span data-i18n="pro.subscription.manage_subscription">Manage subscription</span>';
+                    translatePage();
                 });
             });
         });
@@ -276,7 +304,7 @@
                 if (grid) grid.style.display = 'none';
                 if (empty) {
                     empty.style.display = '';
-                    empty.textContent = 'Unable to load contracts.';
+                    empty.textContent = t('pro.profile.unable_load_contracts', 'Unable to load contracts.');
                 }
             }
         }).catch(function () {
@@ -284,7 +312,7 @@
             if (grid) grid.style.display = 'none';
             if (empty) {
                 empty.style.display = '';
-                empty.textContent = 'Unable to load contracts.';
+                empty.textContent = t('pro.profile.unable_load_contracts', 'Unable to load contracts.');
             }
         });
     }
@@ -296,7 +324,8 @@
     function buildInvoiceCard(inv) {
         var status = inv.status || 'Unknown';
         var statusCls = status.toLowerCase().includes('paid') ? 'status-confirmed' : (status.toLowerCase().includes('failed') ? 'status-cancelled' : 'status-pending');
-        var title = inv.stripe_invoice_id || inv.id || 'Invoice';
+        var statusKey = status === 'Unknown' ? 'pro.profile.unknown_status' : null;
+        var title = inv.stripe_invoice_id || inv.id || t('pro.profile.invoice', 'Invoice');
         var amount = (inv.amount_paid != null ? inv.amount_paid : inv.amount_due) || 0;
         var amountStr = '€ ' + parseFloat(amount).toFixed(2);
         var periodStart = inv.period_start || '';
@@ -312,15 +341,16 @@
             '<div class="acc-card-icon"><i class="fa-solid fa-receipt"></i></div>' +
             '<div class="acc-card-body">' +
               '<div class="acc-card-title">' + escHtml(title) + '</div>' +
-              '<div class="acc-card-meta"><span class="acc-status ' + statusCls + '">' + escHtml(status) + '</span></div>' +
+              '<div class="acc-card-meta"><span class="acc-status ' + statusCls + '">' + (statusKey ? '<span data-i18n="' + statusKey + '">' + escHtml(status) + '</span>' : escHtml(status)) + '</span></div>' +
               '<div class="acc-card-amount">' + escHtml(amountStr) + '</div>' +
               ((periodStart || periodEnd) ? '<div class="acc-card-date"><i class="fa-regular fa-calendar"></i> ' + escHtml(periodStart + (periodStart && periodEnd ? ' → ' : '') + periodEnd) + '</div>' : '') +
-              (dueDate ? '<div class="acc-card-date"><i class="fa-regular fa-clock"></i> Due ' + escHtml(dueDate) + '</div>' : '') +
+              (dueDate ? '<div class="acc-card-date"><i class="fa-regular fa-clock"></i> <span data-i18n="pro.profile.due">Due</span> ' + escHtml(dueDate) + '</div>' : '') +
               '<div class="acc-card-actions" style="display:flex;gap:5px;justify-content:center;align-items:center;width:100%;border-top:1px solid #ccc;padding-top:10px;flex-wrap:wrap;">' +
-                (invoiceUrl ? '<a class="btn-secondary" href="' + escAttr(invoiceUrl) + '" target="_blank" rel="noopener"><i class="fas fa-file-invoice"></i> View invoice</a>' : '') +
-                (receiptUrl ? '<a class="btn-secondary" href="' + escAttr(receiptUrl) + '" target="_blank" rel="noopener"><i class="fas fa-download"></i> Receipt</a>' : '') +
+                (invoiceUrl ? '<a class="btn-secondary" href="' + escAttr(invoiceUrl) + '" target="_blank" rel="noopener"><i class="fas fa-file-invoice"></i> <span data-i18n="pro.profile.view_invoice">View invoice</span></a>' : '') +
+                (receiptUrl ? '<a class="btn-secondary" href="' + escAttr(receiptUrl) + '" target="_blank" rel="noopener"><i class="fas fa-download"></i> <span data-i18n="pro.profile.receipt">Receipt</span></a>' : '') +
               '</div>' +
             '</div>';
+        translatePage();
         return el;
     }
 
@@ -423,7 +453,7 @@
                 if (grid) grid.style.display = 'none';
                 if (empty) {
                     empty.style.display = '';
-                    empty.textContent = 'Unable to load invoices.';
+                    empty.textContent = t('pro.profile.unable_load_invoices', 'Unable to load invoices.');
                 }
             }
         }).catch(function () {
@@ -431,7 +461,7 @@
             if (grid) grid.style.display = 'none';
             if (empty) {
                 empty.style.display = '';
-                empty.textContent = 'Unable to load invoices.';
+                empty.textContent = t('pro.profile.unable_load_invoices', 'Unable to load invoices.');
             }
         });
     }
@@ -488,14 +518,14 @@
                     try {
                         return JSON.parse(text);
                     } catch (e) {
-                        return { success: false, message: text || 'Server error.' };
+                        return { success: false, message: text || t('pro.profile.server_error', 'Server error.') };
                     }
                 }
                 try {
                     return JSON.parse(text);
                 } catch (e) {
                     console.error('Unexpected MFA response:', text);
-                    return { success: false, message: 'Unexpected server response. Please try again.' };
+                    return { success: false, message: t('pro.profile.unexpected_server_response', 'Unexpected server response. Please try again.') };
                 }
             });
         });
@@ -510,11 +540,11 @@
     if (setupBtn) {
         setupBtn.addEventListener('click', function () {
             setupBtn.disabled = true;
-            setupBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Loading...';
+            setupBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ' + t('pro.profile.loading', 'Loading...');
             postMFA('mfa_setup').then(function (data) {
                 setupBtn.disabled = false;
-                setupBtn.innerHTML = '<i class="fa-solid fa-qrcode"></i> Setup 2FA';
-                if (!data.success) { setFeedback(document.getElementById('mfa-feedback'), data.message || 'Error.', true); return; }
+                setupBtn.innerHTML = '<i class="fa-solid fa-qrcode"></i> ' + t('pro.profile.setup_2fa', 'Setup 2FA');
+                if (!data.success) { setFeedback(document.getElementById('mfa-feedback'), data.message || t('pro.profile.error', 'Error.'), true); return; }
                 currentSecret = data.secret;
                 document.getElementById('mfa-secret-display').textContent = data.secret;
                 var qrEl = document.getElementById('mfa-qr-code');
@@ -527,8 +557,8 @@
                 setupBtn.style.display = 'none';
             }).catch(function () {
                 setupBtn.disabled = false;
-                setupBtn.innerHTML = '<i class="fa-solid fa-qrcode"></i> Setup 2FA';
-                setFeedback(document.getElementById('mfa-feedback'), 'Network error. Please try again.', true);
+                setupBtn.innerHTML = '<i class="fa-solid fa-qrcode"></i> ' + t('pro.profile.setup_2fa', 'Setup 2FA');
+                setFeedback(document.getElementById('mfa-feedback'), t('pro.profile.network_error_try_again', 'Network error. Please try again.'), true);
             });
         });
     }
@@ -538,24 +568,24 @@
         enableBtn.addEventListener('click', function () {
             var code = (document.getElementById('mfa-verify-code').value || '').trim();
             if (!code || code.length !== 6 || !/^\d+$/.test(code)) {
-                setFeedback(document.getElementById('mfa-setup-feedback'), 'Please enter a valid 6-digit code.', true);
+                setFeedback(document.getElementById('mfa-setup-feedback'), t('pro.profile.invalid_6_digit_code', 'Please enter a valid 6-digit code.'), true);
                 return;
             }
             enableBtn.disabled = true;
-            enableBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying...';
+            enableBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ' + t('pro.profile.verifying', 'Verifying...');
             postMFA('mfa_enable', { secret: currentSecret, code: code }).then(function (data) {
                 enableBtn.disabled = false;
-                enableBtn.innerHTML = '<i class="fa-solid fa-check"></i> Activate 2FA';
+                enableBtn.innerHTML = '<i class="fa-solid fa-check"></i> ' + t('pro.profile.activate_2fa', 'Activate 2FA');
                 if (data.success) {
-                    setFeedback(document.getElementById('mfa-setup-feedback'), '2FA enabled successfully! Reloading...', false);
+                    setFeedback(document.getElementById('mfa-setup-feedback'), t('pro.profile.2fa_enabled_reload', '2FA enabled successfully! Reloading...'), false);
                     setTimeout(function () { window.location.reload(); }, 1500);
                 } else {
-                    setFeedback(document.getElementById('mfa-setup-feedback'), data.message || 'Invalid code.', true);
+                    setFeedback(document.getElementById('mfa-setup-feedback'), data.message || t('pro.profile.invalid_code', 'Invalid code.'), true);
                 }
             }).catch(function () {
                 enableBtn.disabled = false;
-                enableBtn.innerHTML = '<i class="fa-solid fa-check"></i> Activate 2FA';
-                setFeedback(document.getElementById('mfa-setup-feedback'), 'Network error. Please try again.', true);
+                enableBtn.innerHTML = '<i class="fa-solid fa-check"></i> ' + t('pro.profile.activate_2fa', 'Activate 2FA');
+                setFeedback(document.getElementById('mfa-setup-feedback'), t('pro.profile.network_error_try_again', 'Network error. Please try again.'), true);
             });
         });
     }
@@ -564,28 +594,30 @@
     if (disableBtn) {
         disableBtn.addEventListener('click', async function () {
             var confirmed = true;
+            var confirmMessage = t('pro.profile.disable_2fa_confirm', 'Are you sure you want to disable 2FA? This will make your account less secure.');
+            var confirmTitle = t('pro.profile.disable_2fa', 'Disable 2FA');
             if (typeof showConfirmModal === 'function') {
-                confirmed = await showConfirmModal('Are you sure you want to disable 2FA? This will make your account less secure.', 'Disable 2FA');
+                confirmed = await showConfirmModal(confirmMessage, confirmTitle);
             } else {
-                confirmed = confirm('Are you sure you want to disable 2FA? This will make your account less secure.');
+                confirmed = confirm(confirmMessage);
             }
             if (!confirmed) return;
 
             disableBtn.disabled = true;
-            disableBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Disabling...';
+            disableBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ' + t('pro.profile.disabling_2fa', 'Disabling...');
             postMFA('mfa_disable').then(function (data) {
                 disableBtn.disabled = false;
-                disableBtn.innerHTML = '<i class="fa-solid fa-lock-open"></i> Disable 2FA';
+                disableBtn.innerHTML = '<i class="fa-solid fa-lock-open"></i> ' + t('pro.profile.disable_2fa', 'Disable 2FA');
                 if (data.success) {
-                    setFeedback(document.getElementById('mfa-feedback'), '2FA disabled. Reloading...', false);
+                    setFeedback(document.getElementById('mfa-feedback'), t('pro.profile.2fa_disabled_reload', '2FA disabled. Reloading...'), false);
                     setTimeout(function () { window.location.reload(); }, 1500);
                 } else {
-                    setFeedback(document.getElementById('mfa-feedback'), data.message || 'Unable to disable 2FA.', true);
+                    setFeedback(document.getElementById('mfa-feedback'), data.message || t('pro.profile.unable_disable_2fa', 'Unable to disable 2FA.'), true);
                 }
             }).catch(function () {
                 disableBtn.disabled = false;
-                disableBtn.innerHTML = '<i class="fa-solid fa-lock-open"></i> Disable 2FA';
-                setFeedback(document.getElementById('mfa-feedback'), 'Network error. Please try again.', true);
+                disableBtn.innerHTML = '<i class="fa-solid fa-lock-open"></i> ' + t('pro.profile.disable_2fa', 'Disable 2FA');
+                setFeedback(document.getElementById('mfa-feedback'), t('pro.profile.network_error_try_again', 'Network error. Please try again.'), true);
             });
         });
     }

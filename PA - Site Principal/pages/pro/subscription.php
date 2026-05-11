@@ -20,8 +20,8 @@ if ($isAjax) {
 
 <main class="pro-main subscription-page">
     <div class="page-header">
-        <h1>Premium Subscription</h1>
-        <p class="subtitle">Unlock advanced tools for your business</p>
+        <h1 data-i18n="pro.subscription.title">Premium Subscription</h1>
+        <p class="subtitle" data-i18n="pro.subscription.subtitle">Unlock advanced tools for your business</p>
     </div>
 
     <div id="sub-loading">
@@ -35,44 +35,44 @@ if ($isAjax) {
         <section class="premium-status active">
             <div class="status-badge">
                 <i class="fas fa-crown"></i>
-                <span>Premium active</span>
+                <span data-i18n="pro.subscription.premium_active">Premium active</span>
             </div>
-            <p>You have access to all advanced UpcycleConnect features.</p>
+            <p data-i18n="pro.subscription.access_advanced_features">You have access to all advanced UpcycleConnect features.</p>
             <button
                 id="btn-manage"
                 class="btn btn-outline"
                 data-url="create-billing-portal"
             >
-                <i class="fas fa-cog"></i> Manage my subscription
+                <i class="fas fa-cog"></i> <span data-i18n="pro.subscription.manage_subscription">Manage my subscription</span>
             </button>
         </section>
 
         <section class="features-grid">
-            <h2>Your premium features</h2>
+            <h2 data-i18n="pro.subscription.your_premium_features">Your premium features</h2>
             <div class="features">
                 <div class="feature unlocked">
                     <i class="fas fa-chart-bar"></i>
-                    <h3>Advanced dashboards</h3>
-                    <p>Visualise your performance and business growth.</p>
-                    <a href="dashboard" class="btn btn-sm">Access</a>
+                    <h3 data-i18n="pro.subscription.advanced_dashboards">Advanced dashboards</h3>
+                    <p data-i18n="pro.subscription.advanced_dashboards_description">Visualise your performance and business growth.</p>
+                    <a href="dashboard" class="btn btn-sm" data-i18n="pro.subscription.access">Access</a>
                 </div>
                 <div class="feature unlocked">
                     <i class="fas fa-leaf"></i>
-                    <h3>Ecological impact analysis</h3>
-                    <p>Precisely track your carbon footprint and upcycling score.</p>
-                    <a href="dashboard#ecology" class="btn btn-sm">Access</a>
+                    <h3 data-i18n="pro.subscription.ecological_impact_analysis">Ecological impact analysis</h3>
+                    <p data-i18n="pro.subscription.ecological_impact_description">Precisely track your carbon footprint and upcycling score.</p>
+                    <a href="dashboard#ecology" class="btn btn-sm" data-i18n="pro.subscription.access">Access</a>
                 </div>
                 <div class="feature unlocked">
                     <i class="fas fa-boxes"></i>
-                    <h3>Material statistics</h3>
-                    <p>Overview of materials available in your area.</p>
-                    <a href="dashboard#materials" class="btn btn-sm">Access</a>
+                    <h3 data-i18n="pro.subscription.material_statistics">Material statistics</h3>
+                    <p data-i18n="pro.subscription.material_statistics_description">Overview of materials available in your area.</p>
+                    <a href="dashboard#materials" class="btn btn-sm" data-i18n="pro.subscription.access">Access</a>
                 </div>
                 <div class="feature unlocked">
                     <i class="fas fa-bell"></i>
-                    <h3>Priority alerts</h3>
-                    <p>Get collection alerts tailored to your trade first.</p>
-                    <a href="notifications" class="btn btn-sm">Access</a>
+                    <h3 data-i18n="pro.subscription.priority_alerts">Priority alerts</h3>
+                    <p data-i18n="pro.subscription.priority_alerts_description">Get collection alerts tailored to your trade first.</p>
+                    <a href="notifications" class="btn btn-sm" data-i18n="pro.subscription.access">Access</a>
                 </div>
             </div>
         </section>
@@ -83,37 +83,37 @@ if ($isAjax) {
             <div class="plan-comparison">
 
                 <div class="plan free">
-                    <h2>Free</h2>
+                    <h2 data-i18n="pro.subscription.free">Free</h2>
                     <p class="price">€0 / month</p>
                     <ul>
-                        <li><i class="fas fa-check"></i> Post listings</li>
-                        <li><i class="fas fa-check"></i> Access to containers</li>
-                        <li><i class="fas fa-check"></i> Community forum</li>
-                        <li><i class="fas fa-check"></i> Messaging</li>
-                        <li class="locked"><i class="fas fa-lock"></i> Advanced dashboards</li>
-                        <li class="locked"><i class="fas fa-lock"></i> Detailed ecological analysis</li>
-                        <li class="locked"><i class="fas fa-lock"></i> Material statistics</li>
-                        <li class="locked"><i class="fas fa-lock"></i> Priority alerts</li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="pro.subscription.post_listings">Post listings</span></li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="pro.subscription.access_to_containers">Access to containers</span></li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="pro.subscription.community_forum">Community forum</span></li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="pro.subscription.messaging">Messaging</span></li>
+                        <li class="locked"><i class="fas fa-lock"></i> <span data-i18n="pro.subscription.advanced_dashboards">Advanced dashboards</span></li>
+                        <li class="locked"><i class="fas fa-lock"></i> <span data-i18n="pro.subscription.detailed_ecological_analysis">Detailed ecological analysis</span></li>
+                        <li class="locked"><i class="fas fa-lock"></i> <span data-i18n="pro.subscription.material_statistics">Material statistics</span></li>
+                        <li class="locked"><i class="fas fa-lock"></i> <span data-i18n="pro.subscription.priority_alerts">Priority alerts</span></li>
                     </ul>
-                    <span class="current-plan">Your current plan</span>
+                    <span class="current-plan" data-i18n="pro.subscription.your_current_plan">Your current plan</span>
                 </div>
 
                 <div class="plan premium">
-                    <div class="popular-badge">Recommended</div>
-                    <h2><i class="fas fa-crown"></i> Premium</h2>
+                    <div class="popular-badge" data-i18n="pro.subscription.recommended">Recommended</div>
+                    <h2><i class="fas fa-crown"></i> <span data-i18n="pro.subscription.premium">Premium</span></h2>
                     <p class="price" id="price-display">€29.99 / month</p>
                     <ul>
-                        <li><i class="fas fa-check"></i> Everything in Free</li>
-                        <li><i class="fas fa-check"></i> Advanced dashboards</li>
-                        <li><i class="fas fa-check"></i> Detailed ecological impact analysis</li>
-                        <li><i class="fas fa-check"></i> Available material statistics</li>
-                        <li><i class="fas fa-check"></i> Priority collection alerts</li>
-                        <li><i class="fas fa-check"></i> Priority support</li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="pro.subscription.everything_in_free">Everything in Free</span></li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="pro.subscription.advanced_dashboards">Advanced dashboards</span></li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="pro.subscription.detailed_ecological_impact_analysis">Detailed ecological impact analysis</span></li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="pro.subscription.available_material_statistics">Available material statistics</span></li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="pro.subscription.priority_collection_alerts">Priority collection alerts</span></li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="pro.subscription.priority_support">Priority support</span></li>
                     </ul>
                     <button id="btn-subscribe" class="btn btn-primary btn-lg">
-                        <i class="fas fa-crown"></i> Go Premium
+                        <i class="fas fa-crown"></i> <span data-i18n="pro.subscription.go_premium">Go Premium</span>
                     </button>
-                    <p class="billing-note">Cancel anytime</p>
+                    <p class="billing-note" data-i18n="pro.subscription.cancel_anytime">Cancel anytime</p>
                 </div>
 
             </div>

@@ -52,6 +52,16 @@ if ($method === 'POST') {
         ]));
         exit();
     }
+    if ($action === 'delete') {
+        $input = json_decode(file_get_contents('php://input'), true);
+        if (!is_array($input) || empty($input['code'])) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid request body']);
+            exit();
+        }
+        echo askAPI('/translations/' . rawurlencode($input['code']), 'DELETE');
+        exit();
+    }
 }
 http_response_code(400);
 echo json_encode(['error' => 'Unsupported action or method']);

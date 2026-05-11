@@ -523,7 +523,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php echo htmlspecialchars($paymentSuccess); ?>
         </div>
     <?php endif; ?>
-    <h1>Welcome, 
+    <h1><span data-i18n="customers.profile.welcome">Welcome</span>, 
         <?php
 
         $firstNameToShow = $userDetails['first_name'] ?? $user['first_name'] ?? $user['username'];
@@ -667,7 +667,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $badges = isset($userDetails['badges']) && is_array($userDetails['badges']) ? $userDetails['badges'] : [];
                     $defaultBadge = '/PA/PA%20-%20Site%20Principal/assets/img/default-badge.png';
                     if (empty($badges)) {
-                        echo '<p style="color:#888;">No badges earned yet.</p>';
+                        echo '<p style="color:#888;" data-i18n="customers.profile.no_badges_yet">No badges earned yet.</p>';
                     } else {
                         foreach ($badges as $badge) {
                             $imgPath = '/PA/files/badges/' . rawurlencode($badge['file_name']);
@@ -798,7 +798,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <div class="profile-accordion" id="acc-orders" data-section="orders">
                 <button class="accordion-toggle" type="button" aria-expanded="false">
-                    <span><i class="fa-solid fa-box-open"></i> My Orders</span>
+                    <span><i class="fa-solid fa-box-open"></i> <span data-i18n="customers.profile.my_orders">My Orders</span></span>
                     <i class="fa-solid fa-chevron-down accordion-chevron"></i>
                 </button>
                 <div class="accordion-body" style="display:none">
@@ -811,18 +811,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="acc-carousel" style="display:none">
                         <div class="acc-track" role="list"></div>
                         <div class="acc-nav">
-                            <button class="btn-secondary acc-prev" type="button" disabled><i class="fa-solid fa-chevron-left"></i> Previous</button>
+                            <button class="btn-secondary acc-prev" type="button" disabled><i class="fa-solid fa-chevron-left"></i> <span data-i18n="customers.profile.previous">Previous</span></button>
                             <span class="acc-page-info"></span>
-                            <button class="btn-secondary acc-next" type="button"><i class="fa-solid fa-chevron-right"></i> See more</button>
+                            <button class="btn-secondary acc-next" type="button"><i class="fa-solid fa-chevron-right"></i> <span data-i18n="customers.profile.see_more">See more</span></button>
                         </div>
                     </div>
-                    <p class="acc-empty" style="display:none">You have no orders yet.</p>
+                    <p class="acc-empty" style="display:none" data-i18n="customers.profile.no_orders_yet">You have no orders yet.</p>
                 </div>
             </div>
 
             <div class="profile-accordion" id="acc-annonces" data-section="annonces">
                 <button class="accordion-toggle" type="button" aria-expanded="false">
-                    <span><i class="fa-solid fa-tag"></i> My Posted Offers</span>
+                    <span><i class="fa-solid fa-tag"></i> <span data-i18n="customers.profile.my_posted_offers">My Posted Offers</span></span>
                     <i class="fa-solid fa-chevron-down accordion-chevron"></i>
                 </button>
                 <div class="accordion-body" style="display:none">
@@ -835,18 +835,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="acc-carousel" style="display:none">
                         <div class="acc-track" role="list"></div>
                         <div class="acc-nav">
-                            <button class="btn-secondary acc-prev" type="button" disabled><i class="fa-solid fa-chevron-left"></i> Previous</button>
+                            <button class="btn-secondary acc-prev" type="button" disabled><i class="fa-solid fa-chevron-left"></i> <span data-i18n="customers.profile.previous">Previous</span></button>
                             <span class="acc-page-info"></span>
-                            <button class="btn-secondary acc-next" type="button"><i class="fa-solid fa-chevron-right"></i> See more</button>
+                            <button class="btn-secondary acc-next" type="button"><i class="fa-solid fa-chevron-right"></i> <span data-i18n="customers.profile.see_more">See more</span></button>
                         </div>
                     </div>
-                    <p class="acc-empty" style="display:none">You have no posted offers yet.</p>
+                    <p class="acc-empty" style="display:none" data-i18n="customers.profile.no_posted_offers_yet">You have no posted offers yet.</p>
                 </div>
             </div>
 
             <div class="profile-accordion" id="acc-payouts" data-section="payouts">
                 <button class="accordion-toggle" type="button" aria-expanded="false">
-                    <span><i class="fa-solid fa-money-bill-transfer"></i> Payout Requests</span>
+                    <span><i class="fa-solid fa-money-bill-transfer"></i> <span data-i18n="customers.profile.payout_requests">Payout Requests</span></span>
                     <i class="fa-solid fa-chevron-down accordion-chevron"></i>
                 </button>
                 <div class="accordion-body" style="display:none">
@@ -859,18 +859,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="acc-carousel" style="display:none">
                         <div class="acc-track" role="list"></div>
                         <div class="acc-nav">
-                            <button class="btn-secondary acc-prev" type="button" disabled><i class="fa-solid fa-chevron-left"></i> Previous</button>
+                            <button class="btn-secondary acc-prev" type="button" disabled><i class="fa-solid fa-chevron-left"></i> <span data-i18n="customers.profile.previous">Previous</span></button>
                             <span class="acc-page-info"></span>
-                            <button class="btn-secondary acc-next" type="button"><i class="fa-solid fa-chevron-right"></i> See more</button>
+                            <button class="btn-secondary acc-next" type="button"><i class="fa-solid fa-chevron-right"></i> <span data-i18n="customers.profile.see_more">See more</span></button>
                         </div>
                     </div>
-                    <p class="acc-empty" style="display:none">You have no payout requests yet.</p>
+                    <p class="acc-empty" style="display:none" data-i18n="customers.profile.no_payout_requests_yet">You have no payout requests yet.</p>
                 </div>
             </div>
 
             <div class="profile-accordion" id="acc-refunds" data-section="refunds">
                 <button class="accordion-toggle" type="button" aria-expanded="false">
-                    <span><i class="fa-solid fa-rotate-left"></i> My Refund Requests</span>
+                    <span><i class="fa-solid fa-rotate-left"></i> <span data-i18n="customers.profile.my_refund_requests">My Refund Requests</span></span>
                     <i class="fa-solid fa-chevron-down accordion-chevron"></i>
                 </button>
                 <div class="accordion-body" style="display:none">
@@ -883,18 +883,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="acc-carousel" style="display:none">
                         <div class="acc-track" role="list"></div>
                         <div class="acc-nav">
-                            <button class="btn-secondary acc-prev" type="button" disabled><i class="fa-solid fa-chevron-left"></i> Previous</button>
+                            <button class="btn-secondary acc-prev" type="button" disabled><i class="fa-solid fa-chevron-left"></i> <span data-i18n="customers.profile.previous">Previous</span></button>
                             <span class="acc-page-info"></span>
-                            <button class="btn-secondary acc-next" type="button"><i class="fa-solid fa-chevron-right"></i> See more</button>
+                            <button class="btn-secondary acc-next" type="button"><i class="fa-solid fa-chevron-right"></i> <span data-i18n="customers.profile.see_more">See more</span></button>
                         </div>
                     </div>
-                    <p class="acc-empty" style="display:none">You have no refund requests yet.</p>
+                    <p class="acc-empty" style="display:none" data-i18n="customers.profile.no_refund_requests_yet">You have no refund requests yet.</p>
                 </div>
             </div>
 
             <div class="profile-accordion" id="acc-danger-zone" data-section="danger-zone">
                 <button class="accordion-toggle" type="button" aria-expanded="false">
-                    <span><i class="fa-solid fa-skull"></i> Danger zone</span>
+                    <span><i class="fa-solid fa-skull"></i> <span data-i18n="customers.profile.danger_zone">Danger zone</span></span>
                     <i class="fa-solid fa-chevron-down accordion-chevron"></i>
                 </button>
                 <div class="accordion-body" style="display:none">
@@ -907,7 +907,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             This action is permanent and cannot be undone. Your account and all associated data will be deleted.
                         </p>
                         <button type="button" id="delete-account-btn" class="btn-danger" style="background: #c53030;" data-i18n="customers.profile.delete_my_account">
-                            <i class="fa-solid fa-trash"></i> Delete My Account
+                            <i class="fa-solid fa-trash"></i> <span data-i18n="customers.profile.delete_my_account_text">Delete My Account</span>
                         </button>
                     </div>
                 </div>
@@ -1032,12 +1032,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php if ($twoFAEnabled): ?>
                 <p data-i18n="customers.profile.disable_2fa_warning">You can disable Two-Factor Authentication below. This will make your account less secure.</p>
                 <button type="button" class="btn-danger" id="mfa-disable-btn" data-i18n="customers.profile.disable_2fa">
-                    <i class="fa-solid fa-lock-open"></i> Disable 2FA
+                    <i class="fa-solid fa-lock-open"></i> <span data-i18n="customers.profile.disable_2fa">Disable 2FA</span>
                 </button>
             <?php else: ?>
                 <p data-i18n="customers.profile.mfa_intro">Add an extra layer of security by linking an authenticator app (Google Authenticator, Authy, etc.).</p>
                 <button type="button" class="btn-primary" id="mfa-setup-btn" data-i18n="customers.profile.setup_2fa">
-                    <i class="fa-solid fa-qrcode"></i> Setup 2FA
+                    <i class="fa-solid fa-qrcode"></i> <span data-i18n="customers.profile.setup_2fa">Setup 2FA</span>
                 </button>
 
                 <div id="mfa-setup-panel" style="display:none;margin-top:1.5rem;">
@@ -1065,7 +1065,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                     <div id="mfa-setup-feedback"></div>
                     <button type="button" class="btn-primary" id="mfa-enable-btn" data-i18n="customers.profile.activate_2fa">
-                        <i class="fa-solid fa-check"></i> Activate 2FA
+                        <i class="fa-solid fa-check"></i> <span data-i18n="customers.profile.activate_2fa">Activate 2FA</span>
                     </button>
                 </div>
             <?php endif; ?>
@@ -1193,7 +1193,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         </option>
                                     <?php endforeach; ?>
                                 <?php else: ?>
-                                    <option value="">No saved banking details</option>
+                                    <option value="" data-i18n="customers.profile.no_saved_banking_details">No saved banking details</option>
                                 <?php endif; ?>
                             </select>
                         </div>

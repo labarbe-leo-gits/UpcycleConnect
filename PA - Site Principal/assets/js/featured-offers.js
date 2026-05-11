@@ -1,6 +1,13 @@
 (function() {
     'use strict';
 
+    function t(key, defaultText) {
+        if (typeof getTranslationValue === 'function' && window.currentTranslations) {
+            return getTranslationValue(key, window.currentTranslations, window.currentFallback) || defaultText || '';
+        }
+        return defaultText || '';
+    }
+
     function resolveOfferImageUrl(image) {
         const placeholder = '../../assets/img/defaults/placeholder.png';
         if (!image || typeof image !== 'string') {
@@ -28,7 +35,7 @@
 
         const img = document.createElement('img');
         img.src = resolveOfferImageUrl(offer.image);
-        img.alt = offer.title ? offer.title : 'Offer image';
+        img.alt = offer.title || t('public.index.offer_image_alt', 'Offer image');
         img.loading = 'lazy';
         img.onload = function() {
             imageWrapper.classList.remove('loading');
@@ -59,12 +66,12 @@
 
         if (typeof offer.item_state !== 'undefined' && offer.item_state !== null) {
             const stateLabel = {
-                0: 'New',
-                1: 'Like new',
-                2: 'Good',
-                3: 'Fair',
-                4: 'Poor'
-            }[offer.item_state] || ('State ' + offer.item_state);
+                0: t('public.index.offer_state_new', 'New'),
+                1: t('public.index.offer_state_like_new', 'Like new'),
+                2: t('public.index.offer_state_good', 'Good'),
+                3: t('public.index.offer_state_fair', 'Fair'),
+                4: t('public.index.offer_state_poor', 'Poor')
+            }[offer.item_state] || t('public.index.offer_state_unknown', 'State ' + offer.item_state);
             const chip = document.createElement('span');
             chip.className = 'offer-chip offer-chip--state';
             chip.textContent = stateLabel;
@@ -75,7 +82,7 @@
         if (offer.user_type === 2) {
             const chip = document.createElement('span');
             chip.className = 'offer-chip offer-chip--pro';
-            chip.textContent = 'Pro';
+            chip.textContent = t('public.index.offer_tag_pro', 'Pro');
             metaRow.appendChild(chip);
             metaAdded = true;
         }
@@ -83,7 +90,7 @@
         if (offer.promoted) {
             const chip = document.createElement('span');
             chip.className = 'offer-chip offer-chip--promoted';
-            chip.textContent = 'Promoted';
+            chip.textContent = t('public.index.offer_tag_promoted', 'Promoted');
             metaRow.appendChild(chip);
             metaAdded = true;
         }
@@ -108,7 +115,7 @@
         const actionButton = document.createElement('button');
         actionButton.type = 'button';
         actionButton.className = 'offer-action-btn btn-primary';
-        actionButton.textContent = offer.priceValue === 0 ? 'Get Now' : 'Buy Now';
+        actionButton.textContent = offer.priceValue === 0 ? t('public.index.action_get_now', 'Get Now') : t('public.index.action_buy_now', 'Buy Now');
 
         const orderUrl = offer.id ? '../common/order?product_uuid=' + encodeURIComponent(offer.id) : null;
         if (orderUrl) {
@@ -124,12 +131,75 @@
         const detailsBtn = document.createElement('button');
         detailsBtn.type = 'button';
         detailsBtn.className = 'btn-secondary';
-        detailsBtn.textContent = 'View details';
+        detailsBtn.textContent = t('public.index.view_details', 'View details');
         detailsBtn.addEventListener('click', function() {
             window.location.href = '../common/offer?uuid=' + encodeURIComponent(offer.id);
         });
 
         buttons.appendChild(detailsBtn);
+
+        const translateBtn = document.createElement('button');
+        translateBtn.type = 'button';
+        translateBtn.className = 'btn-secondary';
+        translateBtn.textContent = t('public.index.translate_offer', 'Translate');
+        translateBtn.dataset.state = 'original';
+        translateBtn.addEventListener('click', async function() {
+            if (!window.currentLocale || window.currentLocale === 'en') {
+                return;
+            }
+            const currentlyTranslated = translateBtn.dataset.state === 'translated';
+            if (currentlyTranslated) {
+                title.innerHTML = `<i class="fa-solid fa-box-open"></i> ${translateBtn.dataset.originalTitle}`;
+                desc.textContent = translateBtn.dataset.originalDescription;
+                translateBtn.textContent = t('public.index.translate_offer', 'Translate');
+                translateBtn.dataset.state = 'original';
+                return;
+            }
+
+            if (translateBtn.dataset.translatedTitle && translateBtn.dataset.translatedDescription) {
+                title.innerHTML = `<i class="fa-solid fa-box-open"></i> ${translateBtn.dataset.translatedTitle}`;
+                desc.textContent = translateBtn.dataset.translatedDescription;
+                translateBtn.textContent = t('public.index.show_original', 'Show original');
+                translateBtn.dataset.state = 'translated';
+                return;
+            }
+
+            translateBtn.disabled = true;
+            translateBtn.textContent = t('public.index.translating', 'Translating...');
+            const targetLang = window.currentLocale || 'en';
+            try {
+                const response = await fetch('../common/translate-text-api.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: offer.description || '',
+                        title: offer.title || '',
+                        target: targetLang
+                    })
+                });
+                const data = await response.json();
+                if (response.ok && data.translated && data.translated.title && data.translated.description) {
+                    translateBtn.dataset.originalTitle = offer.title || '';
+                    translateBtn.dataset.originalDescription = offer.description || '';
+                    translateBtn.dataset.translatedTitle = data.translated.title;
+                    translateBtn.dataset.translatedDescription = data.translated.description;
+                    title.innerHTML = `<i class="fa-solid fa-box-open"></i> ${data.translated.title}`;
+                    desc.textContent = data.translated.description;
+                    translateBtn.textContent = t('public.index.show_original', 'Show original');
+                    translateBtn.dataset.state = 'translated';
+                } else {
+                    const message = data.error || t('public.index.translation_failed', 'Translation failed');
+                    alert(message);
+                }
+            } catch (err) {
+                console.error('Offer translation failed', err);
+                alert(t('public.index.translation_failed', 'Translation failed'));
+            } finally {
+                translateBtn.disabled = false;
+            }
+        });
+
+        buttons.appendChild(translateBtn);
 
         card.appendChild(buttons);
 
@@ -140,7 +210,7 @@
         const container = document.getElementById(containerId);
         if (!container) return;
         if (!Array.isArray(offers) || offers.length === 0) {
-            container.innerHTML = '<p>No offers available.</p>';
+            container.innerHTML = '<p>' + t('public.index.no_offers_available', 'No offers available.') + '</p>';
             return;
         }
 
@@ -190,8 +260,9 @@
         })
         .catch(err => {
             console.error('Failed to load featured offers', err);
-            if (rowPromoted) rowPromoted.innerHTML = '<p>Unable to load featured offers at this time.</p>';
-            if (rowRandom) rowRandom.innerHTML = '<p>Unable to load featured offers at this time.</p>';
+            const message = t('public.index.unable_load_featured_offers', 'Unable to load featured offers at this time.');
+            if (rowPromoted) rowPromoted.innerHTML = '<p>' + message + '</p>';
+            if (rowRandom) rowRandom.innerHTML = '<p>' + message + '</p>';
         });
     }
 

@@ -148,7 +148,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <div class="container" id="main-content" style="visibility:hidden;">
 
-    <h1>Welcome<?php echo ($firstName !== '' || $lastName !== '') ? ', ' . htmlspecialchars(trim($firstName . ' ' . $lastName)) : ''; ?>!</h1>
+    <h1><span data-i18n="partials.profile.welcome">Welcome</span><?php echo ($firstName !== '' || $lastName !== '') ? ', ' . htmlspecialchars(trim($firstName . ' ' . $lastName)) : ''; ?>!</h1>
 
     <div class="profile-card">
         <div class="profile-header-flex">
@@ -158,6 +158,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     data-blob-src="../../../files/uploads/user/<?= htmlspecialchars($userDetails['profile_picture'] ?? 'defaultUser.png') ?>"
                     src="data:image/gif;base64,R0lGODlhAQABAPAAAP///wAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw=="
                     alt="Profile Picture"
+                    data-i18n-alt="partials.profile.profile_picture_alt"
                     class="profile-pic-large"
                     id="profile-pic-preview"
                 >
@@ -177,29 +178,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php endif; ?>
                 <div class="profile-fields">
                     <div class="profile-field-row">
-                        <span class="profile-label">User ID:</span>
+                        <span class="profile-label" data-i18n="partials.profile.user_id">User ID:</span>
                         <span><?= htmlspecialchars($user['id']) ?></span>
-                        <button class="btn-copy" data-copy="<?= htmlspecialchars($user['id']) ?>" title="Copy User ID">
+                        <button class="btn-copy" data-copy="<?= htmlspecialchars($user['id']) ?>" title="Copy User ID" data-i18n-title="partials.profile.copy_user_id">
                             <i class="fa-solid fa-copy"></i>
                         </button>
                     </div>
                     <div class="profile-field-row editable-row">
-                        <span class="profile-label">Username:</span>
+                        <span class="profile-label" data-i18n="partials.profile.username">Username:</span>
                         <span id="username-value"><?= htmlspecialchars($user['username']) ?></span>
-                        <button class="btn-copy btn-edit-inline" data-edit="username" title="Edit Username">
+                        <button class="btn-copy btn-edit-inline" data-edit="username" title="Edit Username" data-i18n-title="partials.profile.edit_username">
                             <i class="fa-solid fa-pen"></i>
                         </button>
                     </div>
                     <div class="profile-field-row editable-row">
-                        <span class="profile-label">Email:</span>
+                        <span class="profile-label" data-i18n="partials.profile.email">Email:</span>
                         <span id="email-value"><?= htmlspecialchars($user['email']) ?></span>
-                        <button class="btn-copy btn-edit-inline" data-edit="email" title="Edit Email">
+                        <button class="btn-copy btn-edit-inline" data-edit="email" title="Edit Email" data-i18n-title="partials.profile.edit_email">
                             <i class="fa-solid fa-pen"></i>
                         </button>
                     </div>
                 </div>
                 <div class="profile-actions">
-                    <button onclick="document.getElementById('logout-form').submit()" class="btn-logout">
+                    <button onclick="document.getElementById('logout-form').submit()" class="btn-logout" data-i18n="partials.profile.logout">
                         <i class="fa-solid fa-right-from-bracket"></i> Logout
                     </button>
                 </div>
@@ -207,47 +208,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
         <hr>
         <div class="profile-tabs">
-            <button class="tab-btn active" data-tab="general">General</button>
-            <button class="tab-btn" data-tab="personal">Personal Info</button>
+            <button class="tab-btn active" data-tab="general" data-i18n="partials.profile.tab.general">General</button>
+            <button class="tab-btn" data-tab="personal" data-i18n="partials.profile.tab.personal">Personal Info</button>
             <?php if (empty($user['oauth_provider'])): ?>
-                <button class="tab-btn" data-tab="security">Security</button>
-                <button class="tab-btn" data-tab="mfa">MFA</button>
+                <button class="tab-btn" data-tab="security" data-i18n="partials.profile.tab.security">Security</button>
+                <button class="tab-btn" data-tab="mfa" data-i18n="partials.profile.tab.mfa">MFA</button>
             <?php endif; ?>
         </div>
 
         <div class="tab-content" id="general-tab">
             <p class="balance-note" style="margin-top:.5rem;">
                 <i class="fa-solid fa-circle-info"></i>
-                Your account is active. Use the tabs above to manage your personal information and security settings.
+                <span data-i18n="partials.profile.account_active_info">Your account is active. Use the tabs above to manage your personal information and security settings.</span>
             </p>
         </div>
 
         <div class="tab-content" id="personal-tab" style="display:none;">
-            <h3><i class="fa-solid fa-address-card"></i> Personal Information</h3>
+            <h3><i class="fa-solid fa-address-card"></i> <span data-i18n="partials.profile.personal_information">Personal Information</span></h3>
             <div class="profile-fields" style="margin-top:1rem;">
                 <div class="profile-field-row editable-row">
-                    <span class="profile-label">First name:</span>
+                    <span class="profile-label" data-i18n="partials.profile.first_name">First name:</span>
                     <span id="first_name-value"><?= htmlspecialchars($firstName) ?></span>
-                    <button class="btn-copy btn-edit-inline" data-edit="first_name" title="Edit First Name">
+                    <button class="btn-copy btn-edit-inline" data-edit="first_name" title="Edit First Name" data-i18n-title="partials.profile.edit_first_name">
                         <i class="fa-solid fa-pen"></i>
                     </button>
                 </div>
                 <div class="profile-field-row editable-row">
-                    <span class="profile-label">Last name:</span>
+                    <span class="profile-label" data-i18n="partials.profile.last_name">Last name:</span>
                     <span id="last_name-value"><?= htmlspecialchars($lastName) ?></span>
-                    <button class="btn-copy btn-edit-inline" data-edit="last_name" title="Edit Last Name">
+                    <button class="btn-copy btn-edit-inline" data-edit="last_name" title="Edit Last Name" data-i18n-title="partials.profile.edit_last_name">
                         <i class="fa-solid fa-pen"></i>
                     </button>
                 </div>
                 <div class="profile-field-row">
-                    <span class="profile-label">Account type:</span>
-                    <span>Part-time Employee</span>
+                    <span class="profile-label" data-i18n="partials.profile.account_type">Account type:</span>
+                    <span data-i18n="partials.profile.part_time_employee">Part-time Employee</span>
                 </div>
             </div>
         </div>
 
         <div class="tab-content" id="security-tab" style="display:none;">
-            <h3>Change Password</h3>
+            <h3 data-i18n="partials.profile.change_password">Change Password</h3>
             <div id="password-feedback">
                 <?php if (!empty($passwordErrors)): ?>
                     <div class="error-message"><?= htmlspecialchars(implode(' ', $passwordErrors)) ?></div>
@@ -258,68 +259,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <form id="change-password-form" class="change-password-form" autocomplete="off">
                 <input type="hidden" name="form_type" value="password_change">
                 <div class="field">
-                    <label for="current-password">Current Password</label>
+                    <label for="current-password" data-i18n="partials.profile.current_password">Current Password</label>
                     <div class="input-wrapper password-wrapper">
                         <i class="fa-solid fa-lock"></i>
                         <input type="password" id="current-password" name="current_password" required autocomplete="current-password">
-                        <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false">
+                        <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false" data-i18n-aria-label="partials.profile.show_password">
                             <i class="fa-solid fa-eye"></i>
                         </button>
                     </div>
                 </div>
                 <div class="field">
-                    <label for="new-password">New Password</label>
+                    <label for="new-password" data-i18n="partials.profile.new_password">New Password</label>
                     <div class="input-wrapper password-wrapper">
                         <i class="fa-solid fa-lock"></i>
                         <input type="password" id="new-password" name="new_password" class="password-input" data-strength="true" required autocomplete="new-password">
-                        <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false">
+                        <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false" data-i18n-aria-label="partials.profile.show_password">
                             <i class="fa-solid fa-eye"></i>
                         </button>
                     </div>
                     <div class="password-meter">
                         <div class="password-meter-bar"></div>
-                        <span class="password-meter-text">Strength</span>
+                        <span class="password-meter-text" data-i18n="partials.profile.password_strength">Strength</span>
                     </div>
                 </div>
                 <div class="field">
-                    <label for="confirm-password">Confirm New Password</label>
+                    <label for="confirm-password" data-i18n="partials.profile.confirm_new_password">Confirm New Password</label>
                     <div class="input-wrapper password-wrapper">
                         <i class="fa-solid fa-lock"></i>
                         <input type="password" id="confirm-password" name="confirm_password" required autocomplete="new-password">
-                        <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false">
+                        <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false" data-i18n-aria-label="partials.profile.show_password">
                             <i class="fa-solid fa-eye"></i>
                         </button>
                     </div>
                 </div>
-                <button type="submit" class="btn-primary">Change Password</button>
+                <button type="submit" class="btn-primary" data-i18n="partials.profile.change_password_button">Change Password</button>
             </form>
         </div>
 
         <div class="tab-content" id="mfa-tab" style="display:none;">
-            <h3><i class="fa-solid fa-shield-halved"></i> Two-Factor Authentication (TOTP)</h3>
+            <h3><i class="fa-solid fa-shield-halved"></i> <span data-i18n="partials.profile.two_factor_authentication">Two-Factor Authentication (TOTP)</span></h3>
             <div id="mfa-status-badge" class="mfa-status-badge <?= $twoFAEnabled ? 'mfa-enabled' : 'mfa-disabled' ?>">
                 <?php if ($twoFAEnabled): ?>
-                    <i class="fa-solid fa-circle-check"></i> 2FA is <strong>enabled</strong> â€” your account is protected.
+                    <i class="fa-solid fa-circle-check"></i> <span data-i18n-html="partials.profile.twofa_enabled_protected">2FA is <strong>enabled</strong> — your account is protected.</span>
                 <?php else: ?>
-                    <i class="fa-solid fa-circle-xmark"></i> 2FA is <strong>disabled</strong>.
+                    <i class="fa-solid fa-circle-xmark"></i> <span data-i18n-html="partials.profile.twofa_disabled">2FA is <strong>disabled</strong>.</span>
                 <?php endif; ?>
             </div>
             <?php if ($twoFAEnabled): ?>
-                <p>You can disable Two-Factor Authentication below.</p>
-                <button type="button" class="btn-danger" id="mfa-disable-btn">
-                    <i class="fa-solid fa-lock-open"></i> Disable 2FA
+                <p data-i18n="partials.profile.disable_2fa_warning">You can disable Two-Factor Authentication below.</p>
+                <button type="button" class="btn-danger" id="mfa-disable-btn" data-i18n="partials.profile.disable_2fa">
+                    <i class="fa-solid fa-lock-open"></i> <span data-i18n="partials.profile.disable_2fa">Disable 2FA</span>
                 </button>
             <?php else: ?>
-                <p>Add an extra layer of security by linking an authenticator app (Google Authenticator, Authy, etc.).</p>
-                <button type="button" class="btn-primary" id="mfa-setup-btn">
-                    <i class="fa-solid fa-qrcode"></i> Setup 2FA
+                <p data-i18n="partials.profile.mfa_intro">Add an extra layer of security by linking an authenticator app (Google Authenticator, Authy, etc.).</p>
+                <button type="button" class="btn-primary" id="mfa-setup-btn" data-i18n="partials.profile.setup_2fa">
+                    <i class="fa-solid fa-qrcode"></i> <span data-i18n="partials.profile.setup_2fa">Setup 2FA</span>
                 </button>
                 <div id="mfa-setup-panel" style="display:none;margin-top:1.5rem;">
-                    <p class="mfa-info-text">Scan this QR code with your authenticator app, or enter the key manually.</p>
+                    <p class="mfa-info-text" data-i18n="partials.profile.mfa_scan_info">Scan this QR code with your authenticator app, or enter the key manually.</p>
                     <div id="mfa-qr-code" style="margin:1rem 0;"></div>
-                    <p class="mfa-info-text">Manual key: <code id="mfa-secret-display" class="mfa-secret-key"></code></p>
+                    <p class="mfa-info-text"><span data-i18n="partials.profile.manual_key">Manual key:</span> <code id="mfa-secret-display" class="mfa-secret-key"></code></p>
                     <div class="field" style="max-width:280px;">
-                        <label for="mfa-verify-code">Enter the 6-digit code to confirm</label>
+                        <label for="mfa-verify-code" data-i18n="partials.profile.enter_6_digit_code">Enter the 6-digit code to confirm</label>
                         <div class="input-wrapper">
                             <i class="fa-solid fa-key"></i>
                             <input
@@ -331,12 +332,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 pattern="[0-9]{6}"
                                 autocomplete="one-time-code"
                                 placeholder="000000"
+                                data-i18n-placeholder="partials.profile.mfa_code_placeholder"
                             >
                         </div>
                     </div>
                     <div id="mfa-setup-feedback"></div>
-                    <button type="button" class="btn-primary" id="mfa-enable-btn">
-                        <i class="fa-solid fa-check"></i> Activate 2FA
+                    <button type="button" class="btn-primary" id="mfa-enable-btn" data-i18n="partials.profile.activate_2fa">
+                        <i class="fa-solid fa-check"></i> <span data-i18n="partials.profile.activate_2fa">Activate 2FA</span>
                     </button>
                 </div>
             <?php endif; ?>
@@ -346,16 +348,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="modal-overlay" id="password-success-modal" aria-hidden="true">
             <div class="modal" role="dialog" aria-modal="true" aria-labelledby="password-success-title">
                 <div class="modal-header">
-                    <h2 id="password-success-title">Success</h2>
-                    <button type="button" class="modal-close" id="close-password-success" aria-label="Close">
+                    <h2 id="password-success-title" data-i18n="partials.profile.success">Success</h2>
+                    <button type="button" class="modal-close" id="close-password-success" aria-label="Close" data-i18n-aria-label="partials.profile.close">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <p class="center">Your password has been changed successfully.</p>
+                    <p class="center" data-i18n="partials.profile.password_changed_success">Your password has been changed successfully.</p>
                 </div>
                 <div class="modal-actions">
-                    <button type="button" class="btn-primary" id="password-success-ok">OK</button>
+                    <button type="button" class="btn-primary" id="password-success-ok" data-i18n="partials.profile.ok">OK</button>
                 </div>
             </div>
         </div>
