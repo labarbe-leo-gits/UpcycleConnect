@@ -23,7 +23,8 @@ $query = isset($_GET['q']) ? trim($_GET['q']) : '';
     const loadMoreBtn = document.getElementById('search-show-more');
 
     function load() {
-        fetch('/PA/PA%20-%20BO/pages/admin/global-search-api.php?q=' + encodeURIComponent(q) + '&limit=' + limit + '&offset=' + offset)
+        const apiBase = location.pathname.replace(/\/[^\/]+$/, '/') ;
+        fetch(apiBase + 'global-search-api.php?q=' + encodeURIComponent(q) + '&limit=' + limit + '&offset=' + offset)
             .then(r=>r.json())
             .then(data=>{
                 if (!Array.isArray(data) || data.length === 0) {

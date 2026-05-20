@@ -86,6 +86,7 @@ services:
       FACEBOOK_REDIRECT_URI: http://localhost:8081/pages/public/oauth-callback-facebook.php
     volumes:
       - ./files:/var/www/html/files
+      - ./PA - API/data:/var/www/html/api-data:ro
       - ./PA - Site Principal/.env:/var/www/html/.env:ro
     ports:
       - "8081:80"

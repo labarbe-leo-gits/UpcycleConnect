@@ -336,13 +336,47 @@ CREATE TABLE IF NOT EXISTS reservations (
 
 CREATE TABLE IF NOT EXISTS notifications (
     id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    campaign_id CHAR(36) NULL,
     annonce_id CHAR(36),
     user_id CHAR(36) NOT NULL,
     message TEXT NOT NULL,
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (annonce_id) REFERENCES annonces(id) ON DELETE CASCADE
+    FOREIGN KEY (annonce_id) REFERENCES annonces(id) ON DELETE CASCADE,
+    INDEX idx_notifications_campaign_id (campaign_id)
+);
+
+CREATE TABLE IF NOT EXISTS notification_campaigns (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    title VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    target_user_type INT NOT NULL,
+    status INT NOT NULL DEFAULT 0,
+    scheduled_at DATETIME NULL,
+    created_by_user_id CHAR(36) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_notification_campaigns_status (status),
+    INDEX idx_notification_campaigns_target (target_user_type),
+    INDEX idx_notification_campaigns_created_at (created_at)
+);
+
+CREATE TABLE IF NOT EXISTS notification_campaign_recipients (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    campaign_id CHAR(36) NOT NULL,
+    user_id CHAR(36) NOT NULL,
+    notification_id CHAR(36) NULL,
+    delivery_status INT NOT NULL DEFAULT 0,
+    sent_at DATETIME NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (campaign_id) REFERENCES notification_campaigns(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (notification_id) REFERENCES notifications(id) ON DELETE SET NULL,
+    UNIQUE KEY uniq_campaign_recipient (campaign_id, user_id),
+    INDEX idx_campaign_recipients_campaign (campaign_id),
+    INDEX idx_campaign_recipients_status (delivery_status)
 );
 
 CREATE TABLE IF NOT EXISTS facteurs_materiaux (
@@ -890,6 +924,204 @@ CREATE TABLE IF NOT EXISTS favorites (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (annonce_id) REFERENCES annonces(id) ON DELETE CASCADE,
     UNIQUE INDEX idx_favorite (user_id, annonce_id)
+);
+
+CREATE TABLE IF NOT EXISTS subscription_tiers (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    name VARCHAR(100) NOT NULL UNIQUE,
+    description TEXT NULL,
+    tier_level INT NOT NULL UNIQUE,
+    monthly_price DECIMAL(10,2) NOT NULL,
+    currency CHAR(3) NOT NULL DEFAULT 'EUR',
+    stripe_price_id VARCHAR(255) NULL,
+    features JSON NULL,
+    dashboard_access BOOLEAN DEFAULT FALSE,
+    analytics_access BOOLEAN DEFAULT FALSE,
+    material_stats BOOLEAN DEFAULT FALSE,
+    collection_alerts BOOLEAN DEFAULT FALSE,
+    max_annonces INT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+INSERT IGNORE INTO subscription_tiers (
+    name, description, tier_level, monthly_price, currency, stripe_price_id,
+    features, dashboard_access, analytics_access, material_stats, collection_alerts,
+    max_annonces, is_active
+) VALUES
+    (
+        'Free',
+        'Basic access for individuals getting started.',
+        0,
+        0.00,
+        'EUR',
+        NULL,
+        JSON_ARRAY('Post listings', 'Access to containers', 'Community forum', 'Messaging', 'Basic statistics'),
+        FALSE,
+        FALSE,
+        FALSE,
+        FALSE,
+        5,
+        TRUE
+    ),
+    (
+        'Pro',
+        'Professional plan for active sellers and craftspeople.',
+        1,
+        19.99,
+        'EUR',
+        NULL,
+        JSON_ARRAY('Advanced dashboards', 'Material statistics', 'Priority alerts', 'Detailed activity overview'),
+        TRUE,
+        TRUE,
+        TRUE,
+        TRUE,
+        50,
+        TRUE
+    ),
+    (
+        'Premium',
+        'Full access plan with advanced analytics and priority support.',
+        2,
+        29.99,
+        'EUR',
+        'price_1T70WSI7wZRSS0GxZYKgEKZS',
+        JSON_ARRAY('Everything in Pro', 'Ecological impact analysis', 'Advanced dashboards', 'Priority support'),
+        TRUE,
+        TRUE,
+        TRUE,
+        TRUE,
+        NULL,
+        TRUE
+    );
+
+CREATE TABLE IF NOT EXISTS user_subscription_tiers (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    user_id CHAR(36) NOT NULL,
+    tier_id CHAR(36) NOT NULL,
+    contract_id CHAR(36) NULL,
+    started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ended_at TIMESTAMP NULL DEFAULT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (tier_id) REFERENCES subscription_tiers(id) ON DELETE CASCADE,
+    FOREIGN KEY (contract_id) REFERENCES contracts(id) ON DELETE SET NULL,
+    INDEX idx_user_subscription (user_id, started_at)
+);
+
+CREATE TABLE IF NOT EXISTS commission_settings (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    commission_rate_min DECIMAL(5,2) NOT NULL DEFAULT 5.00,
+    commission_rate_max DECIMAL(5,2) NOT NULL DEFAULT 10.00,
+    is_global BOOLEAN DEFAULT TRUE,
+    effective_from DATE NOT NULL,
+    effective_to DATE NULL DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS commission_transactions (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    order_id CHAR(36) NOT NULL,
+    seller_id CHAR(36) NOT NULL,
+    amount_before_commission DECIMAL(10,2) NOT NULL,
+    commission_rate DECIMAL(5,2) NOT NULL,
+    commission_amount DECIMAL(10,2) NOT NULL,
+    amount_after_commission DECIMAL(10,2) NOT NULL,
+    status INT NOT NULL DEFAULT 0,
+    notes TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+    FOREIGN KEY (seller_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_commission_seller (seller_id),
+    INDEX idx_commission_status (status)
+);
+
+CREATE TABLE IF NOT EXISTS partnership_campaigns (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    partner_name VARCHAR(255) NOT NULL,
+    partner_logo VARCHAR(500) NULL,
+    description TEXT NULL,
+    website_url VARCHAR(500) NULL,
+    status INT NOT NULL DEFAULT 0,
+    monthly_price DECIMAL(10,2) NOT NULL,
+    currency CHAR(3) NOT NULL DEFAULT 'EUR',
+    contract_id CHAR(36) NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    stripe_payment_intent_id VARCHAR(255) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (contract_id) REFERENCES contracts(id) ON DELETE SET NULL,
+    INDEX idx_partnership_status (status),
+    INDEX idx_partnership_dates (start_date, end_date)
+);
+
+CREATE TABLE IF NOT EXISTS partnership_campaign_items (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    campaign_id CHAR(36) NOT NULL,
+    annonce_id CHAR(36) NULL,
+    position_type VARCHAR(50) NOT NULL,
+    position_priority INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (campaign_id) REFERENCES partnership_campaigns(id) ON DELETE CASCADE,
+    FOREIGN KEY (annonce_id) REFERENCES annonces(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS training_sessions (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    event_id CHAR(36) NOT NULL,
+    creator_id CHAR(36) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT NULL,
+    session_type VARCHAR(50) NOT NULL,
+    price_per_person DECIMAL(10,2) NOT NULL,
+    currency CHAR(3) NOT NULL DEFAULT 'EUR',
+    max_participants INT DEFAULT NULL,
+    current_participants INT DEFAULT 0,
+    is_online BOOLEAN DEFAULT FALSE,
+    online_link VARCHAR(500) NULL,
+    status INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (event_id) REFERENCES evenements(id) ON DELETE CASCADE,
+    FOREIGN KEY (creator_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_training_status (status)
+);
+
+CREATE TABLE IF NOT EXISTS training_session_registrations (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    session_id CHAR(36) NOT NULL,
+    user_id CHAR(36) NOT NULL,
+    order_id CHAR(36) NULL,
+    amount_paid DECIMAL(10,2) NOT NULL,
+    status INT NOT NULL DEFAULT 0,
+    registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    attended_at TIMESTAMP NULL DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (session_id) REFERENCES training_sessions(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE SET NULL,
+    UNIQUE INDEX idx_training_registration (session_id, user_id),
+    INDEX idx_training_user_registrations (user_id)
+);
+
+CREATE TABLE IF NOT EXISTS revenue_reports (
+    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    report_period_start DATE NOT NULL,
+    report_period_end DATE NOT NULL,
+    subscription_revenue DECIMAL(15,2) DEFAULT 0,
+    commission_revenue DECIMAL(15,2) DEFAULT 0,
+    partnership_revenue DECIMAL(15,2) DEFAULT 0,
+    training_revenue DECIMAL(15,2) DEFAULT 0,
+    total_revenue DECIMAL(15,2) DEFAULT 0,
+    subscription_count INT DEFAULT 0,
+    commission_count INT DEFAULT 0,
+    partnership_count INT DEFAULT 0,
+    training_participants INT DEFAULT 0,
+    generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE INDEX idx_revenue_period (report_period_start, report_period_end)
 );
 
 SET FOREIGN_KEY_CHECKS = 1;

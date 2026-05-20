@@ -93,6 +93,7 @@ services:
     volumes:
       - ./PA - Site Principal:/var/www/html:delegated
       - ./files:/var/www/html/files:delegated
+      - ./PA - API/data:/var/www/html/api-data:delegated
       - ./PA - Site Principal/.env:/var/www/html/.env:ro
       - ./vendor:/var/www/html/vendor:ro
     depends_on:

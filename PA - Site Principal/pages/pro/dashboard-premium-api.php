@@ -24,9 +24,9 @@ if (!$user) {
     exit;
 }
 
-if (!isPremium()) {
+if (!hasSubscriptionAccess('dashboard_access')) {
     http_response_code(403);
-    echo json_encode(['error' => 'Premium required']);
+    echo json_encode(['error' => 'Dashboard access required']);
     exit;
 }
 

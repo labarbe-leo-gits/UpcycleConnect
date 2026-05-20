@@ -439,7 +439,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     async function loadTrendingGifs() {
         try {
-            gifGrid.innerHTML = '<div class="gif-loading">Loading trending GIFs...</div>';
+            gifGrid.innerHTML = '<div class="gif-loading">' + t('common.loading.trending.gifs', 'Loading trending GIFs...') + '</div>';
             const response = await fetch('../../pages/api/gifs-new.php');
             const data = await response.json();
             displayGifs(data.gifs);
@@ -456,18 +456,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         try {
-            gifGrid.innerHTML = '<div class="gif-loading">Searching...</div>';
+            gifGrid.innerHTML = '<div class="gif-loading">' + t('common.searching', 'Searching...') + '</div>';
             const response = await fetch(`../../pages/api/gifs-new.php?q=${encodeURIComponent(query)}`);
             const data = await response.json();
             
             if (!data.gifs || data.gifs.length === 0) {
-                gifGrid.innerHTML = '<div class="gif-empty">No GIFs found for "' + query + '"</div>';
+                gifGrid.innerHTML = '<div class="gif-empty">' + t('common.no.gifs.found', 'No GIFs found for') + ' "' + query + '"</div>';
             } else {
                 displayGifs(data.gifs);
             }
         } catch (e) {
             console.error('Failed to search GIFs:', e);
-            gifGrid.innerHTML = '<div class="gif-empty">Search failed. Please try again.</div>';
+            gifGrid.innerHTML = '<div class="gif-empty">' + t('common.search.failed', 'Search failed. Please try again.') + '</div>';
         }
     }
     
@@ -1019,7 +1019,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
         } catch (e) {
-            acceptedList.innerHTML = 'Error loading friends.';
+            acceptedList.innerHTML = '<div class="empty-state">' + t('common.error.loading.friends', 'Error loading friends.') + '</div>';
             pendingList.innerHTML = 'Error.';
             console.error(e);
         }

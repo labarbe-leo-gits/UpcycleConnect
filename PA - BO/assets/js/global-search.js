@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
         timer = setTimeout(() => {
-            const apiBase = '/PA/PA%20-%20BO/pages/admin/';
+            const apiBase = location.pathname.replace(/\/[^\/]+$/, '/') ;
             fetch(apiBase + 'global-search-api.php?q=' + encodeURIComponent(q))
                 .then(r => r.json())
                 .then(items => {
@@ -80,7 +80,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (e.key === 'Enter') {
             const q = input.value.trim();
             if (q) {
-                window.location.href = '/PA/PA%20-%20BO/pages/admin/search.php?q=' + encodeURIComponent(q);
+                const base = location.pathname.replace(/\/[^\/]+$/, '/');
+                window.location.href = base + 'search.php?q=' + encodeURIComponent(q);
             }
         }
     });

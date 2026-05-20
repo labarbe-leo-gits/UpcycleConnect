@@ -3,6 +3,7 @@ $title = "Offers";
 
 include_once '../../config/db.php';
 include_once '../../includes/auth.php';
+include_once '../../includes/helpers.php';
 $user = getLoggedInUser();
 trackLastPage();
 
@@ -26,79 +27,78 @@ if (!$user) {
 <div class="add-modal">
     <div class="add-modal-content">
         <span class="close-button" id="close-add-modal">&times;</span>
-        <h2>Add New Offer</h2>
+        <h2 data-i18n="customers.offers.add_new_offer">Add New Offer</h2>
         <form id="add-offer-form">
             <div class="form-group">
-                <label for="offer-title">Title:</label>
+                <label for="offer-title" data-i18n="customers.offers.title_label">Title:</label>
                 <input type="text" id="offer-title" name="offer-title" required>
             </div>
             <div class="form-group">
-                <label for="offer-description">Description:</label>
+                <label for="offer-description" data-i18n="customers.offers.description_label">Description:</label>
                 <textarea id="offer-description" name="offer-description" required></textarea>
             </div>
             <div class="form-group">
-                <label for="offer-category">Category:</label>
+                <label for="offer-category" data-i18n="common.category.2">Category:</label>
                 <select id="offer-category" name="offer-category">
-                    <option value="">-- none --</option>
+                    <option value="" data-i18n="common.none">-- none --</option>
                 </select>
             </div>
             <div class="form-group">
-                <label for="offer-item-state">Item condition:</label>
+                <label for="offer-item-state" data-i18n="common.item.condition">Item condition:</label>
                 <select id="offer-item-state" name="offer-item-state">
-                    <option value="0">New</option>
-                    <option value="1">Like new</option>
-                    <option value="2">Good</option>
-                    <option value="3">Fair</option>
-                    <option value="4">Poor</option>
+                    <option value="0" data-i18n="common.new">New</option>
+                    <option value="1" data-i18n="common.like.new">Like new</option>
+                    <option value="2" data-i18n="common.good">Good</option>
+                    <option value="3" data-i18n="common.fair">Fair</option>
+                    <option value="4" data-i18n="common.poor">Poor</option>
                 </select>
             </div>
             <div class="form-group">
-                <label for="offer-price">
+                <label for="offer-price" data-i18n="common.your.net.price.ht">
                     Your net price (HT - what you will receive):
-                    <span class="help-icon" title="Enter the amount you want to receive (excluding UpcycleConnect commission and Stripe fees). The buyer will pay a higher TTC amount calculated automatically.">
+                    <span class="help-icon" title="Enter the amount you want to receive (excluding UpcycleConnect commission and Stripe fees). The buyer will pay a higher TTC amount calculated automatically." data-i18n-title="common.offer.price.help.title">
                         <i class="fa-solid fa-circle-question"></i>
-                        <span class="help-tooltip">Enter the amount you want to receive. Put 0 for a free offer. UpcycleConnect adds an 8% commission and Stripe processing fees (~2.9% + €0.30) on top to get the final buyer price (TTC).<br><br>The price is limited to a maximum of 1000€. If you wish to sell the item for more, please contact support.</span>
+                        <span class="help-tooltip" data-i18n-html="common.offer.price.help.text">Enter the amount you want to receive. Put 0 for a free offer. UpcycleConnect adds an 8% commission and Stripe processing fees (~2.9% + €0.30) on top to get the final buyer price (TTC).<br><br>The price is limited to a maximum of 1000€. If you wish to sell the item for more, please contact support.</span>
                     </span>
                 </label>
                 <input type="number" id="offer-price" name="offer-price" min="0" step="0.01" max="1000" required>
             </div>
             <div class="form-group" id="offer-ttc-preview" style="display:none;">
                 <div class="ttc-breakdown">
-                    <h4><i class="fa-solid fa-calculator"></i> Price breakdown (informative)</h4>
+                    <h4 data-i18n="common.price.breakdown.informative"><i class="fa-solid fa-calculator"></i> Price breakdown (informative)</h4>
                     <div class="ttc-row">
-                        <span>Your net price (HT)</span>
+                        <span data-i18n="common.your.net.price.ht">Your net price (HT)</span>
                         <span id="ttc-ht">€ 0.00</span>
                     </div>
                     <div class="ttc-row">
-                        <span>UpcycleConnect commission (8%)</span>
+                        <span data-i18n="common.upcycleconnect.commission.8">UpcycleConnect commission (8%)</span>
                         <span id="ttc-commission">€ 0.00</span>
                     </div>
                     <div class="ttc-row">
-                        <span>Stripe fees (~2.9% + €0.30)</span>
+                        <span data-i18n="common.stripe.processing.fees.2.9.0.30">Stripe fees (~2.9% + €0.30)</span>
                         <span id="ttc-stripe">€ 0.00</span>
                     </div>
                     <div class="ttc-row ttc-total">
-                        <span><strong>Buyer pays (TTC)</strong></span>
+                        <span><strong data-i18n="common.buyer.pays.ttc">Buyer pays (TTC)</strong></span>
                         <span id="ttc-total"><strong>€ 0.00</strong></span>
                     </div>
-                    <p class="ttc-note"><i class="fa-solid fa-circle-info"></i> Stripe fees are non-refundable. In case of refund, the buyer gets back HT + commission (€ <span id="ttc-refund">0.00</span>).</p>
+                    <p class="ttc-note" data-i18n-html="common.offer.ttc.refund.note"><i class="fa-solid fa-circle-info"></i> Stripe fees are non-refundable. In case of refund, the buyer gets back HT + commission (€ <span id="ttc-refund">0.00</span>).</p>
                 </div>
             </div>
             <div class="form-group">
-                <label for="offer-weight">Material weight (kg):</label>
+                <label for="offer-weight" data-i18n="common.material.weight.kg">Material weight (kg):</label>
                 <input type="number" step="0.01" id="offer-weight" name="offer-weight" min="0">
             </div>
             <div class="form-group">
-                <label for="offer-material">Material type:</label>
+                <label for="offer-material" data-i18n="common.material.type">Material type:</label>
                 <select id="offer-material" name="offer-material">
-                    <option value="">-- select --</option>
-
-                    <option value="other">Other...</option>
+                    <option value="" data-i18n="common.select">-- select --</option>
+                    <option value="other" data-i18n="common.other.2">Other...</option>
                 </select>
-                <input type="text" id="offer-material-custom" name="offer-material-custom" placeholder="Specify material" style="display:none; margin-top:5px;">
+                <input type="text" id="offer-material-custom" name="offer-material-custom" placeholder="Specify material" data-i18n-placeholder="customers.offers.specify_material" style="display:none; margin-top:5px;">
             </div>
             <div class="form-group" id="offer-estimation-group" style="display:none;">
-                <label for="offer-estimation">Estimated upcycling score:</label>
+                <label for="offer-estimation" data-i18n="common.estimated.upcycling.score">Estimated upcycling score:</label>
                 <div id="gemini-ai-badge" style="display:none;margin-bottom:8px;padding:8px 12px;background:#f0f4ff;border-radius:8px;font-size:.82rem;color:#374151;border:1px solid #c7d2fe;line-height:1.5;">
                     <i class="fa-solid fa-spinner fa-spin" id="gemini-spinner"></i><span id="gemini-badge-text"></span>
                 </div>
@@ -110,10 +110,10 @@ if (!$user) {
                         <div class="drop-zone-icon">
                             <i class="fa-solid fa-cloud-arrow-up"></i>
                         </div>
-                        <p class="drop-zone-title">Drop files here or click to browse</p>
-                        <p class="drop-zone-subtitle">Support for multiple images</p>
+                        <p class="drop-zone-title" data-i18n="common.drop.files.here.or.click.to.browse">Drop files here or click to browse</p>
+                        <p class="drop-zone-subtitle" data-i18n="common.support.for.multiple.images">Support for multiple images</p>
                         <button type="button" class="drop-zone-button">
-                            <i class="fa-solid fa-folder-open"></i> Browse Files
+                            <i class="fa-solid fa-folder-open"></i> <span data-i18n="customers.offers.browse_files">Browse Files</span>
                         </button>
                     </div>
                     <input type="file" id="offer-pictures" name="offer-pictures[]" multiple accept="image/*">
@@ -122,7 +122,7 @@ if (!$user) {
             </div>
             <button type="submit">
                 <i class="fa-solid fa-plus"></i>
-                Add Offer
+                <span data-i18n="customers.offers.add_offer">Add Offer</span>
             </button>
         </form>
     </div>
@@ -132,52 +132,52 @@ if (!$user) {
     <div class="offers-toolbar">
         <div class="offers-toolbar-filters">
             <select id="offers-category-filter">
-                <option value="">All categories</option>
+                <option value="" data-i18n="common.all.categories">All categories</option>
             </select>
             <select id="offers-condition-filter">
-                <option value="">All conditions</option>
-                <option value="0">New</option>
-                <option value="1">Like new</option>
-                <option value="2">Good</option>
-                <option value="3">Fair</option>
-                <option value="4">Poor</option>
+                <option value="" data-i18n="common.all.conditions">All conditions</option>
+                <option value="0" data-i18n="common.new">New</option>
+                <option value="1" data-i18n="common.like.new">Like new</option>
+                <option value="2" data-i18n="common.good">Good</option>
+                <option value="3" data-i18n="common.fair">Fair</option>
+                <option value="4" data-i18n="common.poor">Poor</option>
             </select>
             <select id="offers-promoted-filter">
-                <option value="">All offers</option>
-                <option value="1">Promoted</option>
-                <option value="0">Not promoted</option>
+                <option value="" data-i18n="common.all.offers">All offers</option>
+                <option value="1" data-i18n="common.promoted">Promoted</option>
+                <option value="0" data-i18n="common.not.promoted">Not promoted</option>
             </select>
             <div class="offers-price-range">
-                <input id="offers-price-min" style="width: 40px;" type="number" min="0" step="0.01" placeholder="Min price" />
-                <input id="offers-price-max" style="width: 40px;" type="number" min="0" step="0.01" placeholder="Max price" />
+                <input id="offers-price-min" style="width: 40px;" type="number" min="0" step="0.01" placeholder="Min price" data-i18n-placeholder="customers.offers.price_min_placeholder" />
+                <input id="offers-price-max" style="width: 40px;" type="number" min="0" step="0.01" placeholder="Max price" data-i18n-placeholder="customers.offers.price_max_placeholder" />
             </div>
             <select id="offers-sort">
-                <option value="">Sort</option>
-                <option value="created_desc">Newest</option>
-                <option value="created_asc">Oldest</option>
-                <option value="price_asc">Price (low → high)</option>
-                <option value="price_desc">Price (high → low)</option>
-                <option value="title_asc">Name (A → Z)</option>
-                <option value="title_desc">Name (Z → A)</option>
+                <option value="" data-i18n="common.sort">Sort</option>
+                <option value="created_desc" data-i18n="common.newest">Newest</option>
+                <option value="created_asc" data-i18n="common.oldest">Oldest</option>
+                <option value="price_asc" data-i18n="common.price.low.high">Price (low → high)</option>
+                <option value="price_desc" data-i18n="common.price.high.low">Price (high → low)</option>
+                <option value="title_asc" data-i18n="common.name.a.z">Name (A → Z)</option>
+                <option value="title_desc" data-i18n="common.name.z.a">Name (Z → A)</option>
             </select>
             <!-- Promoted boolean -->
 
             <select id="offers-page-size">
-                <option value="4">4 / page</option>
-                <option value="8">8 / page</option>
-                <option value="12">12 / page</option>
-                <option value="20">20 / page</option>
-                <option value="50">50 / page</option>
+                <option value="4" data-i18n="common.4.page">4 / page</option>
+                <option value="8" data-i18n="common.8.page">8 / page</option>
+                <option value="12" data-i18n="common.12.page">12 / page</option>
+                <option value="20" data-i18n="common.20.page">20 / page</option>
+                <option value="50" data-i18n="common.50.page">50 / page</option>
             </select>
         </div>
         <div class="offers-toolbar-search">
             <div class="toolbar-search-wrap">
                 <i class="fa-solid fa-search toolbar-search-icon"></i>
-                <input id="offers-search" type="search" placeholder="Search by name..." autocomplete="off" />
+                <input id="offers-search" type="search" placeholder="Search by name..." data-i18n-placeholder="common.search.by.name" autocomplete="off" />
             </div>
             <button id="offers-reset-filters" class="btn-secondary" type="button">
                 <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
-                Reset filters
+                <span data-i18n="common.reset.filters">Reset filters</span>
             </button>
         </div>
     </div>
@@ -186,7 +186,7 @@ if (!$user) {
     <div class="offers-header">
         <button class="add-offer-button" id="add-offer">
             <i class="fa-solid fa-plus"></i>
-            Add Offer
+            <span data-i18n="customers.offers.add_offer">Add Offer</span>
         </button>
     </div>
     <?php endif; ?>
@@ -290,30 +290,30 @@ if (!$user) {
 <div class="promote-modal" id="promote-modal">
     <div class="promote-modal-content">
         <span class="close-button" id="close-promote-modal">&times;</span>
-        <h2>Promote Offer</h2>
+        <h2 data-i18n="common.promote.offer">Promote Offer</h2>
         <form id="promote-offer-form">
             <input type="hidden" id="promote-offer-id" name="offer_id" />
             <div class="form-group">
-                <label for="promote-name">Campaign name</label>
-                <input type="text" id="promote-name" name="name" placeholder="Promotion name" required />
+                <label for="promote-name" data-i18n="common.campaign.name">Campaign name</label>
+                <input type="text" id="promote-name" name="name" placeholder="Promotion name" data-i18n-placeholder="common.promotion.name.placeholder" required />
             </div>
             <div class="form-group">
-                <label for="promote-budget">Budget (€ per day)</label>
+                <label for="promote-budget" data-i18n="common.budget.per.day">Budget (€ per day)</label>
                 <input type="number" id="promote-budget" name="budget" min="10" step="0.01" value="10" required />
-                <small class="note">Minimum 10€ per day.</small>
+                <small class="note" data-i18n="common.minimum.10.per.day">Minimum 10€ per day.</small>
             </div>
-            <p class="note">Payments are non-refundable once processed.</p>
+            <p class="note" data-i18n="common.payments.are.non.refundable.once.process">Payments are non-refundable once processed.</p>
             <div class="form-group">
-                <label for="promote-duration">Duration (days)</label>
+                <label for="promote-duration" data-i18n="common.duration.days">Duration (days)</label>
                 <input type="number" id="promote-duration" name="duration_days" min="1" step="1" value="7" required />
             </div>
             <div class="form-group">
-                <label for="promote-description">Description (optional)</label>
+                <label for="promote-description" data-i18n="common.description.optional">Description (optional)</label>
                 <textarea id="promote-description" name="description" rows="3"></textarea>
             </div>
             <button type="submit">
                 <i class="fa-solid fa-bullhorn"></i>
-                Promote Offer
+                <span data-i18n="common.promote.offer">Promote Offer</span>
             </button>
             <div id="promote-feedback" style="margin-top:12px;"></div>
         </form>

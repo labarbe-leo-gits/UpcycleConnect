@@ -1,9 +1,19 @@
 <?php
 
-ob_start();
-require_once '../../config/db.php';
-require_once '../../includes/auth.php';
-ob_end_clean();
+$scriptDir = __DIR__;
+$dbConfig = $scriptDir . '/../../config/db.php';
+$authFile = $scriptDir . '/../../includes/auth.php';
+
+if (!is_file($dbConfig) || !is_file($authFile)) {
+    http_response_code(500);
+    header('Content-Type: application/json');
+    echo json_encode(['error' => 'Server configuration error']);
+    exit;
+}
+
+require_once $dbConfig;
+require_once $authFile;
+
 header('Content-Type: application/json');
 
 $user = getLoggedInUser();
@@ -35,11 +45,12 @@ if ($q !== '') {
             }
             foreach ($users as $u) {
                 if (!is_array($u) || !isset($u['id'])) continue;
+                $label = !empty($u['username']) ? $u['username'] : trim(($u['first_name'] ?? '') . ' ' . ($u['last_name'] ?? ''));
                 $results[] = [
                     'type' => 'user',
                     'id'   => $u['id'],
-                    'label'=> !empty($u['username']) ? $u['username'] : trim(($u['first_name'] ?? '') . ' ' . ($u['last_name'] ?? '')),
-                    'href' => "/PA/PA%20-%20BO/pages/admin/user.php?id=" . urlencode($u['id'])
+                    'label'=> $label,
+                    'href' => "/pages/admin/users?search=" . urlencode($label)
                 ];
             }
         }
@@ -63,7 +74,7 @@ if ($q !== '') {
                     'type' => 'annonce',
                     'id'   => $a['id'],
                     'label'=> $a['title'] ?? ('#'.$a['id']),
-                    'href' => "/PA/PA%20-%20BO/pages/admin/annonce.php?id=" . urlencode($a['id'])
+                    'href' => "/pages/admin/annonces?search=" . urlencode($a['title'] ?? $a['id'])
                 ];
             }
         }
@@ -87,7 +98,7 @@ if ($q !== '') {
                     'type' => 'service',
                     'id'   => $s['id'],
                     'label'=> $s['title'] ?? ('#'.$s['id']),
-                    'href' => "/PA/PA%20-%20BO/pages/admin/service.php?id=" . urlencode($s['id'])
+                    'href' => "/pages/admin/services?search=" . urlencode($s['title'] ?? $s['id'])
                 ];
             }
         }

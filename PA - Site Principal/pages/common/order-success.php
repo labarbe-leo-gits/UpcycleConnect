@@ -29,6 +29,100 @@ if (!isset($_SESSION['order_token'][$productUuid]) || $_SESSION['order_token'][$
 
 unset($_SESSION['order_token'][$productUuid]);
 
+function getEnvValue(string $key, string $default = ''): string {
+    $value = getenv($key);
+    return ($value !== false && $value !== '') ? $value : $default;
+}
+
+function buildEmailHtml(string $title, string $bodyHtml): string {
+    return '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>' . htmlentities($title) . '</title></head><body style="margin:0;padding:0;background:#f3f4f6;font-family:Arial,Helvetica,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" role="presentation"><tr><td align="center" style="padding:20px;"><table width="600" cellpadding="0" cellspacing="0" role="presentation" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 16px 40px rgba(15,23,42,.08);"><tr><td style="background:#10b981;padding:24px 32px;color:#ffffff;text-align:center;font-size:24px;font-weight:700;">' . htmlentities($title) . '</td></tr><tr><td style="padding:32px;color:#111827;font-size:16px;line-height:1.6;">' . $bodyHtml . '</td></tr><tr><td style="background:#f9fafb;padding:24px 32px;color:#6b7280;font-size:14px;text-align:center;">Thank you for using UpcycleConnect.</td></tr></table></td></tr></table></body></html>';
+}
+
+function sendHtmlEmail(string $to, string $name, string $subject, string $htmlBody): bool {
+    $smtpHost = getEnvValue('EMAIL_HOST');
+    $smtpPort = getEnvValue('EMAIL_PORT', '587');
+    $smtpUser = getEnvValue('EMAIL_USERNAME');
+    $smtpPass = getEnvValue('EMAIL_PASSWORD');
+    $fromEmail = getEnvValue('EMAIL_FROM', $smtpUser);
+    $fromName = getEnvValue('EMAIL_FROM_NAME', 'UpcycleConnect');
+
+    if ($smtpHost === '' || $smtpUser === '' || $smtpPass === '' || $fromEmail === '' || $to === '') {
+        error_log('sendHtmlEmail failed: SMTP settings or recipient missing');
+        return false;
+    }
+
+    $autoloadPath = __DIR__ . '/../../vendor/autoload.php';
+    if (!file_exists($autoloadPath)) {
+        error_log('sendHtmlEmail failed: autoload.php not found');
+        return false;
+    }
+
+    require_once $autoloadPath;
+
+    try {
+        $mail = new PHPMailer\PHPMailer\PHPMailer(true);
+        $mail->isSMTP();
+        $mail->Host = $smtpHost;
+        $mail->SMTPAuth = true;
+        $mail->Username = $smtpUser;
+        $mail->Password = $smtpPass;
+        $mail->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port = (int)$smtpPort;
+        $mail->CharSet = 'UTF-8';
+
+        $mail->setFrom($fromEmail, $fromName);
+        $mail->addAddress($to, $name ?: $to);
+        $mail->Subject = $subject;
+        $mail->isHTML(true);
+        $mail->Body = $htmlBody;
+        $mail->AltBody = strip_tags(str_replace(['<br>', '<br/>', '<br />'], "\n", $htmlBody));
+
+        $mail->send();
+        return true;
+    } catch (PHPMailer\PHPMailer\Exception $e) {
+        error_log('sendHtmlEmail error: ' . $e->getMessage());
+        return false;
+    }
+}
+
+function sendOrderConfirmationEmails(array $user, array $offer, string $productType, float $priceTTC, string $priceDisplay, string $productName, bool $isFree, bool $orderSaved): void {
+    if (!$orderSaved) {
+        return;
+    }
+
+    $buyerName = trim(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? '')) ?: ($user['username'] ?? '');
+    $buyerEmail = $user['email'] ?? '';
+    $subject = 'Your order is confirmed — UpcycleConnect';
+    $content = '<p>Hello ' . htmlentities($buyerName ?: 'Customer') . ',</p>';
+    $content .= '<p>Thank you for your order.</p>';
+    $content .= '<p><strong>Product:</strong> ' . htmlentities($productName) . '</p>';
+    $content .= '<p><strong>Amount:</strong> ' . htmlentities($priceDisplay) . '</p>';
+    if ($productType === 'service') {
+        $content .= '<p>Your registration has been confirmed and details will appear in your account shortly.</p>';
+    } else {
+        $content .= '<p>Your purchase request has been recorded. The seller will be notified to follow up with you.</p>';
+    }
+    $content .= '<p>If you have any questions, please reply to this email or contact the seller directly.</p>';
+
+    sendHtmlEmail($buyerEmail, $buyerName, $subject, buildEmailHtml('Order Confirmation', $content));
+
+    if ($productType === 'offer' && !empty($offer['user_id']) && ($offer['user_id'] ?? '') !== ($user['id'] ?? '')) {
+        $sellerResp = askAPI('/users/' . urlencode($offer['user_id']), 'GET');
+        $seller = json_decode($sellerResp, true);
+        $sellerEmail = $seller['email'] ?? '';
+        if ($sellerEmail !== '') {
+            $sellerName = trim(($seller['first_name'] ?? '') . ' ' . ($seller['last_name'] ?? '')) ?: ($seller['username'] ?? 'Seller');
+            $sellerSubject = 'Your item has been ordered on UpcycleConnect';
+            $sellerContent = '<p>Hello ' . htmlentities($sellerName) . ',</p>';
+            $sellerContent .= '<p>Your offer <strong>' . htmlentities($productName) . '</strong> has just been ordered.</p>';
+            $sellerContent .= '<p><strong>Buyer:</strong> ' . htmlentities($buyerName ?: 'A customer') . '</p>';
+            $sellerContent .= '<p><strong>Amount to credit:</strong> ' . htmlentities($priceDisplay) . '</p>';
+            $sellerContent .= '<p>We will update your balance and notify you once the order is complete.</p>';
+            sendHtmlEmail($sellerEmail, $sellerName, $sellerSubject, buildEmailHtml('Item Ordered', $sellerContent));
+        }
+    }
+}
+
 function findOfferById($offerUuid) {
     $offersResponse = askAPI('/annonces/' . $offerUuid, 'GET');
     $offersDecoded = json_decode($offersResponse, true);
@@ -219,6 +313,10 @@ if ($paymentVerified) {
             }
         }
     }
+}
+
+if ($orderSaved) {
+    sendOrderConfirmationEmails($user, $offer ?? [], $productType, $priceTTC, $priceDisplay, $productName, $priceTTC == 0, $orderSaved);
 }
 
 $hasOrderError = (!$paymentVerified) || !empty($orderSaveError);

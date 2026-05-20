@@ -40,15 +40,14 @@ try {
     }
 
     $all = [];
+    $total = null;
     if (is_array($decoded) && isset($decoded['items'])) {
         $all = $decoded['items'];
-        $total = intval($decoded['total'] ?? count($all));
+        $total = isset($decoded['total']) ? intval($decoded['total']) : null;
     } elseif (is_array($decoded)) {
         $all = $decoded;
-        $total = count($all);
     } else {
         $all = [];
-        $total = 0;
     }
 
     $processed = [];
@@ -71,7 +70,9 @@ try {
         $processed[] = array_merge($d, ['conteneur' => $conteneur]);
     }
 
-    $total = count($processed);
+    if ($total === null) {
+        $total = count($processed);
+    }
 
     if (is_array($decoded) && isset($decoded['items'])) {
         $sliced = $processed;

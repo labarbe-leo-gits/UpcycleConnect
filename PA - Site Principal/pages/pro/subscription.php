@@ -78,47 +78,20 @@ if ($isAjax) {
         </section>
     </div>
 
-    <div id="sub-freemium" class="hidden">
-        <section class="freemium-banner">
-            <div class="plan-comparison">
+    <div id="sub-freemium" class="hidden"></div>
 
-                <div class="plan free">
-                    <h2 data-i18n="pro.subscription.free">Free</h2>
-                    <p class="price">€0 / month</p>
-                    <ul>
-                        <li><i class="fas fa-check"></i> <span data-i18n="pro.subscription.post_listings">Post listings</span></li>
-                        <li><i class="fas fa-check"></i> <span data-i18n="pro.subscription.access_to_containers">Access to containers</span></li>
-                        <li><i class="fas fa-check"></i> <span data-i18n="pro.subscription.community_forum">Community forum</span></li>
-                        <li><i class="fas fa-check"></i> <span data-i18n="pro.subscription.messaging">Messaging</span></li>
-                        <li class="locked"><i class="fas fa-lock"></i> <span data-i18n="pro.subscription.advanced_dashboards">Advanced dashboards</span></li>
-                        <li class="locked"><i class="fas fa-lock"></i> <span data-i18n="pro.subscription.detailed_ecological_analysis">Detailed ecological analysis</span></li>
-                        <li class="locked"><i class="fas fa-lock"></i> <span data-i18n="pro.subscription.material_statistics">Material statistics</span></li>
-                        <li class="locked"><i class="fas fa-lock"></i> <span data-i18n="pro.subscription.priority_alerts">Priority alerts</span></li>
-                    </ul>
-                    <span class="current-plan" data-i18n="pro.subscription.your_current_plan">Your current plan</span>
-                </div>
+    <section class="freemium-banner">
+        <div class="subscription-intro">
+            <h2 data-i18n="pro.subscription.choose_plan">Choose a plan</h2>
+            <p data-i18n="pro.subscription.choose_plan_description">Pick the tier that matches your activity. You can edit these plans later from the admin portal.</p>
+        </div>
 
-                <div class="plan premium">
-                    <div class="popular-badge" data-i18n="pro.subscription.recommended">Recommended</div>
-                    <h2><i class="fas fa-crown"></i> <span data-i18n="pro.subscription.premium">Premium</span></h2>
-                    <p class="price" id="price-display">€29.99 / month</p>
-                    <ul>
-                        <li><i class="fas fa-check"></i> <span data-i18n="pro.subscription.everything_in_free">Everything in Free</span></li>
-                        <li><i class="fas fa-check"></i> <span data-i18n="pro.subscription.advanced_dashboards">Advanced dashboards</span></li>
-                        <li><i class="fas fa-check"></i> <span data-i18n="pro.subscription.detailed_ecological_impact_analysis">Detailed ecological impact analysis</span></li>
-                        <li><i class="fas fa-check"></i> <span data-i18n="pro.subscription.available_material_statistics">Available material statistics</span></li>
-                        <li><i class="fas fa-check"></i> <span data-i18n="pro.subscription.priority_collection_alerts">Priority collection alerts</span></li>
-                        <li><i class="fas fa-check"></i> <span data-i18n="pro.subscription.priority_support">Priority support</span></li>
-                    </ul>
-                    <button id="btn-subscribe" class="btn btn-primary btn-lg">
-                        <i class="fas fa-crown"></i> <span data-i18n="pro.subscription.go_premium">Go Premium</span>
-                    </button>
-                    <p class="billing-note" data-i18n="pro.subscription.cancel_anytime">Cancel anytime</p>
-                </div>
+        <div id="tiers-grid" class="tiers-grid"></div>
 
-            </div>
-        </section>
-    </div>
+        <div class="subscription-note">
+            <p data-i18n="pro.subscription.cancel_anytime">Cancel anytime</p>
+        </div>
+    </section>
 </main>
 
 <?php if (!$isAjax) include_once '../../includes/footer.php'; ?>

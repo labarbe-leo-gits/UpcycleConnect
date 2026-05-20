@@ -4,6 +4,7 @@ header('Content-Type: text/html; charset=utf-8');
 $title    = 'Dashboard';
 $extraCss = ['../../assets/css/subscription.css','../../assets/css/profile-badges.css','../../assets/css/updoc.css'];
 require_once __DIR__ . '/../../vendor/autoload.php';
+require_once '../../includes/helpers.php';
 $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
 
 if ($isAjax) {
@@ -340,6 +341,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <button type="button" class="btn-secondary btn-inline" id="download-personal-data-btn">
                         <i class="fa-solid fa-download"></i> <span data-i18n="pro.profile.download_personal_data">Download My Personal Data</span>
                     </button>
+                    <a href="partnerships" class="btn-secondary btn-inline" style="text-decoration:none;display:inline-flex;align-items:center;gap:8px;">
+                        <i class="fa-solid fa-layer-group"></i> <span>Request partnership bundle</span>
+                    </a>
                     <a href="dashboard" id="sub-quick-access" class="sub-quick-btn" data-i18n-title="pro.profile.subscription_title" title="Subscription">
                         <i class="fa-solid fa-gauge-high"></i>
                         <span id="sub-quick-label" data-i18n="pro.profile.dashboard">Dashboard</span>
@@ -477,6 +481,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <div class="tab-content" id="general-tab">
+            <?php
+            $pendingBundles = [];
+            try {
+                $bundleData = askAPI("/partnership-campaigns?mine=1&status=4", 'GET');
+                $decodedBundles = json_decode($bundleData, true);
+                if (is_array($decodedBundles) && !isset($decodedBundles['error'])) {
+                    $pendingBundles = is_array($decodedBundles) ? $decodedBundles : [];
+                }
+            } catch (Exception $e) {
+                
+            }
+            ?>
+
+            <?php if (!empty($pendingBundles)): ?>
+            <div style="background:#fef3c7;border:1px solid #fcd34d;border-radius:8px;padding:20px;margin-bottom:20px;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                    <i class="fa-solid fa-triangle-exclamation" style="font-size:20px;color:#d97706;"></i>
+                    <h4 style="margin:0;color:#92400e;font-size:16px;">Partnership Bundle Payment Pending</h4>
+                </div>
+                <p style="margin:0 0 15px 0;color:#b45309;font-size:14px;">You have <?php echo count($pendingBundles); ?> partnership bundle(s) awaiting payment to activate.</p>
+                <?php foreach ($pendingBundles as $bundle): ?>
+                <div style="background:white;padding:12px;border-radius:6px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
+                    <div>
+                        <strong style="color:#1f2937;display:block;"><?php echo htmlspecialchars($bundle['partner_name'] ?? 'Partnership Bundle'); ?></strong>
+                        <span style="font-size:13px;color:#6b7280;"><?php echo htmlspecialchars($bundle['monthly_price'] ?? '0'); ?>€/month</span>
+                    </div>
+                    <a href="bundle-payment?id=<?php echo htmlspecialchars($bundle['id']); ?>" class="btn-primary" style="text-decoration:none;display:inline-block;padding:8px 16px;border-radius:4px;font-size:13px;">
+                        <i class="fa-solid fa-credit-card"></i> Complete Payment
+                    </a>
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
+
             <?php
             $addressParts = [];
             if (!empty($userDetails['user_road_number'])) $addressParts[] = $userDetails['user_road_number'];

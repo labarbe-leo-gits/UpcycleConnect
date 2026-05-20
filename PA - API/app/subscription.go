@@ -14,6 +14,7 @@ func ActivateSubscription(w http.ResponseWriter, r *http.Request) {
 		UserID               string `json:"user_id"`
 		StripeCustomerID     string `json:"stripe_customer_id"`
 		StripeSubscriptionID string `json:"stripe_subscription_id"`
+		TierID               string `json:"tier_id,omitempty"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
@@ -30,6 +31,21 @@ func ActivateSubscription(w http.ResponseWriter, r *http.Request) {
 	if payload.StripeCustomerID == "" || payload.StripeSubscriptionID == "" {
 		sendError(w, "Missing stripe_customer_id or stripe_subscription_id", http.StatusBadRequest)
 		return
+	}
+
+	if payload.TierID != "" {
+		tierID, err := uuid.Parse(payload.TierID)
+		if err != nil {
+			sendError(w, "Invalid tier ID", http.StatusBadRequest)
+			return
+		}
+
+		if err := db.EndUserSubscriptionTierInDB(userID); err != nil {
+			fmt.Println("[WARN] ActivateSubscription: failed to close previous tier:", err)
+		}
+		if err := db.AssignSubscriptionTierToUserInDB(userID, tierID, nil); err != nil {
+			fmt.Println("[WARN] ActivateSubscription: failed to assign tier:", err)
+		}
 	}
 
 	if err := db.UpdateSubscriptionInDB(userID, 1, payload.StripeCustomerID, payload.StripeSubscriptionID); err != nil {
@@ -71,6 +87,11 @@ func RevokeSubscription(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if payload.StripeSubscriptionID != "" {
+		if userID, err := db.GetUserIDByStripeSubscriptionID(payload.StripeSubscriptionID); err == nil {
+			if err := db.EndUserSubscriptionTierInDB(userID); err != nil {
+				fmt.Println("[WARN] RevokeSubscription: failed to end tier:", err)
+			}
+		}
 		if err := db.RevokePremiumByStripeSubscriptionID(payload.StripeSubscriptionID); err != nil {
 			fmt.Println("[ERROR] RevokeSubscription by sub:", err)
 			sendError(w, "Failed to revoke subscription", http.StatusInternalServerError)
@@ -81,6 +102,11 @@ func RevokeSubscription(w http.ResponseWriter, r *http.Request) {
 		}
 		fmt.Printf("[INFO] Premium revoked for subscription %s\n", payload.StripeSubscriptionID)
 	} else if payload.StripeCustomerID != "" {
+		if userID, err := db.GetUserIDByStripeCustomerID(payload.StripeCustomerID); err == nil {
+			if err := db.EndUserSubscriptionTierInDB(userID); err != nil {
+				fmt.Println("[WARN] RevokeSubscription: failed to end tier:", err)
+			}
+		}
 		if err := db.RevokePremiumByStripeCustomerID(payload.StripeCustomerID); err != nil {
 			fmt.Println("[ERROR] RevokeSubscription by customer:", err)
 			sendError(w, "Failed to revoke subscription", http.StatusInternalServerError)

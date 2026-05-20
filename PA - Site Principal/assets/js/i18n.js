@@ -29,6 +29,15 @@ function getTranslationValue(key, translations, fallback) {
   return null;
 }
 
+function t(key, defaultText) {
+  if (typeof window === 'undefined') {
+    return defaultText || key;
+  }
+  const translations = window.currentTranslations || {};
+  const fallback = window.currentFallback || {};
+  return getTranslationValue(key, translations, fallback) || defaultText || key;
+}
+
 function translateElement(el, translations, fallback) {
   const key = el.dataset.i18n;
   if (!key) {

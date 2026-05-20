@@ -65,7 +65,7 @@ func GetDashboardMetrics(w http.ResponseWriter, r *http.Request) {
 	registerCounts := make(map[string]int)
 
 	getLogFilePath := func(filename string) string {
-		return filepath.Join(string(os.PathSeparator), "files", "logs", filename)
+		return filepath.Join("files", "logs", filename)
 	}
 
 	loginLogPath := getLogFilePath("login.log")

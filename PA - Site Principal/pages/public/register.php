@@ -5,6 +5,165 @@ include_once '../../config/db.php';
 $error_message = '';
 $success_message = '';
 
+function getDataDir(): string {
+    static $dir;
+    if ($dir === null) {
+        if (is_dir('/var/www/html/api-data')) {
+            $dir = '/var/www/html/api-data';
+        } else {
+            $localPath = realpath(__DIR__ . '/../../../PA - API/data');
+            if ($localPath !== false) {
+                $dir = $localPath;
+            } else {
+                throw new RuntimeException('Could not locate data directory for moderation list. Tried: /var/www/html/api-data and ' . __DIR__ . '/../../../PA - API/data');
+            }
+        }
+    }
+    return $dir;
+}
+
+function getWordlistPath(): string {
+    return getDataDir() . '/wordlist.json';
+}
+
+function loadWordlist(): array {
+    try {
+        $path = getWordlistPath();
+    } catch (RuntimeException $e) {
+        error_log('Moderation wordlist unavailable: ' . $e->getMessage());
+        return [];
+    }
+
+    if (!file_exists($path)) {
+        return [];
+    }
+    $data = json_decode(file_get_contents($path), true);
+    if (!is_array($data)) {
+        return [];
+    }
+    return array_values(array_filter(array_map(fn($item) => is_string($item) ? trim($item) : null, $data), fn($item) => $item !== ''));
+}
+
+function findForbiddenUsernameWords(string $username, array $words): array {
+    $username = mb_strtolower(trim($username), 'UTF-8');
+    $found = [];
+    foreach ($words as $word) {
+        $word = trim((string)$word);
+        if ($word === '') {
+            continue;
+        }
+        if (mb_stripos($username, mb_strtolower($word, 'UTF-8')) !== false) {
+            $found[] = $word;
+        }
+    }
+    return array_values(array_unique($found));
+}
+
+function getGeminiApiKey(): ?string {
+    $apiKey = getenv('GEMINI_API_KEY');
+    if ($apiKey) {
+        return trim($apiKey);
+    }
+
+    $envFile = __DIR__ . '/../../.env';
+    if (!file_exists($envFile)) {
+        return null;
+    }
+
+    $envData = parse_ini_file($envFile);
+    if (!is_array($envData)) {
+        return null;
+    }
+
+    return isset($envData['GEMINI_API_KEY']) ? trim($envData['GEMINI_API_KEY']) : null;
+}
+
+function verifyUsernameWithGemini(string $username): ?array {
+    $apiKey = getGeminiApiKey();
+    if (!$apiKey) {
+        error_log('[register] Gemini API key not configured for username moderation');
+        return null;
+    }
+
+    $prompt = "You are a content moderation assistant for an online community. " .
+        "Decide whether the following username should be rejected because it contains hateful, extremist, abusive, sexual, violent, harassing, or otherwise prohibited content. " .
+        "Respond with ONLY a JSON object using the exact keys: {\"flagged\": true|false, \"reasons\": [string], \"flaggedWords\": [string]}. " .
+        "Do not include any other text.\n\n" .
+        "Username:\n" . $username;
+
+    $payload = json_encode([
+        'contents' => [[
+            'parts' => [[
+                'text' => $prompt
+            ]]
+        ]],
+        'generationConfig' => [
+            'temperature' => 0.0,
+            'maxOutputTokens' => 80,
+        ]
+    ]);
+
+    $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemma-4-26b-a4b-it:generateContent?key=' . urlencode($apiKey);
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Content-Type: application/json',
+        'Content-Length: ' . strlen($payload),
+    ]);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+
+    $response = curl_exec($ch);
+    $curlErr = curl_error($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($curlErr) {
+        error_log('[register] Gemini moderation cURL error: ' . $curlErr);
+        return null;
+    }
+
+    if (!$response) {
+        error_log('[register] Gemini moderation empty response, HTTP ' . $httpCode);
+        return null;
+    }
+
+    $decoded = json_decode($response, true);
+    if (!is_array($decoded)) {
+        error_log('[register] Gemini moderation invalid JSON response: ' . json_last_error_msg());
+        return null;
+    }
+
+    $text = trim($decoded['candidates'][0]['content']['parts'][0]['text'] ?? '');
+    if ($text === '') {
+        error_log('[register] Gemini moderation returned empty text');
+        return null;
+    }
+
+    $parsed = json_decode($text, true);
+    if (is_array($parsed) && isset($parsed['flagged'])) {
+        return [
+            'flagged' => (bool) $parsed['flagged'],
+            'reasons' => isset($parsed['reasons']) && is_array($parsed['reasons']) ? $parsed['reasons'] : [],
+            'flaggedWords' => isset($parsed['flaggedWords']) && is_array($parsed['flaggedWords']) ? $parsed['flaggedWords'] : [],
+        ];
+    }
+
+    // fallback heuristic: if model answered 'true' or 'yes' for rejection
+    $flagged = false;
+    if (preg_match('/"flagged"\s*:\s*true/i', $text) || preg_match('/^\s*(yes|true)\b/i', $text)) {
+        $flagged = true;
+    }
+
+    return [
+        'flagged' => $flagged,
+        'reasons' => [$text],
+        'flaggedWords' => [],
+    ];
+}
+
 function verifyRecaptcha($token) {
     $secret = getenv('RECAPTCHA_SECRET_KEY');
     $response = file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret=$secret&response=$token");
@@ -75,81 +234,94 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ((int) $user_type_filtered === 2 && !isValidFrenchSiretOrSiren($siret_digits)) {
             $error_message = 'Please enter a valid SIRET or SIREN number for professional registration.';
         } else {
-
-            $llmQuota = 10;
-            if ($user_type_filtered === 2) {
-                $llmQuota = 15;
+            $forbiddenWords = findForbiddenUsernameWords($no_spaces_username, loadWordlist());
+            if (!empty($forbiddenWords)) {
+                $error_message = 'Username contains forbidden content: ' . implode(', ', $forbiddenWords) . '.';
+            } else {
+                $moderationResult = verifyUsernameWithGemini($no_spaces_username);
+                if (is_array($moderationResult) && isset($moderationResult['flagged']) && $moderationResult['flagged']) {
+                    $reasons = is_array($moderationResult['reasons']) ? implode(', ', $moderationResult['reasons']) : '';
+                    $details = trim($reasons ?: implode(', ', $moderationResult['flaggedWords'] ?? []));
+                    $error_message = 'Username rejected by moderation' . ($details ? ': ' . $details : '.');
+                }
             }
 
-            $data_payload = [
-                'first_name' => trim($first_name_filtered),
-                'last_name' => trim($last_name_filtered),
-                'user_type' => $user_type_filtered,
-                'username' => $no_spaces_username,
-                'email' => $email_filtered,
-                'password' => $password_filtered,
-                'llm_quota' => $llmQuota,
-                'company_name' => '',
-                'siret' => '',
-            ];
+            if ($error_message === '') {
+                $llmQuota = 10;
+                if ($user_type_filtered === 2) {
+                    $llmQuota = 15;
+                }
 
-            if ((int) $user_type_filtered === 2) {
-                $company_name = trim((string) $company_name_filtered);
-                $data_payload['company_name'] = $company_name;
-                $data_payload['siret'] = $siret_digits;
-            }
+                $data_payload = [
+                    'first_name' => trim($first_name_filtered),
+                    'last_name' => trim($last_name_filtered),
+                    'user_type' => $user_type_filtered,
+                    'username' => $no_spaces_username,
+                    'email' => $email_filtered,
+                    'password' => $password_filtered,
+                    'llm_quota' => $llmQuota,
+                    'company_name' => '',
+                    'siret' => '',
+                ];
 
-            $pendingExists = false;
-            $pendingResponse = askAPI('pending-registrations?identifier=' . urlencode($no_spaces_username), 'GET');
-            $pendingDecoded = json_decode($pendingResponse, true);
-            if (is_array($pendingDecoded) && isset($pendingDecoded['exists']) && $pendingDecoded['exists'] === true) {
-                $pendingExists = true;
-            }
+                if ((int) $user_type_filtered === 2) {
+                    $company_name = trim((string) $company_name_filtered);
+                    $data_payload['company_name'] = $company_name;
+                    $data_payload['siret'] = $siret_digits;
+                }
 
-            if (!$pendingExists) {
-                $pendingResponse = askAPI('pending-registrations?identifier=' . urlencode($email_filtered), 'GET');
+                $pendingExists = false;
+                $pendingResponse = askAPI('pending-registrations?identifier=' . urlencode($no_spaces_username), 'GET');
                 $pendingDecoded = json_decode($pendingResponse, true);
                 if (is_array($pendingDecoded) && isset($pendingDecoded['exists']) && $pendingDecoded['exists'] === true) {
                     $pendingExists = true;
                 }
-            }
 
-            if ($pendingExists) {
-                $error_message = 'A registration is already pending for this username or email. Please verify your account or resend the code.';
-            } else {
-                $emailExists = false;
-                $usernameExists = false;
-
-                if ($no_spaces_username !== '') {
-                    $profileResponse = askAPI('profile/' . urlencode($no_spaces_username), 'GET');
-                    $profileDecoded = json_decode($profileResponse, true);
-                    if (is_array($profileDecoded) && !isset($profileDecoded['error'])) {
-                        $usernameExists = true;
+                if (!$pendingExists) {
+                    $pendingResponse = askAPI('pending-registrations?identifier=' . urlencode($email_filtered), 'GET');
+                    $pendingDecoded = json_decode($pendingResponse, true);
+                    if (is_array($pendingDecoded) && isset($pendingDecoded['exists']) && $pendingDecoded['exists'] === true) {
+                        $pendingExists = true;
                     }
                 }
 
-                $emailResponse = askAPI('users/email', 'POST', json_encode(['email' => $email_filtered]));
-                $emailDecoded = json_decode($emailResponse, true);
-                if (is_array($emailDecoded) && !isset($emailDecoded['error'])) {
-                    $emailExists = true;
-                }
-
-                if ($usernameExists) {
-                    $error_message = 'This username is already taken.';
-                } elseif ($emailExists) {
-                    $error_message = 'This email is already registered.';
+                if ($pendingExists) {
+                    $error_message = 'A registration is already pending for this username or email. Please verify your account or resend the code.';
                 } else {
-                    $pendingResponse = askAPI('pending-registrations', 'POST', json_encode($data_payload));
-                    $pendingDecoded = json_decode($pendingResponse, true);
+                    $emailExists = false;
+                    $usernameExists = false;
 
-                    if (isset($pendingDecoded['pending_id'])) {
-                        $_SESSION['pending_registration_id'] = $pendingDecoded['pending_id'];
-                        header('Location: verify.php');
-                        exit();
-                    } elseif (isset($pendingDecoded['error'])) {
-                        $error_message = $pendingDecoded['error'];
+                    if ($no_spaces_username !== '') {
+                        $profileResponse = askAPI('profile/' . urlencode($no_spaces_username), 'GET');
+                        $profileDecoded = json_decode($profileResponse, true);
+                        if (is_array($profileDecoded) && !isset($profileDecoded['error'])) {
+                            $usernameExists = true;
+                        }
+                    }
+
+                    $emailResponse = askAPI('users/email', 'POST', json_encode(['email' => $email_filtered]));
+                    $emailDecoded = json_decode($emailResponse, true);
+                    if (is_array($emailDecoded) && !isset($emailDecoded['error'])) {
+                        $emailExists = true;
+                    }
+
+                    if ($usernameExists) {
+                        $error_message = 'This username is already taken.';
+                    } elseif ($emailExists) {
+                        $error_message = 'This email is already registered.';
                     } else {
-                        $error_message = 'An unexpected error occurred. API Response: ' . htmlspecialchars($pendingResponse);
+                        $pendingResponse = askAPI('pending-registrations', 'POST', json_encode($data_payload));
+                        $pendingDecoded = json_decode($pendingResponse, true);
+
+                        if (isset($pendingDecoded['pending_id'])) {
+                            $_SESSION['pending_registration_id'] = $pendingDecoded['pending_id'];
+                            header('Location: verify.php');
+                            exit();
+                        } elseif (isset($pendingDecoded['error'])) {
+                            $error_message = $pendingDecoded['error'];
+                        } else {
+                            $error_message = 'An unexpected error occurred. API Response: ' . htmlspecialchars($pendingResponse);
+                        }
                     }
                 }
             }

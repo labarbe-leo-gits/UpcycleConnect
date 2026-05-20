@@ -209,24 +209,81 @@
   color: white;
   font-weight: bold;
 }
-#load-more-btn {
-  margin: 8px auto 0 auto;
-  display: block;
-  position: relative;
-}
 .delete-word.btn-danger {
   background: #e53e3e;
   border-radius: 4px;
   padding: 4px 8px;
+  border: none;
 }
 .delete-word.btn-danger:hover {
   background: #c53030;
 }
 
-#load-more-btn {
-  margin: 8px auto 0 auto;
-  display: block;
-  position: relative;
+#moderation-body {
+  display: flex;
+  gap: 24px;
+  margin-left: 100px;
+  margin-right: 100px;
+  margin-bottom: 100px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.moderation-panel {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  box-shadow: 0 14px 38px rgba(15, 23, 42, 0.08);
+  padding: 24px;
+  flex: 1 1 320px;
+  min-width: 300px;
+}
+
+.left-panel {
+  max-width: 380px;
+}
+
+.panel-card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.panel-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+#badwords-table {
+  width: 100%;
+  margin: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+#pagination-controls {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 15px;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+#page-info {
+  color: #334155;
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  #moderation-body {
+    flex-direction: column;
+  }
 }
 
 .text p {

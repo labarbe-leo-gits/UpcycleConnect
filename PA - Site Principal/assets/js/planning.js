@@ -511,7 +511,7 @@
 
         if (address && typeof window.L !== 'undefined') {
             mapEl.style.display = 'block';
-            mapEl.textContent = 'Loading map…';
+            mapEl.textContent = t('common.loading.map', 'Loading map…');
             if (viewPlanningMapInstance) {
                 try { viewPlanningMapInstance.remove(); } catch (ignore) {}
                 viewPlanningMapInstance = null;
@@ -520,14 +520,14 @@
                 .then(function(response){ return response.json(); })
                 .then(function(data) {
                     if (!data || !data.length) {
-                        mapEl.textContent = 'Map unavailable for this address.';
+                        mapEl.textContent = t('common.map.unavailable.for.address', 'Map unavailable for this address.');
                         return;
                     }
                     mapEl.textContent = '';
                     var lat = parseFloat(data[0].lat);
                     var lon = parseFloat(data[0].lon);
                     if (isNaN(lat) || isNaN(lon)) {
-                        mapEl.textContent = 'Map unavailable for this address.';
+                        mapEl.textContent = t('common.map.unavailable.for.address', 'Map unavailable for this address.');
                         return;
                     }
                     mapEl.innerHTML = '';
@@ -538,7 +538,7 @@
                     window.L.marker([lat, lon]).addTo(viewPlanningMapInstance);
                 })
                 .catch(function(err) {
-                    mapEl.textContent = 'Unable to load map.';
+                    mapEl.textContent = t('common.unable.to.load.map', 'Unable to load map.');
                     console.warn('Planning map geocode failed', err);
                 });
         } else {
@@ -562,7 +562,7 @@
         if (viewTitle) viewTitle.textContent = planning.title || 'Slot Details';
         if (viewDate) viewDate.textContent = formatDisplayDate(planning.date || '') || '';
         if (viewTime) viewTime.textContent = formatDisplayTime(planning.start_time) + ' - ' + formatDisplayTime(planning.end_time);
-        if (viewDesc) viewDesc.innerHTML = makeLinksClickable(planning.description || 'No description available.');
+        if (viewDesc) viewDesc.innerHTML = makeLinksClickable(planning.description || t('common.no.description.available', 'No description available.'));
 
         var address = extractAddress(planning.description || '');
         var urls = extractMapUrls(planning.description || '');

@@ -81,11 +81,13 @@ switch ($event->type) {
 
         $customerId = $object->customer     ?? '';
         $subscId    = $object->subscription ?? '';
+        $tierId     = $object->metadata->tier_id ?? '';
 
         callInternalApi('/internal/subscription/activate', [
             'user_id'                => $userId,
             'stripe_customer_id'     => $customerId,
             'stripe_subscription_id' => $subscId,
+            'tier_id'                => $tierId,
         ]);
 
         if (!empty($subscId)) {

@@ -63,7 +63,7 @@
                 totalPages = total > 0 ? Math.ceil(total / pageSize) : 1;
 
                 if (!offers || offers.length === 0) {
-                    container.innerHTML = '<p class="offers-empty">No offers available at the moment.</p>';
+                    container.innerHTML = '<p class="offers-empty">' + t('common.offers.empty', 'No offers available at the moment.') + '</p>';
                     if (pagination) {
                         pagination.innerHTML = '';
                     }
@@ -91,7 +91,7 @@
             })
             .catch(error => {
                 console.error('Error loading offers:', error);
-                container.innerHTML = '<p class="error-message">An error occurred while loading offers. Please try again later.</p>';
+                container.innerHTML = '<p class="error-message">' + t('common.offers.load.error', 'An error occurred while loading offers. Please try again later.') + '</p>';
                 if (pagination) {
                     pagination.innerHTML = '';
                 }
@@ -306,7 +306,7 @@
         const addFormSelect = document.getElementById('offer-category');
         if (filter) {
             const current = filter.value;
-            filter.innerHTML = '<option value="">All categories</option>';
+            filter.innerHTML = '<option value="">' + t('common.all.categories', 'All categories') + '</option>';
             list.forEach(category => {
                 const opt = document.createElement('option');
                 opt.value = category.id;
@@ -319,7 +319,7 @@
             const current = addFormSelect.value;
             addFormSelect.innerHTML = '';
             addFormSelect.appendChild(document.createElement('option')).value = '';
-            addFormSelect.querySelector('option').textContent = '-- none --';
+            addFormSelect.querySelector('option').textContent = t('common.none', '-- none --');
             list.forEach(category => {
                 const opt = document.createElement('option');
                 opt.value = category.id;
@@ -348,7 +348,7 @@
             return;
         }
 
-        const prevButton = createPageButton('Prev', currentPage === 1, function() {
+        const prevButton = createPageButton(t('common.prev', 'Prev'), currentPage === 1, function() {
             if (currentPage > 1) {
                 requestPage(currentPage - 1);
             }
@@ -366,7 +366,7 @@
             pagination.appendChild(pageButton);
         }
 
-        const nextButton = createPageButton('Next', currentPage === totalPages, function() {
+        const nextButton = createPageButton(t('common.next', 'Next'), currentPage === totalPages, function() {
             if (currentPage < totalPages) {
                 requestPage(currentPage + 1);
             }
@@ -421,13 +421,17 @@
         container.innerHTML = skeletons.join('');
     }
 
-    const ITEM_STATE_LABELS = {
-        0: 'New',
-        1: 'Like new',
-        2: 'Good',
-        3: 'Fair',
-        4: 'Poor'
-    };
+    function getItemStateLabel(state) {
+        const labels = {
+            0: { key: 'common.new', fallback: 'New' },
+            1: { key: 'common.like.new', fallback: 'Like new' },
+            2: { key: 'common.good', fallback: 'Good' },
+            3: { key: 'common.fair', fallback: 'Fair' },
+            4: { key: 'common.poor', fallback: 'Poor' }
+        };
+        const entry = labels[state] || { key: 'common.state', fallback: 'State ' + state };
+        return t(entry.key, entry.fallback);
+    }
 
     function createOfferElement(offer) {
         const offerDiv = document.createElement('div');
@@ -469,7 +473,7 @@
         }
 
         if (typeof offer.item_state !== 'undefined' && offer.item_state !== null) {
-            const stateLabel = ITEM_STATE_LABELS[offer.item_state] || ('State ' + offer.item_state);
+            const stateLabel = getItemStateLabel(offer.item_state);
             const chip = document.createElement('span');
             chip.className = 'offer-chip offer-chip--state';
             chip.textContent = stateLabel;
@@ -703,7 +707,7 @@
         button.type = 'button';
         button.className = 'offer-favorite-toggle';
         button.innerHTML = '<i class="fa-solid fa-heart" aria-hidden="true"></i>';
-        button.title = 'Save as favorite';
+        button.title = t('common.save.as.favorite', 'Save as favorite');
         button.addEventListener('click', async function (event) {
             event.stopPropagation();
             button.disabled = true;
@@ -738,7 +742,7 @@
 
         const image = document.createElement('img');
         image.src = offer.image || '../../assets/img/defaults/placeholder.png';
-        image.alt = offer.title ? offer.title : 'Offer image';
+        image.alt = offer.title ? offer.title : t('common.offer.image.alt', 'Offer image');
         image.loading = 'lazy';
         image.onload = function() {
             imageWrapper.classList.remove('loading');
@@ -769,7 +773,7 @@
         }
 
         if (typeof offer.item_state !== 'undefined' && offer.item_state !== null) {
-            const stateLabel = ITEM_STATE_LABELS[offer.item_state] || ('State ' + offer.item_state);
+            const stateLabel = getItemStateLabel(offer.item_state);
             const chip = document.createElement('span');
             chip.className = 'offer-chip offer-chip--state';
             chip.textContent = stateLabel;

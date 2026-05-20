@@ -64,7 +64,7 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
     ?>
 </head>
 <body><script>if(localStorage.getItem('theme')==='dark')document.body.classList.add('dark-mode');</script>
-    <header data-api-base="<?php echo htmlspecialchars($API_URL ?? ''); ?>" data-user-id="<?php echo htmlspecialchars($user['id'] ?? ''); ?>">
+    <header data-api-base="<?php echo htmlspecialchars($API_URL_BROWSER ?? ($API_URL ?? '')); ?>" data-user-id="<?php echo htmlspecialchars($user['id'] ?? ''); ?>">
         <div class="left">
             <h1>Admin Portal</h1>
         </div>
@@ -86,6 +86,7 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
                     <a href="<?= base_url('pages/common/forums') ?>"><i class="fa-solid fa-indent"></i>Forums</a>
                     <a href="<?= base_url('pages/admin/users') ?>"><i class="fa-solid fa-user"></i>Users</a>
                     <a href="<?= base_url('pages/admin/newsletter') ?>"><i class="fa-solid fa-envelopes-bulk"></i>Newsletter</a>
+                    <a href="<?= base_url('pages/admin/notifications-campaigns') ?>"><i class="fa-solid fa-bullhorn"></i>Notifications</a>
                     <a href="<?= base_url('pages/admin/moderation') ?>"><i class="fa-solid fa-gavel"></i>Moderation</a>
                 </div>
             </div>
@@ -120,12 +121,23 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
                     <p>Upcycle</p>
                 </a>
                 <div class="dropdown-menu">
+                    <a href="<?= base_url('pages/admin/languages') ?>"><i class="fa-solid fa-language"></i>Languages</a>
                     <a href="<?= base_url('pages/admin/logs') ?>"><i class="fa-solid fa-clipboard"></i>Logs</a>
                     <a href="<?= base_url('pages/admin/backup') ?>"><i class="fa-solid fa-hard-drive"></i>Logs Backup</a>
                 </div>
             </div>
-            <div class="btn-wrapper">
-                <a href="<?= base_url('pages/admin/languages') ?>"><i class="fa-solid fa-language"></i>Languages</a>
+            <div class="nav-dropdown">
+                <a class="btn-wrapper" href="<?= base_url('pages/admin/subscription-tiers') ?>">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <p>Revenue</p>
+                </a>
+                <div class="dropdown-menu">
+                    <a href="<?= base_url('pages/admin/subscription-tiers') ?>"><i class="fa-solid fa-layer-group"></i>Subscription Tiers</a>
+                    <a href="<?= base_url('pages/admin/commissions') ?>"><i class="fa-solid fa-percent"></i>Commissions</a>
+                    <a href="<?= base_url('pages/admin/partnerships') ?>"><i class="fa-solid fa-handshake"></i>Partnerships</a>
+                    <a href="<?= base_url('pages/admin/training-sessions') ?>"><i class="fa-solid fa-chalkboard-user"></i>Training</a>
+                    <a href="<?= base_url('pages/admin/revenue-reports') ?>"><i class="fa-solid fa-file-invoice-dollar"></i>Revenue Reports</a>
+                </div>
             </div>
             <div class="btn-wrapper" id="dark-toggle" title="Toggle dark mode">
                 <i class="fa-solid fa-moon"></i>

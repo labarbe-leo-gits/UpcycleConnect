@@ -174,7 +174,7 @@
                 scheduleConflictConfirmed = false;
 
                 conflictEl.style.display = 'block';
-                conflictEl.innerHTML = '<div style="border:1px solid #f87171;border-radius:8px;padding:10px;background:#fff7f7;color:#b91c1c;">Conflict: you already have a planning entry at this time on ' + serviceDate + '. The booking will still be added to your agenda.</div>';
+                conflictEl.innerHTML = '<div style="border:1px solid #f87171;border-radius:8px;padding:10px;background:#fff7f7;color:#b91c1c;">' + t('common.schedule.conflict_detected_message', 'Conflict: you already have a planning entry at this time on') + ' ' + serviceDate + '. ' + t('common.schedule.conflict_still_added', 'The booking will still be added to your agenda.') + '</div>';
 
                 if (conflictEntry) {
                     conflictCard.style.display = 'block';
@@ -183,7 +183,7 @@
                     conflictCard.innerHTML = '<div style="border:1px solid #d1d5db;border-radius:8px;padding:10px;background:#ffffff;box-shadow:0 2px 8px rgba(0,0,0,.1);">'
                         + '<strong>' + (conflictEntry.title || 'Untitled') + '</strong><br>'
                         + '<span>' + (startFormatted || '') + ' - ' + (endFormatted || '') + '</span><br>'
-                        + '<span>' + (conflictEntry.description || 'No description available.') + '</span>'
+                        + '<span>' + (conflictEntry.description || t('common.no.description.available', 'No description available.')) + '</span>'
                         + '</div>';
                 } else {
                     conflictCard.style.display = 'none';
@@ -204,7 +204,7 @@
             scheduleConflictConfirmed = false;
 
             conflictEl.style.display = 'block';
-            conflictEl.innerHTML = '<div style="border:1px solid #f87171;border-radius:8px;padding:10px;background:#fff7f7;color:#b91c1c;">Unable to load planning data. Please try again.</div>';
+            conflictEl.innerHTML = '<div style="border:1px solid #f87171;border-radius:8px;padding:10px;background:#fff7f7;color:#b91c1c;">' + t('common.unable.to.load.planning.data', 'Unable to load planning data. Please try again.') + '</div>';
             conflictCard.style.display = 'none';
             conflictCard.innerHTML = '';
         }

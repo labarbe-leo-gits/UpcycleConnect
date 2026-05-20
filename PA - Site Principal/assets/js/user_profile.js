@@ -288,7 +288,7 @@ async function renderReviewsTab() {
     }
 
     reviewsList.innerHTML = '';
-    reviewsEmpty.textContent = 'Loading reviews...';
+    reviewsEmpty.textContent = t('common.loading.reviews', 'Loading reviews...');
     reviewsEmpty.style.display = 'block';
     formError.textContent = '';
 
@@ -296,8 +296,8 @@ async function renderReviewsTab() {
     var isOwnProfile = currentUserId && window.publicUserId === currentUserId;
 
     if (isOwnProfile) {
-        actionTitle.textContent = 'Your profile cannot be reviewed by yourself';
-        actionNote.textContent = 'Users can review your profile from their accounts.';
+        actionTitle.textContent = t('common.your.profile.cannot.be.reviewed.by.yourself', 'Your profile cannot be reviewed by yourself');
+        actionNote.textContent = t('common.users.can.review.your.profile.from.their.accounts', 'Users can review your profile from their accounts.');
         formContainer.style.display = 'none';
     }
 
@@ -318,10 +318,10 @@ async function renderReviewsTab() {
         }
         avgScoreEl.textContent = reviews.length > 0 ? average.toFixed(1) + ' / 5' : '0.0 / 5';
         avgStarsEl.innerHTML = createRatingIcons(Math.round(average), 5, 'review-average-stars');
-        avgCountEl.textContent = reviews.length > 0 ? reviews.length + ' review' + (reviews.length > 1 ? 's' : '') : 'No reviews yet';
+        avgCountEl.textContent = reviews.length > 0 ? reviews.length + ' review' + (reviews.length > 1 ? 's' : '') : t('common.no.reviews.yet', 'No reviews yet');
 
         if (!reviews.length) {
-            reviewsEmpty.textContent = 'No reviews have been submitted for this user yet.';
+            reviewsEmpty.textContent = t('common.no.reviews.have.been.submitted.for.this.user.yet', 'No reviews have been submitted for this user yet.');
             reviewsEmpty.style.display = 'block';
         } else {
             reviewsEmpty.style.display = 'none';
@@ -344,8 +344,8 @@ async function renderReviewsTab() {
                 actionNote.textContent = 'Only authenticated users can submit reviews.';
             } else {
                 formContainer.style.display = 'block';
-                formTitle.textContent = currentUserReview ? 'Edit your review' : 'Leave a review';
-                formNote.textContent = currentUserReview ? 'Update your score and comment anytime.' : 'Click a recycling icon to choose a rating.';
+                formTitle.textContent = currentUserReview ? t('common.edit.your.review', 'Edit your review') : t('common.leave.a.review', 'Leave a review');
+                formNote.textContent = currentUserReview ? t('common.update.your.score.and.comment.anytime', 'Update your score and comment anytime.') : t('common.click.a.recycling.icon.to.choose.a.rating', 'Click a recycling icon to choose a rating.');
             }
         }
 
@@ -393,11 +393,11 @@ async function renderReviewsTab() {
         }
     } catch (e) {
         console.error('[renderReviewsTab] Error loading reviews:', e);
-        reviewsEmpty.textContent = 'Unable to load reviews at the moment.';
+        reviewsEmpty.textContent = t('common.unable.to.load.reviews.at.the.moment', 'Unable to load reviews at the moment.');
         reviewsEmpty.style.display = 'block';
         avgScoreEl.textContent = '0.0 / 5';
         avgStarsEl.innerHTML = createRatingIcons(0, 5, 'review-average-stars');
-        avgCountEl.textContent = 'Unable to load reviews';
+        avgCountEl.textContent = t('common.unable.to.load.reviews', 'Unable to load reviews');
     }
 }
 
@@ -407,7 +407,7 @@ function setReviewSubmitLoading(isLoading) {
     if (isLoading) {
         submitButton.dataset.originalText = submitButton.innerHTML;
         submitButton.disabled = true;
-        submitButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Saving...';
+        submitButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> ' + t('common.saving', 'Saving...');
     } else {
         submitButton.disabled = false;
         submitButton.innerHTML = submitButton.dataset.originalText || 'Submit review';
@@ -421,15 +421,15 @@ async function submitReview() {
     formError.textContent = '';
 
     if (!window.publicUserId || !getAuthToken()) {
-        formError.textContent = 'You must be logged in to submit a review.';
+        formError.textContent = t('common.you.must.be.logged.in.to.submit.a.review', 'You must be logged in to submit a review.');
         return;
     }
     if (window.publicUserId === getCurrentUserId()) {
-        formError.textContent = 'You cannot review yourself.';
+        formError.textContent = t('common.you.cannot.review.yourself', 'You cannot review yourself.');
         return;
     }
     if (!reviewState.currentReviewRating || reviewState.currentReviewRating < 1) {
-        formError.textContent = 'Please choose a rating between 1 and 5.';
+        formError.textContent = t('common.please.choose.a.rating.between.1.and.5', 'Please choose a rating between 1 and 5.');
         return;
     }
 
@@ -461,7 +461,7 @@ async function submitReview() {
         await renderReviewsTab();
     } catch (e) {
         console.error('[submitReview] Error:', e);
-        formError.textContent = e.message || 'An error occurred while saving your review.';
+        formError.textContent = e.message || t('common.an.error.occurred.while.saving.your.review', 'An error occurred while saving your review.');
     } finally {
         setReviewSubmitLoading(false);
     }
@@ -520,17 +520,17 @@ async function deleteReview() {
     } catch (e) {
         console.error('[deleteReview] Error:', e);
         if (deleteError) {
-            deleteError.textContent = e.message || 'An error occurred while deleting your review.';
+            deleteError.textContent = e.message || t('common.an.error.occurred.while.deleting.your.review', 'An error occurred while deleting your review.');
             deleteError.classList.remove('d-none');
         } else {
-            formError.textContent = e.message || 'An error occurred while deleting your review.';
+            formError.textContent = e.message || t('common.an.error.occurred.while.deleting.your.review', 'An error occurred while deleting your review.');
         }
     } finally {
         if (modal) {
             var confirmButton = document.getElementById('btn-confirm-delete-review');
             if (confirmButton) {
                 confirmButton.disabled = false;
-                confirmButton.innerHTML = confirmButton.dataset.originalText || 'Delete';
+                confirmButton.innerHTML = confirmButton.dataset.originalText || t('common.delete', 'Delete');
             }
         }
     }

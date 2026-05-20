@@ -145,7 +145,7 @@
             var removeButton = document.createElement('button');
             removeButton.type = 'button';
             removeButton.className = 'picture-remove';
-            removeButton.setAttribute('aria-label', 'Remove image');
+            removeButton.setAttribute('aria-label', t('common.remove.image', 'Remove image'));
             removeButton.innerHTML = '<i class="fa-solid fa-xmark"></i>';
             removeButton.addEventListener('click', function() {
                 selectedFiles.splice(index, 1);
@@ -255,6 +255,32 @@
         var UPCYCLE_RATE  = 0.08;
         var STRIPE_RATE   = 0.029;
         var STRIPE_FIXED  = 0.30;
+
+        (function loadCommission() {
+            fetch('commission-settings-api', {headers:{'X-Requested-With':'XMLHttpRequest'}})
+                .then(function(res){ return res.text(); })
+                .then(function(text){
+                    try {
+                        var parsed = JSON.parse(text);
+                        if (Array.isArray(parsed) && parsed.length > 0) parsed = parsed[0];
+                        if (parsed && !parsed.error) {
+                            var pct = parsed.commission_rate_min ?? parsed.commission_rate ?? null;
+                            if (pct !== null && !isNaN(parseFloat(pct))) {
+                                UPCYCLE_RATE = parseFloat(pct) / 100.0;
+                            }
+                        }
+                    } catch (e) {
+                    }
+                    try {
+                        var labelEl = document.querySelector('[data-i18n="common.upcycleconnect.commission.8"]');
+                        if (labelEl) {
+                            labelEl.textContent = 'UpcycleConnect commission (' + (UPCYCLE_RATE*100).toFixed(2) + '%)';
+                        }
+                    } catch (e) {}
+                    try { updateTTCPreview(); } catch (e) {}
+                })
+                .catch(function(){  });
+        })();
 
         function calcTTC(ht) {
             if (ht <= 0) return 0;
@@ -405,7 +431,7 @@
                 if (!badge) return;
                 badge.style.display = 'block';
                 if (spinner) { spinner.className = 'fa-solid fa-spinner fa-spin'; spinner.style.display = ''; }
-                if (text)    text.textContent = '\u00a0Estimating CO\u2082 factor with AI\u2026';
+                if (text)    text.textContent = '\u00a0' + t('common.estimating.co2.factor.with.ai', 'Estimating CO\u2082 factor with AI\u2026');
                 var inp = document.getElementById('offer-estimation');
                 if (inp) inp.value = '';
                 setSubmitBlocked(true);
@@ -480,44 +506,44 @@
 
             var errors = [];
             if (!title) {
-                errors.push('Title is required');
+                errors.push(t('common.title.required', 'Title is required'));
             } else if (title.length > 60) {
-                errors.push('Title must be 60 characters or less');
+                errors.push(t('common.title.max.length', 'Title must be 60 characters or less'));
             }
 
             if (!description) {
-                errors.push('Description is required');
+                errors.push(t('common.description.required', 'Description is required'));
             } else if (description.length > 1000) {
-                errors.push('Description must be 1000 characters or less');
+                errors.push(t('common.description.max.length', 'Description must be 1000 characters or less'));
             }
 
             if (!price || isNaN(price) || parseFloat(price) < 0) {
-                errors.push('Price must be a valid positive number');
+                errors.push(t('common.price.valid.positive.number', 'Price must be a valid positive number'));
             }
             if (weight && (isNaN(weight) || parseFloat(weight) < 0)) {
-                errors.push('Weight must be a positive number');
+                errors.push(t('common.weight.positive.number', 'Weight must be a positive number'));
             }
             if (weight && !material) {
-                errors.push('Material type is required when weight is provided');
+                errors.push(t('common.material.type.required', 'Material type is required when weight is provided'));
             }
             if (material === 'other') {
                 if (!customMat) {
-                    errors.push('Please specify material when "Other" is selected');
+                    errors.push(t('common.please.specify.material.other.selected', 'Please specify material when "Other" is selected'));
                 }
                 if (!estimate || isNaN(estimate) || parseFloat(estimate) <= 0) {
-                    errors.push('Please provide a valid estimated upcycling score');
+                    errors.push(t('common.valid.estimated.upcycling.score', 'Please provide a valid estimated upcycling score'));
                 }
             }
 
             if (!selectedFiles.length) {
-                errors.push('Please add at least one image');
+                errors.push(t('common.please.add.at.least.one.image', 'Please add at least one image'));
             } else if (selectedFiles.length > 10) {
-                errors.push('Maximum 10 images allowed');
+                errors.push(t('common.maximum.10.images.allowed', 'Maximum 10 images allowed'));
             }
 
             submitButton.disabled = true;
             var originalText = submitButton.innerHTML;
-            submitButton.innerHTML = '<i class="fa-solid fa-spinner"></i> Creating...';
+            submitButton.innerHTML = '<i class="fa-solid fa-spinner"></i> ' + t('common.creating', 'Creating...');
 
             var categorySelect = document.getElementById('offer-category');
             var category = categorySelect ? categorySelect.value : '';
@@ -572,10 +598,16 @@
                     return uploadImage(file, annonce.id);
                 });
                 return Promise.allSettled(imagePromises).then(function(results) {
+                    var failedImages = [];
                     results.forEach(function(result, index) {
                         if (result.status === 'rejected') {
+                            failedImages.push(selectedFiles[index].name + ': ' + result.reason);
                         }
                     });
+                    if (failedImages.length > 0) {
+                        console.error('Image upload failures:', failedImages);
+                        throw new Error('Some images failed to upload: ' + failedImages.join('; '));
+                    }
                     return annonce;
                 });
             })
@@ -590,6 +622,13 @@
                 }
             })
             .catch(function(error) {
+                console.error('Offer creation error:', error);
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalText;
+                
+                var errorMsg = error && error.message ? error.message : 'Failed to create offer';
+                alert(errorMsg);
+                
                 if (window.loadOffers) {
                     window.loadOffers();
                 }

@@ -95,10 +95,7 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
             <h1>Customer Portal</h1>
         </div>
         <nav>
-            <div class="btn-wrapper language-select-wrapper">
-                <select id="language-select" class="language-selector" aria-label="Language"></select>
-            </div>
-            <div class="btn-wrapper" id="dark-toggle" data-i18n-title="nav.toggle_theme" title="Toggle dark mode">
+                <div class="btn-wrapper" id="dark-toggle" data-i18n-title="nav.toggle_theme" title="Toggle dark mode">
                 <i class="fa-solid fa-moon"></i>
                 <p data-i18n="nav.theme">Theme</p>
             </div>

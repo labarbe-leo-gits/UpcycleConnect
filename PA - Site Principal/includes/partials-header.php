@@ -86,20 +86,17 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
             </div>
 
             <div class="nav-dropdown training-dropdown">
-                <a class="btn-wrapper" href="training">
+                <a class="btn-wrapper" href="../partials/training">
                     <i class="fa-solid fa-graduation-cap"></i>
                     <p data-i18n="nav.formations">Formations</p>
                 </a>
                 <div class="dropdown-menu">
-                    <a href="training"><i class="fa-solid fa-plus-circle"></i><span data-i18n="nav.manage">Manage</span></a>
-                    <a href="awaiting-validation"><i class="fa-solid fa-hourglass-half"></i><span data-i18n="nav.awaiting_validation">Awaiting validation</span></a>
+                    <a href="../partials/training"><i class="fa-solid fa-plus-circle"></i><span data-i18n="nav.manage">Manage</span></a>
+                    <a href="../partials/awaiting-validation"><i class="fa-solid fa-hourglass-half"></i><span data-i18n="nav.awaiting_validation">Awaiting validation</span></a>
                     <a href="../common/planning"><i class="fa-solid fa-calendar-days"></i><span data-i18n="nav.planning">Planning</span></a>
                 </div>
             </div>
 
-            <div class="btn-wrapper language-select-wrapper">
-                <select id="language-select" class="language-selector" aria-label="Language"></select>
-            </div>
             <div class="btn-wrapper" id="dark-toggle" data-i18n-title="nav.toggle_theme" title="Toggle dark mode">
                 <i class="fa-solid fa-moon"></i>
                 <p data-i18n="nav.theme">Theme</p>

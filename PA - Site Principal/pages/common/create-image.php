@@ -33,7 +33,7 @@ try {
     }
 
     $user = getLoggedInUser();
-    if (empty($user) || $user['user_type'] != 1) {
+    if (empty($user) || !in_array($user['user_type'], [1, 2])) {
         http_response_code(403);
         echo json_encode(['error' => 'Unauthorized']);
         exit;

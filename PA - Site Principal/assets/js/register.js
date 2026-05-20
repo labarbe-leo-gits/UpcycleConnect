@@ -13,6 +13,26 @@
         return String(value || '').replace(/\D/g, '');
     }
 
+    function setSubmitLoading(form, isLoading) {
+        if (!form) return;
+        var button = form.querySelector('button[type="submit"]');
+        if (!button) return;
+        if (isLoading) {
+            if (button.dataset.originalHtml === undefined) {
+                button.dataset.originalHtml = button.innerHTML;
+            }
+            button.disabled = true;
+            button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ' + (button.textContent.trim() || 'Submitting...');
+            button.classList.add('is-loading');
+        } else {
+            if (button.dataset.originalHtml !== undefined) {
+                button.innerHTML = button.dataset.originalHtml;
+            }
+            button.disabled = false;
+            button.classList.remove('is-loading');
+        }
+    }
+
     function setFieldStatus(element, message, statusClass) {
         if (!element) return;
         element.textContent = message;
@@ -173,6 +193,8 @@
             forms.forEach(function(form) {
                 form.addEventListener('submit', function(e) {
                     e.preventDefault();
+                    setSubmitLoading(form, true);
+
                     window.grecaptcha.execute(siteKey, { action: 'register' })
                         .then(function(token) {
                             var tokenField = form.querySelector('.recaptcha-token');
@@ -203,6 +225,7 @@
                                         } else {
                                             var errorsList = Object.values(checkResult.errors).join('\n');
                                             alert('Content moderation:\n\n' + errorsList);
+                                            setSubmitLoading(form, false);
                                         }
                                     })
                                     .catch(function(err) {
@@ -212,6 +235,10 @@
                             } else {
                                 form.submit();
                             }
+                        })
+                        .catch(function(err) {
+                            console.error('Recaptcha execution failed:', err);
+                            setSubmitLoading(form, false);
                         });
                 });
             });

@@ -82,7 +82,7 @@ func CreateOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = db.CreateOrderInDB(orderDto)
+	orderID, err := db.CreateOrderInDB(orderDto)
 
 	if err != nil {
 		fmt.Println("[ERROR] CreateOrder DB insert:", err)
@@ -102,6 +102,7 @@ func CreateOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	orderDto.ID = orderID
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(orderDto)

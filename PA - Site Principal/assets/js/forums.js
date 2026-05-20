@@ -78,7 +78,7 @@
         }
 
         if (!filtered.length) {
-            list.innerHTML = '<div class="deposit-empty"><p>No forums found.</p></div>';
+            list.innerHTML = '<div class="deposit-empty"><p>' + t('common.no.forums.found', 'No forums found.') + '</p></div>';
             return;
         }
 
@@ -109,7 +109,7 @@
                 const items = Array.isArray(data.items) ? data.items : (Array.isArray(data) ? data : []);
 
                 if (!items.length) {
-                    container.innerHTML = '<div class="deposit-empty"><p>No forums yet. Be the first to create one!</p></div>';
+                    container.innerHTML = '<div class="deposit-empty"><p>' + t('common.no.forums.yet.create.one', 'No forums yet. Be the first to create one!') + '</p></div>';
                     return;
                 }
 
@@ -118,7 +118,7 @@
             })
             .catch(err => {
                 console.error('Failed to load forums', err);
-                container.innerHTML = '<p class="error-message">Unable to load forums. Please try again later.</p>';
+                container.innerHTML = '<p class="error-message">' + t('common.unable.to.load.forums', 'Unable to load forums. Please try again later.') + '</p>';
             });
     }
 
@@ -164,7 +164,7 @@
         const viewBtn = document.createElement('button');
         viewBtn.type = 'button';
         viewBtn.className = 'btn-secondary';
-        viewBtn.textContent = 'Open Forum';
+        viewBtn.textContent = t('common.open.forum', 'Open Forum');
         viewBtn.addEventListener('click', function() {
             window.location.href = `forum?uuid=${encodeURIComponent(f.id)}`;
         });
@@ -193,7 +193,7 @@
         `;
         list.innerHTML = itemSkeleton.repeat(allLimit);
         seeMore.disabled = true;
-        seeMore.textContent = 'See more';
+        seeMore.textContent = t('common.see.more', 'See more');
         seeMore.style.display = 'none';
 
         loadAllForumsPage(allPage, allLimit);
@@ -213,7 +213,7 @@
         if (!list || !seeMore) return;
         allLoading = true;
         seeMore.disabled = true;
-        if (page > 1) seeMore.textContent = 'Loading...';
+if (page > 1) seeMore.textContent = t('common.loading', 'Loading...');
 
 
         let apiSort = (currentSort === 'posts-desc' || currentSort === 'posts-asc') ? 'trending' : currentSort;
@@ -232,7 +232,7 @@
                 }
 
                 if (!items.length && page === 1) {
-                    list.innerHTML = '<div class="deposit-empty"><p>No forums found.</p></div>';
+                    list.innerHTML = '<div class="deposit-empty"><p>' + t('common.no.forums.found', 'No forums found.') + '</p></div>';
                     seeMore.style.display = 'none';
                     return;
                 }
@@ -256,7 +256,7 @@
                 if (hasMore) {
                     seeMore.style.display = 'block';
                     seeMore.disabled = false;
-                    seeMore.textContent = 'See more';
+                    seeMore.textContent = t('common.see.more', 'See more');
                 } else {
                     seeMore.style.display = 'none';
                 }
@@ -265,7 +265,7 @@
                 console.error('Failed to load more forums', err);
                 const errNode = document.createElement('div');
                 errNode.className = 'error-message';
-                errNode.textContent = 'Unable to load more forums.';
+                errNode.textContent = t('common.unable.to.load.more.forums', 'Unable to load more forums.');
                 list.appendChild(errNode);
                 seeMore.style.display = 'none';
             })

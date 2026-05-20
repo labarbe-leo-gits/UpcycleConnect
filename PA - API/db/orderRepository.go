@@ -93,7 +93,7 @@ func GetOrdersFromDB() ([]models.Order, error) {
 
 }
 
-func CreateOrderInDB(order models.Order) error {
+func CreateOrderInDB(order models.Order) (uuid.UUID, error) {
 
 	newID := uuid.New()
 
@@ -102,16 +102,16 @@ func CreateOrderInDB(order models.Order) error {
 	availabilityID := uuidPointerToValue(order.OrderAvailabilityID)
 
 	if eventID == nil && productID == nil {
-		return fmt.Errorf("createOrder package db: missing event_id and product_id")
+		return uuid.Nil, fmt.Errorf("createOrder package db: missing event_id and product_id")
 	}
 
 	if eventID != nil && availabilityID == nil {
-		return fmt.Errorf("createOrder package db: schedule slot is required")
+		return uuid.Nil, fmt.Errorf("createOrder package db: schedule slot is required")
 	}
 
 	tx, err := Db.Begin()
 	if err != nil {
-		return fmt.Errorf("createOrder package db : %s", err.Error())
+		return uuid.Nil, fmt.Errorf("createOrder package db : %s", err.Error())
 	}
 
 	defer func() {
@@ -122,15 +122,15 @@ func CreateOrderInDB(order models.Order) error {
 
 	if order.EventID != nil && *order.EventID != uuid.Nil {
 		if order.OrderAvailabilityID == nil || *order.OrderAvailabilityID == uuid.Nil {
-			return fmt.Errorf("event_availability_id is required for service orders")
+			return uuid.Nil, fmt.Errorf("event_availability_id is required for service orders")
 		}
 		err = checkSlotAvailability(tx, *order.EventID, *order.OrderAvailabilityID)
 		if err != nil {
-			return err
+			return uuid.Nil, err
 		}
 		err = checkAndIncrementParticipants(tx, *order.EventID)
 		if err != nil {
-			return err
+			return uuid.Nil, err
 		}
 	}
 
@@ -140,7 +140,7 @@ func CreateOrderInDB(order models.Order) error {
 		fmt.Printf("[ERROR] CreateOrderInDB insert: %s, userID=%s, eventID=%#v, productID=%#v, transactionID=%s, amount=%.2f, status=%d\n",
 			err.Error(), order.UserID.String(), eventID, productID, order.TransactionID, order.Amount, order.Status)
 
-		return fmt.Errorf("createOrder package db : %s", err.Error())
+		return uuid.Nil, fmt.Errorf("createOrder package db : %s", err.Error())
 	}
 
 	var ownerID uuid.UUID
@@ -149,14 +149,14 @@ func CreateOrderInDB(order models.Order) error {
 		err = tx.QueryRow("SELECT user_id FROM annonces WHERE id = ? FOR UPDATE", order.ProductID.String()).Scan(&ownerIDStr)
 		if err != nil {
 			if err == sql.ErrNoRows {
-				return fmt.Errorf("annonce not found")
+				return uuid.Nil, fmt.Errorf("annonce not found")
 			}
-			return fmt.Errorf("createOrder package db annonce: %s", err.Error())
+			return uuid.Nil, fmt.Errorf("createOrder package db annonce: %s", err.Error())
 		}
 
 		ownerID, parseErr := uuid.Parse(ownerIDStr)
 		if parseErr != nil {
-			return fmt.Errorf("createOrder package db annonce owner uuid: %s", parseErr.Error())
+			return uuid.Nil, fmt.Errorf("createOrder package db annonce owner uuid: %s", parseErr.Error())
 		}
 
 		if ownerID != order.UserID {
@@ -166,7 +166,23 @@ func CreateOrderInDB(order models.Order) error {
 			credit := math.Round(annoncePriceHT*100) / 100
 			_, err = tx.Exec("UPDATE users SET balance = balance + ? WHERE id = ?", credit, ownerID.String())
 			if err != nil {
-				return fmt.Errorf("createOrder package db credit owner: %s", err.Error())
+				return uuid.Nil, fmt.Errorf("createOrder package db credit owner: %s", err.Error())
+			}
+
+			commissionAmount := math.Round(annoncePriceHT*UpcycleCommissionRate*100) / 100
+			amountAfterCommission := math.Round((annoncePriceHT-commissionAmount)*100) / 100
+			commissionTransaction := models.CommissionTransaction{
+				ID:               uuid.New(),
+				OrderID:          newID,
+				SellerID:         ownerID,
+				AmountBeforeComm: annoncePriceHT,
+				CommissionRate:   UpcycleCommissionRate * 100,
+				CommissionAmount: commissionAmount,
+				AmountAfterComm:  amountAfterCommission,
+				Status:           0,
+			}
+			if err := CreateCommissionTransactionWithTx(tx, commissionTransaction); err != nil {
+				return uuid.Nil, fmt.Errorf("createOrder package db commission transaction: %s", err.Error())
 			}
 
 			var sellerScore float64
@@ -219,10 +235,10 @@ func CreateOrderInDB(order models.Order) error {
 	}
 
 	if err = tx.Commit(); err != nil {
-		return fmt.Errorf("createOrder package db : %s", err.Error())
+		return uuid.Nil, fmt.Errorf("createOrder package db : %s", err.Error())
 	}
 
-	return nil
+	return newID, nil
 }
 
 func checkAndIncrementParticipants(tx *sql.Tx, eventID uuid.UUID) error {

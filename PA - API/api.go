@@ -138,7 +138,22 @@ var requestBodyTypes = map[string]reflect.Type{
 	"POST /orders":               reflect.TypeOf(models.Order{}),
 	"POST /annonces/{id}/images": reflect.TypeOf(models.Image{}),
 	"POST /notifications":        reflect.TypeOf(models.Notification{}),
-	"POST /payment-requests":     reflect.TypeOf(models.PaymentRequest{}),
+	"POST /notification-campaigns": reflect.TypeOf(struct {
+		Title           string  `json:"title"`
+		Message         string  `json:"message"`
+		TargetUserType  int     `json:"target_user_type"`
+		Status          int     `json:"status"`
+		ScheduledAt     *string `json:"scheduled_at,omitempty"`
+		CreatedByUserID string  `json:"created_by_user_id"`
+	}{}),
+	"PATCH /notification-campaigns/{id}": reflect.TypeOf(struct {
+		Title          string  `json:"title"`
+		Message        string  `json:"message"`
+		TargetUserType int     `json:"target_user_type"`
+		Status         int     `json:"status"`
+		ScheduledAt    *string `json:"scheduled_at,omitempty"`
+	}{}),
+	"POST /payment-requests": reflect.TypeOf(models.PaymentRequest{}),
 	"PATCH /payment-requests/{id}/status": reflect.TypeOf(struct {
 		Status       *int   `json:"status"`
 		ApproverID   string `json:"approver_id,omitempty"`
@@ -680,6 +695,12 @@ func main() {
 	registerRoute("GET", "/users/{id}/annonces", "List all annonces for a specific user by their UUID", app.GetAnnoncesByUserID)
 	registerRoute("PATCH", "/notifications/{id}/read", "Mark a notification as read by its UUID", app.MarkNotificationAsRead, app.JWTAuthMiddleware)
 	registerRoute("DELETE", "/notifications/{id}", "Delete a notification by its UUID", app.DeleteNotification, app.JWTAuthMiddleware)
+	registerRoute("GET", "/notification-campaigns", "List notification campaigns (admin back office)", app.GetNotificationCampaigns, app.JWTAuthMiddleware)
+	registerRoute("GET", "/notification-campaigns/{id}", "Get a notification campaign by id", app.GetNotificationCampaign, app.JWTAuthMiddleware)
+	registerRoute("POST", "/notification-campaigns", "Create a notification campaign", app.CreateNotificationCampaign, app.JWTAuthMiddleware)
+	registerRoute("PATCH", "/notification-campaigns/{id}", "Update a notification campaign", app.UpdateNotificationCampaign, app.JWTAuthMiddleware)
+	registerRoute("DELETE", "/notification-campaigns/{id}", "Delete a notification campaign", app.DeleteNotificationCampaign, app.JWTAuthMiddleware)
+	registerRoute("POST", "/notification-campaigns/{id}/send", "Send a notification campaign to its target", app.SendNotificationCampaign, app.JWTAuthMiddleware)
 	registerRoute("PATCH", "/users/{id}/notifications/read", "Mark all users notification as read", app.MarkAllNotificationAsRead, app.JWTAuthMiddleware)
 	registerRoute("DELETE", "/users/{id}/planning/{pID}", "Delete a planning entry for a user", app.DeletePlanning, app.JWTAuthMiddleware)
 	registerRoute("GET", "/forums", "List all forums", app.GetForums)
@@ -879,6 +900,43 @@ func main() {
 	/* TODOOOOOOO */
 	registerRoute("POST", "/users/{id}/favorites", "Add a new favorite item for a specific user by their UUID", app.AddUserFavorite, app.JWTAuthMiddleware)
 	registerRoute("DELETE", "/users/{id}/favorites/{fID}", "Remove a specific favorite item for a user by their UUIDs", app.RemoveUserFavorite, app.JWTAuthMiddleware)
+
+	registerRoute("GET", "/subscription-tiers", "List all active subscription tiers", app.GetSubscriptionTiers, app.JWTAuthMiddleware)
+	registerRoute("GET", "/subscription-tier", "Get a specific subscription tier by ID", app.GetSubscriptionTierByID, app.JWTAuthMiddleware)
+	registerRoute("POST", "/subscription-tier", "Create a new subscription tier (admin only)", app.CreateSubscriptionTier, app.JWTAuthMiddleware, RoleMiddleware(3))
+	registerRoute("PUT", "/subscription-tier", "Update a subscription tier (admin only)", app.UpdateSubscriptionTier, app.JWTAuthMiddleware, RoleMiddleware(3))
+	registerRoute("DELETE", "/subscription-tier", "Delete a subscription tier (admin only)", app.DeleteSubscriptionTier, app.JWTAuthMiddleware, RoleMiddleware(3))
+	registerRoute("GET", "/users/{id}/subscription-tier", "Get current subscription tier for a user", app.GetUserCurrentTier, app.JWTAuthMiddleware)
+
+	registerRoute("GET", "/commission-settings", "Get current commission settings", app.GetCommissionSettings, app.JWTAuthMiddleware)
+	registerRoute("PUT", "/commission-settings", "Update commission settings (admin only)", app.UpdateCommissionSettings, app.JWTAuthMiddleware, RoleMiddleware(3))
+	registerRoute("GET", "/commission-transactions", "List commission transactions with optional seller filter", app.GetCommissionTransactions, app.JWTAuthMiddleware, RoleMiddleware(3))
+	registerRoute("GET", "/commission-transaction", "Get a specific commission transaction by ID", app.GetCommissionTransactionByID, app.JWTAuthMiddleware)
+	registerRoute("POST", "/commission-transaction", "Create a new commission transaction", app.CreateCommissionTransaction, app.JWTAuthMiddleware)
+	registerRoute("PUT", "/commission-transaction", "Update commission transaction status (admin only)", app.UpdateCommissionTransactionStatus, app.JWTAuthMiddleware, RoleMiddleware(3))
+
+	registerRoute("GET", "/partnership-campaigns", "List all partnership campaigns", app.GetPartnershipCampaigns, app.JWTAuthMiddleware)
+	registerRoute("GET", "/partnership-campaign", "Get a specific partnership campaign by ID", app.GetPartnershipCampaignByID, app.JWTAuthMiddleware)
+	registerRoute("POST", "/partnership-campaign", "Create a new partnership campaign (admin only)", app.CreatePartnershipCampaign, app.JWTAuthMiddleware, RoleMiddleware(3))
+	registerRoute("PUT", "/partnership-campaign", "Update a partnership campaign (admin only)", app.UpdatePartnershipCampaign, app.JWTAuthMiddleware, RoleMiddleware(3))
+	registerRoute("DELETE", "/partnership-campaign", "Delete a partnership campaign (admin only)", app.DeletePartnershipCampaign, app.JWTAuthMiddleware, RoleMiddleware(3))
+	registerRoute("POST", "/partnership-campaign/item", "Add an item to a partnership campaign (admin only)", app.AddItemToPartnershipCampaign, app.JWTAuthMiddleware, RoleMiddleware(3))
+	registerRoute("DELETE", "/partnership-campaign/item", "Remove an item from a partnership campaign (admin only)", app.RemoveItemFromPartnershipCampaign, app.JWTAuthMiddleware, RoleMiddleware(3))
+
+	registerRoute("GET", "/training-sessions", "List all training sessions", app.GetTrainingSessions, app.JWTAuthMiddleware)
+	registerRoute("GET", "/training-session", "Get a specific training session by ID", app.GetTrainingSessionByID, app.JWTAuthMiddleware)
+	registerRoute("POST", "/training-session", "Create a new training session", app.CreateTrainingSession, app.JWTAuthMiddleware)
+	registerRoute("PUT", "/training-session", "Update a training session", app.UpdateTrainingSession, app.JWTAuthMiddleware)
+	registerRoute("DELETE", "/training-session", "Delete a training session", app.DeleteTrainingSession, app.JWTAuthMiddleware)
+	registerRoute("POST", "/training-session/register", "Register a user for a training session", app.RegisterTrainingSession, app.JWTAuthMiddleware)
+	registerRoute("GET", "/training-session/registrations", "List training session registrations with optional filters", app.GetTrainingSessionRegistrations, app.JWTAuthMiddleware)
+	registerRoute("PUT", "/training-session/registration", "Update training session registration status", app.UpdateTrainingSessionRegistrationStatus, app.JWTAuthMiddleware)
+
+	registerRoute("GET", "/revenue-reports", "List revenue reports with optional date range filter", app.GetRevenueReports, app.JWTAuthMiddleware, RoleMiddleware(3))
+	registerRoute("GET", "/revenue-report", "Get a specific revenue report by ID", app.GetRevenueReportByID, app.JWTAuthMiddleware, RoleMiddleware(3))
+	registerRoute("POST", "/revenue-report", "Generate a new revenue report (admin only)", app.GenerateRevenueReport, app.JWTAuthMiddleware, RoleMiddleware(3))
+	registerRoute("GET", "/current-month-revenue", "Get current month revenue overview", app.GetCurrentMonthRevenue, app.JWTAuthMiddleware, RoleMiddleware(3))
+	registerRoute("GET", "/revenue-breakdown", "Get revenue breakdown for a date range (admin only)", app.GetRevenueBreakdown, app.JWTAuthMiddleware, RoleMiddleware(3))
 
 	http.HandleFunc("/translations", corsMiddleware(translationsHandler))
 	http.HandleFunc("/translations/", corsMiddleware(translationsHandler))

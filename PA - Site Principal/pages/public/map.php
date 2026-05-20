@@ -3,7 +3,7 @@ $title = 'Map';
 require_once __DIR__ . '/../../config/db.php';
 $extraCss = ['https://unpkg.com/leaflet/dist/leaflet.css'];
 $extraJs  = ['https://unpkg.com/leaflet/dist/leaflet.js',
-             '/PA/PA - Site Principal/assets/js/deposits.js'];
+             '/assets/js/deposits.js'];
 include_once '../../includes/header.php';
 ?>
 

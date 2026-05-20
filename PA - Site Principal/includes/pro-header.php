@@ -111,15 +111,13 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
                 </a>
                 <div class="dropdown-menu">
                     <a href="../common/offers"><i class="fa-solid fa-box-open"></i><span data-i18n="nav.offers">Offers</span></a>
+                    <a href="../pro/partnerships"><i class="fa-solid fa-layer-group"></i><span>Bundles</span></a>
                     <a href="../pro/containers"><i class="fa-solid fa-warehouse"></i><span data-i18n="nav.containers">Containers</span></a>
                 </div>
             </div>
             <div class="btn-wrapper" onClick="window.location.href='../public/index'">
                 <i class="fa-solid fa-arrow-left"></i>
                 <p data-i18n="nav.home">Main Site</p>
-            </div>
-            <div class="btn-wrapper language-select-wrapper">
-                <select id="language-select" class="language-selector" aria-label="Language"></select>
             </div>
             <div class="btn-wrapper" id="dark-toggle" data-i18n-title="nav.toggle_theme" title="Toggle dark mode">
                 <i class="fa-solid fa-moon"></i>

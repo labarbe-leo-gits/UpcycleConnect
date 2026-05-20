@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const userDetailsCache = {};
 
     if (!token || !currentUserId) {
-        showError('You must be logged in to manage friends.');
+        showError(t('common.you.must.be.logged.in.to.manage.friends', 'You must be logged in to manage friends.'));
         return;
     }
 
@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const res = await authFetch('/friends');
             if (!res.ok) {
                 const errorData = await res.json().catch(() => ({}));
-                throw new Error(errorData.error || 'Unable to load friends.');
+                throw new Error(errorData.error || t('common.unable.to.load.friends', 'Unable to load friends.'));
             }
 
             const data = await res.json();
@@ -69,9 +69,9 @@ document.addEventListener('DOMContentLoaded', () => {
             renderRequestCarousel();
             renderFriendsPage();
         } catch (err) {
-            showError(err.message || 'Error loading friends.');
-            requestsContainer.innerHTML = '<div class="empty-state">Unable to load friend requests.</div>';
-            friendsList.innerHTML = '<div class="empty-state">Unable to load friends.</div>';
+            showError(err.message || t('common.error.loading.friends', 'Error loading friends.'));
+            requestsContainer.innerHTML = '<div class="empty-state">' + t('common.unable.to.load.friend.requests', 'Unable to load friend requests.') + '</div>';
+            friendsList.innerHTML = '<div class="empty-state">' + t('common.unable.to.load.friends', 'Unable to load friends.') + '</div>';
             requestsPagination.innerHTML = '';
             friendsPagination.innerHTML = '';
             console.error(err);

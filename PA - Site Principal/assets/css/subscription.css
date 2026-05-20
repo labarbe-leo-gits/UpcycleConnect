@@ -1,9 +1,15 @@
-.subscription-page,
+﻿.subscription-page,
 .subscription-success-page,
 .dashboard-premium-page {
-  padding: 40px 5vw;
-  max-width: 1100px;
+  padding: 56px 4vw 72px;
+  max-width: 1240px;
   margin: 0 auto;
+}
+
+.subscription-page {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
 }
 
 main.dashboard-page {
@@ -16,7 +22,6 @@ main.dashboard-page {
   gap: 14px;
   width: 100%;
 }
-
 .skeleton-text {
   display: inline-block;
   min-width: 60px;
@@ -31,14 +36,17 @@ main.dashboard-page {
   height: 80px;
   border-radius: 8px;
 }
+
 .skeleton-block-md {
   height: 120px;
   border-radius: 8px;
 }
+
 .skeleton-block-lg {
   height: 120px;
   border-radius: 12px;
 }
+
 .skeleton-block-xl {
   height: 200px;
   border-radius: 12px;
@@ -51,23 +59,25 @@ main.dashboard-page {
 
 .page-header {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 36px;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  text-align: center;
 }
 
 .page-header h1 {
-  font-size: 28px;
+  font-size: 30px;
   font-weight: 700;
   color: #1f2937;
   margin: 0;
+  letter-spacing: -0.02em;
 }
 
 .page-header .subtitle {
   color: #6b7280;
-  margin: 4px 0 0;
+  margin: 0;
   font-size: 15px;
 }
 
@@ -126,7 +136,7 @@ main.dashboard-page {
   border: 2px solid #6ee7b7;
   border-radius: 16px;
   padding: 28px 32px;
-  margin-bottom: 36px;
+  margin-bottom: 24px;
 }
 
 .status-badge {
@@ -162,17 +172,17 @@ main.dashboard-page {
 .features {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
+  gap: 20px;
 }
 
 .feature {
   background: white;
   border: 1px solid #e5e7eb;
   border-radius: 14px;
-  padding: 24px 20px;
+  padding: 26px 22px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
   transition: box-shadow 0.2s;
 }
@@ -203,6 +213,73 @@ main.dashboard-page {
   margin: 0;
   flex: 1;
 }
+
+.subscription-intro {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.freemium-banner {
+  background: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%);
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 32px;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.06);
+}
+
+.subscription-intro h2 {
+  margin: 0 0 8px;
+  font-size: 24px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.subscription-intro p,
+.subscription-note p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.tiers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  align-items: stretch;
+  max-width: 1080px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.tiers-grid .plan {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.tiers-grid .plan.active {
+  border-color: #10b981;
+  box-shadow: 0 12px 28px rgba(16, 185, 129, 0.18);
+}
+
+.tier-description {
+  color: #6b7280;
+  font-size: 13px;
+  margin: 0 0 8px;
+  min-height: 36px;
+}
+
+.subscription-note {
+  text-align: center;
+  margin-top: 18px;
+}
+
+.subscription-note p {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .plan-comparison {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -212,7 +289,47 @@ main.dashboard-page {
 }
 
 @media (max-width: 640px) {
+  .subscription-page,
+  .subscription-success-page,
+  .dashboard-premium-page {
+    padding: 32px 16px 56px;
+  }
+
+  .page-header h1 {
+    font-size: 26px;
+  }
+
+  .subscription-intro h2 {
+    font-size: 21px;
+  }
+
+  .freemium-banner {
+    padding: 24px 18px;
+    border-radius: 22px;
+  }
+
   .plan-comparison {
+    grid-template-columns: 1fr;
+  }
+
+  .tiers-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .plan {
+    padding: 40px 20px 22px;
+  }
+
+  .feature,
+  .kpi-card,
+  .dashboard-section,
+  .premium-status {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .kpi-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -221,8 +338,12 @@ main.dashboard-page {
   background: white;
   border: 2px solid #e5e7eb;
   border-radius: 20px;
-  padding: 32px 28px;
+  padding: 44px 28px 26px;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  box-sizing: border-box;
 }
 
 .plan.premium {
@@ -232,7 +353,7 @@ main.dashboard-page {
 
 .popular-badge {
   position: absolute;
-  top: -13px;
+  top: 12px;
   left: 50%;
   transform: translateX(-50%);
   background: linear-gradient(135deg, #10b981, #34d399);
@@ -245,7 +366,7 @@ main.dashboard-page {
 }
 
 .plan h2 {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 700;
   color: #1f2937;
   margin: 0 0 8px;
@@ -265,10 +386,11 @@ main.dashboard-page {
 .plan ul {
   list-style: none;
   padding: 0;
-  margin: 0 0 24px;
+  margin: 0 0 26px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
+  flex: 1;
 }
 
 .plan ul li {
@@ -1023,4 +1145,11 @@ main.dashboard-page .kpi-card .kpi-value {
   .dash-plan-compare {
     grid-template-columns: 1fr 1fr;
   }
+}
+
+.tiers-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 30px;
+  width: fit-content;
 }

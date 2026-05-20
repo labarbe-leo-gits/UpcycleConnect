@@ -138,6 +138,19 @@ $productDescription = $service ? ($service['description'] ?? '') : ($offer['desc
 $priceHT = floatval($service ? ($service['price'] ?? 0) : ($offer['price'] ?? 0));
 
 $UPCYCLE_COMMISSION_RATE = 0.08;
+
+$commissionResp = askAPI('/commission-settings', 'GET');
+$commissionDecoded = json_decode($commissionResp, true);
+if (is_array($commissionDecoded) && !isset($commissionDecoded['error'])) {
+    $cfg = is_array($commissionDecoded) && isset($commissionDecoded[0]) ? $commissionDecoded[0] : $commissionDecoded;
+    $percent = $cfg['commission_rate_min'] ?? $cfg['commission_rate'] ?? null;
+    if ($percent !== null) {
+        $p = floatval($percent);
+        if ($p > 0) {
+            $UPCYCLE_COMMISSION_RATE = $p / 100.0;
+        }
+    }
+}
 $STRIPE_FEE_RATE   = 0.029;
 $STRIPE_FIXED_FEE  = 0.30;
 

@@ -1,0 +1,198 @@
+.bundle-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px 20px 56px;
+}
+.bundle-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+    gap: 20px;
+    align-items: stretch;
+    margin-bottom: 22px;
+}
+.bundle-card,
+.bundle-form-card,
+.bundle-offers-card {
+    background: #fff;
+    border: 1px solid rgba(0,0,0,.08);
+    border-radius: 18px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.05);
+}
+.dark-mode .bundle-card,
+.dark-mode .bundle-form-card,
+.dark-mode .bundle-offers-card {
+    background: #1f1f1f;
+    border-color: rgba(255,255,255,.08);
+}
+.bundle-card {
+    padding: 28px;
+}
+.bundle-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: rgba(61,139,94,.12);
+    color: #2d7a4f;
+    font-weight: 700;
+    margin-bottom: 14px;
+}
+.bundle-card h1 {
+    margin: 0 0 12px 0;
+    font-size: clamp(1.9rem, 3vw, 2.6rem);
+}
+.bundle-card p {
+    margin: 0 0 10px 0;
+    line-height: 1.55;
+    color: #555;
+}
+.dark-mode .bundle-card p,
+.dark-mode .bundle-note,
+.dark-mode .bundle-offers-card p,
+.dark-mode .bundle-help-list li {
+    color: #c9c9c9;
+}
+.bundle-help-list {
+    margin: 16px 0 0 18px;
+    padding: 0;
+}
+.bundle-help-list li {
+    margin-bottom: 8px;
+}
+.bundle-form-card,
+.bundle-offers-card {
+    padding: 24px;
+}
+.bundle-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+.bundle-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.bundle-form-group label {
+    font-weight: 700;
+}
+.bundle-form-group input,
+.bundle-form-group textarea,
+.bundle-form-group select {
+    width: 100%;
+    padding: 11px 12px;
+    border-radius: 10px;
+    border: 1px solid #d1d5db;
+    background: #fff;
+    font-size: 0.98rem;
+}
+.dark-mode .bundle-form-group input,
+.dark-mode .bundle-form-group textarea,
+.dark-mode .bundle-form-group select {
+    background: #151515;
+    color: #f3f3f3;
+    border-color: #444;
+}
+.bundle-form-group textarea {
+    min-height: 110px;
+    resize: vertical;
+}
+.bundle-span-2 {
+    grid-column: span 2;
+}
+.bundle-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-top: 18px;
+}
+.bundle-submit {
+    padding: 12px 18px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #3d8b5e, #2d7a4f);
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+}
+.bundle-submit:hover { filter: brightness(1.03); }
+.bundle-cta-link {
+    text-decoration: none;
+    color: #3d8b5e;
+    font-weight: 700;
+}
+.bundle-error {
+    margin: 0 0 16px 0;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: #fee2e2;
+    color: #991b1b;
+    font-weight: 600;
+}
+.dark-mode .bundle-error { background: #3b1111; color: #ffd2d2; }
+.bundle-offers-card h2,
+.bundle-form-card h2 {
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+.bundle-offers-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 16px;
+}
+.bundle-offer-item {
+    border: 1px solid rgba(0,0,0,.08);
+    border-radius: 14px;
+    padding: 14px;
+    background: #fafafa;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+.dark-mode .bundle-offer-item {
+    background: #161616;
+    border-color: rgba(255,255,255,.08);
+}
+.bundle-offer-item input { margin-top: 4px; }
+.bundle-offer-body h3 {
+    margin: 0 0 6px 0;
+    font-size: 1rem;
+}
+.bundle-offer-meta {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    font-size: .9rem;
+    color: #666;
+    margin-top: 6px;
+}
+.bundle-summary {
+    margin-top: 16px;
+    padding: 14px;
+    border-radius: 14px;
+    background: rgba(61,139,94,.08);
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+.bundle-summary strong { font-size: 1.1rem; }
+.bundle-empty {
+    padding: 22px;
+    border: 1px dashed rgba(0,0,0,.15);
+    border-radius: 14px;
+    text-align: center;
+    color: #666;
+}
+.dark-mode .bundle-empty { color: #c7c7c7; border-color: rgba(255,255,255,.12); }
+@media (max-width: 960px) {
+    .bundle-hero,
+    .bundle-offers-grid,
+    .bundle-grid {
+        grid-template-columns: 1fr;
+    }
+    .bundle-span-2 { grid-column: auto; }
+}

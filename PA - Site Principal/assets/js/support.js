@@ -83,7 +83,7 @@
             const removeBtn = document.createElement('button');
             removeBtn.type = 'button';
             removeBtn.className = 'file-card-remove';
-            removeBtn.setAttribute('aria-label', 'Remove attachment');
+            removeBtn.setAttribute('aria-label', t('common.remove.attachment', 'Remove attachment'));
             removeBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
             removeBtn.addEventListener('click', clearAttachment);
 

@@ -45,11 +45,13 @@ if ($isAjax) {
             if ($session->status === 'complete' && (string)$metaUserId === (string)$user['id']) {
                 $customerId = $session->customer          ?? '';
                 $subscId    = $session->subscription->id ?? ($session->subscription ?? '');
+                $tierId     = $session->metadata->tier_id ?? '';
 
                 callInternalApi('/internal/subscription/activate', [
                     'user_id'                => $user['id'],
                     'stripe_customer_id'     => $customerId,
                     'stripe_subscription_id' => $subscId,
+                    'tier_id'                => $tierId,
                 ]);
                 isPremium(true);
                 $success = true;

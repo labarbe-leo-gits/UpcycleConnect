@@ -262,6 +262,41 @@ func updateTranslationHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 }
 
+func deleteLanguageHandler(w http.ResponseWriter, r *http.Request) {
+	code := strings.TrimPrefix(r.URL.Path, "/translations/")
+	code = strings.TrimSpace(code)
+	if code == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "missing language code"})
+		return
+	}
+	meta, err := loadLanguagesMetadata()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+	if _, index := findLanguageMeta(code, meta); index < 0 {
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(map[string]string{"error": "language not found"})
+		return
+	} else {
+		meta = append(meta[:index], meta[index+1:]...)
+	}
+	if err := saveLanguagesMetadata(meta); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+	if err := os.Remove(translationFilePath(code)); err != nil && !os.IsNotExist(err) {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+}
+
 func translationsHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		if r.URL.Path == "/translations" {
@@ -277,6 +312,10 @@ func translationsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if r.Method == http.MethodPatch && strings.HasPrefix(r.URL.Path, "/translations/") {
 		updateTranslationHandler(w, r)
+		return
+	}
+	if r.Method == http.MethodDelete && strings.HasPrefix(r.URL.Path, "/translations/") {
+		deleteLanguageHandler(w, r)
 		return
 	}
 	w.WriteHeader(http.StatusMethodNotAllowed)
