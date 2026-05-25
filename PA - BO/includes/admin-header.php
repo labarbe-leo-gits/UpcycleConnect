@@ -135,7 +135,8 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
                     <a href="<?= base_url('pages/admin/subscription-tiers') ?>"><i class="fa-solid fa-layer-group"></i>Subscription Tiers</a>
                     <a href="<?= base_url('pages/admin/commissions') ?>"><i class="fa-solid fa-percent"></i>Commissions</a>
                     <a href="<?= base_url('pages/admin/partnerships') ?>"><i class="fa-solid fa-handshake"></i>Partnerships</a>
-                    <a href="<?= base_url('pages/admin/training-sessions') ?>"><i class="fa-solid fa-chalkboard-user"></i>Training</a>
+                    <a href="<?= base_url('pages/admin/contracts') ?>"><i class="fa-solid fa-file-contract"></i>Contracts</a>
+                    <a href="<?= base_url('pages/admin/sql') ?>"><i class="fa-solid fa-database"></i>SQL Analytics</a>
                     <a href="<?= base_url('pages/admin/revenue-reports') ?>"><i class="fa-solid fa-file-invoice-dollar"></i>Revenue Reports</a>
                 </div>
             </div>

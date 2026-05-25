@@ -2,6 +2,7 @@ package db
 
 import (
 	"API/models"
+	"database/sql"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -67,6 +68,42 @@ func GetRevenueReportByIDFromDB(reportID uuid.UUID) (*models.RevenueReport, erro
 	return &report, nil
 }
 
+func GetRevenueReportByPeriodFromDB(startDate string, endDate string) (*models.RevenueReport, error) {
+	query := `
+		SELECT id, report_period_start, report_period_end, subscription_revenue,
+		       commission_revenue, partnership_revenue, training_revenue, total_revenue,
+		       subscription_count, commission_count, partnership_count, training_participants,
+		       generated_at
+		FROM revenue_reports
+		WHERE report_period_start = ? AND report_period_end = ?
+	`
+
+	var report models.RevenueReport
+	err := Db.QueryRow(query, startDate, endDate).Scan(
+		&report.ID, &report.ReportPeriodStart, &report.ReportPeriodEnd,
+		&report.SubscriptionRevenue, &report.CommissionRevenue, &report.PartnershipRevenue,
+		&report.TrainingRevenue, &report.TotalRevenue, &report.SubscriptionCount,
+		&report.CommissionCount, &report.PartnershipCount, &report.TrainingParticipants,
+		&report.GeneratedAt,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &report, nil
+}
+
+func DeleteRevenueReportByIDFromDB(reportID uuid.UUID) error {
+	query := `
+		DELETE FROM revenue_reports
+		WHERE id = ?
+	`
+
+	_, err := Db.Exec(query, reportID.String())
+	return err
+}
+
 func GetRevenueReportsByDateRangeFromDB(startDate string, endDate string) ([]models.RevenueReport, error) {
 	query := `
 		SELECT id, report_period_start, report_period_end, subscription_revenue,
@@ -103,16 +140,21 @@ func GetRevenueReportsByDateRangeFromDB(startDate string, endDate string) ([]mod
 }
 
 func GenerateRevenueReportInDB(startDate string, endDate string) (*models.RevenueReport, error) {
+	existing, err := GetRevenueReportByPeriodFromDB(startDate, endDate)
+	if err != nil && err != sql.ErrNoRows {
+		return nil, err
+	}
+
 	subscriptionQuery := `
 		SELECT COALESCE(SUM(c.amount), 0), COUNT(DISTINCT c.id)
 		FROM contracts c
-		WHERE c.created_at >= ? AND c.created_at <= ?
+		WHERE DATE(c.created_at) BETWEEN ? AND ?
 		AND c.contract_type = 1
 	`
 
 	var subscriptionRev float64
 	var subscriptionCount int
-	err := Db.QueryRow(subscriptionQuery, startDate, endDate).Scan(&subscriptionRev, &subscriptionCount)
+	err = Db.QueryRow(subscriptionQuery, startDate, endDate).Scan(&subscriptionRev, &subscriptionCount)
 	if err != nil {
 		fmt.Println("[ERROR] GenerateRevenueReport subscription:", err)
 	}
@@ -120,8 +162,7 @@ func GenerateRevenueReportInDB(startDate string, endDate string) (*models.Revenu
 	commissionQuery := `
 		SELECT COALESCE(SUM(ct.commission_amount), 0), COUNT(ct.id)
 		FROM commission_transactions ct
-		WHERE ct.created_at >= ? AND ct.created_at <= ?
-		AND ct.status = 1
+		WHERE DATE(ct.created_at) BETWEEN ? AND ?
 	`
 
 	var commissionRev float64
@@ -134,8 +175,7 @@ func GenerateRevenueReportInDB(startDate string, endDate string) (*models.Revenu
 	partnershipQuery := `
 		SELECT COALESCE(SUM(pc.monthly_price), 0), COUNT(pc.id)
 		FROM partnership_campaigns pc
-		WHERE pc.created_at >= ? AND pc.created_at <= ?
-		AND pc.status = 1
+		WHERE DATE(pc.created_at) BETWEEN ? AND ?
 	`
 
 	var partnershipRev float64
@@ -148,7 +188,7 @@ func GenerateRevenueReportInDB(startDate string, endDate string) (*models.Revenu
 	trainingQuery := `
 		SELECT COALESCE(SUM(tsr.amount_paid), 0), COUNT(tsr.id)
 		FROM training_session_registrations tsr
-		WHERE tsr.created_at >= ? AND tsr.created_at <= ?
+		WHERE DATE(tsr.created_at) BETWEEN ? AND ?
 		AND tsr.status = 1
 	`
 
@@ -176,6 +216,15 @@ func GenerateRevenueReportInDB(startDate string, endDate string) (*models.Revenu
 		TrainingParticipants: trainingParticipants,
 	}
 
+	if existing != nil {
+		report.ID = existing.ID
+		if err := UpdateRevenueReportByPeriodInDB(report, existing.ID); err != nil {
+			fmt.Println("[ERROR] GenerateRevenueReport update:", err)
+			return nil, err
+		}
+		return &report, nil
+	}
+
 	insertQuery := `
 		INSERT INTO revenue_reports
 		(id, report_period_start, report_period_end, subscription_revenue,
@@ -197,6 +246,24 @@ func GenerateRevenueReportInDB(startDate string, endDate string) (*models.Revenu
 	}
 
 	return &report, nil
+}
+
+func UpdateRevenueReportByPeriodInDB(report models.RevenueReport, reportID uuid.UUID) error {
+	query := `
+		UPDATE revenue_reports
+		SET subscription_revenue = ?, commission_revenue = ?, partnership_revenue = ?, training_revenue = ?,
+		    total_revenue = ?, subscription_count = ?, commission_count = ?, partnership_count = ?, training_participants = ?,
+		    generated_at = NOW()
+		WHERE id = ?
+	`
+
+	_, err := Db.Exec(query,
+		report.SubscriptionRevenue, report.CommissionRevenue, report.PartnershipRevenue,
+		report.TrainingRevenue, report.TotalRevenue, report.SubscriptionCount,
+		report.CommissionCount, report.PartnershipCount, report.TrainingParticipants,
+		reportID.String(),
+	)
+	return err
 }
 
 func GetCurrentMonthRevenueFromDB() (map[string]interface{}, error) {

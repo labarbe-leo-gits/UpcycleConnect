@@ -10,6 +10,222 @@ import (
 	"github.com/google/uuid"
 )
 
+func scanContractRow(rows *sql.Rows) (models.Contract, error) {
+	var c models.Contract
+	var idStr string
+	var userIDStr string
+	var contractRef sql.NullString
+	var stripeCustomerID sql.NullString
+	var stripePriceID sql.NullString
+	var stripeProductID sql.NullString
+	var currency sql.NullString
+	var billingInterval sql.NullString
+	var amount sql.NullFloat64
+	var cancelledAt sql.NullString
+	var stripeStatus sql.NullString
+	var metadata sql.NullString
+	var lastBilledAt sql.NullString
+	var nextBillingAt sql.NullString
+	var createdAt sql.NullString
+	var updatedAt sql.NullString
+
+	err := rows.Scan(
+		&idStr,
+		&contractRef,
+		&c.ContractType,
+		&c.SubscriptionID,
+		&stripeCustomerID,
+		&stripePriceID,
+		&stripeProductID,
+		&userIDStr,
+		&amount,
+		&currency,
+		&billingInterval,
+		&c.StartDate,
+		&c.EndDate,
+		&c.CancelAtPeriodEnd,
+		&cancelledAt,
+		&stripeStatus,
+		&c.Status,
+		&metadata,
+		&lastBilledAt,
+		&nextBillingAt,
+		&createdAt,
+		&updatedAt,
+	)
+	if err != nil {
+		return c, err
+	}
+
+	c.ID, _ = uuid.Parse(idStr)
+	c.UserID, _ = uuid.Parse(userIDStr)
+	if contractRef.Valid {
+		c.ContractRef = contractRef.String
+	}
+	if stripeCustomerID.Valid {
+		c.StripeCustomerID = stripeCustomerID.String
+	}
+	if stripePriceID.Valid {
+		c.StripePriceID = stripePriceID.String
+	}
+	if stripeProductID.Valid {
+		c.StripeProductID = stripeProductID.String
+	}
+	if amount.Valid {
+		c.Amount = amount.Float64
+	}
+	if currency.Valid {
+		c.Currency = currency.String
+	}
+	if billingInterval.Valid {
+		c.BillingInterval = billingInterval.String
+	}
+	if cancelledAt.Valid {
+		c.CancelledAt = cancelledAt.String
+	}
+	if stripeStatus.Valid {
+		c.StripeSubscriptionStatus = stripeStatus.String
+	}
+	if metadata.Valid {
+		var m map[string]any
+		if err := json.Unmarshal([]byte(metadata.String), &m); err == nil {
+			c.Metadata = m
+		}
+	}
+	if lastBilledAt.Valid {
+		c.LastBilledAt = lastBilledAt.String
+	}
+	if nextBillingAt.Valid {
+		c.NextBillingAt = nextBillingAt.String
+	}
+	if createdAt.Valid {
+		c.CreatedAt = createdAt.String
+	}
+	if updatedAt.Valid {
+		c.UpdatedAt = updatedAt.String
+	}
+
+	return c, nil
+}
+
+func scanContractWithUserRow(rows *sql.Rows) (models.ContractWithUser, error) {
+	var result models.ContractWithUser
+	var idStr string
+	var userIDStr string
+	var contractRef sql.NullString
+	var stripeCustomerID sql.NullString
+	var stripePriceID sql.NullString
+	var stripeProductID sql.NullString
+	var currency sql.NullString
+	var billingInterval sql.NullString
+	var amount sql.NullFloat64
+	var cancelledAt sql.NullString
+	var stripeStatus sql.NullString
+	var metadata sql.NullString
+	var lastBilledAt sql.NullString
+	var nextBillingAt sql.NullString
+	var createdAt sql.NullString
+	var updatedAt sql.NullString
+	var firstName sql.NullString
+	var lastName sql.NullString
+	var email sql.NullString
+	var username sql.NullString
+
+	err := rows.Scan(
+		&idStr,
+		&contractRef,
+		&result.ContractType,
+		&result.SubscriptionID,
+		&stripeCustomerID,
+		&stripePriceID,
+		&stripeProductID,
+		&userIDStr,
+		&amount,
+		&currency,
+		&billingInterval,
+		&result.StartDate,
+		&result.EndDate,
+		&result.CancelAtPeriodEnd,
+		&cancelledAt,
+		&stripeStatus,
+		&result.Status,
+		&metadata,
+		&lastBilledAt,
+		&nextBillingAt,
+		&createdAt,
+		&updatedAt,
+		&firstName,
+		&lastName,
+		&email,
+		&username,
+	)
+	if err != nil {
+		return result, err
+	}
+
+	result.ID, _ = uuid.Parse(idStr)
+	result.UserID, _ = uuid.Parse(userIDStr)
+	if contractRef.Valid {
+		result.ContractRef = contractRef.String
+	}
+	if stripeCustomerID.Valid {
+		result.StripeCustomerID = stripeCustomerID.String
+	}
+	if stripePriceID.Valid {
+		result.StripePriceID = stripePriceID.String
+	}
+	if stripeProductID.Valid {
+		result.StripeProductID = stripeProductID.String
+	}
+	if amount.Valid {
+		result.Amount = amount.Float64
+	}
+	if currency.Valid {
+		result.Currency = currency.String
+	}
+	if billingInterval.Valid {
+		result.BillingInterval = billingInterval.String
+	}
+	if cancelledAt.Valid {
+		result.CancelledAt = cancelledAt.String
+	}
+	if stripeStatus.Valid {
+		result.StripeSubscriptionStatus = stripeStatus.String
+	}
+	if metadata.Valid {
+		var m map[string]any
+		if err := json.Unmarshal([]byte(metadata.String), &m); err == nil {
+			result.Metadata = m
+		}
+	}
+	if lastBilledAt.Valid {
+		result.LastBilledAt = lastBilledAt.String
+	}
+	if nextBillingAt.Valid {
+		result.NextBillingAt = nextBillingAt.String
+	}
+	if createdAt.Valid {
+		result.CreatedAt = createdAt.String
+	}
+	if updatedAt.Valid {
+		result.UpdatedAt = updatedAt.String
+	}
+	if firstName.Valid {
+		result.UserFirstName = firstName.String
+	}
+	if lastName.Valid {
+		result.UserLastName = lastName.String
+	}
+	if email.Valid {
+		result.UserEmail = email.String
+	}
+	if username.Valid {
+		result.Username = username.String
+	}
+
+	return result, nil
+}
+
 func GetContractsByUserID(userID uuid.UUID) ([]models.Contract, error) {
 	rows, err := Db.Query(
 		`SELECT id, contract_ref, contract_type, subscriptionID, stripe_customer_id, stripe_price_id, stripe_product_id, user_id, amount, currency, billing_interval, start_date, end_date, cancel_at_period_end, cancelled_at, stripe_subscription_status, status, metadata, last_billed_at, next_billing_at, created_at, updated_at
@@ -23,102 +239,10 @@ func GetContractsByUserID(userID uuid.UUID) ([]models.Contract, error) {
 
 	contracts := []models.Contract{}
 	for rows.Next() {
-		var c models.Contract
-		var idStr string
-		var userIDStr string
-		var contractRef sql.NullString
-		var stripeCustomerID sql.NullString
-		var stripePriceID sql.NullString
-		var stripeProductID sql.NullString
-		var currency sql.NullString
-		var billingInterval sql.NullString
-		var amount sql.NullFloat64
-		var cancelledAt sql.NullString
-		var stripeStatus sql.NullString
-		var metadata sql.NullString
-		var lastBilledAt sql.NullString
-		var nextBillingAt sql.NullString
-		var createdAt sql.NullString
-		var updatedAt sql.NullString
-
-		err := rows.Scan(
-			&idStr,
-			&contractRef,
-			&c.ContractType,
-			&c.SubscriptionID,
-			&stripeCustomerID,
-			&stripePriceID,
-			&stripeProductID,
-			&userIDStr,
-			&amount,
-			&currency,
-			&billingInterval,
-			&c.StartDate,
-			&c.EndDate,
-			&c.CancelAtPeriodEnd,
-			&cancelledAt,
-			&stripeStatus,
-			&c.Status,
-			&metadata,
-			&lastBilledAt,
-			&nextBillingAt,
-			&createdAt,
-			&updatedAt,
-		)
+		c, err := scanContractRow(rows)
 		if err != nil {
 			return nil, fmt.Errorf("getContractsByUserID scan: %w", err)
 		}
-		if amount.Valid {
-			c.Amount = amount.Float64
-		}
-		if err != nil {
-			return nil, fmt.Errorf("getContractsByUserID scan: %w", err)
-		}
-		c.ID, _ = uuid.Parse(idStr)
-		c.UserID, _ = uuid.Parse(userIDStr)
-		if contractRef.Valid {
-			c.ContractRef = contractRef.String
-		}
-		if stripeCustomerID.Valid {
-			c.StripeCustomerID = stripeCustomerID.String
-		}
-		if stripePriceID.Valid {
-			c.StripePriceID = stripePriceID.String
-		}
-		if stripeProductID.Valid {
-			c.StripeProductID = stripeProductID.String
-		}
-		if currency.Valid {
-			c.Currency = currency.String
-		}
-		if billingInterval.Valid {
-			c.BillingInterval = billingInterval.String
-		}
-		if cancelledAt.Valid {
-			c.CancelledAt = cancelledAt.String
-		}
-		if stripeStatus.Valid {
-			c.StripeSubscriptionStatus = stripeStatus.String
-		}
-		if metadata.Valid {
-			var m map[string]any
-			if err := json.Unmarshal([]byte(metadata.String), &m); err == nil {
-				c.Metadata = m
-			}
-		}
-		if lastBilledAt.Valid {
-			c.LastBilledAt = lastBilledAt.String
-		}
-		if nextBillingAt.Valid {
-			c.NextBillingAt = nextBillingAt.String
-		}
-		if createdAt.Valid {
-			c.CreatedAt = createdAt.String
-		}
-		if updatedAt.Valid {
-			c.UpdatedAt = updatedAt.String
-		}
-
 		contracts = append(contracts, c)
 	}
 
@@ -127,6 +251,62 @@ func GetContractsByUserID(userID uuid.UUID) ([]models.Contract, error) {
 	}
 
 	return contracts, nil
+}
+
+func GetAllContractsWithUser() ([]models.ContractWithUser, error) {
+	rows, err := Db.Query(
+		`SELECT c.id, c.contract_ref, c.contract_type, c.subscriptionID, c.stripe_customer_id, c.stripe_price_id, c.stripe_product_id, c.user_id, c.amount, c.currency, c.billing_interval, c.start_date, c.end_date, c.cancel_at_period_end, c.cancelled_at, c.stripe_subscription_status, c.status, c.metadata, c.last_billed_at, c.next_billing_at, c.created_at, c.updated_at, u.first_name, u.last_name, u.email, u.username
+		 FROM contracts c
+		 LEFT JOIN users u ON c.user_id = u.id
+		 ORDER BY c.created_at DESC`,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("getAllContractsWithUser: %w", err)
+	}
+	defer rows.Close()
+
+	contracts := []models.ContractWithUser{}
+	for rows.Next() {
+		c, err := scanContractWithUserRow(rows)
+		if err != nil {
+			return nil, fmt.Errorf("getAllContractsWithUser scan: %w", err)
+		}
+		contracts = append(contracts, c)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("getAllContractsWithUser rows: %w", err)
+	}
+
+	return contracts, nil
+}
+
+func GetContractWithUserByID(contractID uuid.UUID) (models.ContractWithUser, error) {
+	rows, err := Db.Query(
+		`SELECT c.id, c.contract_ref, c.contract_type, c.subscriptionID, c.stripe_customer_id, c.stripe_price_id, c.stripe_product_id, c.user_id, c.amount, c.currency, c.billing_interval, c.start_date, c.end_date, c.cancel_at_period_end, c.cancelled_at, c.stripe_subscription_status, c.status, c.metadata, c.last_billed_at, c.next_billing_at, c.created_at, c.updated_at, u.first_name, u.last_name, u.email, u.username
+		 FROM contracts c
+		 LEFT JOIN users u ON c.user_id = u.id
+		 WHERE c.id = ?`,
+		contractID.String(),
+	)
+	if err != nil {
+		return models.ContractWithUser{}, fmt.Errorf("getContractWithUserByID: %w", err)
+	}
+	defer rows.Close()
+
+	if rows.Next() {
+		contract, err := scanContractWithUserRow(rows)
+		if err != nil {
+			return models.ContractWithUser{}, fmt.Errorf("getContractWithUserByID scan: %w", err)
+		}
+		return contract, nil
+	}
+
+	if err := rows.Err(); err != nil {
+		return models.ContractWithUser{}, fmt.Errorf("getContractWithUserByID rows: %w", err)
+	}
+
+	return models.ContractWithUser{}, sql.ErrNoRows
 }
 
 func UpsertContractFromStripe(userID uuid.UUID, stripeCustomerID, stripeSubscriptionID string) error {

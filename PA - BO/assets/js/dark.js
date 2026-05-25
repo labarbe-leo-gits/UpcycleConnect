@@ -20,7 +20,10 @@ if (darkToggle) {
             document.body.classList.toggle('dark-mode');
             const isDark = document.body.classList.contains('dark-mode');
             localStorage.setItem('theme', isDark ? 'dark' : 'light');
-            if (!isDark) {
+            if (isDark) {
+                document.documentElement.style.backgroundColor = '#121212';
+                document.documentElement.style.colorScheme = 'dark';
+            } else {
                 document.documentElement.style.backgroundColor = '';
                 document.documentElement.style.colorScheme = '';
             }

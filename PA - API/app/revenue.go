@@ -84,6 +84,29 @@ func GenerateRevenueReport(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(report)
 }
 
+func DeleteRevenueReport(w http.ResponseWriter, r *http.Request) {
+	reportIDStr := r.URL.Query().Get("id")
+	if reportIDStr == "" {
+		sendError(w, "Report ID is required", http.StatusBadRequest)
+		return
+	}
+
+	reportID, err := uuid.Parse(reportIDStr)
+	if err != nil {
+		sendError(w, "Invalid report ID", http.StatusBadRequest)
+		return
+	}
+
+	if err := db.DeleteRevenueReportByIDFromDB(reportID); err != nil {
+		fmt.Println("[ERROR] DeleteRevenueReport:", err)
+		sendError(w, "Failed to delete revenue report", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "deleted"})
+}
+
 func GetCurrentMonthRevenue(w http.ResponseWriter, r *http.Request) {
 	revenue, err := db.GetCurrentMonthRevenueFromDB()
 	if err != nil {

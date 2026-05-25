@@ -5,7 +5,6 @@ if (!$baseDir) {
     $baseDir = __DIR__ . '/..';
 }
 include_once $baseDir . '/config/db.php';
-include_once $baseDir . '/includes/helpers.php';
 
 try {
     $method = $_SERVER['REQUEST_METHOD'];
@@ -26,6 +25,27 @@ try {
     if ($method === 'POST') {
         $body = file_get_contents('php://input');
         $response = askAPI('/revenue-report', 'POST', $body);
+        $decoded = json_decode($response, true);
+        if (json_last_error() === JSON_ERROR_NONE && isset($decoded['error']) && isset($decoded['http_code'])) {
+            http_response_code((int)$decoded['http_code']);
+        }
+        echo $response;
+        exit;
+    }
+
+    if ($method === 'DELETE') {
+        $reportId = isset($_GET['id']) ? trim($_GET['id']) : '';
+        if ($reportId === '') {
+            http_response_code(400);
+            echo json_encode(['error' => 'id is required']);
+            exit;
+        }
+
+        $response = askAPI('/revenue-report?id=' . urlencode($reportId), 'DELETE');
+        $decoded = json_decode($response, true);
+        if (json_last_error() === JSON_ERROR_NONE && isset($decoded['error']) && isset($decoded['http_code'])) {
+            http_response_code((int)$decoded['http_code']);
+        }
         echo $response;
         exit;
     }

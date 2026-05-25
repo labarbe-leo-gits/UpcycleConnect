@@ -1,19 +1,29 @@
-function setReportModalOpen(isOpen) {
-    const modal = document.getElementById('report-modal');
+function setModalOpen(modalId, isOpen) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
     modal.classList.toggle('is-open', isOpen);
     modal.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
     document.body.classList.toggle('modal-open', isOpen);
 }
 
-function openReportModal() { setReportModalOpen(true); }
-function closeReportModal() { setReportModalOpen(false); }
+function openModal(modalId) { setModalOpen(modalId, true); }
+function closeModal(modalId) { setModalOpen(modalId, false); }
+
+function setReportModalOpen(isOpen) { setModalOpen('report-modal', isOpen); }
+function openReportModal() { openModal('report-modal'); }
+function closeReportModal() { closeModal('report-modal'); }
+
+let pendingDeleteReportId = null;
 
 function formatDateDisplay(dateStr) {
     if (!dateStr) return '';
-    const datePart = String(dateStr).split('T')[0];
+    const normalized = String(dateStr).replace(' ', 'T');
+    const datePart = normalized.split('T')[0];
     const parts = datePart.split('-');
-    if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
-    const d = new Date(dateStr);
+    if (parts.length === 3 && parts[0].length === 4) {
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    const d = new Date(normalized);
     if (isNaN(d)) return dateStr;
     const dd = String(d.getDate()).padStart(2, '0');
     const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -79,16 +89,82 @@ function renderReports(reports) {
                 </div>
                 <p class="service-location" style="color:#999;font-size:12px;">Generated: ${formatDateDisplay(report.generated_at)}</p>
             </div>
-            <div class="service-buttons">
-                <button type="button" class="btn-secondary" onclick="viewReport('${report.id}')">View Details</button>
-                <button type="button" class="btn-secondary" onclick="exportReport('${report.id}')">Export</button>
+            <div class="service-buttons report-actions" style="display:grid;
+grid-template-columns:repeat(3,1fr);">
+                <button type="button" class="btn-secondary icon-only" style="width:100%;" title="View details" onclick="viewReport('${report.id}')">
+                    <i class="fa-solid fa-eye" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="btn-secondary icon-only" style="width:100%;" title="Export report" onclick="exportReport('${report.id}')">
+                    <i class="fa-solid fa-file-csv" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="btn-danger icon-only" style="width:100%;" title="Delete report" onclick="openDeleteReportModal('${report.id}')">
+                    <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                </button>
             </div>
         </div>
     `).join('');
 }
 
 async function viewReport(reportId) {
-    alert('Report details feature coming soon');
+    try {
+        const response = await fetch(`/pages/api/revenue-report.php?id=${reportId}`);
+        if (!response.ok) {
+            console.error('Failed to load report details', response.statusText);
+            alert('Unable to load report details.');
+            return;
+        }
+
+        const report = await response.json();
+        document.getElementById('report-details-title').innerText = `Revenue report details`;
+        document.getElementById('report-details-period').innerText = `Period: ${formatDateDisplay(report.report_period_start)} - ${formatDateDisplay(report.report_period_end)}`;
+        document.getElementById('report-details-generated').innerText = formatDateDisplay(report.generated_at);
+        document.getElementById('report-details-start').innerText = formatDateDisplay(report.report_period_start);
+        document.getElementById('report-details-end').innerText = formatDateDisplay(report.report_period_end);
+        document.getElementById('report-details-total').innerText = report.total_revenue.toFixed(2) + '€';
+        document.getElementById('report-details-subscription').innerText = `${report.subscription_revenue.toFixed(2)}€ - ${report.subscription_count} contracts`;
+        document.getElementById('report-details-commission').innerText = `${report.commission_revenue.toFixed(2)}€ - ${report.commission_count} transactions`;
+        document.getElementById('report-details-partnership').innerText = `${report.partnership_revenue.toFixed(2)}€ - ${report.partnership_count} campaigns`;
+        document.getElementById('report-details-training').innerText = `${report.training_revenue.toFixed(2)}€ - ${report.training_participants} participants`;
+
+        openModal('report-details-modal');
+    } catch (error) {
+        console.error('Error loading report details:', error);
+        alert('Error loading report details');
+    }
+}
+
+function openDeleteReportModal(reportId) {
+    pendingDeleteReportId = reportId;
+    document.getElementById('delete-report-message').innerText = 'Delete this revenue report? This action cannot be undone.';
+    openModal('delete-report-modal');
+}
+
+async function confirmDeleteReport() {
+    if (!pendingDeleteReportId) {
+        alert('No report selected for deletion.');
+        return;
+    }
+
+    try {
+        const response = await fetch(`/pages/api/revenue-report.php?id=${pendingDeleteReportId}`, {
+            method: 'DELETE'
+        });
+        const result = await response.json();
+
+        if (!response.ok || result.error) {
+            console.error('Error deleting report:', result);
+            alert(result.error || 'Error deleting report');
+            return;
+        }
+
+        closeModal('delete-report-modal');
+        pendingDeleteReportId = null;
+        //alert('Revenue report deleted successfully.');
+        await loadReports();
+    } catch (error) {
+        console.error('Error deleting report:', error);
+        alert('Error deleting report');
+    }
 }
 
 async function exportReport(reportId) {
@@ -134,12 +210,18 @@ document.getElementById('report-form').addEventListener('submit', async (e) => {
             })
         });
 
-        if (response.ok) {
-            closeReportModal();
-            loadCurrentMonth();
-            loadReports();
-            document.getElementById('report-form').reset();
+        const result = await response.json();
+        if (!response.ok || result.error || !result.id) {
+            console.error('Error generating report:', result);
+            alert(result.error || 'Error generating report');
+            return;
         }
+
+        alert(`Revenue report generated for ${formatDateDisplay(result.report_period_start)} to ${formatDateDisplay(result.report_period_end)}.`);
+        closeReportModal();
+        loadCurrentMonth();
+        await loadReports();
+        document.getElementById('report-form').reset();
     } catch (error) {
         console.error('Error generating report:', error);
         alert('Error generating report');

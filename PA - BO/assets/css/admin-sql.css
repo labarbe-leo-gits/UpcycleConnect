@@ -1,0 +1,60 @@
+.sql-action-row {
+        width: 100%;
+    }
+
+    .sql-action-row button {
+        width: 100%;
+    }
+
+    #sql-query {
+        min-height: 220px;
+        resize: vertical;
+        width: 100%;
+    }
+
+    #sql-suggestions-list .sql-suggestion {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        padding: 14px;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        background: #f8fafc;
+    }
+
+    #sql-suggestions-list .sql-suggestion-text {
+        flex: 1 1 0;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+        white-space: pre-wrap;
+        word-break: break-word;
+        color: #111827;
+    }
+
+    #sql-result table {
+        width: 100%;
+        border-collapse: collapse;
+        border: 1px solid #e5e7eb;
+        margin-top: 10px;
+        background: #fff;
+    }
+
+    #sql-result th,
+    #sql-result td {
+        padding: 12px 14px;
+        border: 1px solid #e5e7eb;
+        text-align: left;
+    }
+
+    #sql-result th {
+        background: #f8fafc;
+        color: #111827;
+    }
+
+    #sql-result tr:nth-child(even) {
+        background: #f9fafb;
+    }
+
+    .error-message {
+        margin-bottom: 16px;
+    }

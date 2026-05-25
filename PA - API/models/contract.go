@@ -26,3 +26,11 @@ type Contract struct {
 	CreatedAt                string         `json:"created_at,omitempty"`
 	UpdatedAt                string         `json:"updated_at,omitempty"`
 }
+
+type ContractWithUser struct {
+	Contract
+	UserFirstName string `json:"user_first_name,omitempty"`
+	UserLastName  string `json:"user_last_name,omitempty"`
+	UserEmail     string `json:"user_email,omitempty"`
+	Username      string `json:"username,omitempty"`
+}

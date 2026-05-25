@@ -1,5 +1,14 @@
-FROM composer:latest AS builder
+FROM php:8.2-cli AS builder
 WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl unzip libpng-dev libjpeg-dev libfreetype6-dev libzip-dev zip \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install gd zip \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl -sS https://getcomposer.org/download/latest-stable/composer.phar -o /usr/local/bin/composer \
+    && chmod +x /usr/local/bin/composer
 
 COPY composer.json composer.lock* ./
 RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --no-scripts
@@ -7,8 +16,9 @@ RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoload
 FROM php:8.2-apache
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libzip-dev zip unzip \
-    && docker-php-ext-install zip \
+    libzip-dev libpng-dev libjpeg-dev libfreetype6-dev zip unzip \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install gd zip \
     && rm -rf /var/lib/apt/lists/*
 
 RUN a2enmod rewrite headers
