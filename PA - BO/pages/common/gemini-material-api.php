@@ -1,5 +1,5 @@
 <?php
-// AJAX-only endpoint — estimates a material's CO₂ factor via Google Gemini
+// AJAX-only endpoint - estimates a material's CO₂ factor via Google Gemini
 
 if (!isset($_SERVER['HTTP_X_REQUESTED_WITH']) || strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) !== 'xmlhttprequest') {
     header('Location: offers');
@@ -114,7 +114,7 @@ $decoded = json_decode($response, true);
 
 if ($httpCode === 429) {
     http_response_code(429);
-    echo json_encode(['error' => 'AI quota exceeded — try again later']);
+    echo json_encode(['error' => 'AI quota exceeded - try again later']);
     exit;
 }
 

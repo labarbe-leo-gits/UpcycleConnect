@@ -13,7 +13,7 @@
     function renderMaterials(stats, totalWeight) {
         const wrap = document.getElementById('materials-content');
         if (!stats || stats.length === 0) {
-            wrap.innerHTML = '<p class="empty-state">No material data available — publish listings to see your stats.</p>';
+            wrap.innerHTML = '<p class="empty-state">No material data available - publish listings to see your stats.</p>';
             return;
         }
         const rows = stats.map(function (m) {

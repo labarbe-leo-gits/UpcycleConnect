@@ -44,18 +44,20 @@ $likeCount = is_array($likeData) ? (int)($likeData['count'] ?? count($likeData))
                 <i class="fa-solid fa-arrow-left"></i> Back
             </a>
             <?php if ($isOwner): ?>
-            <a href="updoc?id=<?= urlencode($projectId) ?>" class="updoc-back-btn">
+            <a href="updoc-create?id=<?= urlencode($projectId) ?>" class="updoc-back-btn">
                 <i class="fa-solid fa-pen"></i> Edit
             </a>
+            <?php endif; ?>
             <a href="../common/export-pdf?id=<?= urlencode($projectId) ?>" target="_blank" class="updoc-back-btn updoc-export-btn">
                 <i class="fa-solid fa-file-pdf"></i> Export PDF
             </a>
-            <?php endif; ?>
+            <?php if (!$isOwner): ?>
             <button type="button" class="updoc-like-btn <?= '' ?>"
                     id="like-btn" data-project-id="<?= htmlspecialchars($projectId) ?>">
                 <i class="fa-solid fa-heart"></i>
                 <span id="like-count"><?= $likeCount ?></span>
             </button>
+            <?php endif; ?>
         </div>
 
         <h1 class="updoc-view-title"><?= htmlspecialchars($project['title'] ?? '') ?></h1>
@@ -111,6 +113,10 @@ $likeCount = is_array($likeData) ? (int)($likeData['count'] ?? count($likeData))
                     <div class="updoc-skel-step"></div>
                     <div class="updoc-skel-step"></div>
                 </div>
+                <div class="updoc-empty-state" id="steps-empty-message" style="display:none; text-align:center; margin-top:24px; color:#666; font-size:0.98rem; border:1px dashed rgba(102, 102, 102, 0.4); padding:22px 18px; border-radius:12px; background:#fafafa;">
+                    <i class="fa-regular fa-clock" style="font-size:1.4rem; display:block; margin:0 auto 12px;"></i>
+                    
+                </div>
                 <div class="updoc-steps-list" id="steps-container" style="display:none"></div>
             </section>
         </div>
@@ -131,10 +137,9 @@ $likeCount = is_array($likeData) ? (int)($likeData['count'] ?? count($likeData))
                     <div class="updoc-skel-comment"></div>
                     <div class="updoc-skel-comment"></div>
                 </div>
-                <div class="updoc-comment-list" id="comment-list" style="display:none">
-                    <p id="no-comments-msg" style="color:#999;font-size:.88rem;display:none">
-                        No comments yet. Be the first!
-                    </p>
+                <div class="updoc-comment-list" id="comment-list" style="display:none"></div>
+                <div id="no-comments-msg" style="display:none; color:#999; font-size:.88rem; padding:1rem 0; text-align:center;">
+                    No comments, be the first to comment !
                 </div>
             </div>
         </aside>

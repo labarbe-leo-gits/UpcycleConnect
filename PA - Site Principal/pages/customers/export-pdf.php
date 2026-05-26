@@ -199,7 +199,7 @@ function renderProjectPdf(array $project, array $steps): void {
     }
 
     $pdf->SetFont('Arial', '', 8);
-    $pdf->Cell(0, 6, 'Generated with UpDoc — UpcycleConnect on ' . date('d/m/Y'), 0, 1, 'C');
+    $pdf->Cell(0, 6, 'Generated with UpDoc - UpcycleConnect on ' . date('d/m/Y'), 0, 1, 'C');
 
     $title = preg_replace('/[^a-zA-Z0-9_\- ]/', '', $project['title'] ?? 'project');
     if ($title === '') {
@@ -261,7 +261,7 @@ $isPuppeteerRender = !empty($_GET['print']) && !empty($_GET['token']);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($project['title'] ?? 'Project') ?> — UpDoc</title>
+    <title><?= htmlspecialchars($project['title'] ?? 'Project') ?> - UpDoc</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
@@ -536,7 +536,7 @@ $isPuppeteerRender = !empty($_GET['print']) && !empty($_GET['token']);
 
     <div class="pdf-cover">
         <div class="pdf-cover-brand">
-            <i class="fa-solid fa-recycle"></i> UpDoc — UpcycleConnect
+            <i class="fa-solid fa-recycle"></i> UpDoc - UpcycleConnect
         </div>
         <h1><?= htmlspecialchars($project['title'] ?? '') ?></h1>
         <div class="pdf-cover-meta">
@@ -643,7 +643,7 @@ $isPuppeteerRender = !empty($_GET['print']) && !empty($_GET['token']);
     </div>
 
     <div class="pdf-footer">
-        <span data-i18n="customers.export_pdf.generated_with">Generated with</span> <span>UpDoc</span> — UpcycleConnect &middot; <?= date('d/m/Y') ?>
+        <span data-i18n="customers.export_pdf.generated_with">Generated with</span> <span>UpDoc</span> - UpcycleConnect &middot; <?= date('d/m/Y') ?>
     </div>
 
     <?php if (!$isPuppeteerRender): ?>

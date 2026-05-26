@@ -250,21 +250,42 @@ func matchRoute(routePath, requestPath string) bool {
 	return true
 }
 
-func findRoute(method, requestPath string) http.HandlerFunc {
-	for _, route := range apiRoutes {
-		if !strings.EqualFold(route.method, method) {
-			continue
-		}
-		if matchRoute(route.path, requestPath) {
-			return route.handler
+func extractPathValues(routePath, requestPath string) map[string]string {
+	routePath = normalizeRoutePath(routePath)
+	if routePath == requestPath {
+		return nil
+	}
+	routeSegments := strings.Split(strings.Trim(routePath, "/"), "/")
+	requestSegments := strings.Split(strings.Trim(requestPath, "/"), "/")
+	if len(routeSegments) != len(requestSegments) {
+		return nil
+	}
+
+	values := make(map[string]string)
+	for i := 0; i < len(routeSegments); i++ {
+		segment := routeSegments[i]
+		if strings.HasPrefix(segment, "{") && strings.HasSuffix(segment, "}") {
+			key := segment[1 : len(segment)-1]
+			values[key] = requestSegments[i]
 		}
 	}
-	return nil
+	return values
 }
 
 func requestRouter(w http.ResponseWriter, r *http.Request) {
-	if handler := findRoute(r.Method, r.URL.Path); handler != nil {
-		handler(w, r)
+	for _, route := range apiRoutes {
+		if !strings.EqualFold(route.method, r.Method) {
+			continue
+		}
+		if !matchRoute(route.path, r.URL.Path) {
+			continue
+		}
+		if pathValues := extractPathValues(route.path, r.URL.Path); pathValues != nil {
+			for key, value := range pathValues {
+				r.SetPathValue(key, value)
+			}
+		}
+		route.handler(w, r)
 		return
 	}
 	notFoundHandler(w, r)

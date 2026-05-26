@@ -92,7 +92,7 @@ function sendOrderConfirmationEmails(array $user, array $offer, string $productT
 
     $buyerName = trim(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? '')) ?: ($user['username'] ?? '');
     $buyerEmail = $user['email'] ?? '';
-    $subject = 'Your order is confirmed — UpcycleConnect';
+    $subject = 'Your order is confirmed - UpcycleConnect';
     $content = '<p>Hello ' . htmlentities($buyerName ?: 'Customer') . ',</p>';
     $content .= '<p>Thank you for your order.</p>';
     $content .= '<p><strong>Product:</strong> ' . htmlentities($productName) . '</p>';

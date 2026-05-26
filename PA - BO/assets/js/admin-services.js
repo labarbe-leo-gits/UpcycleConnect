@@ -148,7 +148,7 @@
                             const name = ((u.first_name || '') + ' ' + (u.last_name || '')).trim();
                             item.innerHTML = '<i class="fa-solid fa-user"></i><span>' + escHtml(name ? name + ' \u2014 ' + u.username : u.username) + '</span>';
                             item.addEventListener('click', function() {
-                                addEmployee({ userId: u.id, name: name ? name + ' — ' + u.username : u.username });
+                                addEmployee({ userId: u.id, name: name ? name + ' - ' + u.username : u.username });
                                 input.value = '';
                                 results.style.display = 'none';
                             });
@@ -224,7 +224,7 @@
                             item.innerHTML = '<i class="fa-solid fa-user"></i><span>' + escHtml(name ? name + ' \u2014 ' + u.username : u.username) + '</span>';
                             item.addEventListener('click', function() {
                                 employeeFilterId = u.id;
-                                employeeFilterName = name ? name + ' — ' + u.username : u.username;
+                                employeeFilterName = name ? name + ' - ' + u.username : u.username;
                                 chipName.textContent = employeeFilterName;
                                 chip.style.display = 'flex';
                                 input.closest('#employee-filter-wrapper').querySelector('.input-wrapper').style.display = 'none';

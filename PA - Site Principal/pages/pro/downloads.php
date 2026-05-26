@@ -85,7 +85,7 @@ $integral = $integrals[array_rand($integrals)];
             </div>
             <div class="dl-app-info">
                 <h1 class="dl-app-name" data-i18n="pro.downloads.title">UpcycleConnect</h1>
-                <p class="dl-app-tagline" data-i18n="pro.downloads.tagline">The professional toolkit for craftsmen &amp; artisans — manage jobs, offers, and clients on the go.</p>
+                <p class="dl-app-tagline" data-i18n="pro.downloads.tagline">The professional toolkit for craftsmen &amp; artisans - manage jobs, offers, and clients on the go.</p>
                 <div class="dl-app-meta">
                     <span class="dl-badge"><i class="fa-brands fa-android"></i> <span data-i18n="pro.downloads.android">Android</span></span>
                     <span class="dl-badge"><i class="fa-solid fa-code-branch"></i> <span data-i18n="pro.downloads.version_info">v1.0.0</span></span>
@@ -103,7 +103,7 @@ $integral = $integrals[array_rand($integrals)];
             <div class="dl-feature-card">
                 <div class="dl-feat-icon"><i class="fa-solid fa-hammer"></i></div>
                 <h3 data-i18n="pro.downloads.project_showcase">Project Showcase</h3>
-                <p data-i18n="pro.downloads.project_showcase_description">Create, track and publish your upcycling projects — from raw materials to finished creations.</p>
+                <p data-i18n="pro.downloads.project_showcase_description">Create, track and publish your upcycling projects - from raw materials to finished creations.</p>
             </div>
             <div class="dl-feature-card">
                 <div class="dl-feat-icon"><i class="fa-solid fa-bell"></i></div>

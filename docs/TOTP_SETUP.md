@@ -8,8 +8,8 @@ Ce guide explique comment implémenter une authentification à deux facteurs (2F
 
 1. [C'est quoi le TOTP ?](#cest-quoi-le-totp-)
 2. [Applications compatibles](#applications-compatibles)
-3. [Côté serveur — Go](#côté-serveur--go)
-4. [Côté client — PHP / JS](#côté-client--php--js)
+3. [Côté serveur - Go](#côté-serveur--go)
+4. [Côté client - PHP / JS](#côté-client--php--js)
 5. [Flux d'authentification complet](#flux-dauthentification-complet)
 6. [Base de données](#base-de-données)
 7. [Activer le 2FA côté utilisateur](#activer-le-2fa-côté-utilisateur)
@@ -121,7 +121,7 @@ func Setup2FA(w http.ResponseWriter, r *http.Request) {
         "secret":  key.Secret(),
         "otp_url": key.URL(),
     })
-    // Ne pas encore stocker le secret — seulement après Enable2FA
+    // Ne pas encore stocker le secret - seulement après Enable2FA
 }
 ```
 
@@ -198,7 +198,7 @@ func Verify2FA(w http.ResponseWriter, r *http.Request) {
 
 Appelle l'endpoint `/users/{id}/2fa/setup` pour obtenir l'`otp_url`, puis génère un QR code depuis cette URL.
 
-**Option 1 — Bibliothèque PHP (endroid/qr-code)**
+**Option 1 - Bibliothèque PHP (endroid/qr-code)**
 
 ```bash
 composer require endroid/qr-code
@@ -217,7 +217,7 @@ $result = $writer->write($qrCode);
 echo '<img src="' . $result->getDataUri() . '" alt="QR Code 2FA">';
 ```
 
-**Option 2 — Librairie JS côté navigateur**
+**Option 2 - Librairie JS côté navigateur**
 
 ```html
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>

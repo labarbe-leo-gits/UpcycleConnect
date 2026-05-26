@@ -148,7 +148,6 @@ func CreateProject(w http.ResponseWriter, r *http.Request) {
 
 	}
 
-
 	project, err := db.CreateProjectInDB(input)
 	if err != nil {
 		fmt.Println("[ERROR] CreateProject:", err)
@@ -221,7 +220,7 @@ func DeleteProject(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetProjectsByUserID(w http.ResponseWriter, r *http.Request) {
-	userID := r.PathValue("id")
+	userID := strings.TrimSpace(r.PathValue("id"))
 	if _, err := uuid.Parse(userID); err != nil {
 		sendError(w, "Invalid user ID", http.StatusBadRequest)
 		return

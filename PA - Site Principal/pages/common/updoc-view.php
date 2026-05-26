@@ -9,42 +9,49 @@ $extraJs = [
 ];
 
 require_once '../../includes/auth.php';
+require_once '../../config/db.php';
 
 $user      = getLoggedInUser();
 
-if ($user['user_type'] == 1){
+$projectId = trim($_GET['id'] ?? '');
+$projectError = null;
+$project = null;
+$likeCount = 0;
+$editorName = 'Unknown';
+$isOwner = false;
+
+if ($projectId === '') {
+    $projectError = 'Missing project ID.';
+} else {
+    $resp    = askAPI("/projects/{$projectId}", 'GET');
+    $project = json_decode($resp, true);
+    if (!is_array($project) || isset($project['error']) || $project === null) {
+        $projectError = is_array($project) && isset($project['error']) ? $project['error'] : 'Unable to load project.';
+        $project = null;
+    }
+}
+
+if ($user['user_type'] == 1) {
     require_once '../../includes/customers-header.php';
-}else if ($user['user_type'] == 2){
+} else if ($user['user_type'] == 2) {
     require_once '../../includes/pro-header.php';
-}else {
+} else {
     require_once '../../includes/header.php';
 }
 
-$projectId = trim($_GET['id'] ?? '');
+if ($project !== null) {
+    $isOwner   = ($project['user_id'] ?? '') === $user['id'];
 
-if ($projectId === '') {
-    header('Location: profile');
-    exit;
+    $likeResp  = askAPI("/projects/{$projectId}/likes", 'GET');
+    $likeData  = json_decode($likeResp, true);
+    $likeCount = is_array($likeData) ? (int)($likeData['count'] ?? count($likeData)) : 0;
+
+    $editorID = $project['user_id'] ?? '';
+    $editorResp = askAPI("/users/{$editorID}", 'GET');
+
+    $editorData = json_decode($editorResp, true);
+    $editorName = is_array($editorData) && !isset($editorData['error']) ? ($editorData['username'] ?? 'Unknown') : 'Unknown';
 }
-
-$resp    = askAPI("/projects/{$projectId}", 'GET');
-$project = json_decode($resp, true);
-if (!is_array($project) || isset($project['error']) || $project === null) {
-    header('Location: profile');
-    exit;
-}
-
-$isOwner   = ($project['user_id'] ?? '') === $user['id'];
-
-$likeResp  = askAPI("/projects/{$projectId}/likes", 'GET');
-$likeData  = json_decode($likeResp, true);
-$likeCount = is_array($likeData) ? (int)($likeData['count'] ?? count($likeData)) : 0;
-
-$editorID = $project['user_id'] ?? '';
-$editorResp = askAPI("/users/{$editorID}", 'GET');
-
-$editorData = json_decode($editorResp, true);
-$editorName = is_array($editorData) && !isset($editorData['error']) ? ($editorData['username'] ?? 'Unknown') : 'Unknown';
 
 ?>
 
@@ -54,24 +61,38 @@ $editorName = is_array($editorData) && !isset($editorData['error']) ? ($editorDa
 
 <div class="container updoc-view-page">
 
+<?php if ($projectError): ?>
+    <div class="updoc-error-message" style="padding: 40px 20px; text-align:center; max-width:720px; margin:40px auto;">
+        <h1 style="margin-bottom:16px;">Project unavailable</h1>
+        <p style="color:#666; margin-bottom:24px;"><?= htmlspecialchars($projectError) ?></p>
+        <a href="profile" class="updoc-back-btn" style="display:inline-flex; align-items:center; gap:8px;">
+            <i class="fa-solid fa-arrow-left"></i> Back to profile
+        </a>
+    </div>
+</div>
+<?php include_once '../../includes/footer.php'; return; ?>
+<?php endif; ?>
+
     <div class="updoc-view-hero">
         <div class="updoc-view-actions">
             <a href="profile" class="updoc-back-btn">
                 <i class="fa-solid fa-arrow-left"></i> Back
             </a>
             <?php if ($isOwner): ?>
-            <a href="updoc?id=<?= urlencode($projectId) ?>" class="updoc-back-btn">
+            <a href="updoc-create?id=<?= urlencode($projectId) ?>" class="updoc-back-btn">
                 <i class="fa-solid fa-pen"></i> Edit
             </a>
+            <?php endif; ?>
             <a href="../common/export-pdf?id=<?= urlencode($projectId) ?>" target="_blank" class="updoc-back-btn updoc-export-btn">
                 <i class="fa-solid fa-file-pdf"></i> Export PDF
             </a>
-            <?php endif; ?>
+            <?php if (!$isOwner): ?>
             <button type="button" class="updoc-like-btn <?= '' ?>"
                     id="like-btn" data-project-id="<?= htmlspecialchars($projectId) ?>">
                 <i class="fa-solid fa-heart"></i>
                 <span id="like-count"><?= $likeCount ?></span>
             </button>
+            <?php endif; ?>
         </div>
 
         <h1 class="updoc-view-title"><?= htmlspecialchars($project['title'] ?? '') ?></h1>
@@ -128,6 +149,10 @@ $editorName = is_array($editorData) && !isset($editorData['error']) ? ($editorDa
                     <div class="updoc-skel-step"></div>
                     <div class="updoc-skel-step"></div>
                 </div>
+                <div class="updoc-empty-state" id="steps-empty-message" style="display:none; text-align:center; margin-top:24px; color:#666; font-size:0.98rem; border:1px dashed rgba(102, 102, 102, 0.4); padding:22px 18px; border-radius:12px; background:#fafafa;">
+                    <i class="fa-regular fa-clock" style="font-size:1.4rem; display:block; margin:0 auto 12px;"></i>
+                    <strong>No steps for this project, stay tuned!</strong>
+                </div>
                 <div class="updoc-steps-list" id="steps-container" style="display:none"></div>
             </section>
         </div>
@@ -148,10 +173,9 @@ $editorName = is_array($editorData) && !isset($editorData['error']) ? ($editorDa
                     <div class="updoc-skel-comment"></div>
                     <div class="updoc-skel-comment"></div>
                 </div>
-                <div class="updoc-comment-list" id="comment-list" style="display:none">
-                    <p id="no-comments-msg" style="color:#999;font-size:.88rem;display:none">
-                        No comments yet. Be the first!
-                    </p>
+                <div class="updoc-comment-list" id="comment-list" style="display:none"></div>
+                <div id="no-comments-msg" style="display:none; color:#999; font-size:.88rem; padding:1rem 0; text-align:center;">
+                    No comments, be the first to comment !
                 </div>
             </div>
         </aside>
@@ -230,7 +254,7 @@ var UPDOC_VIEW_DATA = {
     currentUserId: <?= json_encode($user['id']) ?>,
     isOwner:       <?= json_encode($isOwner) ?>
 };
-var UPDOC_API_PATH = 'updoc-api-create';
+var UPDOC_API_PATH = '/pages/common/updoc-api-create';
 </script>
 
 <?php include_once '../../includes/footer.php'; ?>

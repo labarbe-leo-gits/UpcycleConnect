@@ -60,8 +60,24 @@ function translateElement(el, translations, fallback) {
   } else if (el.hasAttribute('data-i18n-html')) {
     el.innerHTML = value;
   } else {
-    el.textContent = value;
+    preserveElementText(el, value);
   }
+}
+
+function preserveElementText(el, value) {
+  const textNodes = Array.from(el.childNodes).filter(node => node.nodeType === Node.TEXT_NODE);
+  const meaningfulNode = textNodes.find(node => node.nodeValue.trim().length > 0) || textNodes[0];
+  if (!meaningfulNode) {
+    el.textContent = value;
+    return;
+  }
+  const leadingWhitespace = meaningfulNode.nodeValue.match(/^\s*/)?.[0] || '';
+  meaningfulNode.nodeValue = leadingWhitespace + value;
+  textNodes.forEach(node => {
+    if (node !== meaningfulNode) {
+      node.parentNode.removeChild(node);
+    }
+  });
 }
 
 function translateAttributes(translations, fallback) {

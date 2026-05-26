@@ -1,5 +1,5 @@
 <?php
-// AJAX-only endpoint — generate read-only SQL suggestions using Gemini
+// AJAX-only endpoint - generate read-only SQL suggestions using Gemini
 
 if (!isset($_SERVER['HTTP_X_REQUESTED_WITH']) || strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) !== 'xmlhttprequest') {
     header('Location: sql');
@@ -118,7 +118,7 @@ if ($curlError || !$response) {
 $decoded = json_decode($response, true);
 if ($httpCode === 429) {
     http_response_code(429);
-    echo json_encode(['error' => 'AI quota exceeded — try again later']);
+    echo json_encode(['error' => 'AI quota exceeded - try again later']);
     exit;
 }
 if ($httpCode !== 200 || !$decoded) {

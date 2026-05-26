@@ -25,7 +25,7 @@ if (
 header('Content-Type: application/json');
 
 $user   = getLoggedInUser();
-$userId = $user['id'] ?? '';
+$userId = trim($user['id'] ?? '');
 
 if ($userId === '') {
     http_response_code(401);

@@ -228,7 +228,7 @@
 
         var aiGenerated = parseInt(item.ai_generated ?? 0) === 1;
         var viewUrl = UPDOC_BASE_PATH + 'updoc-view?id=' + projId;
-        var editUrl = UPDOC_BASE_PATH + 'updoc?id=' + projId;
+        var editUrl = UPDOC_BASE_PATH + 'updoc-create?id=' + projId;
 
         el.innerHTML =
             '<div class="updoc-proj-card-body">' +

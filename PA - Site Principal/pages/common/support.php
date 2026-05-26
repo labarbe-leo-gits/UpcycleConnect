@@ -405,7 +405,7 @@ if ($userType === 1) {
                     </div>
 
                     <div class="field">
-                        <label>Attachment <span class="optional">(optional — max 5 MB)</span></label>
+                        <label>Attachment <span class="optional">(optional - max 5 MB)</span></label>
                         <label class="file-drop" for="attachment" id="file-drop-zone">
                             <i class="fa-solid fa-cloud-arrow-up"></i>
                             <span class="file-drop-text">Click to browse or drag &amp; drop a file here</span>

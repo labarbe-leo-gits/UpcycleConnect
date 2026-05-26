@@ -39,7 +39,7 @@ function isExternalAI(string $text): bool {
     }
     
     if (!$apiKey || strlen(trim($text)) < 100) {
-        error_log('[AI-detect] Skipping — key missing or text too short');
+        error_log('[AI-detect] Skipping - key missing or text too short');
         return false;
     }
 
@@ -80,7 +80,7 @@ function isExternalAI(string $text): bool {
         return false;
     }
 
-    error_log('[AI-detect] HTTP ' . $httpCode . ' — raw response: ' . $resp);
+    error_log('[AI-detect] HTTP ' . $httpCode . ' - raw response: ' . $resp);
 
     $data   = json_decode($resp, true);
     $answer = trim($data['candidates'][0]['content']['parts'][0]['text'] ?? '');
@@ -359,9 +359,10 @@ switch ($action) {
             echo json_encode(['error' => 'project_id required']);
             exit;
         }
-        $resp = askAPI("/projects/{$projectId}/likes", 'POST', '{}');
+        askAPI("/projects/{$projectId}/likes", 'POST', '{}');
+        $resp = askAPI("/projects/{$projectId}/likes", 'GET');
         $data = json_decode($resp, true);
-        echo json_encode($data ?? ['success' => true]);
+        echo json_encode(is_array($data) ? $data : ['count' => 0, 'liked' => true]);
         break;
     }
 
@@ -373,7 +374,9 @@ switch ($action) {
             exit;
         }
         askAPI("/projects/{$projectId}/likes", 'DELETE');
-        echo json_encode(['success' => true]);
+        $resp = askAPI("/projects/{$projectId}/likes", 'GET');
+        $data = json_decode($resp, true);
+        echo json_encode(is_array($data) ? $data : ['count' => 0, 'liked' => false]);
         break;
     }
 

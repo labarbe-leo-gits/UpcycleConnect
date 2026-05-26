@@ -6,7 +6,7 @@ requireUserType(2);
 
 $user = getLoggedInUser();
 $title = 'Partnership Bundles';
-$extraCss = ['../../assets/css/subscription.css'];
+$extraCss = ['../../assets/css/subscription.css', '../../assets/css/partnership.css'];
 
 $requestError = '';
 $formValues = [
@@ -84,8 +84,6 @@ if (!array_is_list($offersData)) {
 include_once '../../includes/pro-header.php';
 ?>
 
-<link rel="stylesheet" href="../../assets/css/partnerships.css">
-
 <main class="bundle-page">
     <section class="bundle-hero">
         <div class="bundle-card">
@@ -96,7 +94,7 @@ include_once '../../includes/pro-header.php';
             <ul class="bundle-help-list">
                 <li>Pick the offers you want to include in the bundle.</li>
                 <li>Set the monthly price and campaign window.</li>
-                <li>Submit for admin review — no manual back-office entry needed.</li>
+                <li>Submit for admin review - no manual back-office entry needed.</li>
             </ul>
         </div>
 
@@ -112,21 +110,15 @@ include_once '../../includes/pro-header.php';
                         <label for="partner_name">Campaign name</label>
                         <input type="text" id="partner_name" name="partner_name" value="<?php echo htmlspecialchars($formValues['partner_name']); ?>" placeholder="Example: Spring eco bundle" required>
                     </div>
-                    <div class="bundle-form-group">
+                    <div class="bundle-form-group bundle-span-2">
                         <label for="monthly_price">Monthly price (€)</label>
                         <input type="number" id="monthly_price" name="monthly_price" value="<?php echo htmlspecialchars($formValues['monthly_price']); ?>" min="1" step="0.01" required>
                     </div>
-                    <div class="bundle-form-group">
-                        <label for="currency">Currency</label>
-                        <select id="currency" name="currency">
-                            <option value="EUR" <?php echo $formValues['currency'] === 'EUR' ? 'selected' : ''; ?>>EUR</option>
-                        </select>
-                    </div>
-                    <div class="bundle-form-group">
+                    <div class="bundle-form-group bundle-span-2">
                         <label for="start_date">Start date</label>
                         <input type="date" id="start_date" name="start_date" value="<?php echo htmlspecialchars($formValues['start_date']); ?>" required>
                     </div>
-                    <div class="bundle-form-group">
+                    <div class="bundle-form-group bundle-span-2">
                         <label for="end_date">End date</label>
                         <input type="date" id="end_date" name="end_date" value="<?php echo htmlspecialchars($formValues['end_date']); ?>" required>
                     </div>

@@ -300,7 +300,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <h3><i class="fa-solid fa-shield-halved"></i> <span data-i18n="partials.profile.two_factor_authentication">Two-Factor Authentication (TOTP)</span></h3>
             <div id="mfa-status-badge" class="mfa-status-badge <?= $twoFAEnabled ? 'mfa-enabled' : 'mfa-disabled' ?>">
                 <?php if ($twoFAEnabled): ?>
-                    <i class="fa-solid fa-circle-check"></i> <span data-i18n-html="partials.profile.twofa_enabled_protected">2FA is <strong>enabled</strong> — your account is protected.</span>
+                    <i class="fa-solid fa-circle-check"></i> <span data-i18n-html="partials.profile.twofa_enabled_protected">2FA is <strong>enabled</strong> - your account is protected.</span>
                 <?php else: ?>
                     <i class="fa-solid fa-circle-xmark"></i> <span data-i18n-html="partials.profile.twofa_disabled">2FA is <strong>disabled</strong>.</span>
                 <?php endif; ?>

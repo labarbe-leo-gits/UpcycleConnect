@@ -89,7 +89,7 @@ $decoded = json_decode($response, true);
 
 if ($httpCode === 429) {
     http_response_code(429);
-    echo json_encode(['error' => 'AI quota exceeded — try again later']);
+    echo json_encode(['error' => 'AI quota exceeded - try again later']);
     exit;
 }
 

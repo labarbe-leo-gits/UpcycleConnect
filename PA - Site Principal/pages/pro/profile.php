@@ -28,7 +28,14 @@ if (!is_array($userDetails)) {
 $updocQuota = array_key_exists('updoc_quota', $userDetails) ? (int) $userDetails['updoc_quota'] : null;
 $updocProjectsResponse = askAPI("/users/{$user['id']}/projects", 'GET');
 $updocProjectsData     = json_decode($updocProjectsResponse, true);
-$updocProjectCount     = is_array($updocProjectsData) && !isset($updocProjectsData['error']) ? count($updocProjectsData) : 0;
+$updocProjectCount     = 0;
+if (is_array($updocProjectsData) && !isset($updocProjectsData['error'])) {
+    if (array_keys($updocProjectsData) === range(0, count($updocProjectsData) - 1)) {
+        $updocProjectCount = count($updocProjectsData);
+    } elseif (isset($updocProjectsData['items']) && is_array($updocProjectsData['items'])) {
+        $updocProjectCount = count($updocProjectsData['items']);
+    }
+}
 $balance        = $userDetails['balance']      ?? 0;
 $companyName    = $userDetails['company_name'] ?? '';
 $firstName      = $userDetails['first_name']   ?? '';
@@ -341,9 +348,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <button type="button" class="btn-secondary btn-inline" id="download-personal-data-btn">
                         <i class="fa-solid fa-download"></i> <span data-i18n="pro.profile.download_personal_data">Download My Personal Data</span>
                     </button>
-                    <a href="partnerships" class="btn-secondary btn-inline" style="text-decoration:none;display:inline-flex;align-items:center;gap:8px;">
+                    <button type="button" class="btn-secondary btn-inline" id="request-partnership-bundle-btn" style="display:inline-flex;align-items:center;gap:8px;">
                         <i class="fa-solid fa-layer-group"></i> <span>Request partnership bundle</span>
-                    </a>
+                    </button>
                     <a href="dashboard" id="sub-quick-access" class="sub-quick-btn" data-i18n-title="pro.profile.subscription_title" title="Subscription">
                         <i class="fa-solid fa-gauge-high"></i>
                         <span id="sub-quick-label" data-i18n="pro.profile.dashboard">Dashboard</span>
@@ -650,7 +657,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </div>
         <div class="tab-content" id="contracts-tab" style="display:none;">
-            <h3><i class="fa-solid fa-file-contract"></i> <span data-i18n="pro.profile.contracts">Contracts</span></h3>
+            <div class="tab-header-row" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0.75rem;">
+                <h3 style="margin:0;"><i class="fa-solid fa-file-contract"></i> <span data-i18n="pro.profile.contracts">Contracts</span></h3>
+                <a href="export-contracts.php" target="_blank" class="btn-secondary" style="white-space:nowrap;">
+                    <i class="fa-solid fa-file-pdf"></i> <span data-i18n="pro.profile.export_contracts_pdf">Export contracts PDF</span>
+                </a>
+            </div>
             <div id="contracts-skeleton" class="acc-skeleton-row" style="display:none;">
                 <div class="acc-skel-card"></div>
                 <div class="acc-skel-card"></div>
@@ -740,7 +752,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <h3><i class="fa-solid fa-shield-halved"></i> <span data-i18n="pro.profile.two_factor_authentication">Two-Factor Authentication (TOTP)</span></h3>
             <div id="mfa-status-badge" class="mfa-status-badge <?= $twoFAEnabled ? 'mfa-enabled' : 'mfa-disabled' ?>">
                 <?php if ($twoFAEnabled): ?>
-                    <i class="fa-solid fa-circle-check"></i> <span data-i18n-html="pro.profile.twofa_enabled_protected">2FA is <strong>enabled</strong> — your account is protected.</span>
+                    <i class="fa-solid fa-circle-check"></i> <span data-i18n-html="pro.profile.twofa_enabled_protected">2FA is <strong>enabled</strong> - your account is protected.</span>
                 <?php else: ?>
                     <i class="fa-solid fa-circle-xmark"></i> <span data-i18n-html="pro.profile.twofa_disabled">2FA is <strong>disabled</strong>.</span>
                 <?php endif; ?>
@@ -990,6 +1002,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     window.profileSectionApiPath = '../customers/profile-section-api';
     window.UPDOC_BASE_PATH = '../common/';
     window.UPDOC_API_PATH = '../common/updoc-api-create';
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var partnershipButton = document.getElementById('request-partnership-bundle-btn');
+        if (partnershipButton) {
+            partnershipButton.addEventListener('click', function () {
+                window.location.href = 'partnerships';
+            });
+        }
+    });
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
 <script src="../../assets/js/profile-sections.js"></script>

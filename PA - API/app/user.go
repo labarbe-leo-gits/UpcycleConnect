@@ -1142,7 +1142,7 @@ func UploadProfilePicture(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetProfilePictureHistory(w http.ResponseWriter, r *http.Request) {
-	userID := r.PathValue("id")
+	userID := strings.TrimSpace(r.PathValue("id"))
 	if _, err := uuid.Parse(userID); err != nil {
 		sendError(w, "Invalid user ID format", http.StatusBadRequest)
 		return
@@ -1172,8 +1172,8 @@ func GetProfilePictureHistory(w http.ResponseWriter, r *http.Request) {
 }
 
 func RestoreProfilePictureFromHistory(w http.ResponseWriter, r *http.Request) {
-	userID := r.PathValue("id")
-	historyID := r.PathValue("historyID")
+	userID := strings.TrimSpace(r.PathValue("id"))
+	historyID := strings.TrimSpace(r.PathValue("historyID"))
 	if _, err := uuid.Parse(userID); err != nil {
 		sendError(w, "Invalid user ID format", http.StatusBadRequest)
 		return
@@ -1242,8 +1242,8 @@ func RestoreProfilePictureFromHistory(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteProfilePictureHistoryItem(w http.ResponseWriter, r *http.Request) {
-	userID := r.PathValue("id")
-	historyID := r.PathValue("historyID")
+	userID := strings.TrimSpace(r.PathValue("id"))
+	historyID := strings.TrimSpace(r.PathValue("historyID"))
 	if _, err := uuid.Parse(userID); err != nil {
 		sendError(w, "Invalid user ID format", http.StatusBadRequest)
 		return
@@ -1303,7 +1303,7 @@ func DeleteProfilePictureHistoryItem(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteAllProfilePictureHistory(w http.ResponseWriter, r *http.Request) {
-	userID := r.PathValue("id")
+	userID := strings.TrimSpace(r.PathValue("id"))
 	if _, err := uuid.Parse(userID); err != nil {
 		sendError(w, "Invalid user ID format", http.StatusBadRequest)
 		return

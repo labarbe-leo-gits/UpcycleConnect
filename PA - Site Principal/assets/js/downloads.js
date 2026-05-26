@@ -151,7 +151,7 @@
                     captchaMsg.className   = 'dl-captcha-msg success';
                     unlockDownload();
                 } else {
-                    captchaMsg.textContent = '✗ Wrong answer — please try again.';
+                    captchaMsg.textContent = '✗ Wrong answer - please try again.';
                     captchaMsg.className   = 'dl-captcha-msg error';
                     answerInput.value      = '';
                     answerInput.focus();
@@ -159,7 +159,7 @@
                     verifyBtn.innerHTML    = '<i class="fa-solid fa-check"></i> Verify';
                 }
             } catch (e) {
-                captchaMsg.textContent = 'Network error — please refresh and try again.';
+                captchaMsg.textContent = 'Network error - please refresh and try again.';
                 captchaMsg.className   = 'dl-captcha-msg error';
                 verifyBtn.disabled     = false;
                 verifyBtn.innerHTML    = '<i class="fa-solid fa-check"></i> Verify';

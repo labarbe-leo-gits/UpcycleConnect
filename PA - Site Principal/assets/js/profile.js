@@ -41,13 +41,19 @@ const paymentModal = document.getElementById('payment-modal');
     });
 
     function getLoggedInUserId() {
+        var userId = null;
         if (window.currentUserId) {
-            return window.currentUserId;
+            userId = window.currentUserId;
+        } else if (typeof getCurrentUserId === 'function') {
+            userId = getCurrentUserId();
         }
-        if (typeof getCurrentUserId === 'function') {
-            return getCurrentUserId();
+        if (typeof userId === 'string') {
+            userId = userId.trim();
+            if (userId === '') {
+                return null;
+            }
         }
-        return null;
+        return userId || null;
     }
 
     function getProfileImageUrl(picture) {

@@ -43,7 +43,7 @@ if (!$llmData || !isset($llmData['usage_today'], $llmData['quota'])) {
 }
 if ($llmData['usage_today'] >= $llmData['quota']) {
     http_response_code(429);
-    echo json_encode(['error' => 'Daily AI quota exceeded — try again tomorrow']);
+    echo json_encode(['error' => 'Daily AI quota exceeded - try again tomorrow']);
     exit;
 }
 

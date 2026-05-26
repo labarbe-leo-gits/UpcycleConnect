@@ -300,7 +300,7 @@ $refund = \Stripe\Refund::create([
 ]);
 ```
 
-### 4. Subscriptions — Modèle Freemium Premium
+### 4. Subscriptions - Modèle Freemium Premium
 
 See the dedicated section **[Abonnement Premium (Freemium)](#abonnement-premium-freemium)** below for the full implementation already in place.
 
@@ -377,7 +377,7 @@ Pro user  →  /pages/pro/subscription.php
 
 ---
 
-### Étape 1 — Migration base de données
+### Étape 1 - Migration base de données
 
 Pour une installation existante, exécutez :
 
@@ -390,7 +390,7 @@ Ces colonnes sont déjà présentes dans `db_schema.sql` (nouvelles installation
 
 ---
 
-### Étape 2 — Créer le produit et le prix dans Stripe Dashboard
+### Étape 2 - Créer le produit et le prix dans Stripe Dashboard
 
 1. Stripe Dashboard → **Products** → **Add product**
 2. Nom : `UpcycleConnect Premium`
@@ -405,7 +405,7 @@ Ces colonnes sont déjà présentes dans `db_schema.sql` (nouvelles installation
 
 ---
 
-### Étape 3 — Configurer le webhook dans Stripe Dashboard
+### Étape 3 - Configurer le webhook dans Stripe Dashboard
 
 1. Dashboard → **Developers** → **Webhooks** → **Add endpoint**
 2. URL :  
@@ -423,7 +423,7 @@ STRIPE_WEBHOOK_SECRET=whsec_YOUR_SECRET_HERE
 
 ---
 
-### Étape 4 — Configurer le Customer Portal (portail de gestion)
+### Étape 4 - Configurer le Customer Portal (portail de gestion)
 
 Les utilisateurs premium peuvent gérer/annuler leur abonnement via  
 le portail Stripe, accessible depuis `subscription.php` → bouton "Gérer mon abonnement".
