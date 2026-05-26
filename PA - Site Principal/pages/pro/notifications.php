@@ -176,12 +176,12 @@ if (empty($notificationsError) && !empty($notifications)) {
                                         <?php endif; ?>
                                         <button class="btn-secondary notif-read-btn" type="button" data-notification-id="<?php echo htmlspecialchars($notificationId); ?>"><i class="fa-solid fa-envelope-circle-check"></i> <span data-i18n="pro.notifications.mark_as_read">Mark as read</span></button>
 							</div>
-						<?php endforeach; ?>
-					</div>
-				</div>
-
-				<div id="tab-read" class="notifications-tab-content" style="display: none;">
-					<p class="balance-note" id="notifications-empty-read" style="display: <?php echo empty($readNotifications) ? 'block' : 'none'; ?>;" data-i18n="pro.notifications.no_read">You have no read notifications.</p>
+                            </div>
+					<?php endforeach; ?>
+                        </div>
+                    </div>
+                    <div id="tab-read" class="notifications-tab-content" style="display: none;">
+                        <p class="balance-note" id="notifications-empty-read" style="display: <?php echo empty($readNotifications) ? 'block' : 'none'; ?>;" data-i18n="pro.notifications.no_read">You have no read notifications.</p>
 					<div class="notifications-list" id="notifications-list-read">
 						<?php foreach ($readNotifications as $notification): ?>
 							<?php

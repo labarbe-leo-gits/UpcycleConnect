@@ -150,7 +150,7 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
                     <a href="../pro/downloads"><i class="fa-solid fa-download"></i><span data-i18n="nav.downloads">Downloads</span></a>
                     <a href="../common/support"><i class="fa-solid fa-headset"></i><span data-i18n="nav.support">Support</span></a>
                     <a href="../pro/notifications"><i class="fa-solid fa-bell"></i></i><span data-i18n="nav.notifications">Notifications</span> <span class="notif-badge" id="notifications-count" hidden>0</span></a>
-                    <a href="../pro/planning"><i class="fa-solid fa-calendar-days"></i><span data-i18n="nav.planning">Planning</span></a>
+                    <a href="../common/planning"><i class="fa-solid fa-calendar-days"></i><span data-i18n="nav.planning">Planning</span></a>
                     <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="fa-solid fa-right-from-bracket"></i><span data-i18n="nav.logout">Logout</span></a>
                 </div>
             </div>
