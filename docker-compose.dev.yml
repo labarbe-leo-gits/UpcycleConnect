@@ -38,7 +38,7 @@ services:
       API_PORT: "9999"
     volumes:
       - ./PA - API:/workspace:delegated
-      - ./files:/files:ro
+      - ./files:/files:delegated
       - ./PA - API/.env:/app/.env:ro
     working_dir: /workspace
     command: >

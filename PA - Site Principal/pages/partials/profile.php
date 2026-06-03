@@ -371,8 +371,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <script src="../../assets/js/blob-images.js"></script>
 <script src="../../assets/js/pro-profile.js"></script>
 <script src="../../assets/js/profile.js"></script>
-<?php if (!$isAjax) { include_once '../../includes/footer.php'; } ?>
-<?php if (!$isAjax): ?>
+<?php if (!$isAjax) { include_once '../../includes/footer.php'; ?>
 </body>
 </html>
-<?php endif; ?>
+<?php } ?>

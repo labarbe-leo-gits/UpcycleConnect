@@ -557,6 +557,8 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 
         if (tab === 'general') {
             document.getElementById('general-tab').style.display = '';
+        } else if (tab === 'personal') {
+            document.getElementById('personal-tab').style.display = '';
         } else if (tab === 'business') {
             document.getElementById('business-tab').style.display = '';
         } else if (tab === 'security') {

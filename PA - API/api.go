@@ -291,6 +291,16 @@ func requestRouter(w http.ResponseWriter, r *http.Request) {
 	notFoundHandler(w, r)
 }
 
+func routeLogFilename(method, path string) string {
+	if strings.EqualFold(method, "POST") && path == "/login" {
+		return "login"
+	}
+	if strings.EqualFold(method, "POST") && path == "/users" {
+		return "register"
+	}
+	return "website"
+}
+
 func registerRoute(method, path, description string, handler func(http.ResponseWriter, *http.Request), middlewares ...func(http.HandlerFunc) http.HandlerFunc) {
 	finalHandler := handler
 	finalHandler = corsMiddleware(finalHandler)
@@ -313,6 +323,12 @@ func registerRoute(method, path, description string, handler func(http.ResponseW
 	for i := len(middlewares) - 1; i >= 0; i-- {
 		finalHandler = middlewares[i](finalHandler)
 	}
+
+	if strings.EqualFold(method, "POST") || strings.EqualFold(method, "PATCH") || strings.EqualFold(method, "PUT") || strings.EqualFold(method, "DELETE") {
+		logFilename := routeLogFilename(method, path)
+		finalHandler = app.LogMiddleware(logFilename, "INFO")(finalHandler)
+	}
+
 	apiRoutes = append(apiRoutes, apiRoute{
 		method:  method,
 		path:    path,
