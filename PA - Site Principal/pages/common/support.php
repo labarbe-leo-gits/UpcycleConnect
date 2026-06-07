@@ -42,18 +42,22 @@ function _glpiCurl(string $method, string $url, array $headers, $body = null): a
 function submitGlpiTicket(array $data, ?array $file): array
 {
     $glpiBase  = rtrim((string) getenv('GLPI_URL'), '/');
-    $appToken  = (string) getenv('GLPI_APP_TOKEN');
+    $appToken  = (string) getenv('GLPI_APP_TOKEN') ?: null;
     $userToken = (string) getenv('GLPI_USER_TOKEN');
 
-    if (!$glpiBase || !$appToken || !$userToken) {
+    if (!$glpiBase || !$userToken) {
         return ['ok' => false, 'message' => 'Support service is not configured yet. Please contact us via the Contact page.', 'ticket_id' => null];
     }
 
-    $res = _glpiCurl('GET', $glpiBase . '/apirest.php/initSession', [
+    $initHeaders = [
         'Content-Type: application/json',
-        'App-Token: ' . $appToken,
         'Authorization: user_token ' . $userToken,
-    ]);
+    ];
+    if ($appToken) {
+        $initHeaders[] = 'App-Token: ' . $appToken;
+    }
+    
+    $res = _glpiCurl('GET', $glpiBase . '/apirest.php/initSession', $initHeaders);
 
     if ($res['code'] !== 200) {
         error_log('[GLPI] initSession failed (' . $res['code'] . '): ' . $res['body']);
@@ -67,9 +71,11 @@ function submitGlpiTicket(array $data, ?array $file): array
 
     $jsonHeaders = [
         'Content-Type: application/json',
-        'App-Token: '     . $appToken,
         'Session-Token: ' . $sessionToken,
     ];
+    if ($appToken) {
+        $jsonHeaders[] = 'App-Token: ' . $appToken;
+    }
 
     $urgencyMap = ['low' => 2, 'medium' => 3, 'high' => 4, 'very_high' => 5];
     $typeMap    = ['incident' => 1, 'request' => 2];
@@ -128,10 +134,14 @@ function submitGlpiTicket(array $data, ?array $file): array
             ],
         ]);
 
-        $docRes = _glpiCurl('POST', $glpiBase . '/apirest.php/Document', [
-            'App-Token: '     . $appToken,
+        $docHeaders = [
             'Session-Token: ' . $sessionToken,
-        ], [
+        ];
+        if ($appToken) {
+            $docHeaders[] = 'App-Token: ' . $appToken;
+        }
+
+        $docRes = _glpiCurl('POST', $glpiBase . '/apirest.php/Document', $docHeaders, [
             'uploadManifest' => $uploadManifest,
             'filename[0]'    => new CURLFile($file['tmp_name'], $file['mime'], $file['name']),
         ]);
