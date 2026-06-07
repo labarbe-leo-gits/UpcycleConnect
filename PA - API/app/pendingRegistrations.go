@@ -292,6 +292,66 @@ func GetPendingRegistration(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+func GetPendingRegistrations(w http.ResponseWriter, r *http.Request) {
+	pending, err := db.GetAllPendingRegistrations()
+	if err != nil {
+		fmt.Println("[ERROR] GetPendingRegistrations DB query:", err)
+		sendError(w, "Unable to fetch pending registrations", http.StatusInternalServerError)
+		return
+	}
+
+	type pendingItem struct {
+		ID          string `json:"id"`
+		FirstName   string `json:"first_name"`
+		LastName    string `json:"last_name"`
+		CompanyName string `json:"company_name"`
+		Siret       string `json:"siret"`
+		UserType    int    `json:"user_type"`
+		Username    string `json:"username"`
+		Email       string `json:"email"`
+		LLMQuota    int    `json:"llm_quota"`
+		ExpiresAt   string `json:"expires_at"`
+		CreatedAt   string `json:"created_at"`
+	}
+
+	items := make([]pendingItem, 0, len(pending))
+	for _, p := range pending {
+		items = append(items, pendingItem{
+			ID:          p.ID,
+			FirstName:   p.FirstName,
+			LastName:    p.LastName,
+			CompanyName: p.CompanyName,
+			Siret:       p.Siret,
+			UserType:    p.UserType,
+			Username:    p.Username,
+			Email:       p.Email,
+			LLMQuota:    p.LLMQuota,
+			ExpiresAt:   p.ExpiresAt,
+			CreatedAt:   p.CreatedAt,
+		})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(items)
+}
+
+func DeletePendingRegistrationAdmin(w http.ResponseWriter, r *http.Request) {
+	id := strings.TrimPrefix(r.URL.Path, "/pending-registrations/")
+	if id == "" {
+		sendError(w, "Pending registration ID is required", http.StatusBadRequest)
+		return
+	}
+
+	if err := db.DeletePendingRegistration(id); err != nil {
+		fmt.Println("[ERROR] DeletePendingRegistrationAdmin DB delete:", err)
+		sendError(w, "Unable to delete pending registration", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]bool{"success": true})
+}
+
 func VerifyPendingRegistration(w http.ResponseWriter, r *http.Request) {
 	var req PendingRegistrationVerifyRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

@@ -1558,14 +1558,55 @@
             attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
         }).addTo(map);
         const list = Array.isArray(window.AVAILABLE_CONTENEURS) ? window.AVAILABLE_CONTENEURS : [];
-        list.forEach(function(c) {
-            const address = [c.number, c.road, c.postal_code, c.city].filter(Boolean).join(', ');
+        const containerMarkers = {};
+        const searchItems = list.map((c, idx) => ({
+            container: c,
+            index: idx,
+            label: c.name || c.conteneur_name || c.conteneur_name || [c.number, c.road, c.postal_code, c.city].filter(Boolean).join(', ') || 'Conteneur',
+            address: [c.number, c.road, c.postal_code, c.city].filter(Boolean).join(', ')
+        }));
+
+        function getContainerLabel(c) {
+            return c.name || c.conteneur_name || c.conteneur_name || [c.number, c.road, c.postal_code, c.city].filter(Boolean).join(', ') || 'Conteneur';
+        }
+
+        function getContainerAddress(c) {
+            return [c.number, c.road, c.postal_code, c.city].filter(Boolean).join(', ');
+        }
+
+        function buildContainerMatches(query) {
+            const low = query.toLowerCase();
+            return searchItems.filter(item => {
+                const haystack = [item.label, item.address, item.container.road || '', item.container.city || '', item.container.postal_code || '', item.container.number || '']
+                    .join(' ')
+                    .toLowerCase();
+                return haystack.indexOf(low) !== -1;
+            });
+        }
+
+        function renderContainerResult(item) {
+            return `<div class="addr-result-item" data-type="container" data-index="${item.index}"><i class='fa-solid fa-box'></i>${escapeHtml(item.label)}${item.address ? `<span class="addr-result-secondary"> — ${escapeHtml(item.address)}</span>` : ''}</div>`;
+        }
+
+        function renderAddressResult(f) {
+            const props = f.properties;
+            const coords = f.geometry && f.geometry.coordinates ? f.geometry.coordinates : [];
+            const label = `${props.housenumber||''} ${props.street||''}`.trim();
+            const location = `${props.postcode||''} ${props.city||''}`.trim();
+            const display = `${label}${location ? `, ${location}` : ''}`.trim();
+            return `<div class="addr-result-item" data-type="address" data-lat="${coords[1]||''}" data-lon="${coords[0]||''}" data-label="${escapeHtml(display)}"><i class='fa-solid fa-location-dot'></i>${escapeHtml(display)}</div>`;
+        }
+
+        list.forEach(function(c, idx) {
+            const address = getContainerAddress(c);
             if (!address) return;
             geocodeAddress(address).then(function(coords) {
                 if (coords) {
+                    c.__coords = coords;
                     const marker = L.marker([coords.lat, coords.lon]).addTo(map);
-                    const label = escapeHtml(c.name || c.conteneur_name || 'Conteneur');
+                    const label = escapeHtml(getContainerLabel(c));
                     marker.bindPopup(`<strong>${label}</strong><br>${escapeHtml(address)}`);
+                    containerMarkers[idx] = marker;
                 }
             });
         });
@@ -1578,53 +1619,131 @@
             }
             if (input && resultsDiv) {
                 let timeout = null;
+                let latestQuery = '';
+                const selectedIcon = L.icon({
+                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41]
+                });
+
+                function setMapView(coords) {
+                    if (!coords) return;
+                    map.setView([coords.lat, coords.lon], 15);
+                    L.marker([coords.lat, coords.lon], { icon: selectedIcon }).addTo(map);
+                }
+
+                function focusMap(coords) {
+                    if (!coords) return;
+                    map.setView([coords.lat, coords.lon], 15);
+                }
+
+                function showResults(items) {
+                    if (!items.length) {
+                        resultsDiv.innerHTML = '<div class="addr-result-item no-results" style="padding:10px 14px;color:#888;">No results</div>';
+                        resultsDiv.style.display = 'block';
+                        return;
+                    }
+                    resultsDiv.innerHTML = items.join('');
+                    resultsDiv.style.display = 'block';
+                }
+
                 input.addEventListener('input', function() {
                     const val = input.value.trim();
+                    latestQuery = val;
                     if (!val) { resultsDiv.innerHTML = ''; resultsDiv.style.display = 'none'; return; }
                     if (timeout) clearTimeout(timeout);
+                    const localMatches = buildContainerMatches(val);
+                    const localHtml = localMatches.map(renderContainerResult);
+                    if (localHtml.length) {
+                        resultsDiv.innerHTML = localHtml.join('');
+                        resultsDiv.style.display = 'block';
+                    } else {
+                        resultsDiv.innerHTML = '<div class="addr-result-item no-results" style="padding:10px 14px;color:#888;">Searching…</div>';
+                        resultsDiv.style.display = 'block';
+                    }
+
                     timeout = setTimeout(() => {
-                        fetch(`https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(val)}`)
+                        if (latestQuery !== val) return;
+                        if (val.length < 3) {
+                            if (!localHtml.length) {
+                                resultsDiv.innerHTML = '<div class="addr-result-item no-results" style="padding:10px 14px;color:#888;">Type at least 3 characters to search addresses</div>';
+                                resultsDiv.style.display = 'block';
+                            }
+                            return;
+                        }
+                        fetch(`https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(val)}&limit=6`)
                             .then(r => r.json())
                             .then(data => {
-                                if (data && data.features && data.features.length) {
+                                if (latestQuery !== val) return;
+                                const addressResults = (data && data.features ? data.features : []).map(renderAddressResult);
+                                if (addressResults.length) {
+                                    const combined = [...localHtml, ...addressResults];
+                                    resultsDiv.innerHTML = combined.join('');
                                     resultsDiv.style.display = 'block';
-                                    resultsDiv.innerHTML = data.features.map(f => {
-                                        const props = f.properties;
-                                        const coords = f.geometry && f.geometry.coordinates ? f.geometry.coordinates : [];
-                                        return `<div class="addr-result-item" data-lat="${coords[1]||''}" data-lon="${coords[0]||''}"><i class='fa-solid fa-location-dot'></i>${props.housenumber||''} ${props.street||''}, ${props.postcode||''} ${props.city||''}</div>`;
-                                    }).join('');
+                                } else if (localHtml.length) {
+                                    resultsDiv.innerHTML = localHtml.join('');
+                                    resultsDiv.style.display = 'block';
                                 } else {
-                                    resultsDiv.style.display = 'block';
-                                    resultsDiv.innerHTML = '<div style="padding:6px 8px;color:#888;">No results</div>';
+                                    showResults([]);
                                 }
                             })
                             .catch(() => {
-                                resultsDiv.style.display = 'block';
-                                resultsDiv.innerHTML = '<div style="padding:6px 8px;color:#888;">Error</div>';
+                                if (latestQuery !== val) return;
+                                if (!localHtml.length) {
+                                    resultsDiv.innerHTML = '<div class="addr-result-item no-results" style="padding:10px 14px;color:#888;">Error</div>';
+                                    resultsDiv.style.display = 'block';
+                                }
                             });
                     }, 350);
                 });
+
                 resultsDiv.addEventListener('click', function(e) {
                     const item = e.target.closest('.addr-result-item');
-                    if (item) {
-                        const lat = parseFloat(item.getAttribute('data-lat'));
-                        const lon = parseFloat(item.getAttribute('data-lon'));                        
-                        if (!isNaN(lat) && !isNaN(lon)) {
-                            map.setView([lat, lon], 15);
-                            const redIcon = L.icon({
-                                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
-                                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-                                iconSize: [25, 41],
-                                iconAnchor: [12, 41],
-                                popupAnchor: [1, -34],
-                                shadowSize: [41, 41]
-                            });
-                            L.marker([lat, lon], {icon: redIcon}).addTo(map);
+                    if (!item) return;
+                    const type = item.getAttribute('data-type');
+                    if (type === 'container') {
+                        const index = parseInt(item.getAttribute('data-index'), 10);
+                        const selection = list[index];
+                        if (selection) {
+                            if (selection.__coords) {
+                                focusMap(selection.__coords);
+                                const marker = containerMarkers[index];
+                                if (marker) {
+                                    marker.openPopup();
+                                }
+                            } else {
+                                const address = getContainerAddress(selection);
+                                if (address) {
+                                    geocodeAddress(address).then(coords => {
+                                        if (coords) {
+                                            selection.__coords = coords;
+                                            focusMap(coords);
+                                            const marker = L.marker([coords.lat, coords.lon]).addTo(map);
+                                            const label = escapeHtml(getContainerLabel(selection));
+                                            marker.bindPopup(`<strong>${label}</strong><br>${escapeHtml(address)}`);
+                                            containerMarkers[index] = marker;
+                                            marker.openPopup();
+                                        }
+                                    });
+                                }
+                            }
                         }
-                        resultsDiv.innerHTML = '';
-                        resultsDiv.style.display = 'none';
-                        input.value = '';
+                    } else {
+                        const lat = parseFloat(item.getAttribute('data-lat'));
+                        const lon = parseFloat(item.getAttribute('data-lon'));
+                        const label = item.getAttribute('data-label') || item.textContent.trim();
+                        if (!isNaN(lat) && !isNaN(lon)) {
+                            setMapView({ lat, lon });
+                            const marker = L.marker([lat, lon], { icon: selectedIcon }).addTo(map);
+                            marker.bindPopup(`<strong>${escapeHtml(label)}</strong>`).openPopup();
+                        }
                     }
+                    resultsDiv.innerHTML = '';
+                    resultsDiv.style.display = 'none';
+                    input.value = '';
                 });
             }
         }

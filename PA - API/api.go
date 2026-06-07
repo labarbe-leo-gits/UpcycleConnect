@@ -680,6 +680,8 @@ func main() {
 	registerRoute("POST", "/users/email", "Get user by email - for OAuth lookup", app.GetUserByEmail)
 	registerRoute("POST", "/pending-registrations", "Create a new pending registration and send verification code", app.CreatePendingRegistration)
 	registerRoute("GET", "/pending-registrations", "Get details for a pending registration by identifier or ID", app.GetPendingRegistration)
+	registerRoute("GET", "/pending-registrations/list", "List all pending registrations", app.GetPendingRegistrations, app.JWTAuthMiddleware, RoleMiddleware(3))
+	registerRoute("DELETE", "/pending-registrations/{id}", "Delete a pending registration by its UUID", app.DeletePendingRegistrationAdmin, app.JWTAuthMiddleware, RoleMiddleware(3))
 	registerRoute("POST", "/pending-registrations/verify", "Verify a pending registration and create a user", app.VerifyPendingRegistration)
 	registerRoute("POST", "/pending-registrations/resend", "Resend a pending registration verification code", app.ResendPendingRegistrationCode)
 

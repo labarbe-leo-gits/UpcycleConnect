@@ -52,7 +52,8 @@
               (date ? '<div class="acc-card-date"><i class="fa-regular fa-calendar"></i> ' + escHtml(date) + '</div>' : '') +
               '<div class="acc-card-actions" style="display:flex;gap:5px;justify-content:center;align-items:center;width:100%;border-top:1px solid #ccc;padding-top:10px;flex-wrap:wrap;">' +
                 refundHtml +
-                '<button class="btn-secondary details-btn" style="padding:6px;" data-order-id="' + escAttr(item.id) + '"><i class="fa-solid fa-info"></i> View Details</button>' +
+                '<button type="button" class="btn-secondary pdf-btn" style="padding:6px;" data-order-id="' + escAttr(item.id) + '"><i class="fa-solid fa-file-pdf"></i> PDF</button>' +
+                '<button class="btn-secondary details-btn" style="padding:6px;" data-order-id="' + escAttr(item.id) + '"><i class="fa-solid fa-info"></i> Details</button>' +
               '</div>' +
             '</div>';
         return el;
@@ -545,6 +546,15 @@
             var rOrderId    = refundBtn.dataset.orderId    || '';
             var rOrderTitle = refundBtn.dataset.orderTitle || '';
             if (rOrderId) openRefundModal(rOrderId, rOrderTitle);
+            return;
+        }
+
+        var pdfBtn = e.target.closest('.pdf-btn');
+        if (pdfBtn) {
+            var pdfOrderId = pdfBtn.dataset.orderId || '';
+            if (pdfOrderId) {
+                window.open('../common/order-invoice.php?order_id=' + encodeURIComponent(pdfOrderId), '_blank', 'noopener');
+            }
             return;
         }
 

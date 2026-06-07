@@ -92,6 +92,50 @@ func GetPendingRegistrationByID(id string) (*models.PendingRegistration, error) 
 	return &registration, nil
 }
 
+func GetAllPendingRegistrations() ([]models.PendingRegistration, error) {
+	rows, err := Db.Query(
+		"SELECT id, first_name, last_name, company_name, siret, user_type, username, email, password_hash, llm_quota, token, expires_at, created_at FROM pending_registrations ORDER BY created_at DESC",
+	)
+	if err != nil {
+		return nil, fmt.Errorf("getAllPendingRegistrations: %s", err.Error())
+	}
+	defer rows.Close()
+
+	var registrations []models.PendingRegistration
+	for rows.Next() {
+		var registration models.PendingRegistration
+		var companyName sql.NullString
+		var siret sql.NullString
+		err := rows.Scan(
+			&registration.ID,
+			&registration.FirstName,
+			&registration.LastName,
+			&companyName,
+			&siret,
+			&registration.UserType,
+			&registration.Username,
+			&registration.Email,
+			&registration.PasswordHash,
+			&registration.LLMQuota,
+			&registration.Token,
+			&registration.ExpiresAt,
+			&registration.CreatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("getAllPendingRegistrations: %s", err.Error())
+		}
+		if companyName.Valid {
+			registration.CompanyName = companyName.String
+		}
+		if siret.Valid {
+			registration.Siret = siret.String
+		}
+		registrations = append(registrations, registration)
+	}
+
+	return registrations, nil
+}
+
 func CreatePendingRegistration(p models.PendingRegistration) (string, error) {
 	if p.ID == "" {
 		p.ID = uuid.New().String()

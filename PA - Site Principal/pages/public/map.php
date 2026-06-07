@@ -1,47 +1,49 @@
 <?php
 $title = 'Map';
 require_once __DIR__ . '/../../config/db.php';
-$extraCss = ['https://unpkg.com/leaflet/dist/leaflet.css'];
-$extraJs  = ['https://unpkg.com/leaflet/dist/leaflet.js',
-             '/assets/js/deposits.js'];
+$extraCss = [
+    'https://unpkg.com/leaflet/dist/leaflet.css',
+    '/assets/css/map.css'
+];
+$extraJs  = [
+    'https://unpkg.com/leaflet/dist/leaflet.js',
+    '/assets/js/deposits.js'
+];
 include_once '../../includes/header.php';
 ?>
 
-<style>
-#map-search-input-results .addr-result-item {
-    padding: 10px 14px;
-    cursor: pointer;
-    font-size: .875rem;
-    color: #374151;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    border-bottom: 1px solid #f3f4f6;
-    transition: background .1s;
-    text-align: left;
-}
-#map-search-input-results .addr-result-item:last-child { border-bottom: none; }
-#map-search-input-results .addr-result-item:hover { background: #f0fdf4; color: #10b981; }
-#map-search-input-results { position: absolute; top: 100%; left: 0; right: 0; z-index: 1000; max-height: 260px; overflow-y: auto; background: #fff; border: 1px solid #e5e7eb; border-radius: 4px; }
-#map-search-input-results .addr-result-item i { color: #10b981; flex-shrink: 0; }
-</style>
+<main class="page-map">
+    <div class="container">
+        <section class="page-header">
+            <h1 data-i18n="public.map.title">Map of Collection Points</h1>
+            <p data-i18n="public.map.description">Search nearby collection points and explore available containers on an interactive map. Select an address to zoom in on the right location.</p>
+        </section>
 
-<div class="container" style="padding:0;">
-    <div style="position:relative;width:80%;margin:0 auto 12px;">
-        <input type="text" id="map-search-input" placeholder="Search address…" data-i18n-placeholder="public.map.search_address" style="width:100%;padding:8px 12px;font-size:1em;border:1px solid #ccc;border-radius:6px;" />
-        <div id="map-search-input-results" style="position:absolute;top:100%;left:0;right:0;z-index:1000;
-            background:#fff;border:1px solid #e5e7eb;border-radius:8px;display:none;
-            max-height:240px;overflow-y:auto;"></div>
+        <section class="map-panel">
+            <div class="map-control-panel">
+                <div class="field">
+                    <label for="map-search-input" class="sr-only" data-i18n="public.map.search_label">Search address</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                        <input type="text" id="map-search-input" placeholder="Search address…" data-i18n-placeholder="public.map.search_address" autocomplete="off" />
+                    </div>
+                </div>
+                <div id="map-search-input-results"></div>
+            </div>
+
+            <div class="map-frame" id="map"></div>
+        </section>
     </div>
-    <div id="map" style="height:80vh;width:80%;margin:0 auto;border-radius:16px;"></div>
-</div>
+</main>
 
 <?php
 $conteneurs = [];
 try {
     $cResp = askAPI('/conteneurs', 'GET');
     $decoded = json_decode($cResp, true);
-    if (is_array($decoded)) $conteneurs = $decoded;
+    if (is_array($decoded)) {
+        $conteneurs = $decoded;
+    }
 } catch (\Exception $e) {
     $conteneurs = [];
 }
