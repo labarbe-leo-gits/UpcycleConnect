@@ -205,14 +205,15 @@ func GetUserByIDFromDB(id uuid.UUID) (models.User, error) {
 	var companyName, oauthProvider, oauthID, profilePicture sql.NullString
 	var stripeCustomerID sql.NullString
 	var managerID sql.NullString
+	var oneSignalPlayerID sql.NullString
 	var userXP, userLevel int
 	var userRoadNumber, userRoad, userZipCode, userCity sql.NullString
 	var newsletterSubscribed sql.NullInt64
 
 	err := Db.QueryRow(
-		"SELECT id, first_name, last_name, company_name, user_type, username, email, password_hash, balance, upcycling_score, created_at, last_login, oauth_provider, oauth_id, profile_picture, is_premium, stripe_customer_id, manager_id, user_xp, user_level, user_road_number, user_road, user_zip_code, user_city, newsletter_subscribed, updoc_quota FROM users WHERE id = ?",
+		"SELECT id, first_name, last_name, company_name, user_type, username, email, password_hash, balance, upcycling_score, created_at, last_login, oauth_provider, oauth_id, profile_picture, is_premium, stripe_customer_id, manager_id, one_signal_player_id, user_xp, user_level, user_road_number, user_road, user_zip_code, user_city, newsletter_subscribed, updoc_quota FROM users WHERE id = ?",
 		id.String(),
-	).Scan(&idStr, &user.FirstName, &user.LastName, &companyName, &user.UserType, &user.Username, &user.Email, &user.Password, &user.Balance, &user.UpcyclingScore, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture, &user.IsPremium, &stripeCustomerID, &managerID, &userXP, &userLevel, &userRoadNumber, &userRoad, &userZipCode, &userCity, &newsletterSubscribed, &user.UpdocQuota)
+	).Scan(&idStr, &user.FirstName, &user.LastName, &companyName, &user.UserType, &user.Username, &user.Email, &user.Password, &user.Balance, &user.UpcyclingScore, &createdAt, &lastLogin, &oauthProvider, &oauthID, &profilePicture, &user.IsPremium, &stripeCustomerID, &managerID, &oneSignalPlayerID, &userXP, &userLevel, &userRoadNumber, &userRoad, &userZipCode, &userCity, &newsletterSubscribed, &user.UpdocQuota)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return user, fmt.Errorf("user not found")
@@ -244,6 +245,9 @@ func GetUserByIDFromDB(id uuid.UUID) (models.User, error) {
 	}
 	if userCity.Valid {
 		user.UserCity = userCity.String
+	}
+	if oneSignalPlayerID.Valid {
+		user.OneSignalPlayerID = oneSignalPlayerID.String
 	}
 	if profilePicture.Valid {
 		user.ProfilePicture = profilePicture.String
@@ -343,6 +347,10 @@ func UpdateUserInDB(id uuid.UUID, updates map[string]interface{}) error {
 			cols = append(cols, "manager_id = ?")
 			args = append(args, s)
 		}
+	}
+	if v, ok := updates["one_signal_player_id"].(string); ok {
+		cols = append(cols, "one_signal_player_id = ?")
+		args = append(args, strings.TrimSpace(v))
 	}
 	if len(cols) == 0 {
 		return nil

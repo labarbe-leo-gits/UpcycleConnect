@@ -54,6 +54,7 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
         window.API_TOKEN = <?= json_encode($_SESSION['jwt_token'] ?? $_SESSION['token'] ?? '') ?>;
         window.currentUserId = <?= json_encode($user['id'] ?? '') ?>;
         window.currentUserType = <?= json_encode($user['user_type'] ?? '') ?>;
+        window.ONE_SIGNAL_APP_ID = <?= json_encode(getenv('ONESIGNAL_APP_ID') ?: '') ?>;
         if (window.API_TOKEN) {
             try {
                 localStorage.setItem('jwt_token', window.API_TOKEN);
@@ -63,6 +64,10 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
             }
         }
     </script>
+    <?php if (!empty(getenv('ONESIGNAL_APP_ID'))): ?>
+    <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async></script>
+    <script src="../../assets/js/onesignal.js" defer></script>
+    <?php endif; ?>
     <?php
     if (!empty(
         isset($extraCss) ? $extraCss : null

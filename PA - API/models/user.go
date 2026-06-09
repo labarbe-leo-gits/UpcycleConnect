@@ -16,6 +16,7 @@ type User struct {
 	IsPremium            int       `json:"is_premium"`
 	Username             string    `json:"username" gorm:"unique;not null"`
 	Email                string    `json:"email" gorm:"unique;not null"`
+	OneSignalPlayerID    string    `json:"one_signal_player_id,omitempty"`
 	Password             string    `json:"password,omitempty" gorm:"not null"`
 	LLMQuota             int       `json:"llm_quota"`
 	LLMUsageToday        int       `json:"llm_usage_today"`

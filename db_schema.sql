@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS users (
     stripe_customer_id VARCHAR(255) NULL,
     stripe_subscription_id VARCHAR(255) NULL,
     user_type INT NOT NULL,
+    one_signal_player_id VARCHAR(255) NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

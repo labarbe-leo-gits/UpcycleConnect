@@ -557,6 +557,71 @@
         }
         buttonsWrapper.appendChild(detailsButton);
 
+        const translateBtn = document.createElement('button');
+        translateBtn.type = 'button';
+        translateBtn.className = 'btn-secondary';
+        translateBtn.textContent = t('public.index.translate_offer', 'Translate');
+        translateBtn.dataset.state = 'original';
+        translateBtn.addEventListener('click', async function() {
+            if (!window.currentLocale || window.currentLocale === 'en') {
+                return;
+            }
+
+            const currentlyTranslated = translateBtn.dataset.state === 'translated';
+            if (currentlyTranslated) {
+                title.innerHTML = `<i class="fa-solid fa-box-open"></i> ${translateBtn.dataset.originalTitle}`;
+                desc.textContent = translateBtn.dataset.originalDescription;
+                translateBtn.textContent = t('public.index.translate_offer', 'Translate');
+                translateBtn.dataset.state = 'original';
+                return;
+            }
+
+            if (translateBtn.dataset.translatedTitle && translateBtn.dataset.translatedDescription) {
+                title.innerHTML = `<i class="fa-solid fa-box-open"></i> ${translateBtn.dataset.translatedTitle}`;
+                desc.textContent = translateBtn.dataset.translatedDescription;
+                translateBtn.textContent = t('public.index.show_original', 'Show original');
+                translateBtn.dataset.state = 'translated';
+                return;
+            }
+
+            translateBtn.disabled = true;
+            translateBtn.textContent = t('public.index.translating', 'Translating...');
+            const targetLang = window.currentLocale || 'en';
+            try {
+                const response = await fetch('../common/translate-text-api.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: offer.description || '',
+                        title: offer.title || '',
+                        target: targetLang
+                    })
+                });
+                const data = await response.json();
+                if (response.ok && data.translated && data.translated.title && data.translated.description) {
+                    translateBtn.dataset.originalTitle = offer.title || '';
+                    translateBtn.dataset.originalDescription = offer.description || '';
+                    translateBtn.dataset.translatedTitle = data.translated.title;
+                    translateBtn.dataset.translatedDescription = data.translated.description;
+                    title.innerHTML = `<i class="fa-solid fa-box-open"></i> ${data.translated.title}`;
+                    desc.textContent = data.translated.description;
+                    translateBtn.textContent = t('public.index.show_original', 'Show original');
+                    translateBtn.dataset.state = 'translated';
+                } else {
+                    const message = data.error || t('public.index.translation_failed', 'Translation failed');
+                    alert(message);
+                }
+            } catch (err) {
+                console.error('Offer translation failed', err);
+                alert(t('public.index.translation_failed', 'Translation failed'));
+            } finally {
+                translateBtn.disabled = false;
+            }
+        });
+
+        buttonsWrapper.appendChild(translateBtn);
+
+
         const isPro = typeof window !== 'undefined' && window.currentUserType === 2;
         const promotedLocal = isOfferPromotedLocally(offer.id);
         const promoted = !!offer.promoted || promotedLocal;
@@ -856,6 +921,72 @@
             detailsButton.disabled = true;
         }
         buttonsWrapper.appendChild(detailsButton);
+
+        
+        const translateBtn = document.createElement('button');
+        translateBtn.type = 'button';
+        translateBtn.className = 'btn-secondary';
+        translateBtn.textContent = t('public.index.translate_offer', 'Translate');
+        translateBtn.dataset.state = 'original';
+        translateBtn.addEventListener('click', async function() {
+            if (!window.currentLocale || window.currentLocale === 'en') {
+                return;
+            }
+
+            const currentlyTranslated = translateBtn.dataset.state === 'translated';
+            if (currentlyTranslated) {
+                title.innerHTML = `<i class="fa-solid fa-box-open"></i> ${translateBtn.dataset.originalTitle}`;
+                description.textContent = translateBtn.dataset.originalDescription;
+                translateBtn.textContent = t('public.index.translate_offer', 'Translate');
+                translateBtn.dataset.state = 'original';
+                return;
+            }
+
+            if (translateBtn.dataset.translatedTitle && translateBtn.dataset.translatedDescription) {
+                title.innerHTML = `<i class="fa-solid fa-box-open"></i> ${translateBtn.dataset.translatedTitle}`;
+                description.textContent = translateBtn.dataset.translatedDescription;
+                translateBtn.textContent = t('public.index.show_original', 'Show original');
+                translateBtn.dataset.state = 'translated';
+                return;
+            }
+
+            translateBtn.disabled = true;
+            translateBtn.textContent = t('public.index.translating', 'Translating...');
+            const targetLang = window.currentLocale || 'en';
+            try {
+                const response = await fetch('../common/translate-text-api.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: offer.description || '',
+                        title: offer.title || '',
+                        target: targetLang
+                    })
+                });
+                const data = await response.json();
+                if (response.ok && data.translated && data.translated.title && data.translated.description) {
+                    translateBtn.dataset.originalTitle = offer.title || '';
+                    translateBtn.dataset.originalDescription = offer.description || '';
+                    translateBtn.dataset.translatedTitle = data.translated.title;
+                    translateBtn.dataset.translatedDescription = data.translated.description;
+                    title.innerHTML = `<i class="fa-solid fa-box-open"></i> ${data.translated.title}`;
+                    description.textContent = data.translated.description;
+                    translateBtn.textContent = t('public.index.show_original', 'Show original');
+                    translateBtn.dataset.state = 'translated';
+                } else {
+                    const message = data.error || t('public.index.translation_failed', 'Translation failed');
+                    alert(message);
+                }
+            } catch (err) {
+                console.error('Offer translation failed', err);
+                alert(t('public.index.translation_failed', 'Translation failed'));
+            } finally {
+                translateBtn.disabled = false;
+            }
+        });
+
+        buttonsWrapper.appendChild(translateBtn);
+
 
         const isPro = typeof window !== 'undefined' && window.currentUserType === 2;
         const promotedLocal = isOfferPromotedLocally(offer.id);

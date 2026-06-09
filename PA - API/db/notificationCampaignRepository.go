@@ -260,7 +260,7 @@ func SendNotificationCampaignFromDB(campaignID string) (int, int, error) {
 		return 0, 0, fmt.Errorf("sendNotificationCampaign begin tx: %w", err)
 	}
 
-	recipientsQuery := "SELECT id FROM users WHERE is_active = 1"
+	recipientsQuery := "SELECT id, one_signal_player_id FROM users WHERE is_active = 1"
 	recipientsArgs := []interface{}{}
 	if campaign.TargetUserType == 0 {
 		recipientsQuery += " AND user_type IN (?, ?)"
@@ -276,14 +276,19 @@ func SendNotificationCampaignFromDB(campaignID string) (int, int, error) {
 	}
 
 	userIDs := []string{}
+	playerIDs := []string{}
 	for rows.Next() {
 		var uid string
-		if scanErr := rows.Scan(&uid); scanErr != nil {
+		var playerID sql.NullString
+		if scanErr := rows.Scan(&uid, &playerID); scanErr != nil {
 			rows.Close()
 			tx.Rollback()
 			return 0, 0, fmt.Errorf("sendNotificationCampaign recipients scan: %w", scanErr)
 		}
 		userIDs = append(userIDs, uid)
+		if playerID.Valid && strings.TrimSpace(playerID.String) != "" {
+			playerIDs = append(playerIDs, strings.TrimSpace(playerID.String))
+		}
 	}
 	if rowsErr := rows.Err(); rowsErr != nil {
 		rows.Close()
@@ -346,6 +351,10 @@ func SendNotificationCampaignFromDB(campaignID string) (int, int, error) {
 
 	if err := tx.Commit(); err != nil {
 		return 0, 0, fmt.Errorf("sendNotificationCampaign commit: %w", err)
+	}
+
+	if err := sendOneSignalNotification(campaign.Title, campaign.Message, playerIDs, campaign.TargetUserType); err != nil {
+		fmt.Printf("[WARN] OneSignal send failed for campaign %s: %v\n", campaign.ID.String(), err)
 	}
 
 	return sentCount, failedCount, nil
