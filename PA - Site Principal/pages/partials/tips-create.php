@@ -18,7 +18,7 @@ require_once '../../includes/partials-header.php';
 ?>
 
 <main class="container">
-    <div class="section-header">
+    <div class="section-header tip-create-header">
         <h1><i class="fa-solid fa-lightbulb"></i> New Tip</h1>
         <a class="btn-secondary" href="../partials/tips"><i class="fa-solid fa-arrow-left"></i> Back to Tips</a>
     </div>

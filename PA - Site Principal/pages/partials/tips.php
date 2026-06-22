@@ -14,9 +14,9 @@ require_once '../../includes/partials-header.php';
 ?>
 
 <main class="container">
-    <div class="section-header">
+    <div class="section-header tips-header">
         <h1>Tips Management</h1>
-        <a class="btn-primary" href="tips-create" id="add-tip"><i class="fa-solid fa-plus"></i> Create Tip</a>
+        <a class="btn-primary new-tip-btn" href="tips-create" id="add-tip"><i class="fa-solid fa-plus"></i> Create Tip</a>
     </div>
 
     <div class="tips-list" id="tips-list"></div>

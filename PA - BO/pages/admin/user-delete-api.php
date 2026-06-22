@@ -20,7 +20,7 @@ if (!$id) {
     exit;
 }
 
-$resp = askAPI('/users/' . urlencode($id), 'DELETE');
+$resp = askAPI('/users/' . urlencode($id) . "/delete", 'DELETE');
 $decoded = json_decode($resp, true);
 if ($decoded === null) {
     error_log("user-delete-api non-json: $resp");

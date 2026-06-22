@@ -753,6 +753,7 @@ func main() {
 	registerRoute("GET", "/planning", "Get all planning entries in the system (admin only)", app.GetAllPlanning)
 	registerRoute("PATCH", "/users/{id}", "Update a user's profile", app.UpdateUser, app.JWTAuthMiddleware)
 	registerRoute("DELETE", "/users/{id}", "Delete a user by UUID", app.DeleteUser, app.JWTAuthMiddleware)
+	registerRoute("DELETE", "/users/{id}/delete", "Delete a user by UUID (admin only)", app.DeleteUserAdmin, app.JWTAuthMiddleware, RoleMiddleware(3))
 	registerRoute("PATCH", "/annonces/{id}/views", "Increment the view count for an annonce", app.IncrementAnnonceViewCount, app.JWTAuthMiddleware)
 	registerRoute("GET", "/forums/{id}", "Get details of a specific forum by its UUID", app.GetForumByID)
 	registerRoute("PATCH", "/forums/{id}/posts/{pID}", "Update a specific post in a forum by its UUID", app.UpdatePost, app.JWTAuthMiddleware)

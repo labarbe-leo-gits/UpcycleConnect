@@ -1546,6 +1546,29 @@ func GetBansByUserID(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func DeleteUserAdmin(w http.ResponseWriter, r *http.Request) {
+	userID := strings.TrimPrefix(r.URL.Path, "/users/")
+	userID = strings.TrimSuffix(userID, "/delete")
+
+	if _, err := uuid.Parse(userID); err != nil {
+		fmt.Println("[WARN] DeleteUserAdmin: invalid UUID", userID)
+		sendError(w, "Invalid user ID format", http.StatusBadRequest)
+		return
+	}
+
+	err := db.DeleteUserFromDB(uuid.MustParse(userID))
+	if err != nil {
+		fmt.Println("[ERROR] DeleteUserAdmin:", err)
+		sendError(w, "Unable to delete user", http.StatusInternalServerError)
+		return
+	}
+	
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]bool{"success": true})
+
+}
+
 func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	var deleteReq struct {
 		Password string `json:"password"`

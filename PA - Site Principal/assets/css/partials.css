@@ -25,6 +25,37 @@
   padding: 0 1rem;
 }
 
+.tip-create-header{
+  justify-content:center;
+  gap:50px;
+}
+
+.tip-create-header > .btn-secondary{
+  text-decoration: None;
+}
+
+#tips-empty{
+  display: block;
+  justify-content: center;
+  text-align: center;
+  border-style: dashed;
+  border: 2px dashed rgba(140, 141, 143, .5);
+  padding: 20px;
+  border-radius: 16px;
+}
+
+.new-tip-btn{
+  width: fit-content;
+  padding-left: 50px;
+  padding-right: 50px;
+  text-decoration: none;
+  margin-top: 10px;
+}
+
+.tips-header{
+  flex-direction: column;
+}
+
 .section-header h1 {
   font-size: 2rem;
   font-weight: 700;
