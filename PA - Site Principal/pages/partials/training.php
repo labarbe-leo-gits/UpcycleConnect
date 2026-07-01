@@ -98,6 +98,21 @@ console.log('Is truthy:', !!window.USER_MANAGER_ID);
                 </div>
             </div>
 
+            <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;">
+                <div class="field">
+                    <label for="form-duration-days">Duration (days) *</label>
+                    <div class="input-wrapper"><i class="fa-solid fa-calendar-days"></i>
+                        <input type="number" id="form-duration-days" name="duration_days" min="1" step="1" value="1" required />
+                    </div>
+                </div>
+                <div class="field">
+                    <label for="form-estimated-time">Estimated time (minutes) *</label>
+                    <div class="input-wrapper"><i class="fa-solid fa-clock"></i>
+                        <input type="number" id="form-estimated-time" name="estimated_time_minutes" min="1" step="1" value="60" required />
+                    </div>
+                </div>
+            </div>
+
             <div class="field" id="form-location-section">
                 <label>Location</label>
                 <div class="form-loc-switcher" id="form-loc-switcher">

@@ -5,6 +5,7 @@
 $title = 'Order Success';
 include_once '../../config/db.php';
 include_once '../../includes/auth.php';
+require_once __DIR__ . '/agenda-helper.php';
 $user = getLoggedInUser();
 trackLastPage();
 
@@ -18,6 +19,7 @@ if (!$user) {
 
 $productUuid = $_GET['product_uuid'] ?? null;
 $orderToken = $_GET['order_token'] ?? null;
+$eventAvailabilityId = $_GET['event_availability_id'] ?? null;
 
 if (!$productUuid || !$orderToken) {
     redirectBackOrServices();
@@ -268,7 +270,6 @@ if ($paymentVerified) {
             $orderSaved = true;
         } else {
             $transactionId = $paymentIntentId ?: ('free-' . ($productUuid ?? 'service') . '-' . ($user['id'] ?? 'guest'));
-            $eventAvailabilityId = $_GET['event_availability_id'] ?? null;
             error_log('order-success event_availability_id=' . var_export($eventAvailabilityId, true));
             $payload = json_encode([
                 'user_id' => $user['id'] ?? '',
@@ -310,6 +311,19 @@ if ($paymentVerified) {
                     'message' => $message
                 ]);
                 askAPI('/notifications', 'POST', $notificationPayload);
+            }
+        }
+
+        if ($orderSaved && $productType === 'service' && $priceTTC == 0 && !empty($eventAvailabilityId)) {
+            $agendaResult = call_user_func(
+                'createAgendaEntriesForPurchase',
+                (string)($user['id'] ?? ''),
+                (string)$productUuid,
+                (string)$eventAvailabilityId
+            );
+
+            if (!empty($agendaResult['errors'])) {
+                error_log('order-success: agenda creation errors: ' . implode(' | ', $agendaResult['errors']));
             }
         }
     }

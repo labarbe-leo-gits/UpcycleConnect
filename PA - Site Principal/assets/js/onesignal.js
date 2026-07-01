@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    window.OneSignal = window.OneSignal || [];
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
 
     function isLocalhost() {
         return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
@@ -50,18 +50,49 @@
         }
     }
 
-    function registerPlayerId() {
-        window.OneSignal.getUserId(function (playerId) {
-            if (!playerId) {
+    function registerPlayerId(OneSignal) {
+        const playerId = OneSignal?.User?.PushSubscription?.id || '';
+        if (!playerId) {
+            return;
+        }
+
+        const stored = localStorage.getItem('one_signal_player_id');
+        if (stored === playerId) {
+            log('OneSignal player ID already registered');
+            return;
+        }
+
+        sendPlayerIdToServer(playerId);
+    }
+
+    async function showPermissionPrompt(OneSignal) {
+        if (!OneSignal?.Notifications?.isPushSupported || !OneSignal.Notifications.isPushSupported()) {
+            log('OneSignal push is not supported in this browser');
+            return;
+        }
+
+        if (OneSignal.Notifications.permission) {
+            return;
+        }
+
+        if (localStorage.getItem('one_signal_prompt_shown')) {
+            return;
+        }
+
+        localStorage.setItem('one_signal_prompt_shown', '1');
+
+        try {
+            if (OneSignal?.Slidedown?.promptPush) {
+                await OneSignal.Slidedown.promptPush({ force: true });
                 return;
             }
-            const stored = localStorage.getItem('one_signal_player_id');
-            if (stored === playerId) {
-                log('OneSignal player ID already registered');
-                return;
+
+            if (OneSignal?.Notifications?.requestPermission) {
+                await OneSignal.Notifications.requestPermission();
             }
-            sendPlayerIdToServer(playerId);
-        });
+        } catch (err) {
+            log('Error showing OneSignal prompt:', err);
+        }
     }
 
     function initOneSignal() {
@@ -74,36 +105,45 @@
             return;
         }
 
-        window.OneSignal.push(function () {
+        window.OneSignalDeferred.push(async function (OneSignal) {
             try {
-                window.OneSignal.init({
+                await OneSignal.init({
                     appId: window.ONE_SIGNAL_APP_ID,
                     allowLocalhostAsSecureOrigin: isLocalhost(),
+                    autoResubscribe: true,
                     notifyButton: { enable: false }
                 });
 
-                window.OneSignal.isPushNotificationsEnabled(function (isEnabled) {
-                    log('OneSignal push enabled:', isEnabled);
-                    if (isEnabled) {
-                        registerPlayerId();
-                        return;
-                    }
-                    if (!localStorage.getItem('one_signal_prompt_shown')) {
-                        localStorage.setItem('one_signal_prompt_shown', '1');
-                        try {
-                            window.OneSignal.showNativePrompt();
-                        } catch (err) {
-                            log('Error showing OneSignal prompt:', err);
-                        }
-                    }
-                });
+                try {
+                    await OneSignal.login(String(window.currentUserId));
+                } catch (loginError) {
+                    log('OneSignal login failed:', loginError);
+                }
 
-                window.OneSignal.on('subscriptionChange', function (isSubscribed) {
-                    log('OneSignal subscription changed:', isSubscribed);
-                    if (isSubscribed) {
-                        registerPlayerId();
-                    }
-                });
+                if (OneSignal?.User?.PushSubscription?.addEventListener) {
+                    OneSignal.User.PushSubscription.addEventListener('change', function (event) {
+                        const currentId = event?.current?.id || '';
+                        log('OneSignal subscription changed:', event?.current?.optedIn, currentId);
+                        if (currentId) {
+                            sendPlayerIdToServer(currentId);
+                        }
+                    });
+                }
+
+                if (OneSignal?.Notifications?.addEventListener) {
+                    OneSignal.Notifications.addEventListener('permissionChange', function (permission) {
+                        log('OneSignal permission changed:', permission);
+                        if (permission) {
+                            registerPlayerId(OneSignal);
+                        }
+                    });
+                }
+
+                registerPlayerId(OneSignal);
+
+                if (!OneSignal.Notifications.permission) {
+                    await showPermissionPrompt(OneSignal);
+                }
             } catch (err) {
                 log('OneSignal init failed:', err);
             }

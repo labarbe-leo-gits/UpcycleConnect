@@ -11,7 +11,7 @@ if (file_exists($ENV_FILE)) {
     error_log("Warning: .env file not found. Using system environment variables.");
 }
 
-$defaultRedirect = 'http://localhost:8081/pages/public/oauth-callback-google';
+$defaultRedirect = 'https://upcycleconnect.cloud/pages/public/oauth-callback-google';
 if (!empty($_SERVER['HTTP_HOST'])) {
     $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
     $host = $_SERVER['HTTP_HOST'];

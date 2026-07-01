@@ -11,25 +11,27 @@ type ServiceSchedule struct {
 }
 
 type Service struct {
-	ID                  uuid.UUID         `json:"id" gorm:"type:uuid;primaryKey"`
-	Name                string            `json:"name" gorm:"not null"`
-	Description         string            `json:"description,omitempty"`
-	Price               float64           `json:"price,omitempty"`
-	Type                uuid.UUID         `json:"type_id" gorm:"type:uuid;not null"`
-	ServiceDate         string            `json:"service_date,omitempty"`
-	ServiceRoad         string            `json:"service_road,omitempty"`
-	ServiceCity         string            `json:"service_city,omitempty"`
-	ServiceZip          string            `json:"service_zip,omitempty"`
-	MaximumParticipants *int              `json:"maximum_participants,omitempty"`
-	CurrentParticipants int               `json:"current_participants,omitempty"`
-	Schedules           []ServiceSchedule `json:"schedules,omitempty"`
-	MeetingType         string            `json:"meeting_type,omitempty"`
-	OnlineMeetingLink   string            `json:"online_meeting_link,omitempty"`
-	Status              string            `json:"status,omitempty" gorm:"default:published"`
-	CreatedBy           uuid.UUID         `json:"created_by" gorm:"type:uuid;not null"`
-	CreatorFirstName    string            `json:"creator_first_name,omitempty"`
-	CreatorLastName     string            `json:"creator_last_name,omitempty"`
-	CreatorUsername     string            `json:"creator_username,omitempty"`
-	CreatedAt           string            `json:"created_at,omitempty"`
-	UpdatedAt           string            `json:"updated_at,omitempty"`
+	ID                   uuid.UUID         `json:"id" gorm:"type:uuid;primaryKey"`
+	Name                 string            `json:"name" gorm:"not null"`
+	Description          string            `json:"description,omitempty"`
+	Price                float64           `json:"price,omitempty"`
+	Type                 uuid.UUID         `json:"type_id" gorm:"type:uuid;not null"`
+	ServiceDate          string            `json:"service_date,omitempty"`
+	DurationDays         int               `json:"duration_days,omitempty"`
+	EstimatedTimeMinutes int               `json:"estimated_time_minutes,omitempty"`
+	ServiceRoad          string            `json:"service_road,omitempty"`
+	ServiceCity          string            `json:"service_city,omitempty"`
+	ServiceZip           string            `json:"service_zip,omitempty"`
+	MaximumParticipants  *int              `json:"maximum_participants,omitempty"`
+	CurrentParticipants  int               `json:"current_participants,omitempty"`
+	Schedules            []ServiceSchedule `json:"schedules,omitempty"`
+	MeetingType          string            `json:"meeting_type,omitempty"`
+	OnlineMeetingLink    string            `json:"online_meeting_link,omitempty"`
+	Status               string            `json:"status,omitempty" gorm:"default:published"`
+	CreatedBy            uuid.UUID         `json:"created_by" gorm:"type:uuid;not null"`
+	CreatorFirstName     string            `json:"creator_first_name,omitempty"`
+	CreatorLastName      string            `json:"creator_last_name,omitempty"`
+	CreatorUsername      string            `json:"creator_username,omitempty"`
+	CreatedAt            string            `json:"created_at,omitempty"`
+	UpdatedAt            string            `json:"updated_at,omitempty"`
 }

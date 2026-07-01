@@ -254,12 +254,9 @@
         `;
 
         const statusBadge = getStatusBadge(formation.status);
-        const dateObj = new Date(formation.service_date);
-        const dateStr = dateObj.toLocaleDateString('fr-FR', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
+        const dateStr = formatFormationDateRange(formation.service_date, formation.duration_days);
+        const estimatedTimeStr = formatEstimatedTime(formation.estimated_time_minutes);
+        const durationLabel = formatDurationLabel(formation.duration_days);
 
         card.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
@@ -272,6 +269,8 @@
             <p style="margin: 8px 0; color: #374151; font-size: 0.95em;">${escapeHtml(formation.description).substring(0, 100)}...</p>
             <div style="display: flex; gap: 8px; margin-top: 12px; font-size: 0.9em; color: #6b7280;">
                 <span><i class="fa-solid fa-euro-sign"></i> ${formation.price.toFixed(2)}€</span>
+                <span><i class="fa-solid fa-calendar-days"></i> ${durationLabel}</span>
+                <span><i class="fa-solid fa-clock"></i> ${estimatedTimeStr}</span>
                 <span><i class="fa-solid fa-users"></i> ${formation.maximum_participants ? formation.maximum_participants : 'Unlimited'}</span>
                 <span><i class="fa-solid fa-map-pin"></i> ${formation.service_city || (formation.meeting_type === 'zoom' ? 'Online' : 'TBD')}</span>
             </div>
@@ -306,6 +305,7 @@
         document.getElementById('create-formation-btn').addEventListener('click', () => {
             schedules = [];
             form.reset();
+            setFormationFormDefaults();
             document.getElementById('form-schedules-list').innerHTML = '';
             const approvalCheckbox = document.getElementById('form-needs-approval');
             if (approvalCheckbox) {
@@ -392,6 +392,8 @@
             price: parseFloat(formData.get('price')),
             type_id: formData.get('type'),
             service_date: formData.get('service_date'),
+            duration_days: parseInt(formData.get('duration_days') || '1', 10),
+            estimated_time_minutes: parseInt(formData.get('estimated_time_minutes') || '60', 10),
             service_road: formData.get('service_road') || '',
             service_city: formData.get('service_city') || '',
             service_zip: formData.get('service_zip') || '',
@@ -447,6 +449,8 @@
             form.querySelector('#form-price').value = formation.price || 0;
             form.querySelector('#form-type').value = formation.type_id || '';
             form.querySelector('#form-date').value = formation.service_date || '';
+            form.querySelector('#form-duration-days').value = formation.duration_days || 1;
+            form.querySelector('#form-estimated-time').value = formation.estimated_time_minutes || 60;
             form.querySelector('#form-road').value = formation.service_road || '';
             form.querySelector('#form-city').value = formation.service_city || '';
             form.querySelector('#form-zip').value = formation.service_zip || '';
@@ -551,6 +555,7 @@
         
         editingId = null;
         form.reset();
+        setFormationFormDefaults();
         schedules = [];
         renderSchedules();
         document.getElementById('formation-form-title').textContent = 'Create Formation';
@@ -605,6 +610,62 @@
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    function setFormationFormDefaults() {
+        const durationInput = document.getElementById('form-duration-days');
+        const estimatedTimeInput = document.getElementById('form-estimated-time');
+        if (durationInput) {
+            durationInput.value = '1';
+        }
+        if (estimatedTimeInput) {
+            estimatedTimeInput.value = '60';
+        }
+    }
+
+    function formatDurationLabel(durationDays) {
+        const days = Math.max(1, parseInt(durationDays || '1', 10));
+        return days === 1 ? '1 day' : `${days} days`;
+    }
+
+    function formatEstimatedTime(minutes) {
+        const totalMinutes = Math.max(1, parseInt(minutes || '60', 10));
+        const hours = Math.floor(totalMinutes / 60);
+        const remainingMinutes = totalMinutes % 60;
+
+        if (hours === 0) {
+            return `${remainingMinutes} min`;
+        }
+
+        if (remainingMinutes === 0) {
+            return `${hours}h`;
+        }
+
+        return `${hours}h ${remainingMinutes}m`;
+    }
+
+    function formatFormationDateRange(startDate, durationDays) {
+        if (!startDate) {
+            return '';
+        }
+
+        const start = new Date(startDate);
+        if (Number.isNaN(start.getTime())) {
+            return startDate;
+        }
+
+        const days = Math.max(1, parseInt(durationDays || '1', 10));
+        const end = new Date(start);
+        end.setDate(start.getDate() + days - 1);
+
+        const formatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+        const startLabel = start.toLocaleDateString('fr-FR', formatOptions);
+        if (days === 1) {
+            return startLabel;
+        }
+
+        const endLabel = end.toLocaleDateString('fr-FR', formatOptions);
+        return `${startLabel} - ${endLabel}`;
     }
 
     init();

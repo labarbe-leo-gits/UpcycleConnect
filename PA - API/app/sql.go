@@ -16,6 +16,7 @@ import (
 
 type SQLQueryRequest struct {
 	Query    string `json:"query"`
+	UserID   string `json:"user_id,omitempty"`
 	Password string `json:"password,omitempty"`
 	MFACode  string `json:"mfa_code,omitempty"`
 }
@@ -50,7 +51,7 @@ func ExecuteReadOnlySQL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if isElevatedSQL(query) {
-		if err := validateElevatedSQL(r, payload.Password, payload.MFACode); err != nil {
+		if err := validateElevatedSQL(payload.UserID, payload.Password, payload.MFACode); err != nil {
 			sendError(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
@@ -141,7 +142,7 @@ func isElevatedSQL(query string) bool {
 	return regexp.MustCompile(`(?i)^\s*(alter|update|delete|insert|create|drop|truncate|replace|rename|grant|revoke|set|use|lock|unlock|describe|desc|explain|show|call|prepare|execute|declare)\b`).MatchString(query)
 }
 
-func validateElevatedSQL(r *http.Request, password, mfaCode string) error {
+func validateElevatedSQL(userIDStr, password, mfaCode string) error {
 	if password == "" {
 		return fmt.Errorf("Password is required for elevated SQL commands")
 	}
@@ -149,9 +150,7 @@ func validateElevatedSQL(r *http.Request, password, mfaCode string) error {
 		return fmt.Errorf("MFA code is required for elevated SQL commands")
 	}
 
-	userIDRaw := r.Context().Value("user_id")
-	userIDStr, ok := userIDRaw.(string)
-	if !ok || userIDStr == "" {
+	if strings.TrimSpace(userIDStr) == "" {
 		return fmt.Errorf("Unable to verify elevated SQL credentials")
 	}
 

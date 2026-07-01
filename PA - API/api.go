@@ -846,7 +846,7 @@ func main() {
 	registerRoute("POST", "/internal/subscription/revoke", "Revoke premium for a user on subscription cancellation or payment failure", app.RevokeSubscription, InternalKeyMiddleware)
 	registerRoute("POST", "/internal/subscription/invoice", "Create or update an invoice record", app.CreateInvoice, InternalKeyMiddleware)
 	registerRoute("POST", "/internal/promotion/complete", "Complete a paid promotion by creating a contract, invoice and ad campaign", app.CompletePromotion, InternalKeyMiddleware)
-	registerRoute("POST", "/internal/sql", "Execute a safe read-only SQL query for admin analytics", app.ExecuteReadOnlySQL, app.JWTAuthMiddleware, InternalKeyMiddleware)
+	registerRoute("POST", "/internal/sql", "Execute a safe read-only SQL query for admin analytics", app.ExecuteReadOnlySQL, InternalKeyMiddleware)
 	registerRoute("GET", "/users/{id}/subscription", "Get subscription details for a user", app.GetSubscriptionByUserID, app.JWTAuthMiddleware)
 	registerRoute("POST", "/users/{id}/profile-picture", "Upload a new profile picture for the user", app.UploadProfilePicture, app.JWTAuthMiddleware)
 	registerRoute("GET", "/users/{id}/profile-picture", "Get the profile picture URL for a user", app.GetProfilePicture, app.JWTAuthMiddleware)

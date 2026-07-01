@@ -208,6 +208,8 @@ CREATE TABLE IF NOT EXISTS evenements (
     /* event_type INT NOT NULL, */
     event_type CHAR(36) NOT NULL,
     event_date DATE NOT NULL,
+    duration_days INT NOT NULL DEFAULT 1,
+    estimated_time_minutes INT NOT NULL DEFAULT 60,
     event_road VARCHAR(255),
     event_city VARCHAR(80),
     event_zip_code CHAR(5),

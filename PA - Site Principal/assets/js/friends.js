@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const API_URL = "http://" + window.location.hostname + ":9999";
+    const API_URL = (window.API_BASE || (window.location.protocol + '//' + window.location.hostname + ':9999')).replace(/\/$/, '');
     const token = localStorage.getItem('token') || localStorage.getItem('jwt_token') || getCookie('token') || getCookie('jwt_token');
     const currentUserId = parseJwt(token)?.user_id;
 

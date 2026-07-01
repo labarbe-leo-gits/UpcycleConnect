@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const API_URL = "http://" + window.location.hostname + ":9999";
-    const WS_URL = "ws://" + window.location.hostname + ":9999/ws";
+    const API_URL = (window.API_BASE || (window.location.protocol + '//' + window.location.hostname + ':9999')).replace(/\/$/, '');
+    const WS_URL = API_URL.replace(/^http:/, 'ws:').replace(/^https:/, 'wss:') + '/ws';
     
     const token = localStorage.getItem('token') || getCookie('token');
     const currentUserId = parseJwt(token)?.user_id;

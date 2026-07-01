@@ -5,6 +5,8 @@ require_once '../../includes/auth.php';
 requireUserType(3);
 header('Content-Type: application/json');
 
+$currentUser = getLoggedInUser();
+
 $payload = [];
 $raw = file_get_contents('php://input');
 if ($raw !== false && trim($raw) !== '') {
@@ -29,6 +31,10 @@ if (empty($payload['query'])) {
     }
     $payload['password'] = trim($_POST['password'] ?? '');
     $payload['mfa_code'] = trim($_POST['mfa_code'] ?? '');
+}
+
+if (!empty($currentUser['id'])) {
+    $payload['user_id'] = $currentUser['id'];
 }
 
 if (empty($payload['query'])) {

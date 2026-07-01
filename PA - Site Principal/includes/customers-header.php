@@ -65,20 +65,19 @@ if (isset($_SESSION['banned']) && $_SESSION['banned']){
         }
     </script>
     <?php if (!empty(getenv('ONESIGNAL_APP_ID'))): ?>
-    <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async></script>
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     <script src="../../assets/js/onesignal.js" defer></script>
     <?php endif; ?>
     <?php
-    if (!empty(
-        isset($extraCss) ? $extraCss : null
-    ) && is_array($extraCss)) {
+    $extraCss = $extraCss ?? [];
+    $extraJs = $extraJs ?? [];
+
+    if (!empty($extraCss) && is_array($extraCss)) {
         foreach ($extraCss as $cssFile) {
             echo "    <link rel=\"stylesheet\" href=\"{$cssFile}\">\n";
         }
     }
-    if (!empty(
-        isset($extraJs) ? $extraJs : null
-    ) && is_array($extraJs)) {
+    if (!empty($extraJs) && is_array($extraJs)) {
         foreach ($extraJs as $jsFile) {
             echo "    <script src=\"{$jsFile}\" defer></script>\n";
         }

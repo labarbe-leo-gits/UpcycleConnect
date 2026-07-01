@@ -13,13 +13,13 @@ func GetServicesFromDB(search string, typeUUID string, availableOnly bool, emplo
 
 	services := []models.Service{}
 
-	query := "SELECT id, title, description, price, event_type, event_date, event_road, event_city, event_zip_code, maximum_participants, current_participants, meetingType, onlineMeetingLink, status, created_by, created_at, updated_at FROM evenements"
+	query := "SELECT id, title, description, price, event_type, event_date, duration_days, estimated_time_minutes, event_road, event_city, event_zip_code, maximum_participants, current_participants, meetingType, onlineMeetingLink, status, created_by, created_at, updated_at FROM evenements"
 	args := []interface{}{}
 	clauses := []string{}
 
 	if employeeUUID != "" {
 
-		query = "SELECT e.id, e.title, e.description, e.price, e.event_type, e.event_date, e.event_road, e.event_city, e.event_zip_code, e.maximum_participants, e.current_participants, e.meetingType, e.onlineMeetingLink, e.status, e.created_by, e.created_at, e.updated_at FROM evenements e INNER JOIN affectedEmployees ae ON ae.event_id = e.id AND ae.user_id = ?"
+		query = "SELECT e.id, e.title, e.description, e.price, e.event_type, e.event_date, e.duration_days, e.estimated_time_minutes, e.event_road, e.event_city, e.event_zip_code, e.maximum_participants, e.current_participants, e.meetingType, e.onlineMeetingLink, e.status, e.created_by, e.created_at, e.updated_at FROM evenements e INNER JOIN affectedEmployees ae ON ae.event_id = e.id AND ae.user_id = ?"
 		args = append(args, employeeUUID)
 	}
 
@@ -55,7 +55,7 @@ func GetServicesFromDB(search string, typeUUID string, availableOnly bool, emplo
 		var typeStr string
 		var mt sql.NullString
 		var link sql.NullString
-		err := rows.Scan(&idStr, &service.Name, &service.Description, &service.Price, &typeStr, &service.ServiceDate, &service.ServiceRoad, &service.ServiceCity, &service.ServiceZip, &maxParticipants, &currentParticipants, &mt, &link, &status, &createdByStr, &createdAt, &updatedAt)
+		err := rows.Scan(&idStr, &service.Name, &service.Description, &service.Price, &typeStr, &service.ServiceDate, &service.DurationDays, &service.EstimatedTimeMinutes, &service.ServiceRoad, &service.ServiceCity, &service.ServiceZip, &maxParticipants, &currentParticipants, &mt, &link, &status, &createdByStr, &createdAt, &updatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("getServices package db scan : %s", err.Error())
 		}
@@ -174,7 +174,7 @@ func attachSchedulesToServices(services []models.Service) error {
 func GetServicesPageFromDB(limit int, offset int, availableOnly bool, search string, typeUUID string, employeeUUID string) ([]models.Service, error) {
 
 	services := []models.Service{}
-	query := "SELECT id, title, description, price, event_type, event_date, event_road, event_city, event_zip_code, maximum_participants, current_participants, meetingType, onlineMeetingLink, status, created_by, created_at, updated_at FROM evenements"
+	query := "SELECT id, title, description, price, event_type, event_date, duration_days, estimated_time_minutes, event_road, event_city, event_zip_code, maximum_participants, current_participants, meetingType, onlineMeetingLink, status, created_by, created_at, updated_at FROM evenements"
 	args := []interface{}{}
 	clauses := []string{}
 
@@ -219,7 +219,7 @@ func GetServicesPageFromDB(limit int, offset int, availableOnly bool, search str
 		var typeStr string
 		var mt sql.NullString
 		var link sql.NullString
-		err := rows.Scan(&idStr, &service.Name, &service.Description, &service.Price, &typeStr, &service.ServiceDate, &service.ServiceRoad, &service.ServiceCity, &service.ServiceZip, &maxParticipants, &currentParticipants, &mt, &link, &status, &createdByStr, &createdAt, &updatedAt)
+		err := rows.Scan(&idStr, &service.Name, &service.Description, &service.Price, &typeStr, &service.ServiceDate, &service.DurationDays, &service.EstimatedTimeMinutes, &service.ServiceRoad, &service.ServiceCity, &service.ServiceZip, &maxParticipants, &currentParticipants, &mt, &link, &status, &createdByStr, &createdAt, &updatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("getServicesPage package db scan : %s", err.Error())
 		}
@@ -286,7 +286,7 @@ func CountFormationsByCreatorFromDB(creatorID uuid.UUID) (int, error) {
 func GetFormationsByCreatorFromDB(creatorID uuid.UUID, search string, limit int, offset int) ([]models.Service, error) {
 	services := []models.Service{}
 
-	query := "SELECT id, title, description, price, event_type, event_date, event_road, event_city, event_zip_code, maximum_participants, current_participants, meetingType, onlineMeetingLink, status, created_by, created_at, updated_at FROM evenements WHERE created_by = ?"
+	query := "SELECT id, title, description, price, event_type, event_date, duration_days, estimated_time_minutes, event_road, event_city, event_zip_code, maximum_participants, current_participants, meetingType, onlineMeetingLink, status, created_by, created_at, updated_at FROM evenements WHERE created_by = ?"
 	args := []interface{}{creatorID.String()}
 
 	if search != "" {
@@ -312,7 +312,7 @@ func GetFormationsByCreatorFromDB(creatorID uuid.UUID, search string, limit int,
 		var typeStr string
 		var mt sql.NullString
 		var link sql.NullString
-		err := rows.Scan(&idStr, &service.Name, &service.Description, &service.Price, &typeStr, &service.ServiceDate, &service.ServiceRoad, &service.ServiceCity, &service.ServiceZip, &maxParticipants, &currentParticipants, &mt, &link, &status, &createdByStr, &createdAt, &updatedAt)
+		err := rows.Scan(&idStr, &service.Name, &service.Description, &service.Price, &typeStr, &service.ServiceDate, &service.DurationDays, &service.EstimatedTimeMinutes, &service.ServiceRoad, &service.ServiceCity, &service.ServiceZip, &maxParticipants, &currentParticipants, &mt, &link, &status, &createdByStr, &createdAt, &updatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("getFormationsByCreator package db scan : %s", err.Error())
 		}
@@ -387,7 +387,7 @@ func CountPendingFormationsForManagerFromDB(managerID uuid.UUID, search string) 
 func GetPendingFormationsForManagerFromDB(managerID uuid.UUID, search string, limit int, offset int) ([]models.Service, error) {
 	services := []models.Service{}
 
-	query := "SELECT e.id, e.title, e.description, e.price, e.event_type, e.event_date, e.event_road, e.event_city, e.event_zip_code, e.maximum_participants, e.current_participants, e.meetingType, e.onlineMeetingLink, e.status, e.created_by, e.created_at, e.updated_at, u.first_name, u.last_name, u.username FROM evenements e INNER JOIN users u ON e.created_by = u.id WHERE e.status = 'draft' AND u.manager_id = ?"
+	query := "SELECT e.id, e.title, e.description, e.price, e.event_type, e.event_date, e.duration_days, e.estimated_time_minutes, e.event_road, e.event_city, e.event_zip_code, e.maximum_participants, e.current_participants, e.meetingType, e.onlineMeetingLink, e.status, e.created_by, e.created_at, e.updated_at, u.first_name, u.last_name, u.username FROM evenements e INNER JOIN users u ON e.created_by = u.id WHERE e.status = 'draft' AND u.manager_id = ?"
 	args := []interface{}{managerID.String()}
 
 	if search != "" {
@@ -413,7 +413,7 @@ func GetPendingFormationsForManagerFromDB(managerID uuid.UUID, search string, li
 		var typeStr string
 		var mt sql.NullString
 		var link sql.NullString
-		err := rows.Scan(&idStr, &service.Name, &service.Description, &service.Price, &typeStr, &service.ServiceDate, &service.ServiceRoad, &service.ServiceCity, &service.ServiceZip, &maxParticipants, &currentParticipants, &mt, &link, &status, &createdByStr, &createdAt, &updatedAt, &service.CreatorFirstName, &service.CreatorLastName, &service.CreatorUsername)
+		err := rows.Scan(&idStr, &service.Name, &service.Description, &service.Price, &typeStr, &service.ServiceDate, &service.DurationDays, &service.EstimatedTimeMinutes, &service.ServiceRoad, &service.ServiceCity, &service.ServiceZip, &maxParticipants, &currentParticipants, &mt, &link, &status, &createdByStr, &createdAt, &updatedAt, &service.CreatorFirstName, &service.CreatorLastName, &service.CreatorUsername)
 		if err != nil {
 			return nil, fmt.Errorf("getPendingFormationsForManager package db scan : %s", err.Error())
 		}
@@ -529,8 +529,8 @@ func CreateServiceInDB(service models.Service) (uuid.UUID, error) {
 	if status == "" {
 		status = "published"
 	}
-	_, err := Db.Exec("INSERT INTO evenements (id, title, description, price, event_type, event_date, event_road, event_city, event_zip_code, maximum_participants, meetingType, onlineMeetingLink, status, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-		id, service.Name, service.Description, service.Price, service.Type, service.ServiceDate, service.ServiceRoad, service.ServiceCity, service.ServiceZip, service.MaximumParticipants, service.MeetingType, service.OnlineMeetingLink, status, service.CreatedBy, currentTime, currentTime)
+	_, err := Db.Exec("INSERT INTO evenements (id, title, description, price, event_type, event_date, duration_days, estimated_time_minutes, event_road, event_city, event_zip_code, maximum_participants, meetingType, onlineMeetingLink, status, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		id, service.Name, service.Description, service.Price, service.Type, service.ServiceDate, service.DurationDays, service.EstimatedTimeMinutes, service.ServiceRoad, service.ServiceCity, service.ServiceZip, service.MaximumParticipants, service.MeetingType, service.OnlineMeetingLink, status, service.CreatedBy, currentTime, currentTime)
 
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("createService package db : %s", err.Error())
@@ -542,8 +542,8 @@ func CreateServiceInDB(service models.Service) (uuid.UUID, error) {
 
 func UpdateServiceInDB(serviceID uuid.UUID, service models.Service) error {
 	currentTime := getCurrentTime()
-	query := "UPDATE evenements SET title=?, description=?, price=?, event_type=?, event_date=?, event_road=?, event_city=?, event_zip_code=?, maximum_participants=?, meetingType=?, onlineMeetingLink=?"
-	args := []interface{}{service.Name, service.Description, service.Price, service.Type, service.ServiceDate, service.ServiceRoad, service.ServiceCity, service.ServiceZip, service.MaximumParticipants, service.MeetingType, service.OnlineMeetingLink}
+	query := "UPDATE evenements SET title=?, description=?, price=?, event_type=?, event_date=?, duration_days=?, estimated_time_minutes=?, event_road=?, event_city=?, event_zip_code=?, maximum_participants=?, meetingType=?, onlineMeetingLink=?"
+	args := []interface{}{service.Name, service.Description, service.Price, service.Type, service.ServiceDate, service.DurationDays, service.EstimatedTimeMinutes, service.ServiceRoad, service.ServiceCity, service.ServiceZip, service.MaximumParticipants, service.MeetingType, service.OnlineMeetingLink}
 
 	if service.Status != "" {
 		query += ", status=?"
@@ -579,7 +579,7 @@ func GetServiceByIDFromDB(serviceID uuid.UUID) (models.Service, error) {
 
 	var mt sql.NullString
 	var link sql.NullString
-	err := Db.QueryRow("SELECT id, title, description, price, event_type, event_date, event_road, event_city, event_zip_code, maximum_participants, current_participants, meetingType, onlineMeetingLink, status, created_by, created_at, updated_at FROM evenements WHERE id = ?", serviceID).Scan(&idStr, &service.Name, &service.Description, &service.Price, &typeStr, &service.ServiceDate, &service.ServiceRoad, &service.ServiceCity, &service.ServiceZip, &maxParticipants, &currentParticipants, &mt, &link, &status, &createdByStr, &createdAt, &updatedAt)
+	err := Db.QueryRow("SELECT id, title, description, price, event_type, event_date, duration_days, estimated_time_minutes, event_road, event_city, event_zip_code, maximum_participants, current_participants, meetingType, onlineMeetingLink, status, created_by, created_at, updated_at FROM evenements WHERE id = ?", serviceID).Scan(&idStr, &service.Name, &service.Description, &service.Price, &typeStr, &service.ServiceDate, &service.DurationDays, &service.EstimatedTimeMinutes, &service.ServiceRoad, &service.ServiceCity, &service.ServiceZip, &maxParticipants, &currentParticipants, &mt, &link, &status, &createdByStr, &createdAt, &updatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return service, fmt.Errorf("service not found")
@@ -596,12 +596,6 @@ func GetServiceByIDFromDB(serviceID uuid.UUID) (models.Service, error) {
 		service.Status = status.String
 	} else {
 		service.Status = "published"
-	}
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return service, fmt.Errorf("service not found")
-		}
-		return service, fmt.Errorf("getServiceByID package db : %s", err.Error())
 	}
 
 	service.ID, err = uuid.Parse(idStr)

@@ -8,9 +8,70 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 )
+
+func normalizeFormationDurations(service *models.Service) {
+	if service.DurationDays <= 0 {
+		service.DurationDays = 1
+	}
+	if service.EstimatedTimeMinutes <= 0 {
+		service.EstimatedTimeMinutes = 60
+	}
+}
+
+func createFormationPlanningEntries(service models.Service) error {
+	creator, err := db.GetUserByIDFromDB(service.CreatedBy)
+	if err != nil {
+		return fmt.Errorf("get creator: %w", err)
+	}
+
+	if creator.UserType != 4 || service.Status != "published" || len(service.Schedules) == 0 {
+		return nil
+	}
+
+	serviceDate, err := time.ParseInLocation("2006-01-02", service.ServiceDate, time.Local)
+	if err != nil {
+		return fmt.Errorf("parse service date: %w", err)
+	}
+
+	description := strings.TrimSpace(service.Description)
+	if description == "" {
+		description = fmt.Sprintf("Formation scheduled for %d day(s).", service.DurationDays)
+	} else {
+		description = fmt.Sprintf("%s\n\nFormation scheduled for %d day(s). Estimated time per slot: %d minute(s).", description, service.DurationDays, service.EstimatedTimeMinutes)
+	}
+
+	for dayOffset := 0; dayOffset < service.DurationDays; dayOffset++ {
+		currentDay := serviceDate.AddDate(0, 0, dayOffset)
+		for _, sched := range service.Schedules {
+			startTime := time.Date(currentDay.Year(), currentDay.Month(), currentDay.Day(), sched.Hour, 0, 0, 0, time.Local)
+			endTime := startTime.Add(time.Duration(service.EstimatedTimeMinutes) * time.Minute)
+
+			planning := models.Planning{
+				ID:          uuid.New(),
+				Title:       fmt.Sprintf("Formation: %s", service.Name),
+				Description: description,
+				StartTime:   startTime.Format("2006-01-02 15:04:05"),
+				EndTime:     endTime.Format("2006-01-02 15:04:05"),
+				Date:        currentDay.Format("2006-01-02"),
+				UserID:      service.CreatedBy,
+			}
+
+			if validationErrors := ValidatePlanningDto(planning); len(validationErrors) > 0 {
+				return fmt.Errorf("invalid planning entry: %s", strings.Join(validationErrors, "; "))
+			}
+
+			if err := db.CreatePlanningInDB(planning); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
 
 func GetServices(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
@@ -130,6 +191,14 @@ func ValidateServiceDto(serviceDto models.Service) []string {
 		validationErrors = append(validationErrors, "MaximumParticipants must be 0 or greater")
 	}
 
+	if serviceDto.DurationDays <= 0 {
+		validationErrors = append(validationErrors, "DurationDays must be greater than 0")
+	}
+
+	if serviceDto.EstimatedTimeMinutes <= 0 {
+		validationErrors = append(validationErrors, "EstimatedTimeMinutes must be greater than 0")
+	}
+
 	if serviceDto.MeetingType != "" && serviceDto.MeetingType != "none" && serviceDto.MeetingType != "zoom" && serviceDto.MeetingType != "other" {
 		validationErrors = append(validationErrors, "MeetingType is invalid")
 	}
@@ -167,6 +236,8 @@ func CreateService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	normalizeFormationDurations(&serviceDto)
+
 	validationErrors := ValidateServiceDto(serviceDto)
 
 	if len(validationErrors) > 0 {
@@ -196,6 +267,13 @@ func CreateService(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("[ERROR] CreateService save schedules:", err)
 			sendError(w, "Unable to save service schedules", http.StatusInternalServerError)
 			return
+		}
+	}
+
+	if serviceDto.Status == "published" {
+		serviceDto.ID = newID
+		if err := createFormationPlanningEntries(serviceDto); err != nil {
+			fmt.Println("[WARN] CreateService planning sync:", err)
 		}
 	}
 
@@ -291,7 +369,14 @@ func UpdateService(w http.ResponseWriter, r *http.Request) {
 	if serviceDto.MaximumParticipants == nil {
 		serviceDto.MaximumParticipants = existing.MaximumParticipants
 	}
+	if serviceDto.DurationDays == 0 {
+		serviceDto.DurationDays = existing.DurationDays
+	}
+	if serviceDto.EstimatedTimeMinutes == 0 {
+		serviceDto.EstimatedTimeMinutes = existing.EstimatedTimeMinutes
+	}
 	serviceDto.CreatedBy = existing.CreatedBy
+	normalizeFormationDurations(&serviceDto)
 
 	if serviceDto.MeetingType == "zoom" && serviceDto.OnlineMeetingLink == "" {
 		if url, err := createZoomMeeting(serviceDto.Name, serviceDto.ServiceDate); err != nil {
@@ -663,6 +748,14 @@ func UpdateFormationStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if payload.Status == "published" && existing.Status != "published" {
+		updatedService := existing
+		updatedService.Status = payload.Status
+		if err := createFormationPlanningEntries(updatedService); err != nil {
+			fmt.Println("[WARN] UpdateFormationStatus planning sync:", err)
+		}
+	}
+
 	if payload.Status == "published" || payload.Status == "rejected" {
 		notif := models.Notification{
 			UserID: existing.CreatedBy,
@@ -689,6 +782,8 @@ func CreateFormation(w http.ResponseWriter, r *http.Request) {
 		sendError(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
+
+	normalizeFormationDurations(&serviceDto)
 
 	validationErrors := ValidateServiceDto(serviceDto)
 
@@ -719,6 +814,13 @@ func CreateFormation(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("[ERROR] CreateFormation save schedules:", err)
 			sendError(w, "Unable to save formation schedules", http.StatusInternalServerError)
 			return
+		}
+	}
+
+	if serviceDto.Status == "published" {
+		serviceDto.ID = newID
+		if err := createFormationPlanningEntries(serviceDto); err != nil {
+			fmt.Println("[WARN] CreateFormation planning sync:", err)
 		}
 	}
 
