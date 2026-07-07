@@ -239,11 +239,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error_message = 'Username contains forbidden content: ' . implode(', ', $forbiddenWords) . '.';
             } else {
                 $moderationResult = verifyUsernameWithGemini($no_spaces_username);
-                if (is_array($moderationResult) && isset($moderationResult['flagged']) && $moderationResult['flagged']) {
-                    $reasons = is_array($moderationResult['reasons']) ? implode(', ', $moderationResult['reasons']) : '';
-                    $details = trim($reasons ?: implode(', ', $moderationResult['flaggedWords'] ?? []));
-                    $error_message = 'Username rejected by moderation' . ($details ? ': ' . $details : '.');
-                }
+                //if (is_array($moderationResult) && isset($moderationResult['flagged']) && $moderationResult['flagged']) {
+                //    $reasons = is_array($moderationResult['reasons']) ? implode(', ', $moderationResult['reasons']) : '';
+                //    $details = trim($reasons ?: implode(', ', $moderationResult['flaggedWords'] ?? []));
+                //    $error_message = 'Username rejected by moderation' . ($details ? ': ' . $details : '.');
+                //}
             }
 
             if ($error_message === '') {
