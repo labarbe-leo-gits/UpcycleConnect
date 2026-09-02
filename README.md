@@ -1,6 +1,6 @@
 # UpcycleConnect
 
-Connecting people, artisans and businesses to give new life to used materials — a full-stack platform for discovering, listing and managing upcycling services (customer portal, worker portal, bac[...]
+Connecting people, artisans and businesses to give new life to used materials — a full-stack platform for discovering, listing and managing upcycling services (customer portal, worker portal, back-office and a REST API)
 
 ## Quick summary
 - Frontend: PHP (site pages, public/customer/worker portals)
