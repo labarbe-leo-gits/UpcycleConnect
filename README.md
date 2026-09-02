@@ -1,6 +1,6 @@
 # UpcycleConnect
 
-Connecting people, artisans and businesses to give new life to used materials — a full-stack platform for discovering, listing and managing upcycling services (customer portal, worker portal, back-office and a REST API).
+Connecting people, artisans and businesses to give new life to used materials — a full-stack platform for discovering, listing and managing upcycling services (customer portal, worker portal, bac[...]
 
 ## Quick summary
 - Frontend: PHP (site pages, public/customer/worker portals)
@@ -248,8 +248,131 @@ Developer & deployment
 
 ---
 
-## How to run it (short path)
-1. Clone:
+## How to run it
+
+### Prerequisites
+- **Docker** and **Docker Compose** installed ([download here](https://www.docker.com/products/docker-desktop))
+- **Git** installed
+- For production: Go 1.25+ and PHP 7.4+ (if running without Docker)
+
+### Quick Start (Development with Docker)
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/labarbe-leo-gits/UpcycleConnect.git
+   cd UpcycleConnect
+   ```
+
+2. **Set up environment files:**
+   
+   Create `.env` files from the examples provided:
+   
+   ```bash
+   cp "PA - API/.env.example" "PA - API/.env"
+   cp "PA - Site Principal/.env.example" "PA - Site Principal/.env"
+   cp "PA - BO/.env.example" "PA - BO/.env"  # Back-office
+   cp "PA - Automated Processes/.env.example" "PA - Automated Processes/.env"
+   ```
+
+   Update the `.env` files with your configuration (API keys, OAuth credentials, etc.). For development, many values have reasonable defaults in the docker-compose setup.
+
+3. **Start all services:**
+   ```bash
+   docker-compose -f docker-compose.dev.yml up
+   ```
+
+   This will spin up:
+   - **MySQL Database** (port 3306)
+   - **Go API** (port 9999)
+   - **Frontend** (port 8081)
+   - **Back-office** (port 8080)
+   - **GLPI** (port 8082, for IT asset management)
+   - **Automated Processes** (background jobs/cron)
+
+4. **Access the application:**
+   - Frontend: http://localhost:8081
+   - Back-office: http://localhost:8080
+   - API: http://localhost:9999
+   - API Docs: http://localhost:9999/swagger/
+   - GLPI: http://localhost:8082
+
+5. **Stop the services:**
+   ```bash
+   docker-compose -f docker-compose.dev.yml down
+   ```
+
+### Manual Setup (Without Docker)
+
+#### API Setup (Go)
 ```bash
-git clone https://github.com/labarbe-leo-gits/UpcycleConnect.git
-cd UpcycleConnect
+cd "PA - API"
+cp .env.example .env
+# Edit .env with your database credentials
+go mod download
+go run .
+```
+
+#### Frontend Setup (PHP)
+```bash
+cd "PA - Site Principal"
+cp .env.example .env
+# Install dependencies
+composer install
+# For development, use PHP built-in server or configure your web server
+php -S localhost:8081
+```
+
+#### Back-office Setup (PHP)
+```bash
+cd "PA - BO"
+cp .env.example .env
+composer install
+php -S localhost:8080
+```
+
+#### Database Setup
+```bash
+mysql -u root -p < db_schema.sql
+```
+
+### Configuration
+
+Key environment variables to configure:
+
+**API (`.env` in `PA - API/`):**
+- `JWT_SECRET_KEY` — Secret for JWT token signing
+- `DB_*` — Database connection details
+- `BADWORDS_FILE` — Path to bad words JSON file
+
+**Frontend (`.env` in `PA - Site Principal/`):**
+- `API_HOST` / `API_PORT` — API server address
+- `RECAPTCHA_SITE_KEY` / `RECAPTCHA_SECRET_KEY` — Google reCAPTCHA v3
+- `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` — Google OAuth
+- `FACEBOOK_CLIENT_ID` / `FACEBOOK_CLIENT_SECRET` — Facebook OAuth
+- `STRIPE_PUBLISHABLE_KEY` / `STRIPE_SECRET_KEY` — Stripe payment keys
+- `GEMINI_API_KEY` — Google Gemini API for content moderation
+
+**Database:**
+- Default dev credentials (from `docker-compose.dev.yml`):
+  - User: `app`
+  - Password: `secret`
+  - Database: `upcycle`
+
+### Troubleshooting
+
+- **Database connection fails:** Ensure MySQL is running and credentials match your `.env`
+- **API not responding:** Check if port 9999 is available; verify API container logs: `docker-compose -f docker-compose.dev.yml logs api`
+- **Frontend cannot reach API:** Verify `API_HOST` and `API_PORT` in frontend `.env` match your setup
+- **Permission issues:** Ensure the `files/` directory is writable by the API and frontend containers
+
+### Database Schema
+
+The database schema is automatically initialized on first run from `db_schema.sql`. To manually reset:
+```bash
+mysql -u app -p upcycle < db_schema.sql
+```
+
+### Additional Resources
+
+- API documentation: Visit `/swagger/` or `/swagger/doc.json` when API is running
+- Feature list: See "Full feature list" section above for all implemented endpoints
